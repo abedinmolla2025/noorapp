@@ -83,21 +83,42 @@
   <body>
     <div id="root"></div>
     <script>
-      window.addEventListener('error', function(e) {
-        if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
-          console.error('Resource load error:', e.target.src || e.target.href);
-          // If it's a module load error (likely a chunk error), we can try to reload
-          if (e.message && e.message.includes('MIME type')) {
-             console.log('MIME type error detected, clearing cache and reloading...');
-             if ('serviceWorker' in navigator) {
-               navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                 for(let registration of registrations) { registrations.unregister(); }
-               });
-             }
-             window.location.reload(true);
+      // Global error handler for resource loading and CSP violations
+      (function() {
+        function forceReload() {
+          console.log('Stability issue detected, clearing cache and reloading...');
+          if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+              for(let registration of registrations) { registration.unregister(); }
+            });
           }
+          // Clear all caches if possible
+          if ('caches' in window) {
+            caches.keys().then(function(names) {
+              for (let name of names) caches.delete(name);
+            });
+          }
+          window.location.reload(true);
         }
-      }, true);
+
+        window.addEventListener('error', function(e) {
+          if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+            const src = e.target.src || e.target.href;
+            console.error('Resource load error:', src);
+            if (e.message && (e.message.includes('MIME type') || e.message.includes('chunk'))) {
+              forceReload();
+            }
+          }
+        }, true);
+
+        window.addEventListener('securitypolicyviolation', function(e) {
+          console.error('CSP Violation:', e.blockedURI);
+          // If a critical domain like aladhan or openstreetmap is blocked, it means CSP is stale
+          if (e.blockedURI && (e.blockedURI.includes('aladhan') || e.blockedURI.includes('openstreetmap'))) {
+            forceReload();
+          }
+        });
+      })();
     </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>

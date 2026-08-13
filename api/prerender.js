@@ -283,7 +283,10 @@ function inject(html, { title, description, canonical, ogImage, body }) {
   cleanHtml = cleanHtml.replace("<head>", `<head>\n    ${newTags.join("\n    ")}`);
 
   // 4. Inject body content
-  return cleanHtml.replace(/<div\s+id=["']root["'][^>]*>[\s\S]*?<\/div>/i, `<div id="root">${body}</div>`);
+  let finalHtml = cleanHtml.replace(/<div\s+id=["']root["'][^>]*>[\s\S]*?<\/div>/i, `<div id="root">${body}</div>`);
+  
+  // 5. Final cleanup to avoid quirks mode (no whitespace before <!doctype)
+  return finalHtml.trim();
 }
 
 export default async function handler(req, res) {
