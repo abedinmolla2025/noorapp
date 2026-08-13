@@ -162,7 +162,7 @@ export const usePrayerTimes = (): UsePrayerTimesReturn => {
           setError("Location access denied");
           setIsLoading(false);
         },
-        { enableHighAccuracy: false, timeout: 10000, maximumAge: 300000 }
+        { enableHighAccuracy: false, timeout: 30000, maximumAge: 300000 }
       );
     };
 

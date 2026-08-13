@@ -205,7 +205,7 @@ function applyDocumentBranding(branding: BrandingSettings, seo: SeoSettings) {
       name: appName,
       short_name: appName,
       description: "Prayer times, Quran, Dua, Qibla finder and more.",
-      start_url: "/",
+      start_url: window.location.origin + "/",
       display: "standalone",
       background_color: "#0a1a14",
       theme_color: "#0d9f6e",
