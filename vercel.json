@@ -9,7 +9,7 @@
     { "source": "/sahih-al-bukhari/:lang", "destination": "/hadith/sahih-bukhari/:lang", "statusCode": 301 }
   ],
   "headers": [
-    { "source": "/sitemap.xml", "headers": [{ "key": "Content-Type", "value": "application/xml; charset=utf-8" }, { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" }] },
+    { "source": "/sitemap(.*).xml", "headers": [{ "key": "Content-Type", "value": "application/xml; charset=utf-8" }, { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" }] },
     { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)", "headers": [{ "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }] },
     { "source": "/((?!api/prerender|api/sitemap).*)", "headers": [
       {"key": "X-Content-Type-Options", "value": "nosniff"},
@@ -26,7 +26,7 @@
   },
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
-    { "source": "/sitemap-dynamic.xml", "destination": "/api/sitemap" },
+    { "source": "/sitemap-(.*).xml", "destination": "/api/sitemap" },
     { "source": "/sitemap-index.xml", "destination": "/api/sitemap" },
     { "source": "/ads.txt", "destination": "/ads.txt" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
