@@ -71,7 +71,7 @@ export default async function handler(req: Request) {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: 'NoorApp Support <onboarding@resend.dev>',
+        from: 'NoorApp Support <support@noorapp.in>',
         to: ['support@noorapp.in'],
         reply_to: isValidReplyEmail ? email : undefined,
         subject: `[Support] ${safeSubject} - from ${safeName}`,
