@@ -20,6 +20,8 @@ const APP_PAGES = [
   { value: "other", label: "General / Other / অন্যান্য" },
 ];
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
 const ISSUE_TYPES = [
   { value: "general_inquiry", label: "General Question / সাধারণ জিজ্ঞাসা" },
   { value: "content_error", label: "Content / Translation Error / তথ্যে ভুল বা সংশোধন" },
@@ -33,6 +35,7 @@ const ISSUE_TYPES = [
 export const ContactForm: React.FC = () => {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [emailError, setEmailError] = useState("");
   const [subject, setSubject] = useState("");
   const [page, setPage] = useState("home");
   const [issueType, setIssueType] = useState("general_inquiry");
@@ -41,8 +44,29 @@ export const ContactForm: React.FC = () => {
   const [submitted, setSubmitted] = useState(false);
   const { toast } = useToast();
 
+  const validateEmail = (value: string) => {
+    const normalized = value.trim();
+    if (!normalized) {
+      setEmailError("");
+      return true;
+    }
+
+    const valid = EMAIL_PATTERN.test(normalized);
+    setEmailError(valid ? "" : "Please enter a valid email address.");
+    return valid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (email.trim() && !validateEmail(email)) {
+      toast({
+        title: "Invalid email address",
+        description: "Please enter a valid email address so we can reply to you.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     // Flexible validation: allow submission if either message or subject or name is provided,
     // but ensure at least some content is submitted.
@@ -86,6 +110,7 @@ export const ContactForm: React.FC = () => {
 
       setName("");
       setEmail("");
+      setEmailError("");
       setSubject("");
       setPage("home");
       setIssueType("general_inquiry");
@@ -163,11 +188,27 @@ export const ContactForm: React.FC = () => {
           <Input
             id="contact-email"
             type="email"
+            inputMode="email"
             placeholder="যেমন: abdullah@example.com"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="rounded-xl bg-background/50"
+            onChange={(e) => {
+              setEmail(e.target.value);
+              if (emailError) validateEmail(e.target.value);
+            }}
+            onBlur={() => validateEmail(email)}
+            aria-invalid={Boolean(emailError)}
+            aria-describedby={emailError ? "contact-email-error" : undefined}
+            className={`rounded-xl bg-background/50 ${emailError ? "border-destructive focus-visible:ring-destructive" : ""}`}
           />
+          {emailError ? (
+            <p id="contact-email-error" className="text-xs font-medium text-destructive" role="alert">
+              {emailError}
+            </p>
+          ) : (
+            <p className="text-[11px] text-muted-foreground">
+              Optional, but required if you want a direct reply.
+            </p>
+          )}
         </div>
       </div>
 

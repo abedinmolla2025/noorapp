@@ -27,6 +27,9 @@ verify_jwt = false
 [functions.admin-security]
 verify_jwt = false
 
+[functions.send-contact-email]
+verify_jwt = false
+
 [functions.scheduler-dispatch]
 verify_jwt = false
 
