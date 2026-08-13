@@ -102,6 +102,20 @@ export const ContactForm: React.FC = () => {
 
       if (error) throw error;
 
+      // Also send email notification via Vercel API (fire and forget, don't block UI)
+      fetch("/api/send-contact-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: name.trim() || "Anonymous Visitor",
+          email: email.trim(),
+          subject: finalSubject,
+          message: message.trim() || "(No detailed message provided by user)",
+          page: selectedPageLabel,
+          issueType: selectedIssueLabel,
+        }),
+      }).catch((err) => console.error("Email notification failed:", err));
+
       setSubmitted(true);
       toast({
         title: "Message Sent Successfully!",
