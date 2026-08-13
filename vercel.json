@@ -1,7 +1,6 @@
 {
   "trailingSlash": false,
   "redirects": [
-    
     { "source": "/privacy", "destination": "/privacy-policy", "statusCode": 301 },
     { "source": "/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
     { "source": "/hadith/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
@@ -31,7 +30,10 @@
     { "source": "/ads.txt", "destination": "/ads.txt" },
     { "source": "/robots.txt", "destination": "/robots.txt" },
     { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/manifest.json", "destination": "/manifest.json" },
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
+    { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/", "destination": "/api/prerender?path=/" },
     { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)", "destination": "/api/prerender?path=/$1" },
     { "source": "/(.*)", "destination": "/app.html" }
