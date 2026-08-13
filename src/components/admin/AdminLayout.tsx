@@ -1,6 +1,7 @@
 import React from 'react';
 import { AdminSidebar } from './AdminSidebar';
 import { ProtectedRoute } from './ProtectedRoute';
+import ErrorBoundary from '../ErrorBoundary';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Menu } from 'lucide-react';
@@ -80,7 +81,9 @@ export const AdminLayout = ({ children }: AdminLayoutProps) => {
             id="admin-content"
             className="container mx-auto px-3 py-4 pb-24 sm:px-4 sm:py-6 md:pb-6 lg:px-6"
           >
-            {children}
+            <ErrorBoundary>
+              {children}
+            </ErrorBoundary>
           </div>
 
           <AdminBottomNavigation />
