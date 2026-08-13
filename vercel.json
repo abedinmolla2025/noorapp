@@ -25,7 +25,7 @@
       ]
     },
     {
-      "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|mp3|wav|ogg|pdf|txt|xml|webmanifest)).*)",
+      "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }
       ]
@@ -50,7 +50,7 @@
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
     { "source": "/", "destination": "/api/prerender?path=/" },
-    { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/|.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|mp3|wav|ogg|pdf|txt|xml|webmanifest)).*)", "destination": "/api/prerender?path=/$1" },
-    { "source": "/((?!.*\\.(?:png|jpg|jpeg|gif|svg|ico|webp|mp3|wav|ogg|pdf|txt|xml|webmanifest)).*)", "destination": "/app.html" }
+    { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.ico|.*\\.webp|.*\\.mp3|.*\\.wav|.*\\.ogg|.*\\.pdf|.*\\.txt|.*\\.xml|.*\\.webmanifest).*)", "destination": "/api/prerender?path=/$1" },
+    { "source": "/((?!.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.ico|.*\\.webp|.*\\.mp3|.*\\.wav|.*\\.ogg|.*\\.pdf|.*\\.txt|.*\\.xml|.*\\.webmanifest).*)", "destination": "/app.html" }
   ]
 }
