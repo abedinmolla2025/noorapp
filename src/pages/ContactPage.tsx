@@ -1,6 +1,7 @@
 import { ArrowLeft, Mail, Facebook, MessageCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
+import { ContactForm } from "@/components/ContactForm";
 
 const ContactPage = () => {
   const navigate = useNavigate();
@@ -11,7 +12,7 @@ const ContactPage = () => {
   const devNameBn = legal.developerNameBn || "আবিদিন মোল্লা";
   const country = legal.country || "India";
   const countryBn = legal.countryBn || "ভারত";
-  const email = legal.contactEmail || "noor.islamic.app@gmail.com";
+  const email = legal.contactEmail || "support@noorapp.in";
   const facebookUrl = legal.facebookUrl || "";
   const whatsappUrl = legal.whatsappUrl || "";
 
@@ -22,6 +23,7 @@ const ContactPage = () => {
           <button
             onClick={() => navigate(-1)}
             className="p-2 rounded-full hover:bg-muted/70 border border-border/60 transition-colors"
+            aria-label="Go back"
           >
             <ArrowLeft size={22} />
           </button>
@@ -47,8 +49,11 @@ const ContactPage = () => {
           </p>
         </section>
 
+        {/* Interactive Contact Form */}
+        <ContactForm />
+
         <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-4">
-          <h2 className="text-lg font-semibold">Contact Methods / যোগাযোগের মাধ্যম</h2>
+          <h2 className="text-lg font-semibold">Other Contact Methods / অন্যান্য যোগাযোগের মাধ্যম</h2>
           <div className="space-y-3">
             <a
               href={`mailto:${encodeURIComponent(email)}`}
@@ -116,26 +121,14 @@ const ContactPage = () => {
           <p className="text-muted-foreground">
             If you notice any inaccuracy in Quran text, hadith references, prayer time
             calculations, or any other Islamic content, please report it immediately via
-            email. We take content accuracy very seriously and will address the issue promptly.
+            email or the form above. We take content accuracy very seriously and will
+            address the issue promptly.
           </p>
           <p className="text-muted-foreground font-bangla">
             কুরআনের টেক্সট, হাদিসের রেফারেন্স, নামাজের সময় গণনা বা অন্য কোনো ইসলামিক
-            কনটেন্টে কোনো ভুল লক্ষ্য করলে অনুগ্রহ করে অবিলম্বে ইমেইলের মাধ্যমে জানান।
-            কনটেন্টের নির্ভুলতা আমরা অত্যন্ত গুরুত্বের সাথে দেখি এবং দ্রুত সমাধান করি।
-          </p>
-        </section>
-
-        <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
-          <h2 className="text-lg font-semibold">Response Time / উত্তরের সময়</h2>
-          <p className="text-muted-foreground">
-            We aim to respond to all inquiries within 24–48 hours. For urgent content
-            corrections, we prioritize faster turnaround. Please include as much detail
-            as possible in your message to help us assist you effectively.
-          </p>
-          <p className="text-muted-foreground font-bangla">
-            আমরা সকল জিজ্ঞাসার উত্তর ২৪–৪৮ ঘণ্টার মধ্যে দেওয়ার চেষ্টা করি। জরুরি কনটেন্ট
-            সংশোধনের ক্ষেত্রে আমরা দ্রুত সমাধানকে অগ্রাধিকার দিই। আপনার বার্তায় যতটা সম্ভব
-            বিস্তারিত তথ্য দিন যাতে আমরা আপনাকে কার্যকরভাবে সাহায্য করতে পারি।
+            কনটেন্টে কোনো ভুল লক্ষ্য করলে অনুগ্রহ করে অবিলম্বে ইমেইলের মাধ্যমে বা ওপরের
+            ফর্মের মাধ্যমে জানান। কনটেন্টের নির্ভুলতা আমরা অত্যন্ত গুরুত্বের সাথে দেখি এবং
+            দ্রুত সমাধান করি।
           </p>
         </section>
       </main>

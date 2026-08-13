@@ -55,6 +55,7 @@ const DataSourcesPage = lazy(() => import("./pages/DataSourcesPage"));
 const AdminLayout = lazy(() => import("./components/admin/AdminLayout").then(m => ({ default: m.AdminLayout })));
 const AdminDashboard = lazy(() => import("./pages/admin/AdminDashboard"));
 const AdminUsers = lazy(() => import("./pages/admin/AdminUsers"));
+const AdminMessages = lazy(() => import("./pages/admin/AdminMessages"));
 const AdminContent = lazy(() => import("./pages/admin/AdminContent"));
 const AdminContentWorkflowPage = lazy(() => import("./pages/admin/AdminContentWorkflow"));
 const AdminAuditPage = lazy(() => import("./pages/admin/AdminAudit"));
@@ -159,6 +160,7 @@ const AppRoutes = () => {
           <Route path="/admin" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
           <Route path="/admin/dashboard" element={<AdminLayout><AdminDashboard /></AdminLayout>} />
           <Route path="/admin/users" element={<AdminLayout><AdminUsers /></AdminLayout>} />
+          <Route path="/admin/messages" element={<AdminLayout><AdminMessages /></AdminLayout>} />
           <Route path="/admin/occasions" element={<AdminLayout><AdminOccasions /></AdminLayout>} />
           <Route path="/admin/content" element={<AdminLayout><AdminContent /></AdminLayout>} />
           <Route path="/admin/content/:id/workflow" element={<AdminLayout><AdminContentWorkflowPage /></AdminLayout>} />

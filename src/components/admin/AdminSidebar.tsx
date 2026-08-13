@@ -14,6 +14,7 @@ import {
   LayoutDashboard,
   LayoutGrid,
   LogOut,
+  Mail,
   Settings,
   Shield,
   Sparkles,
@@ -68,6 +69,7 @@ export const AdminSidebar = ({ showQuickShortcuts = false, onNavigate }: AdminSi
       title: 'Manage',
       items: [
         { to: '/admin/users', icon: Users, label: 'Users' },
+        { to: '/admin/messages', icon: Mail, label: 'Contact Messages' },
         { to: '/admin/content', icon: BookOpen, label: 'Content' },
         { to: '/admin/quiz', icon: BookOpen, label: 'Quiz Questions' },
         { to: '/admin/occasions', icon: CalendarDays, label: 'Occasions' },
