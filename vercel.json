@@ -1,7 +1,7 @@
 {
   "trailingSlash": false,
   "redirects": [
-    { "source": "/(.*)", "has": [{ "type": "host", "value": "www.noorapp.in" }], "destination": "https://noorapp.in/$1", "statusCode": 301 },
+    
     { "source": "/privacy", "destination": "/privacy-policy", "statusCode": 301 },
     { "source": "/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
     { "source": "/hadith/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
