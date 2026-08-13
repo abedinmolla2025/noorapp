@@ -286,7 +286,8 @@ function inject(html, { title, description, canonical, ogImage, body }) {
   let finalHtml = cleanHtml.replace(/<div\s+id=["']root["'][^>]*>[\s\S]*?<\/div>/i, `<div id="root">${body}</div>`);
   
   // 5. Final cleanup to avoid quirks mode (no whitespace before <!doctype)
-  return finalHtml.trim();
+  // We use a regex to remove everything before the first <!doctype or <html
+  return finalHtml.replace(/^[\s\S]*?(?=(<!doctype|<html))/i, "");
 }
 
 export default async function handler(req, res) {

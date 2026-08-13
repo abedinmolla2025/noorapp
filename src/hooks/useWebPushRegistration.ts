@@ -69,6 +69,9 @@ async function syncLocationToPreferences(deviceId: string) {
         timezone,
         enabled: true,
         updated_at: new Date().toISOString(),
+        calculation_method: "isna", // Provide default to avoid 400 if required
+        enabled_prayers: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
+        notification_offset: 0
       } as any,
       { onConflict: "device_id" }
     );
@@ -165,16 +168,17 @@ export function useWebPushRegistration() {
         // if the backend migration is not yet fully deployed. Duplicate tokens
         // are handled by the unique constraint on the database.
 
-        // Save subscription to database
+        // Save subscription to database using upsert to handle existing tokens/devices
         const { error } = await supabase
           .from("device_push_tokens" as any)
-          .insert({
+          .upsert({
             token: JSON.stringify(subscription),
             platform: "web",
             device_id: deviceId,
             enabled: true,
             user_id: user?.id ?? null,
-          });
+            updated_at: new Date().toISOString(),
+          } as any, { onConflict: "token" }); // Token is usually the unique identifier for push service
 
         if (error && !isDuplicateTokenError(error)) {
           console.warn("Failed to save web push subscription", error);
