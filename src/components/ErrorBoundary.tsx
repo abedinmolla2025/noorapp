@@ -18,12 +18,31 @@ class ErrorBoundary extends Component<Props, State> {
   };
 
   public static getDerivedStateFromError(error: Error): State {
-    // Update state so the next render will show the fallback UI.
+    // If it's a chunk load error, auto reload immediately
+    const msg = error.message || "";
+    if (
+      msg.includes("Loading chunk") ||
+      msg.includes("CSS_CHUNK_LOAD_FAILED") ||
+      msg.includes("Importing a module script failed") ||
+      msg.includes("Failed to fetch dynamically imported module")
+    ) {
+      window.location.reload();
+    }
     return { hasError: true, error };
   }
 
   public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error("Uncaught error:", error, errorInfo);
+    const msg = error.message || "";
+    if (
+      msg.includes("Loading chunk") ||
+      msg.includes("CSS_CHUNK_LOAD_FAILED") ||
+      msg.includes("Importing a module script failed") ||
+      msg.includes("Failed to fetch dynamically imported module")
+    ) {
+      window.location.reload();
+      return;
+    }
     
     // Log to Supabase (Best effort)
     try {
