@@ -121,48 +121,53 @@ export const usePrayerTimes = (): UsePrayerTimesReturn => {
     };
 
     const getLocationAndPrayerTimes = async () => {
+      const fetchWithIpFallback = async () => {
+        try {
+          const response = await fetch("https://ipapi.co/json/");
+          const data = await response.json();
+          if (data.latitude && data.longitude) {
+            const city = data.city || "Unknown";
+            const country = data.country_name || "";
+            setLocation({ city, country, latitude: data.latitude, longitude: data.longitude });
+            await fetchPrayerTimes(data.latitude, data.longitude);
+          } else {
+            throw new Error("Invalid IP location data");
+          }
+        } catch (err) {
+          console.error("IP location fallback failed:", err);
+          setError("Location unavailable");
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
       if (!navigator.geolocation) {
-        setError("Geolocation not supported");
-        setIsLoading(false);
+        await fetchWithIpFallback();
         return;
       }
 
       navigator.geolocation.getCurrentPosition(
         async (position) => {
           const { latitude, longitude } = position.coords;
-          
-          // Get city name from reverse geocoding
           try {
             const geoResponse = await fetch(
               `https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`
             );
             const geoData = await geoResponse.json();
-            
-            const city = geoData.address?.city || 
-                        geoData.address?.town || 
-                        geoData.address?.village || 
-                        geoData.address?.county ||
-                        geoData.address?.state_district ||
-                        "Unknown";
-            
+            const city = geoData.address?.city || geoData.address?.town || geoData.address?.village || geoData.address?.county || geoData.address?.state_district || "Unknown";
             const country = geoData.address?.country || "";
-            
             setLocation({ city, country, latitude, longitude });
           } catch (err) {
-            console.error("Error getting location:", err);
             setLocation({ city: "Unknown", country: "", latitude, longitude });
           }
-          
-          // Fetch prayer times
           await fetchPrayerTimes(latitude, longitude);
           setIsLoading(false);
         },
-        (err) => {
-          console.error("Geolocation error:", err);
-          setError("Location access denied");
-          setIsLoading(false);
+        async (err) => {
+          console.warn("Geolocation failed, trying IP fallback...", err);
+          await fetchWithIpFallback();
         },
-        { enableHighAccuracy: false, timeout: 30000, maximumAge: 300000 }
+        { enableHighAccuracy: false, timeout: 10000, maximumAge: 3600000 }
       );
     };
 

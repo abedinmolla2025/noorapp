@@ -82,6 +82,23 @@
 
   <body>
     <div id="root"></div>
+    <script>
+      window.addEventListener('error', function(e) {
+        if (e.target && (e.target.tagName === 'SCRIPT' || e.target.tagName === 'LINK')) {
+          console.error('Resource load error:', e.target.src || e.target.href);
+          // If it's a module load error (likely a chunk error), we can try to reload
+          if (e.message && e.message.includes('MIME type')) {
+             console.log('MIME type error detected, clearing cache and reloading...');
+             if ('serviceWorker' in navigator) {
+               navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                 for(let registration of registrations) { registrations.unregister(); }
+               });
+             }
+             window.location.reload(true);
+          }
+        }
+      }, true);
+    </script>
     <script type="module" src="/src/main.tsx"></script>
     <script>
       if ('serviceWorker' in navigator) {

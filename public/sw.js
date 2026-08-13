@@ -1,13 +1,24 @@
 /* Minimal service worker for Web Push notifications */
 
-// Activate the newest worker immediately so stale PWA registrations do not
-// keep an old application shell alive after a deployment.
+const CACHE_NAME = 'noor-cache-v' + Date.now();
+
 self.addEventListener('install', (event) => {
-  event.waitUntil(self.skipWaiting());
+  // Force the waiting service worker to become the active service worker.
+  self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  // Clear all old caches
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cacheName) => {
+          console.log('[sw] Deleting old cache:', cacheName);
+          return caches.delete(cacheName);
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
 self.addEventListener('push', (event) => {
@@ -56,6 +67,8 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Push handlers intentionally do not cache HTML, JS, or CSS. The browser must
-// always fetch the current Vite manifest and hashed assets from Vercel.
-self.addEventListener('fetch', () => {});
+// No-op fetch handler to satisfy PWA requirements without caching assets.
+// This ensures the browser always goes to the network for the latest version.
+self.addEventListener('fetch', (event) => {
+  // Intentionally empty to skip caching
+});

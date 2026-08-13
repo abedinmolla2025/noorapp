@@ -17,5 +17,15 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     storage: localStorage,
     persistSession: true,
     autoRefreshToken: true,
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
+    // Exponential backoff for WebSocket reconnection
+    reconnectAfterMs: (retries) => {
+      console.log(`[realtime] Reconnecting attempt ${retries}...`);
+      return Math.min(Math.pow(2, retries) * 1000, 30000);
+    },
   }
 });
