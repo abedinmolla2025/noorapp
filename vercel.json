@@ -49,8 +49,19 @@
     { "source": "/sitemap-index.xml", "destination": "/api/sitemap" },
     { "source": "/assets/(.*)", "destination": "/assets/$1" },
     { "source": "/api/(.*)", "destination": "/api/$1" },
+    { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/robots.txt", "destination": "/robots.txt" },
+    { "source": "/ads.txt", "destination": "/ads.txt" },
+    { "source": "/manifest.json", "destination": "/manifest.json" },
+    { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/(.*\\.png)", "destination": "/$1" },
+    { "source": "/(.*\\.jpg)", "destination": "/$1" },
+    { "source": "/(.*\\.jpeg)", "destination": "/$1" },
+    { "source": "/(.*\\.svg)", "destination": "/$1" },
+    { "source": "/(.*\\.webp)", "destination": "/$1" },
+    { "source": "/(.*\\.mp3)", "destination": "/$1" },
     { "source": "/", "destination": "/api/prerender?path=/" },
-    { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/|.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.ico|.*\\.webp|.*\\.mp3|.*\\.wav|.*\\.ogg|.*\\.pdf|.*\\.txt|.*\\.xml|.*\\.webmanifest).*)", "destination": "/api/prerender?path=/$1" },
-    { "source": "/((?!.*\\.png|.*\\.jpg|.*\\.jpeg|.*\\.gif|.*\\.svg|.*\\.ico|.*\\.webp|.*\\.mp3|.*\\.wav|.*\\.ogg|.*\\.pdf|.*\\.txt|.*\\.xml|.*\\.webmanifest).*)", "destination": "/app.html" }
+    { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)", "destination": "/api/prerender?path=/$1" },
+    { "source": "/(.*)", "destination": "/app.html" }
   ]
 }
