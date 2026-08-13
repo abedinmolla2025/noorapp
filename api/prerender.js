@@ -308,41 +308,36 @@ export default async function handler(req, res) {
     // like a broken home page on slower WebViews and TWA launches.
     if (routePath === "/") {
       bodyContent = `
-        <div class="min-h-screen bg-background text-foreground pb-20 w-full overflow-x-hidden" data-noor-ssr-home>
-          <header class="border-b border-border bg-background/95">
-            <div class="max-w-3xl mx-auto px-4 py-7">
-              <p class="text-xs font-semibold uppercase tracking-[0.22em] text-primary">NOOR • ইসলামিক কম্প্যানিয়ন</p>
-              <h1 class="mt-2 text-2xl md:text-3xl font-bold tracking-tight">কুরআন, হাদীস, দোয়া ও নামাজের সময়</h1>
-              <p class="mt-2 max-w-xl text-sm leading-6 text-muted-foreground">বিশ্বস্ত ইসলামিক কনটেন্ট, দৈনিক আমল এবং প্রয়োজনীয় ইবাদতের সহায়তা—একটি সহজ ও সুন্দর অ্যাপে।</p>
+        <div class="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center" data-noor-ssr-home>
+          <div class="w-20 h-20 mb-8 animate-pulse bg-primary/20 rounded-3xl flex items-center justify-center">
+             <img src="/pwa-icon-192.png" alt="Noor" class="w-12 h-12 opacity-50" />
+          </div>
+          <h1 class="text-2xl font-bold mb-2">নূর ইসলামিক অ্যাপ</h1>
+          <p class="text-muted-foreground mb-8">অ্যাপটি লোড হচ্ছে, দয়া করে অপেক্ষা করুন...</p>
+          
+          <div class="grid grid-cols-2 gap-4 w-full max-w-md">
+            <div class="bg-card border border-border rounded-2xl p-4 opacity-50">
+              <p class="text-xs font-bold text-primary">কুরআন</p>
             </div>
-          </header>
+            <div class="bg-card border border-border rounded-2xl p-4 opacity-50">
+              <p class="text-xs font-bold text-primary">হাদীস</p>
+            </div>
+          </div>
 
-          <main class="max-w-3xl mx-auto px-4 py-5 space-y-5">
-            <nav aria-label="প্রধান বিভাগ" class="grid grid-cols-2 gap-3">
-              <a href="/quran" class="rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40">
-                <span class="text-xs font-semibold text-primary">কুরআন</span>
-                <span class="mt-1 block text-sm font-medium">পবিত্র কুরআন পাঠ করুন</span>
-              </a>
-              <a href="/hadith" class="rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40">
-                <span class="text-xs font-semibold text-primary">হাদীস</span>
-                <span class="mt-1 block text-sm font-medium">সহিহ হাদীস পড়ুন</span>
-              </a>
-              <a href="/dua" class="rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40">
-                <span class="text-xs font-semibold text-primary">দোয়া</span>
-                <span class="mt-1 block text-sm font-medium">দৈনন্দিন দোয়া ও জিকির</span>
-              </a>
-              <a href="/prayer-times" class="rounded-2xl border border-border bg-card p-4 shadow-sm transition-colors hover:border-primary/40">
-                <span class="text-xs font-semibold text-primary">নামাজ</span>
-                <span class="mt-1 block text-sm font-medium">আজকের নামাজের সময়</span>
-              </a>
-            </nav>
-
-            <section class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
-              <p class="text-xs font-semibold uppercase tracking-[0.18em] text-primary">আজকের স্মরণ</p>
-              <p class="mt-2 text-lg font-semibold">আল্লাহর স্মরণেই অন্তর প্রশান্ত হয়।</p>
-              <p class="mt-1 text-sm text-muted-foreground">নূরের সঙ্গে আপনার প্রতিদিনের ইবাদত আরও সহজ ও নিয়মিত করুন।</p>
-            </section>
-          </main>
+          <script>
+            // Safety timeout: if React doesn't mount in 5 seconds, something is wrong with the cache
+            setTimeout(function() {
+              if (document.querySelector('[data-noor-ssr-home]')) {
+                console.warn('React failed to mount, attempting recovery...');
+                if ('serviceWorker' in navigator) {
+                  navigator.serviceWorker.getRegistrations().then(function(regs) {
+                    for(let r of regs) r.unregister();
+                  });
+                }
+                window.location.reload(true);
+              }
+            }, 5000);
+          </script>
         </div>
       `;
     }

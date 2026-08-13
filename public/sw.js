@@ -17,7 +17,10 @@ self.addEventListener('activate', (event) => {
           return caches.delete(cacheName);
         })
       );
-    }).then(() => self.clients.claim())
+    }).then(() => {
+      // Take control of all clients immediately
+      return self.clients.claim();
+    })
   );
 });
 
@@ -67,6 +70,5 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Fetch event handler removed to satisfy browser "no-op fetch handler" warnings.
-// This allows the browser to handle navigation and asset fetching natively,
-// ensuring users always get the latest version from the network.
+// No-op fetch handler removed to ensure the browser always hits the network for the latest version.
+// This is critical for avoiding the "MIME type error" caused by stale HTML shells.

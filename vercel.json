@@ -19,6 +19,12 @@
       ]
     },
     {
+      "source": "/",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }
+      ]
+    },
+    {
       "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }
