@@ -61,20 +61,35 @@ async function syncLocationToPreferences(deviceId: string) {
     const { latitude, longitude } = position.coords;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-    await supabase.from("user_notification_preferences" as any).upsert(
-      {
-        device_id: deviceId,
-        latitude,
-        longitude,
-        timezone,
-        enabled: true,
-        updated_at: new Date().toISOString(),
-        calculation_method: "isna", // Provide default to avoid 400 if required
-        enabled_prayers: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
-        notification_offset: 0
-      } as any,
-      { onConflict: "device_id" }
-    );
+    // First try to find existing record by device_id
+    const { data: existing } = await supabase
+      .from("user_notification_preferences" as any)
+      .select("id")
+      .eq("device_id", deviceId)
+      .maybeSingle();
+
+    const payload = {
+      device_id: deviceId,
+      latitude,
+      longitude,
+      timezone,
+      enabled: true,
+      updated_at: new Date().toISOString(),
+      calculation_method: "isna",
+      enabled_prayers: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
+      notification_offset: 0
+    };
+
+    if (existing?.id) {
+      await supabase
+        .from("user_notification_preferences" as any)
+        .update(payload)
+        .eq("id", existing.id);
+    } else {
+      await supabase
+        .from("user_notification_preferences" as any)
+        .insert(payload);
+    }
 
     console.log("[webpush] Location synced for prayer notifications");
   } catch (e) {
