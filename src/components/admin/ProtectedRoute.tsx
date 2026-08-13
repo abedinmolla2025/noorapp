@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Loader2 } from "lucide-react";
 import { isAdminIdleExpired, setLastAdminActivityNow } from "@/lib/adminSecurity";
