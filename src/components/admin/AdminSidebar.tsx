@@ -1,3 +1,4 @@
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { NavLink } from '@/components/NavLink';
 import { useAdmin } from '@/contexts/AdminContext';
 import {
@@ -25,7 +26,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
-import { useEffect, useMemo, useRef, useState } from 'react';
+
 
 type AdminSidebarProps = {
   /** Only used inside the mobile sheet: shows a compact shortcut row */
