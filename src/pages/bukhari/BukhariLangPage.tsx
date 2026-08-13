@@ -264,29 +264,41 @@ async function loadChapterFromDb(dbField: string, chapterId: number): Promise<Ha
   }));
 }
 
-async function loadFromDb(dbField: string, search: string = "", chapterId: number | null = null, limit: number = 100): Promise<Hadith[]> {
-  let query = (supabase as any)
-    .from("hadiths")
-    .select("id, chapter_id, hadith_number, arabic, slug, " + dbField)
-    .eq("book_key", "bukhari")
-    .not(dbField, "is", null)
-    .order("chapter_id", { ascending: true })
-    .order("hadith_number", { ascending: true })
-    .limit(limit);
+async function loadFromDb(dbField: string, search: string = "", chapterId: number | null = null): Promise<Hadith[]> {
+  let allRows: any[] = [];
+  let from = 0;
+  const step = 1000;
+  let hasMore = true;
 
-  if (chapterId) {
-    query = query.eq("chapter_id", chapterId);
+  while (hasMore) {
+    let query = (supabase as any)
+      .from("hadiths")
+      .select("id, chapter_id, hadith_number, arabic, slug, " + dbField)
+      .eq("book_key", "bukhari")
+      .not(dbField, "is", null)
+      .order("chapter_id", { ascending: true })
+      .order("hadith_number", { ascending: true })
+      .range(from, from + step - 1);
+
+    if (chapterId) query = query.eq("chapter_id", chapterId);
+    if (search) query = query.ilike(dbField, `%${search}%`);
+
+    const { data, error } = await query;
+    if (error) throw error;
+    
+    if (data && data.length > 0) {
+      allRows = [...allRows, ...data];
+      from += step;
+      // If we got fewer than 'step' rows, we've reached the end
+      if (data.length < step) hasMore = false;
+      // Safety cap for browser performance
+      if (allRows.length >= 8000) hasMore = false;
+    } else {
+      hasMore = false;
+    }
   }
 
-  if (search) {
-    query = query.ilike(dbField, `%${search}%`);
-  }
-
-  const { data, error } = await query;
-  if (error) throw error;
-  if (!data) return [];
-
-  return data.map((row: any) => ({
+  return allRows.map((row: any) => ({
     id: row.id,
     chapterId: row.chapter_id,
     number: row.hadith_number,
@@ -438,7 +450,7 @@ export default function BukhariLangPage() {
               setLoading(false);
             });
         } else {
-          loadFromDb(dbField, searchQuery, selectedChapter, 100)
+          loadFromDb(dbField, searchQuery, selectedChapter)
             .then(processHadiths)
             .catch((err) => {
               if (cancelled) return;

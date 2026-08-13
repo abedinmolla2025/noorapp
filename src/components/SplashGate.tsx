@@ -51,9 +51,8 @@ function isChandRaatPeriod(): boolean {
 export function SplashGate(props: { children: React.ReactNode }) {
   const { children } = props;
 
-  // Skip splash for bots/crawlers and /download page for immediate content access
-  const isBot = /bot|crawler|spider|crawling|Googlebot|bingbot|Baiduspider|yandex|facebookexternalhit|Twitterbot|rogerbot|linkedinbot|embedly|showyoubot|outbrain|pinterest|slackbot|vkShare|W3C_Validator|whatsapp|Applebot|AhrefsBot|SemrushBot|DotBot|MJ12bot|PetalBot/i.test(navigator.userAgent);
-  const skipSplash = isBot || window.location.pathname === "/download";
+  // Skip splash for /download page for immediate content access
+  const skipSplash = window.location.pathname === "/download";
 
   const [done, setDone] = useState(skipSplash);
 

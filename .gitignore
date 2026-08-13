@@ -38,3 +38,4 @@ run_migrations2.py
 .lovable/
 .vercel
 .env*
+src/data/audio/
