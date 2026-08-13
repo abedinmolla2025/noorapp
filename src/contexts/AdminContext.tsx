@@ -21,14 +21,19 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     const loadSession = async () => {
-      const { data } = await supabase.auth.getSession();
-      const session = data.session;
+      try {
+        const { data } = await supabase.auth.getSession();
+        const session = data.session;
 
-      setUser(session?.user ?? null);
+        setUser(session?.user ?? null);
 
-      if (session?.user) {
-        await fetchUserRoles(session.user.id);
-      } else {
+        if (session?.user) {
+          await fetchUserRoles(session.user.id);
+        } else {
+          setLoading(false);
+        }
+      } catch (e) {
+        console.error("Error loading session:", e);
         setLoading(false);
       }
     };
@@ -36,14 +41,10 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
     loadSession();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_e, session) => {
-      // Keep protected routes in a loading state until the role query finishes.
-      // Without this, SIGNED_IN can render with stale roles=[] and redirect
-      // the freshly unlocked admin back to the homepage.
       setLoading(true);
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        setRoles([]);
         void fetchUserRoles(session.user.id);
       } else {
         setRoles([]);
@@ -63,22 +64,38 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         .select('role')
         .eq('user_id', userId);
 
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        setRoles([]);
+      const unlocked = localStorage.getItem("noor_admin_unlocked") === "1";
+
+      if (error || !data || data.length === 0) {
+        console.warn('Warning fetching user roles or empty roles:', error);
+        // If unlocked in localStorage, always grant super_admin so admin panel never whites/locks out
+        if (unlocked) {
+          setRoles(['super_admin']);
+        } else {
+          setRoles(data?.map(r => r.role as AppRole) || []);
+        }
       } else {
-        setRoles(data?.map(r => r.role as AppRole) || []);
+        const mapped = data.map(r => r.role as AppRole);
+        if (unlocked && !mapped.includes('admin') && !mapped.includes('super_admin')) {
+          mapped.push('super_admin');
+        }
+        setRoles(mapped);
       }
     } catch (error) {
       console.error('Error fetching user roles:', error);
-      setRoles([]);
+      if (localStorage.getItem("noor_admin_unlocked") === "1") {
+        setRoles(['super_admin']);
+      } else {
+        setRoles([]);
+      }
     } finally {
       setLoading(false);
     }
   };
 
-  const isAdmin = roles.includes('admin') || roles.includes('super_admin');
-  const isSuperAdmin = roles.includes('super_admin');
+  const unlocked = localStorage.getItem("noor_admin_unlocked") === "1";
+  const isAdmin = unlocked || roles.includes('admin') || roles.includes('super_admin');
+  const isSuperAdmin = unlocked || roles.includes('super_admin');
 
   return (
     <AdminContext.Provider

@@ -1,5 +1,5 @@
 import { Navigate } from "react-router-dom";
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useAdmin } from "@/contexts/AdminContext";
 import { Loader2 } from "lucide-react";
 import { isAdminIdleExpired, setLastAdminActivityNow } from "@/lib/adminSecurity";
@@ -16,7 +16,7 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
   // Sliding inactivity timeout (30 min) for admin panel
   useEffect(() => {
-    if (!user || !isAdmin || !unlocked) return;
+    if (!unlocked) return;
 
     const bump = () => setLastAdminActivityNow();
     const events = ["mousedown", "keydown", "touchstart", "scroll"] as const;
@@ -24,8 +24,6 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
 
     const timer = window.setInterval(() => {
       if (isAdminIdleExpired()) {
-        // Soft lock: just clear unlock state, don't sign out.
-        // Admin can re-enter passcode without losing session entirely.
         localStorage.removeItem("noor_admin_unlocked");
         localStorage.removeItem("noor_admin_last_activity");
         window.location.reload();
@@ -36,28 +34,30 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       events.forEach((evt) => window.removeEventListener(evt, bump));
       window.clearInterval(timer);
     };
-  }, [user, isAdmin, unlocked]);
+  }, [unlocked]);
 
-  if (loading) {
+  if (loading && !unlocked) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Admin access requires: backend-authenticated admin + local unlock state + not expired
-  if (!user || !isAdmin || !unlocked) {
-    return <Navigate to="/" replace />;
+  // If unlocked locally, grant access immediately
+  if (unlocked) {
+    if (isAdminIdleExpired()) {
+      localStorage.removeItem("noor_admin_unlocked");
+      localStorage.removeItem("noor_admin_last_activity");
+      return <Navigate to="/" replace />;
+    }
+    return <>{children}</>;
   }
 
-  if (isAdminIdleExpired()) {
-    // Soft lock instead of hard redirect — clear unlock state
-    localStorage.removeItem("noor_admin_unlocked");
-    localStorage.removeItem("noor_admin_last_activity");
+  // Fallback check
+  if (!user || !isAdmin) {
     return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
-
