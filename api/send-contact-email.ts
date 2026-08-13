@@ -1,10 +1,6 @@
-import { Resend } from 'resend';
-
 export const config = {
   runtime: 'edge',
 };
-
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const escapeHtml = (value: unknown) => String(value ?? "")
   .replace(/&/g, "&amp;")
@@ -38,6 +34,11 @@ export default async function handler(req: Request) {
       return new Response(JSON.stringify({ error: 'Message is required' }), { status: 400, headers });
     }
 
+    const resendApiKey = process.env.RESEND_API_KEY;
+    if (!resendApiKey) {
+      return new Response(JSON.stringify({ error: 'Server configuration error' }), { status: 500, headers });
+    }
+
     const safeName = escapeHtml(name || 'Anonymous');
     const safeEmail = escapeHtml(email || 'Not provided');
     const safeSubject = escapeHtml(subject || 'General Inquiry');
@@ -63,20 +64,29 @@ export default async function handler(req: Request) {
 
     const isValidReplyEmail = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email || "");
 
-    const { data, error } = await resend.emails.send({
-      from: 'NoorApp Support <onboarding@resend.dev>',
-      to: ['support@noorapp.in'],
-      reply_to: isValidReplyEmail ? email : undefined,
-      subject: `[Support] ${safeSubject} - from ${safeName}`,
-      html: html,
+    const resendResponse = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        from: 'NoorApp Support <onboarding@resend.dev>',
+        to: ['support@noorapp.in'],
+        reply_to: isValidReplyEmail ? email : undefined,
+        subject: `[Support] ${safeSubject} - from ${safeName}`,
+        html: html,
+      }),
     });
 
-    if (error) {
-      console.error('Resend Error:', error);
-      return new Response(JSON.stringify({ error: error.message }), { status: 500, headers });
+    const resendData = await resendResponse.json();
+
+    if (!resendResponse.ok) {
+      console.error('Resend Error:', resendData);
+      return new Response(JSON.stringify({ error: resendData.message || 'Failed to send email' }), { status: 500, headers });
     }
 
-    return new Response(JSON.stringify({ success: true, id: data?.id }), { status: 200, headers });
+    return new Response(JSON.stringify({ success: true, id: resendData.id }), { status: 200, headers });
   } catch (err: any) {
     console.error('API Error:', err);
     return new Response(JSON.stringify({ error: err.message }), { status: 500, headers });
