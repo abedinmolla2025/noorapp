@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +34,6 @@ const AdminDashboard = () => {
     const loadStats = async () => {
       setLoading(true);
 
-      // Parallel queries for stats
       const [usersRes, contentRes, notificationsRes, activityRes] = await Promise.all([
         supabase.from("profiles").select("id", { count: "exact", head: true }),
         supabase.from("admin_content").select("id", { count: "exact", head: true }),
@@ -49,7 +48,7 @@ const AdminDashboard = () => {
         totalUsers: usersRes.count ?? 0,
         totalContent: contentRes.count ?? 0,
         totalNotifications: notificationsRes.count ?? 0,
-        totalQuizQuestions: 0, // Quiz questions might be in a different table or JSON
+        totalQuizQuestions: 0,
         recentActivity: activityRes.count ?? 0,
       });
       setLoading(false);
@@ -58,173 +57,81 @@ const AdminDashboard = () => {
     loadStats();
   }, []);
 
-  const statCards = [
-    {
-      title: "Total Users",
-      value: stats?.totalUsers ?? 0,
-      description: "Registered users",
-      icon: Users,
-      link: "/admin/users",
-      color: "text-primary",
-    },
-    {
-      title: "Content Items",
-      value: stats?.totalContent ?? 0,
-      description: "Published content",
-      icon: BookOpen,
-      link: "/admin/content",
-      color: "text-primary",
-    },
-    {
-      title: "Notifications",
-      value: stats?.totalNotifications ?? 0,
-      description: "Sent notifications",
-      icon: Bell,
-      link: "/admin/notifications/history",
-      color: "text-primary",
-    },
-    {
-      title: "Recent Activity",
-      value: stats?.recentActivity ?? 0,
-      description: "Last 24 hours",
-      icon: BarChart3,
-      link: "/admin/audit",
-      color: "text-primary",
-    },
-  ];
-
-  const quickLinks = [
-    { title: "Send Notification", icon: Bell, link: "/admin/notifications", color: "bg-primary/10" },
-    { title: "Manage Content", icon: BookOpen, link: "/admin/content", color: "bg-primary/10" },
-    { title: "Quiz Questions", icon: HelpCircle, link: "/admin/quiz", color: "bg-primary/10" },
-    { title: "Security Settings", icon: Shield, link: "/admin/security", color: "bg-primary/10" },
-  ];
-
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Welcome to {branding.appName || "NOOR"} Admin Panel
-          </p>
-        </div>
-        <div className="flex items-center gap-2 rounded-lg bg-primary/10 px-3 py-1.5">
-          <TrendingUp className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium">Live</span>
-        </div>
+      <div className="flex flex-col gap-2">
+        <h1 className="text-3xl font-bold tracking-tight">ড্যাশবোর্ড</h1>
+        <p className="text-muted-foreground">
+          NoorApp এডমিন প্যানেলে স্বাগতম। এখান থেকে আপনি পুরো সিস্টেম পরিচালনা করতে পারবেন।
+        </p>
       </div>
 
-      {/* Stats Grid */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        {statCards.map((stat) => (
-          <Link key={stat.title} to={stat.link}>
-            <Card className="transition-colors hover:bg-muted/50">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">{stat.title}</CardTitle>
-                <stat.icon className={`h-4 w-4 ${stat.color}`} />
-              </CardHeader>
-              <CardContent>
-                {loading ? (
-                  <Skeleton className="h-8 w-16" />
-                ) : (
-                  <div className="text-2xl font-bold">{stat.value.toLocaleString("en-US")}</div>
-                )}
-                <p className="text-xs text-muted-foreground">{stat.description}</p>
-              </CardContent>
-            </Card>
-          </Link>
-        ))}
-      </div>
-
-      {/* Quick Actions */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" /> Quick Actions
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {quickLinks.map((item) => (
-              <Link
-                key={item.title}
-                to={item.link}
-                className="flex items-center gap-3 rounded-lg border p-4 transition-colors hover:bg-muted"
-              >
-                <div className={`rounded-lg p-2 ${item.color}`}>
-                  <item.icon className="h-5 w-5 text-primary" />
-                </div>
-                <span className="font-medium">{item.title}</span>
-              </Link>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* App Info */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
-          <CardHeader>
-            <CardTitle>App Information</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">মোট ব্যবহারকারী</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-3">
-            {configLoading ? (
-              <>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-3/4" />
-              </>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-7 w-20" />
             ) : (
-              <>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">App Name</span>
-                  <span className="font-medium">{branding.appName || "NOOR"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Tagline</span>
-                  <span className="font-medium">{branding.tagline || "Islamic Companion"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Status</span>
-                  <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                    Active
-                  </span>
-                </div>
-              </>
+              <div className="text-2xl font-bold">{stats?.totalUsers}</div>
             )}
           </CardContent>
         </Card>
 
         <Card>
-          <CardHeader>
-            <CardTitle>System Status</CardTitle>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">মোট কন্টেন্ট</CardTitle>
+            <BookOpen className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Database</span>
-              <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                Connected
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Edge Functions</span>
-              <span className="rounded bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-                Running
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-muted-foreground">Last Sync</span>
-              <span className="font-medium">{new Date().toLocaleTimeString("en-US")}</span>
-            </div>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-7 w-20" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.totalContent}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">নোটিফিকেশন</CardTitle>
+            <Bell className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-7 w-20" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.totalNotifications}</div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium">সক্রিয় ব্যবহারকারী (২৪ ঘণ্টা)</CardTitle>
+            <TrendingUp className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            {loading ? (
+              <Skeleton className="h-7 w-20" />
+            ) : (
+              <div className="text-2xl font-bold">{stats?.recentActivity}</div>
+            )}
           </CardContent>
         </Card>
       </div>
 
-      {/* PWA Manifest Health */}
-      <PwaManifestHealthWidget />
-
-      {/* Real-time Analytics */}
-      <RealtimeAnalyticsWidget />
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="col-span-4 space-y-4">
+          <RealtimeAnalyticsWidget />
+        </div>
+        <div className="col-span-3 space-y-4">
+          <PwaManifestHealthWidget />
+        </div>
+      </div>
     </div>
   );
 };
