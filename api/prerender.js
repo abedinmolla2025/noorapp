@@ -3,8 +3,8 @@ import fs from "fs";
 import path from "path";
 
 const SITE_ORIGIN = "https://noorapp.in";
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -162,9 +162,19 @@ async function loadHadithRowsSsr(lang, chapterId) {
 
   if (meta.file) {
     try {
-      const response = await fetch(`${SITE_ORIGIN}${meta.file}`, { signal: AbortSignal.timeout(7000) });
-      if (response.ok) {
-        const json = await response.json();
+      const candidates = [
+        path.join(process.cwd(), "dist", meta.file),
+        path.join("/var/task", "dist", meta.file),
+      ];
+      let json = null;
+      for (const file of candidates) {
+        if (fs.existsSync(file)) {
+          json = JSON.parse(fs.readFileSync(file, "utf8"));
+          break;
+        }
+      }
+      
+      if (json) {
         rows = flattenHadithBooks(json)
           .filter((row) => row.arabic && row[meta.field] && (!chapterId || Number(row.chapter_id) === chapterId))
           .slice(0, 20)
@@ -176,27 +186,35 @@ async function loadHadithRowsSsr(lang, chapterId) {
             translation: row[meta.field],
           }));
       }
-    } catch (e) {}
+    } catch (e) {
+      console.error("[SSR] Hadith file read failed", e);
+    }
   }
 
   if (rows.length === 0) {
-    let query = supabase
-      .from("hadiths")
-      .select(`id, chapter_id, hadith_number, arabic, ${meta.field}`)
-      .eq("book_key", "bukhari")
-      .not(meta.field, "is", null)
-      .order("chapter_id", { ascending: true })
-      .order("hadith_number", { ascending: true })
-      .range(0, 19);
-    if (chapterId) query = query.eq("chapter_id", chapterId);
-    const { data } = await query;
-    rows = (data || []).map((row) => ({
-      id: row.id,
-      chapterId: Number(row.chapter_id),
-      number: Number(row.hadith_number),
-      arabic: row.arabic,
-      translation: row[meta.field],
-    }));
+    try {
+      let query = supabase
+        .from("hadiths")
+        .select(`id, chapter_id, hadith_number, arabic, ${meta.field}`)
+        .eq("book_key", "bukhari")
+        .not(meta.field, "is", null)
+        .order("chapter_id", { ascending: true })
+        .order("hadith_number", { ascending: true })
+        .range(0, 19);
+      if (chapterId) query = query.eq("chapter_id", chapterId);
+      const { data, error } = await query;
+      if (!error && data) {
+        rows = data.map((row) => ({
+          id: row.id,
+          chapterId: Number(row.chapter_id),
+          number: Number(row.hadith_number),
+          arabic: row.arabic,
+          translation: row[meta.field],
+        }));
+      }
+    } catch (e) {
+      console.error("[SSR] Hadith DB query failed", e);
+    }
   }
 
   return rows;
@@ -331,14 +349,28 @@ export default async function handler(req, res) {
       title = "Quran Reader — পবিত্র কুরআন | NOOR";
       description = "Read all 114 Surahs of the Holy Quran with Arabic text and Bengali translation.";
       
+      let surahHtml = "";
       let surahs = FALLBACK_SURAHS;
+      
       try {
         const response = await fetch("https://api.alquran.cloud/v1/surah", { signal: AbortSignal.timeout(5000) });
         const json = await response.json();
         if (json.code === 200) surahs = json.data;
-      } catch (e) {}
+      } catch (e) {
+        console.error("[SSR] Quran API failed, using fallback/DB");
+        try {
+          const { data } = await supabase.from("quran_surahs").select("number, english_name, name, number_of_ayahs, english_name_translation").order("number");
+          if (data && data.length > 0) surahs = data.map(s => ({
+            number: s.number,
+            englishName: s.english_name,
+            name: s.name,
+            numberOfAyahs: s.number_of_ayahs,
+            englishNameTranslation: s.english_name_translation
+          }));
+        } catch (dbErr) {}
+      }
 
-      const surahList = surahs.map(s => `
+      surahHtml = surahs.map(s => `
         <a href="/quran/${s.number}" class="flex items-center justify-between p-4 bg-card border border-border rounded-2xl mb-3 hover:shadow-md transition-all group">
           <div class="flex items-center gap-4">
             <span class="w-8 h-8 rounded-lg bg-primary/10 text-primary flex items-center justify-center font-bold text-xs">${s.number}</span>
@@ -359,7 +391,7 @@ export default async function handler(req, res) {
           </header>
           <div class="p-4 max-w-2xl mx-auto -mt-6">
             <div class="bg-card rounded-2xl shadow-xl p-2">
-              ${surahList}
+              ${surahHtml}
             </div>
           </div>
         </div>
