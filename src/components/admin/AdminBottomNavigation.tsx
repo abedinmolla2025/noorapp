@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { LayoutDashboard, Users, BookOpen, Bell, Settings, LayoutGrid } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, Bell, Settings, LayoutGrid, CalendarDays } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
