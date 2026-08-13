@@ -186,15 +186,17 @@ function applyDocumentBranding(branding: BrandingSettings, seo: SeoSettings) {
   }
 
   // Dynamic PWA manifest with cache-busted icons
-    const manifestIcons = [
-    { src: cacheBust("/pwa-icon-192.png", lv), sizes: "192x192", type: "image/png", purpose: "any" },
-    { src: cacheBust("/pwa-icon-192.png", lv), sizes: "192x192", type: "image/png", purpose: "maskable" },
-    { src: cacheBust("/pwa-icon-512.png", lv), sizes: "512x512", type: "image/png", purpose: "any" },
-    { src: cacheBust("/pwa-icon-512.png", lv), sizes: "512x512", type: "image/png", purpose: "maskable" },
-    { src: cacheBust("/pwa-icon-1024.png", lv), sizes: "1024x1024", type: "image/png", purpose: "any" },
-    { src: cacheBust("/pwa-icon-1024.png", lv), sizes: "1024x1024", type: "image/png", purpose: "maskable" },
-    ...(v?.png180 ? [{ src: cacheBust(v.png180, lv), sizes: "180x180", type: "image/png", purpose: "any" }] : []),
-    ...(v?.png48 ? [{ src: cacheBust(v.png48, lv), sizes: "48x48", type: "image/png", purpose: "any" }] : []),
+  // Use absolute URLs for icon src to avoid issues with Blob-based manifests
+  const origin = window.location.origin;
+  const manifestIcons = [
+    { src: origin + cacheBust("/pwa-icon-192.png", lv), sizes: "192x192", type: "image/png", purpose: "any" },
+    { src: origin + cacheBust("/pwa-icon-192.png", lv), sizes: "192x192", type: "image/png", purpose: "maskable" },
+    { src: origin + cacheBust("/pwa-icon-512.png", lv), sizes: "512x512", type: "image/png", purpose: "any" },
+    { src: origin + cacheBust("/pwa-icon-512.png", lv), sizes: "512x512", type: "image/png", purpose: "maskable" },
+    { src: origin + cacheBust("/pwa-icon-1024.png", lv), sizes: "1024x1024", type: "image/png", purpose: "any" },
+    { src: origin + cacheBust("/pwa-icon-1024.png", lv), sizes: "1024x1024", type: "image/png", purpose: "maskable" },
+    ...(v?.png180 ? [{ src: origin + cacheBust(v.png180, lv), sizes: "180x180", type: "image/png", purpose: "any" }] : []),
+    ...(v?.png48 ? [{ src: origin + cacheBust(v.png48, lv), sizes: "48x48", type: "image/png", purpose: "any" }] : []),
   ].filter(icon => icon.src && icon.src.trim() !== "");
 
   if (manifestIcons.length) {
@@ -203,7 +205,7 @@ function applyDocumentBranding(branding: BrandingSettings, seo: SeoSettings) {
       name: appName,
       short_name: appName,
       description: "Prayer times, Quran, Dua, Qibla finder and more.",
-      start_url: window.location.origin + "/",
+      start_url: origin + "/",
       display: "standalone",
       background_color: "#0a1a14",
       theme_color: "#0d9f6e",

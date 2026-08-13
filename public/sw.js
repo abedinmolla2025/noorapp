@@ -67,8 +67,6 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// No-op fetch handler to satisfy PWA requirements without caching assets.
-// This ensures the browser always goes to the network for the latest version.
-self.addEventListener('fetch', (event) => {
-  // Intentionally empty to skip caching
-});
+// Fetch event handler removed to satisfy browser "no-op fetch handler" warnings.
+// This allows the browser to handle navigation and asset fetching natively,
+// ensuring users always get the latest version from the network.
