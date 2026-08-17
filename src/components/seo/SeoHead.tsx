@@ -319,14 +319,14 @@ export function SeoHead() {
   // Use a database override only when it stays on the selected canonical host.
   // This prevents stale www, preview, or homepage values from splitting canonical signals.
   const rawDbCanonical = pageSeo?.canonical_url?.trim();
-  const isCanonicalHost = rawDbCannical === SITE_ORIGIN || rawDbCanonical?.startsWith(`${SITE_ORIGIN}/`);
+  const isCanonicalHost = rawDbCanonical === SITE_ORIGIN || rawDbCanonical?.startsWith(`${SITE_ORIGIN}/`);
   const isHomepageCanonical = rawDbCanonical === SITE_ORIGIN || rawDbCanonical === `${SITE_ORIGIN}/`;
-  const shouldUseDbCannical = Boolean(
+  const shouldUseDbCanonical = Boolean(
     rawDbCanonical && isCanonicalHost && (!isHomepageCanonical || normalizedPath === "/"),
   );
 
   const canonical = sanitizeCanonical(
-    shouldUseDbCanonical ? rawDbCannical! : `${SITE_ORIGIN}${canonicalPath}`,
+    shouldUseDbCanonical ? rawDbCanonical! : `${SITE_ORIGIN}${canonicalPath}`,
   );
 
   const robots = pageSeo?.robots ?? "index,follow";

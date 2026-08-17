@@ -44,25 +44,9 @@ class ErrorBoundary extends Component<Props, State> {
       return;
     }
     
-    // Log to Supabase (Best effort)
-    try {
-      const logError = async () => {
-        const { supabase } = await import("@/integrations/supabase/client");
-        await supabase.from("app_logs" as any).insert({
-          level: "error",
-          message: error.message,
-          metadata: {
-            stack: error.stack,
-            componentStack: errorInfo.componentStack,
-            url: window.location.href,
-            userAgent: navigator.userAgent,
-          }
-        }).select();
-      };
-      logError();
-    } catch (e) {
-      // Ignore logging errors to prevent infinite loops
-    }
+    // The client uses a public Supabase key and no app_logs table is provisioned.
+    // Console logging above preserves diagnostics without creating a secondary 404
+    // while the error screen is already being displayed.
   }
 
   private handleReload = () => {
