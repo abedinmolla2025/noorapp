@@ -124,8 +124,9 @@
     <script>
       if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
-          navigator.serviceWorker.register('/sw.js').then(reg => {
+          navigator.serviceWorker.register('/sw.js?rev=20260818-restore-v1', { updateViaCache: 'none' }).then(reg => {
             console.log('SW registered:', reg.scope);
+            reg.update().catch(() => undefined);
             
             // Check for updates every hour
             setInterval(() => {

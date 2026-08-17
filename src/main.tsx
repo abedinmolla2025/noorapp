@@ -4,6 +4,10 @@ import App from "./App.tsx";
 import ErrorBoundary from "./components/ErrorBoundary";
 import "./index.css";
 
+// Revision is deliberately changed on cache-recovery releases so clients still
+// running an old app shell fetch the newest service-worker script immediately.
+const SERVICE_WORKER_REVISION = "20260818-restore-v1";
+
 // Global listener for chunk load failures (common in PWAs after a new Vercel deploy)
 window.addEventListener("error", (event) => {
   const msg = String(event.message || "");
@@ -30,6 +34,16 @@ window.addEventListener("unhandledrejection", (event) => {
     window.location.reload();
   }
 });
+
+// Do this before rendering the app so stale service workers update at the first
+// possible moment. The worker itself has no fetch handler, so it cannot cache
+// an old HTML shell after this recovery release.
+if ("serviceWorker" in navigator) {
+  navigator.serviceWorker
+    .register(`/sw.js?rev=${SERVICE_WORKER_REVISION}`, { updateViaCache: "none" })
+    .then((registration) => registration.update())
+    .catch(() => undefined);
+}
 
 createRoot(document.getElementById("root")!).render(
   <ErrorBoundary>

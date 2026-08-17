@@ -434,42 +434,22 @@ export default async function handler(req, res) {
 
   try {
     // --- Homepage ---
-    // Keep the initial HTML useful and calm while the React app loads. The old
-    // implementation rendered a full-screen, patterned skeleton which looked
-    // like a broken home page on slower WebViews and TWA launches.
+    // Keep the server shell deliberately small. It is replaced by the current
+    // React home page immediately after hydration, so it must never resemble an
+    // outdated version of the application or trigger a recovery reload loop.
     if (routePath === "/") {
       bodyContent = `
-        <div class="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center" data-noor-ssr-home>
-          <div class="w-20 h-20 mb-8 animate-pulse bg-primary/20 rounded-3xl flex items-center justify-center">
-             <img src="/pwa-icon-192.png" alt="Noor" class="w-12 h-12 opacity-50" />
+        <main class="min-h-screen min-h-[100dvh] bg-background text-foreground flex flex-col items-center justify-center px-6 text-center" data-noor-ssr-home aria-busy="true" aria-live="polite">
+          <div class="fixed top-0 left-0 right-0 h-[3px] bg-primary/10 overflow-hidden">
+            <div class="h-full w-[40%] rounded-r-full bg-primary animate-pulse"></div>
           </div>
-          <h1 class="text-2xl font-bold mb-2">নূর ইসলামিক অ্যাপ</h1>
-          <p class="text-muted-foreground mb-8">অ্যাপটি লোড হচ্ছে, দয়া করে অপেক্ষা করুন...</p>
-          
-          <div class="grid grid-cols-2 gap-4 w-full max-w-md">
-            <div class="bg-card border border-border rounded-2xl p-4 opacity-50">
-              <p class="text-xs font-bold text-primary">কুরআন</p>
-            </div>
-            <div class="bg-card border border-border rounded-2xl p-4 opacity-50">
-              <p class="text-xs font-bold text-primary">হাদীস</p>
-            </div>
+          <div class="relative mb-5 h-16 w-16 rounded-full border-4 border-primary/10">
+            <div class="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-primary font-bold">N</div>
           </div>
-
-          <script>
-            // Safety timeout: if React doesn't mount in 5 seconds, something is wrong with the cache
-            setTimeout(function() {
-              if (document.querySelector('[data-noor-ssr-home]')) {
-                console.warn('React failed to mount, attempting recovery...');
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(regs) {
-                    for(let r of regs) r.unregister();
-                  });
-                }
-                window.location.reload(true);
-              }
-            }, 5000);
-          </script>
-        </div>
+          <h1 class="text-lg font-bold tracking-wide">Noor</h1>
+          <p class="mt-1 text-sm text-muted-foreground">আপনার ইসলামিক সঙ্গী প্রস্তুত হচ্ছে</p>
+        </main>
       `;
     }
 
@@ -982,7 +962,9 @@ export default async function handler(req, res) {
     });
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "public, s-maxage=31536000, stale-while-revalidate=604800, max-age=3600");
+    // Never cache application HTML across releases. Versioned JS/CSS assets remain
+    // cacheable, while the HTML shell always points visitors to the newest bundle.
+    res.setHeader("Cache-Control", "no-store, max-age=0, must-revalidate");
     res.setHeader("X-Noor-Prerender", "v101");
     res.setHeader("X-Noor-OG-Image", req.storyOgImage || "default");
     res.status(200).send(finalHtml);
