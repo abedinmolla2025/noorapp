@@ -124,11 +124,11 @@ export default function SeoIntroSection() {
           </Link>{" "}
           available for Bengali Muslims. Browse authenticated narrations from the six major hadith
           collections, including{" "}
-          <Link to="/hadith/bukhari" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link to="/hadith/sahih-bukhari/bangla" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Bukhari
           </Link>{" "}
           — the most authenticated hadith collection in Islam — and{" "}
-          <Link to="/hadith/muslim" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Muslim
           </Link>
           , compiled by Imam Muslim after examining over 300,000 narrations. Every hadith is
@@ -257,11 +257,11 @@ export default function SeoIntroSection() {
             </h3>
             <p className="text-[12px] text-muted-foreground">
               Yes. Noor includes{" "}
-              <Link to="/hadith/bukhari" className="font-medium text-primary hover:underline">
+              <Link to="/hadith/sahih-bukhari/bangla" className="font-medium text-primary hover:underline">
                 Sahih Bukhari
               </Link>{" "}
               with Arabic text and Bengali translation. You can also read{" "}
-              <Link to="/hadith/muslim" className="font-medium text-primary hover:underline">
+              <Link to="/hadith" className="font-medium text-primary hover:underline">
                 Sahih Muslim
               </Link>
               , Jami at-Tirmidhi, and Sunan Abu Dawud from the Hadith section.

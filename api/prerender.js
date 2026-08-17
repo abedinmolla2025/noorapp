@@ -135,6 +135,132 @@ const esc = (s) => {
     .replace(/'/g, "&#039;");
 };
 
+// These pages are interactive in the client app. Render concise, page-specific HTML on
+// the server as well so crawlers always receive a meaningful H1, descriptive copy, and
+// internal links instead of the generic application-loading fallback.
+const STATIC_ROUTE_SEO = {
+  "/prayer-times": {
+    title: "Prayer Times for India & Bangladesh | Noor",
+    description: "Check accurate daily prayer times for your location with Noor, including Fajr, Dhuhr, Asr, Maghrib and Isha.",
+    heading: "Accurate Prayer Times for Every Day",
+    intro: "Noor helps Muslims check daily Fajr, Dhuhr, Asr, Maghrib and Isha times using their location and a selected calculation method.",
+    links: [["/prayer-guide", "Learn how to pray"], ["/qibla", "Find the Qibla direction"], ["/dua", "Read daily duas"]],
+  },
+  "/prayer-guide": {
+    title: "How to Pray Salah Step by Step | Noor",
+    description: "Learn how to perform Salah with Noor's step-by-step prayer guide for beginners, including wudu and every prayer position.",
+    heading: "Step-by-Step Salah Prayer Guide",
+    intro: "Follow a clear guide to wudu and Salah, from the opening takbir through ruku, sujud and tashahhud.",
+    links: [["/prayer-times", "Check prayer times"], ["/qibla", "Find the Qibla direction"], ["/dua", "Read daily duas"]],
+  },
+  "/qibla": {
+    title: "Qibla Finder Online | Noor",
+    description: "Use Noor's Qibla finder to calculate the direction of the Kaaba from your location before prayer.",
+    heading: "Find the Qibla Direction",
+    intro: "Use your device location and compass to find the direction of the Kaaba before Salah.",
+    links: [["/prayer-times", "Check prayer times"], ["/prayer-guide", "Read the prayer guide"], ["/tasbih", "Use digital tasbih"]],
+  },
+  "/tasbih": {
+    title: "Digital Tasbih Counter for Dhikr | Noor",
+    description: "Use Noor's free digital tasbih counter to keep track of dhikr, tasbih and daily remembrance.",
+    heading: "Digital Tasbih Counter",
+    intro: "Keep a simple count of your daily dhikr and remembrance with Noor's digital tasbih tool.",
+    links: [["/dua", "Read daily duas"], ["/99-names", "Explore the 99 Names of Allah"], ["/quran", "Read the Quran"]],
+  },
+  "/99-names": {
+    title: "99 Names of Allah with Meanings | Noor",
+    description: "Explore the 99 Names of Allah with Arabic text, transliteration and meanings on Noor.",
+    heading: "The 99 Names of Allah",
+    intro: "Learn Asma ul Husna with Arabic text, transliteration and accessible meanings for daily reflection.",
+    links: [["/quran", "Read the Quran"], ["/dua", "Read daily duas"], ["/tasbih", "Use digital tasbih"]],
+  },
+  "/baby-names": {
+    title: "Muslim Baby Names with Meanings | Noor",
+    description: "Browse meaningful Muslim baby names for boys and girls with Arabic script and meanings on Noor.",
+    heading: "Muslim Baby Names with Meanings",
+    intro: "Browse Islamic baby names for boys and girls, including Arabic spelling and clear meanings.",
+    links: [["/99-names", "Explore the 99 Names of Allah"], ["/quran", "Read the Quran"], ["/about", "About Noor"]],
+  },
+  "/calendar": {
+    title: "Islamic Calendar and Hijri Dates | Noor",
+    description: "View Hijri dates and important Islamic occasions with Noor's Islamic calendar.",
+    heading: "Islamic Calendar and Hijri Dates",
+    intro: "Follow Hijri dates and important Islamic occasions throughout the year with Noor's Islamic calendar.",
+    links: [["/prayer-times", "Check prayer times"], ["/quran", "Read the Quran"], ["/stories", "Read Islamic stories"]],
+  },
+  "/quiz": {
+    title: "Daily Islamic Quiz | Noor",
+    description: "Test and grow your Islamic knowledge with Noor's daily quiz on Quran, Hadith and Islamic history.",
+    heading: "Daily Islamic Quiz",
+    intro: "Build your knowledge with short Islamic quiz questions covering Quran, Hadith, Islamic history and everyday practice.",
+    links: [["/quran", "Read the Quran"], ["/hadith", "Explore Hadith"], ["/stories", "Read Islamic stories"]],
+  },
+  "/about": {
+    title: "About Noor Islamic App | Noor",
+    description: "Learn about Noor, a free Islamic app for Quran, Hadith, Dua, prayer times, Qibla and Islamic learning.",
+    heading: "About Noor Islamic App",
+    intro: "Noor is a free Islamic companion for Quran reading, Hadith, Dua, prayer times, Qibla and daily learning.",
+    links: [["/quran", "Read the Quran"], ["/hadith", "Explore Hadith"], ["/contact", "Contact Noor"]],
+  },
+  "/download": {
+    title: "Download Noor App APK | Free Islamic App",
+    description: "Download the Noor Islamic App APK for Quran, Hadith, Dua, prayer times, Qibla and Islamic learning.",
+    heading: "Download the Noor Islamic App",
+    intro: "Download Noor for Android to access Quran, Hadith, Dua, prayer times, Qibla and Islamic learning in one app.",
+    links: [["/quran", "Read the Quran online"], ["/hadith", "Explore Hadith"], ["/about", "About Noor"]],
+  },
+  "/islamic-app": {
+    title: "Free Islamic App for Quran, Hadith & Dua | Noor",
+    description: "Discover Noor, a free Islamic app for Quran, Hadith, Dua, prayer times, Qibla and Islamic learning.",
+    heading: "Your Free Islamic Companion",
+    intro: "Noor brings Quran, Hadith, Dua, prayer times, Qibla and useful Islamic tools together in one free app.",
+    links: [["/download", "Download Noor App"], ["/quran", "Read the Quran"], ["/prayer-times", "Check prayer times"]],
+  },
+  "/sources": {
+    title: "Noor Content Sources | Quran and Hadith References",
+    description: "Review the Quran, Hadith and supporting sources used across Noor's Islamic learning content.",
+    heading: "Noor Content Sources",
+    intro: "Review the reference sources used to support Noor's Quran, Hadith and Islamic learning content.",
+    links: [["/data-sources", "View data sources"], ["/quran", "Read the Quran"], ["/hadith", "Explore Hadith"]],
+  },
+  "/data-sources": {
+    title: "Noor Data Sources and References",
+    description: "Learn about the data sources and references that support Noor's Islamic content and tools.",
+    heading: "Data Sources and References",
+    intro: "Noor uses established data sources and references to support its Islamic content and tools.",
+    links: [["/sources", "View content sources"], ["/quran", "Read the Quran"], ["/hadith", "Explore Hadith"]],
+  },
+  "/privacy-policy": {
+    title: "Privacy Policy | Noor Islamic App",
+    description: "Read Noor's privacy policy and learn how the Islamic app handles information and settings.",
+    heading: "Noor Privacy Policy",
+    intro: "Read Noor's privacy policy and learn how the app handles information, settings and user choices.",
+    links: [["/terms", "Read terms and conditions"], ["/contact", "Contact Noor"], ["/about", "About Noor"]],
+  },
+  "/terms": {
+    title: "Terms and Conditions | Noor Islamic App",
+    description: "Read the terms and conditions for using Noor's Quran, Hadith, Dua and Islamic learning tools.",
+    heading: "Noor Terms and Conditions",
+    intro: "Read the terms and conditions that apply when using Noor's Quran, Hadith, Dua and Islamic learning tools.",
+    links: [["/privacy-policy", "Read the privacy policy"], ["/contact", "Contact Noor"], ["/about", "About Noor"]],
+  },
+};
+
+function renderStaticSeoPage({ heading, intro, links }) {
+  const related = links.map(([href, label]) => `<li><a href="${esc(href)}">${esc(label)}</a></li>`).join("");
+  return `
+    <main class="max-w-3xl mx-auto p-6 text-foreground">
+      <article>
+        <h1 class="text-3xl font-bold mb-4">${esc(heading)}</h1>
+        <p class="text-lg leading-relaxed mb-6">${esc(intro)}</p>
+        <nav aria-label="Related Noor content" class="rounded-xl border border-border p-5">
+          <h2 class="text-xl font-semibold mb-3">Explore Noor</h2>
+          <ul class="list-disc pl-5 space-y-2">${related}</ul>
+        </nav>
+      </article>
+    </main>`;
+}
+
 const ISLAMIC_PATTERN_HTML = ISLAMIC_PATTERN.replace(/"/g, "&quot;");
 const HADITH_CARD_STYLE = `background-image: ${ISLAMIC_PATTERN_HTML}, linear-gradient(to bottom right, hsl(158,55%,25%), hsl(158,64%,20%))`;
 
@@ -799,7 +925,15 @@ export default async function handler(req, res) {
       `;
     }
 
-    // --- Fallback for other routes ---
+    // --- Static app routes that need meaningful crawlable HTML ---
+    else if (STATIC_ROUTE_SEO[routePath]) {
+      const seo = STATIC_ROUTE_SEO[routePath];
+      title = seo.title;
+      description = seo.description;
+      bodyContent = renderStaticSeoPage(seo);
+    }
+
+    // --- Fallback for unknown routes ---
     if (!bodyContent) {
       bodyContent = `
         <div class="min-h-screen flex items-center justify-center p-4 bg-background">

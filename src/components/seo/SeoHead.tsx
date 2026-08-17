@@ -316,14 +316,17 @@ export function SeoHead() {
   const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
   // Canonical consolidation: /names → /baby-names
   const canonicalPath = normalizedPath === "/names" ? "/baby-names" : normalizedPath;
-  // IMPORTANT: We ignore pageSeo?.canonical_url if it points to the homepage while the current route is NOT the homepage.
-  // This prevents the "Crawled - currently not indexed" issue caused by stale DB overrides.
-  const rawDbCanonical = pageSeo?.canonical_url;
+  // Use a database override only when it stays on the selected canonical host.
+  // This prevents stale www, preview, or homepage values from splitting canonical signals.
+  const rawDbCanonical = pageSeo?.canonical_url?.trim();
+  const isCanonicalHost = rawDbCannical === SITE_ORIGIN || rawDbCanonical?.startsWith(`${SITE_ORIGIN}/`);
   const isHomepageCanonical = rawDbCanonical === SITE_ORIGIN || rawDbCanonical === `${SITE_ORIGIN}/`;
-  const shouldUseDbCanonical = rawDbCanonical && (!isHomepageCanonical || normalizedPath === "/");
+  const shouldUseDbCannical = Boolean(
+    rawDbCanonical && isCanonicalHost && (!isHomepageCanonical || normalizedPath === "/"),
+  );
 
   const canonical = sanitizeCanonical(
-    shouldUseDbCanonical ? rawDbCanonical : `${SITE_ORIGIN}${canonicalPath}`,
+    shouldUseDbCanonical ? rawDbCannical! : `${SITE_ORIGIN}${canonicalPath}`,
   );
 
   const robots = pageSeo?.robots ?? "index,follow";
