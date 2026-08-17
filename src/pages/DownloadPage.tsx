@@ -21,7 +21,7 @@ const DownloadPage = () => {
         <title>Download Noor App (APK) — Free Islamic App</title>
         <meta name="description" content="Download the Noor Islamic App APK directly. Read Quran, Hadith, Dua, get Prayer Times and more — all free." />
         <link rel="canonical" href="https://noorapp.in/download" />
-        <meta name="robots" content="noindex,nofollow" />
+        <meta name="robots" content="index,follow" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24">
