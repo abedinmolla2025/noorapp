@@ -138,6 +138,54 @@ const esc = (s) => {
 const ISLAMIC_PATTERN_HTML = ISLAMIC_PATTERN.replace(/"/g, "&quot;");
 const HADITH_CARD_STYLE = `background-image: ${ISLAMIC_PATTERN_HTML}, linear-gradient(to bottom right, hsl(158,55%,25%), hsl(158,64%,20%))`;
 
+const isUsableSocialImage = (value) => {
+  if (typeof value !== "string" || !value.trim()) return false;
+  const normalized = value.trim().toLowerCase();
+  if (normalized.includes("yourwebsite.com")) return false;
+  // Older imports pointed at a non-existent local slug image. Do not expose it to crawlers.
+  if (normalized.startsWith("https://noorapp.in/assets/og-images/") || normalized.startsWith("https://www.noorapp.in/assets/og-images/")) return false;
+  return normalized.startsWith("https://") || normalized.startsWith("http://") || value.startsWith("/assets/");
+};
+
+const resolveStoredSocialImage = (raw, folder = "dua-og") => {
+  if (typeof raw !== "string" || !raw.trim()) return null;
+  const value = raw.trim();
+  if (value.startsWith("https://") || value.startsWith("http://")) return value;
+  if (value.startsWith("/assets/")) return `${SITE_ORIGIN}${value}`;
+
+  let storagePath = value;
+  while (storagePath.startsWith("/")) storagePath = storagePath.slice(1);
+  if (storagePath.startsWith("media/")) storagePath = storagePath.slice("media/".length);
+  if (!storagePath.includes("/")) storagePath = `${folder}/${storagePath}`;
+  return `${SUPABASE_URL}/storage/v1/object/public/media/${storagePath}`;
+};
+
+const getDuaOgImage = (dua) => {
+  const ogData = dua?.og_image_data && typeof dua.og_image_data === "object" ? dua.og_image_data : {};
+  const seoData = dua?.seo && typeof dua.seo === "object" ? dua.seo : {};
+  const openGraph = seoData.open_graph && typeof seoData.open_graph === "object" ? seoData.open_graph : {};
+  const candidates = [
+    dua?.image_url,
+    dua?.og_image_url,
+    ogData.og_image_url,
+    ogData.og_image,
+    ogData.storage_path,
+    ogData.og_url,
+    ogData.url,
+    seoData.og_image,
+    seoData.ogImage,
+    openGraph["og:image"],
+  ];
+
+  for (const candidate of candidates) {
+    const resolved = resolveStoredSocialImage(candidate);
+    if (resolved && isUsableSocialImage(resolved)) return resolved;
+  }
+
+  // Keep Dua shares on a Dua-specific fallback instead of the app/logo image.
+  return `${SITE_ORIGIN}/og-dua.png`;
+};
+
 const loadBundledStories = () => {
   const candidates = [
     path.join(process.cwd(), "dist", "stories.json"),
@@ -879,13 +927,14 @@ export default async function handler(req, res) {
         .from("admin_content")
         .select("*")
         .eq("slug", slug)
-        .eq("content_type", "dua")
+        .in("content_type", ["dua", "Dua"])
         .eq("status", "published")
         .maybeSingle();
 
       if (dua) {
-        title = `${dua.title} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
-        description = esc(dua.explanation_bn || dua.content || `${dua.title} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`);
+        title = `${dua.title || "দোয়া"} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
+        description = dua.explanation_bn || dua.content || `${dua.title || "এই দোয়া"} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`;
+        req.storyOgImage = getDuaOgImage(dua);
         
         bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,18%)] pb-20">
@@ -900,6 +949,7 @@ export default async function handler(req, res) {
             </header>
             
             <main class="max-w-3xl mx-auto p-4 space-y-6">
+              <img src="${esc(req.storyOgImage)}" alt="${esc(dua.title || "দোয়া")}" width="1200" height="630" class="sr-only" />
               <!-- Arabic Card -->
               <div class="relative bg-gradient-to-br from-[hsl(158,55%,25%)] to-[hsl(158,64%,20%)] border border-white/10 rounded-3xl shadow-xl overflow-hidden" style="background-image: ${ISLAMIC_PATTERN}, linear-gradient(to bottom right, hsl(158,55%,25%), hsl(158,64%,20%))">
                 <div class="absolute inset-0 border border-white/5 rounded-3xl pointer-events-none"></div>
