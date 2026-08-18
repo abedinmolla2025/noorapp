@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabasePublic } from "@/integrations/supabase/client";
 
 const DEVICE_ID_KEY = "noor_device_id";
 const WEB_PUSH_REGISTERED_KEY = "noor_web_push_registered";
@@ -62,7 +62,7 @@ async function syncLocationToPreferences(deviceId: string) {
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // First try to find existing record by device_id
-    const { data: existing } = await supabase
+    const { data: existing } = await supabasePublic
       .from("user_notification_preferences" as any)
       .select("id")
       .eq("device_id", deviceId)
@@ -81,12 +81,12 @@ async function syncLocationToPreferences(deviceId: string) {
     };
 
     if (existing?.id) {
-      await supabase
+      await supabasePublic
         .from("user_notification_preferences" as any)
         .update(payload)
         .eq("id", existing.id);
     } else {
-      await supabase
+      await supabasePublic
         .from("user_notification_preferences" as any)
         .insert(payload);
     }

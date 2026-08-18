@@ -11,6 +11,30 @@
 .noor-shine-text {
   animation: noor-shine 4s linear infinite;
 }
+
+@keyframes noor-skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.noor-skeleton-shimmer {
+  background: linear-gradient(
+    105deg,
+    hsl(var(--muted)) 24%,
+    hsl(var(--muted-foreground) / 0.12) 42%,
+    hsl(var(--muted)) 60%
+  );
+  background-size: 300% 100%;
+  animation: noor-skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .noor-skeleton-shimmer {
+    animation: none;
+    background-position: 0 0;
+  }
+}
+
 @tailwind components;
 @tailwind utilities;
 

@@ -29,3 +29,17 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
     },
   }
 });
+
+// Device-scoped public settings must not inherit a stale/expired auth session.
+// This client always sends the publishable anon key, allowing anonymous PWA
+// users to sync prayer-notification preferences without a spurious 401.
+export const supabasePublic = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+  auth: {
+    // Use a distinct key even though this client does not persist sessions.
+    // Supabase warns when two GoTrue clients share the default auth storage key.
+    storageKey: "noor-public-auth",
+    persistSession: false,
+    autoRefreshToken: false,
+    detectSessionInUrl: false,
+  },
+});

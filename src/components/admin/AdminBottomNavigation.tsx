@@ -52,13 +52,6 @@ const adminNavItems: AdminNavItem[] = [
     matchPrefixes: ["/admin/notifications"],
   },
   {
-    id: "scheduler",
-    label: "Scheduler",
-    path: "/admin/scheduler",
-    icon: <CalendarDays className="h-5 w-5" />,
-    matchPrefixes: ["/admin/scheduler"],
-  },
-  {
     id: "settings",
     label: "Settings",
     path: "/admin/settings",

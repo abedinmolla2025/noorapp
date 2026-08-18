@@ -1,5 +1,6 @@
+import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Mail, MailOpen, Trash2, CheckCircle2 } from "lucide-react";
+import { Check, CheckCircle2, Copy, Mail, MailOpen, Reply, Trash2 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -17,10 +18,50 @@ interface ContactMessage {
   created_at: string;
 }
 
+const getReplySubject = (message: ContactMessage) => {
+  const subject = message.subject?.trim() || "Your NoorApp Support Request";
+  return subject.toLowerCase().startsWith("re:") ? subject : `Re: ${subject}`;
+};
+
+const getReplyTemplate = (message: ContactMessage) => {
+  const name = message.name?.trim() || "there";
+  return `Hi ${name},
+
+Thank you for contacting NoorApp Support.
+
+We have reviewed your message and are happy to assist you. ${message.subject ? `Regarding “${message.subject}”, ` : ""}we are looking into this carefully and will follow up with you as soon as possible.
+
+If you have any additional details, screenshots, or steps that reproduce the issue, please reply to this email and share them with us.
+
+Thank you for helping us improve NoorApp.
+
+Best regards,
+NoorApp Support Team
+support@noorapp.in`;
+};
+
+const copyToClipboard = async (text: string) => {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+    return;
+  }
+
+  const textarea = document.createElement("textarea");
+  textarea.value = text;
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.focus();
+  textarea.select();
+  document.execCommand("copy");
+  textarea.remove();
+};
+
 export default function AdminMessages() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
   const { isAdmin } = useAdmin();
+  const [copiedMessageId, setCopiedMessageId] = useState<string | null>(null);
 
   const { data: messages = [], isLoading, isError, error } = useQuery<ContactMessage[]>({
     queryKey: ["admin-contact-messages"],
@@ -73,6 +114,27 @@ export default function AdminMessages() {
       });
     },
   });
+
+  const handleCopyTemplate = async (message: ContactMessage) => {
+    try {
+      const content = `Subject: ${getReplySubject(message)}\n\n${getReplyTemplate(message)}`;
+      await copyToClipboard(content);
+      setCopiedMessageId(message.id);
+      toast({ title: "Reply template copied", description: "Paste it into your email reply." });
+      window.setTimeout(() => setCopiedMessageId((current) => (current === message.id ? null : current)), 2200);
+    } catch {
+      toast({
+        title: "Could not copy template",
+        description: "Please select and copy the template manually.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleReply = (message: ContactMessage) => {
+    const mailto = `mailto:${encodeURIComponent(message.email)}?subject=${encodeURIComponent(getReplySubject(message))}&body=${encodeURIComponent(getReplyTemplate(message))}`;
+    window.location.href = mailto;
+  };
 
   if (!isAdmin) {
     return (
@@ -127,6 +189,7 @@ export default function AdminMessages() {
             <div className="space-y-3">
               {messages.map((message) => {
                 const unread = message.status !== "read";
+                const copied = copiedMessageId === message.id;
                 return (
                   <article
                     key={message.id}
@@ -147,7 +210,26 @@ export default function AdminMessages() {
                         </p>
                       </div>
 
-                      <div className="flex shrink-0 gap-2">
+                      <div className="flex shrink-0 flex-wrap gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1 text-xs"
+                          onClick={() => handleReply(message)}
+                          disabled={!message.email}
+                        >
+                          <Reply className="h-3.5 w-3.5" />
+                          Reply
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-8 gap-1 text-xs"
+                          onClick={() => handleCopyTemplate(message)}
+                        >
+                          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copied ? "Copied" : "Copy Template"}
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
@@ -179,9 +261,32 @@ export default function AdminMessages() {
                         </Button>
                       </div>
                     </div>
+
                     <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/90">
                       {message.message}
                     </p>
+
+                    <div className="mt-4 flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-background text-primary">
+                          <Reply className="h-4 w-4" />
+                        </div>
+                        <div>
+                          <p className="text-xs font-bold uppercase tracking-[0.12em] text-primary">Reply Helper</p>
+                          <p className="mt-1 text-xs leading-5 text-muted-foreground">Use the professional English template or open a pre-filled email reply.</p>
+                        </div>
+                      </div>
+                      <div className="flex shrink-0 gap-2">
+                        <Button variant="outline" size="sm" className="h-8 gap-1.5 bg-background text-xs" onClick={() => handleCopyTemplate(message)}>
+                          {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                          {copied ? "Copied" : "Copy Template"}
+                        </Button>
+                        <Button size="sm" className="h-8 gap-1.5 text-xs" onClick={() => handleReply(message)} disabled={!message.email}>
+                          <Reply className="h-3.5 w-3.5" />
+                          Reply by Email
+                        </Button>
+                      </div>
+                    </div>
                   </article>
                 );
               })}
@@ -192,4 +297,3 @@ export default function AdminMessages() {
     </div>
   );
 }
-

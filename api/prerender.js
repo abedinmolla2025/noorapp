@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 
-const SITE_ORIGIN = "https://noorapp.in";
+const SITE_ORIGIN = "https://www.noorapp.in";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
 
@@ -137,6 +137,231 @@ const esc = (s) => {
 
 const ISLAMIC_PATTERN_HTML = ISLAMIC_PATTERN.replace(/"/g, "&quot;");
 const HADITH_CARD_STYLE = `background-image: ${ISLAMIC_PATTERN_HTML}, linear-gradient(to bottom right, hsl(158,55%,25%), hsl(158,64%,20%))`;
+
+const loadBundledStories = () => {
+  const candidates = [
+    path.join(process.cwd(), "dist", "stories.json"),
+    path.join(process.cwd(), "public", "stories.json"),
+    path.join("/var/task", "dist", "stories.json"),
+  ];
+
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (Array.isArray(parsed)) return parsed;
+      }
+    } catch (error) {
+      console.error("[SSR] Story bundle read failed", error);
+    }
+  }
+  return [];
+};
+
+const BUNDLED_STORIES = loadBundledStories();
+
+const STATIC_PAGE_COPY = {
+  "/about": {
+    title: "About Noor | Free Islamic App",
+    description: "Learn about Noor's mission to make Quran, Hadith, prayer times, Dua and Islamic learning tools accessible and trustworthy.",
+    heading: "About Noor",
+    intro: "Noor is a free Islamic app designed to make everyday worship, learning and reflection simpler for Muslims in India, Bangladesh and around the world.",
+    sections: [
+      ["Our mission", "We bring Quran reading, authentic Hadith, prayer times, Dua, Qibla, Islamic stories and learning tools together in one calm and accessible experience."],
+      ["Built for daily use", "Noor focuses on practical tools that people return to every day: prayer reminders, Quran reading, supplications, Islamic calendar information and gentle learning activities."],
+      ["Trust and responsibility", "We aim to present Islamic content with clear references, respectful language and transparent source information. If you find an error, please contact the Noor team so it can be reviewed."],
+    ],
+  },
+  "/sources": {
+    title: "Islamic Sources | Noor",
+    description: "Understand the Quran, Hadith and editorial sources used across Noor's Islamic content.",
+    heading: "Our Islamic Sources",
+    intro: "Noor is committed to showing where its Islamic content comes from and how readers can evaluate it.",
+    sections: [
+      ["Quran", "Quran text and translations are presented for reading and study. Readers should consult qualified scholars for detailed tafsir and matters requiring formal religious guidance."],
+      ["Hadith", "Hadith pages identify the collection and language where available. Sahih Al-Bukhari and other collections are presented as educational references, with care taken not to remove important context."],
+      ["Editorial review", "Our editorial approach prioritizes clarity, respectful presentation and source notes. Corrections and feedback can be sent through the Contact page."],
+    ],
+  },
+  "/data-sources": {
+    title: "Data Sources and Methodology | Noor",
+    description: "Learn how Noor uses Quran, Hadith, prayer-time and location data to provide its Islamic tools.",
+    heading: "Data Sources and Methodology",
+    intro: "Noor combines structured Islamic content with public service data to make its tools useful while keeping the source of key information visible.",
+    sections: [
+      ["Prayer times and location", "Prayer times are calculated using location-aware prayer-time services. Location is used to show relevant city information and is not intended to identify a person."],
+      ["Islamic content", "Quran, Hadith, Dua and story content is organized for reading, search and learning. Where available, the app displays collection, book or reference details."],
+      ["Corrections and feedback", "Data can change as services and content are improved. If you find a missing reference, translation issue or factual error, please report it through Noor Support."],
+    ],
+  },
+  "/privacy": {
+    title: "Privacy Policy | Noor",
+    description: "Read Noor's privacy policy covering local preferences, analytics, advertising cookies, third-party services and user rights.",
+    heading: "Privacy Policy",
+    intro: "Noor uses the minimum information needed to operate its tools and improve the experience. Many preferences, such as language, theme, prayer and notification settings, remain on your device.",
+    sections: [
+      ["Information and local storage", "Settings and progress may be stored locally in your browser or device. Anonymous usage information may be aggregated to understand feature usage."],
+      ["Advertising and third-party services", "Noor may use advertising and service providers such as Google AdSense, prayer-time APIs and location services. Cookies and similar technologies may be used according to the applicable provider policies."],
+      ["Your choices", "You can clear local app data from your browser or device settings and manage personalized advertising through the controls described in the full policy."],
+    ],
+  },
+  "/privacy-policy": {
+    title: "Privacy Policy | Noor",
+    description: "Read Noor's privacy policy covering local preferences, analytics, advertising cookies, third-party services and user rights.",
+    heading: "Privacy Policy",
+    intro: "Noor uses the minimum information needed to operate its tools and improve the experience. Many preferences, such as language, theme, prayer and notification settings, remain on your device.",
+    sections: [
+      ["Information and local storage", "Settings and progress may be stored locally in your browser or device. Anonymous usage information may be aggregated to understand feature usage."],
+      ["Advertising and third-party services", "Noor may use advertising and service providers such as Google AdSense, prayer-time APIs and location services. Cookies and similar technologies may be used according to the applicable provider policies."],
+      ["Your choices", "You can clear local app data from your browser or device settings and manage personalized advertising through the controls described in the full policy."],
+    ],
+  },
+  "/terms": {
+    title: "Terms & Conditions | Noor",
+    description: "Read Noor's terms, acceptable-use guidelines and content limitations for using the free Islamic app.",
+    heading: "Terms & Conditions",
+    intro: "By using Noor, you agree to use its tools respectfully and understand that the app provides general educational and devotional information.",
+    sections: [
+      ["Educational use", "Noor is not a replacement for a qualified scholar, imam, medical professional or other specialist. Please seek appropriate guidance for personal religious, legal, medical or financial decisions."],
+      ["Acceptable use", "Do not misuse the service, attempt unauthorized access, disrupt availability or copy and redistribute protected material without permission."],
+      ["Content and availability", "We work to keep information accurate and available, but third-party services, translations and calculations may change. Report problems through Support so they can be reviewed."],
+    ],
+  },
+  "/download": {
+    title: "Download Noor Islamic App | Noor",
+    description: "Use Noor on Android or install the Noor Progressive Web App for Quran, Hadith, prayer times, Dua and more.",
+    heading: "Download Noor",
+    intro: "Noor is available as a fast web experience and can be installed as a Progressive Web App on supported devices.",
+    sections: [
+      ["Install on your device", "Open Noor in a supported mobile browser and choose the browser's install or Add to Home Screen option when available."],
+      ["What you get", "The installed experience gives you quick access to prayer times, Quran reading, Hadith, Dua, Qibla, Tasbih, Islamic stories and learning tools."],
+      ["Need help?", "If installation, notifications or a page does not work as expected, use the Support & Feedback form and include the affected page."],
+    ],
+  },
+  "/islamic-app": {
+    title: "Noor Islamic App | Quran, Hadith, Dua and Prayer Times",
+    description: "Explore Noor, a free Islamic app with Quran, authentic Hadith, prayer times, Dua, Qibla, Islamic stories and more.",
+    heading: "Noor Islamic App",
+    intro: "Noor brings essential Islamic reading, prayer and learning tools together in one clean, free app.",
+    sections: [
+      ["Read and listen", "Read the Quran with Arabic text and translations, explore Hadith collections and discover Islamic stories with practical lessons."],
+      ["Practice every day", "Use prayer times, countdowns, Qibla, morning and evening Dua, Tasbih and the Islamic calendar to support your daily routine."],
+      ["Designed for Bengali readers", "Noor supports Bengali-first Islamic learning while also offering English, Arabic and Urdu experiences in selected sections."],
+    ],
+  },
+  "/prayer-times": {
+    title: "Prayer Times | Accurate Salah Times | Noor",
+    description: "Find Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha prayer times with a live countdown and location-based calculation on Noor.",
+    heading: "Prayer Times",
+    intro: "Noor helps you view the five daily Salah times, the next-prayer countdown and relevant location information in one place.",
+    sections: [
+      ["Daily schedule", "See Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha times for your selected location and date."],
+      ["Location and calculation", "Prayer times depend on your location and calculation settings. Check the selected city and method if a time appears different from your local mosque timetable."],
+      ["Reminders", "Where supported, Noor can help you configure prayer reminders and notifications. Browser and device permissions must be enabled by the user."],
+    ],
+  },
+  "/prayer-guide": {
+    title: "Prayer Guide | Salah and Wudu Guidance | Noor",
+    description: "Use Noor's prayer guide to review key Salah steps, Wudu guidance and daily prayer information in a clear format.",
+    heading: "Prayer Guide",
+    intro: "This guide is designed as a simple reference for reviewing the structure and essential considerations of daily prayer.",
+    sections: [
+      ["Before Salah", "Review cleanliness, Wudu, prayer time, direction of the Qibla and suitable clothing before beginning."],
+      ["During prayer", "Follow the prayer method taught by your trusted scholar or local imam. Noor provides a general learning reference and does not replace qualified instruction."],
+      ["Keep learning", "For differences of opinion or personal questions, consult a trusted qualified scholar and the established practice of your community."],
+    ],
+  },
+  "/qibla": {
+    title: "Qibla Finder | Find the Direction of Makkah | Noor",
+    description: "Use Noor's Qibla finder to estimate the direction of the Kaaba from your current location.",
+    heading: "Qibla Finder",
+    intro: "The Qibla finder helps you estimate the direction of the Kaaba using your device location and compass support where available.",
+    sections: [
+      ["Allow location access", "Location permission is needed to calculate the direction from your selected position. Noor uses it for this feature's purpose."],
+      ["Calibrate your compass", "Keep the device away from magnetic objects and follow the on-screen calibration guidance if the compass appears unstable."],
+      ["Use as a guide", "For a mosque, travel or unfamiliar place, compare the result with local signage or a trusted Qibla reference when possible."],
+    ],
+  },
+  "/tasbih": {
+    title: "Digital Tasbih | Dhikr Counter | Noor",
+    description: "Use Noor's digital Tasbih to count dhikr with a simple, respectful and customizable counter.",
+    heading: "Digital Tasbih",
+    intro: "Noor's Tasbih counter is a simple tool for keeping track of dhikr without distracting from remembrance.",
+    sections: [
+      ["Simple counting", "Tap to increase the count, choose a target and reset when you begin a new session."],
+      ["Your privacy", "Counter preferences and progress can be stored locally on your device so the tool remains quick and personal."],
+      ["Remember with presence", "A digital counter is only a support tool. The value of dhikr is in sincere remembrance, intention and consistency."],
+    ],
+  },
+  "/99-names": {
+    title: "99 Names of Allah | Asma ul Husna | Noor",
+    description: "Explore the 99 Names of Allah with Arabic names, transliteration, Bengali meanings and reflective explanations on Noor.",
+    heading: "99 Names of Allah",
+    intro: "Explore Asma ul Husna with Arabic names, pronunciation support and meanings intended for reflection and learning.",
+    sections: [
+      ["Read and reflect", "Open each name to review its Arabic form, transliteration and meaning, then reflect on how the name relates to worship and character."],
+      ["Language support", "Noor presents Bengali meaning and additional language support where available so learners can understand the names more clearly."],
+      ["Use reliable guidance", "For detailed theology and interpretation, consult established Islamic scholarship and trusted teachers."],
+    ],
+  },
+  "/baby-names": {
+    title: "Islamic Baby Names | Muslim Names and Meanings | Noor",
+    description: "Browse meaningful Islamic baby names with Arabic origins, Bengali meanings and information for boys and girls.",
+    heading: "Islamic Baby Names",
+    intro: "Explore a collection of Muslim baby names with meanings and origin information to help families begin their search.",
+    sections: [
+      ["Search by meaning", "Use the name list to explore names for boys and girls and compare meanings, spellings and origins."],
+      ["Choose thoughtfully", "Name meanings and transliterations can vary by language. Families should verify spelling and consult trusted references before making a final decision."],
+      ["A helpful starting point", "Noor provides educational information and suggestions; the final choice belongs to the family."],
+    ],
+  },
+  "/calendar": {
+    title: "Islamic Calendar | Hijri Dates and Events | Noor",
+    description: "View Hijri and Gregorian dates, Ramadan information and important Islamic occasions with Noor's calendar.",
+    heading: "Islamic Calendar",
+    intro: "Use Noor's calendar to understand the relationship between Hijri and Gregorian dates and to review important Islamic occasions.",
+    sections: [
+      ["Hijri dates", "The Islamic calendar is lunar, so dates can vary by local moon sighting and authority. Use the calendar as a helpful reference."],
+      ["Important occasions", "Review Ramadan, Eid and other important dates while checking your local mosque or recognized authority for official announcements."],
+      ["Plan your worship", "Use the calendar alongside prayer times and Dua tools to prepare for important days and personal goals."],
+    ],
+  },
+  "/quiz": {
+    title: "Daily Islamic Quiz | Learn Quran and Hadith | Noor",
+    description: "Test and grow your Islamic knowledge with Noor's daily quiz covering Quran, Hadith, history and the lives of the Prophets.",
+    heading: "Daily Islamic Quiz",
+    intro: "Noor's quiz turns short daily learning sessions into an opportunity to review Islamic knowledge and discover new topics.",
+    sections: [
+      ["What the quiz covers", "Questions may cover the Quran, authentic Hadith, Islamic history, Fiqh basics and the lives of the Prophets."],
+      ["Learn from every answer", "Use explanations and references where available to review the answer instead of treating the score as the goal."],
+      ["A respectful learning tool", "The quiz is educational and should be complemented with reading, qualified teaching and careful study."],
+    ],
+  },
+};
+
+const renderStaticPage = (page) => `
+  <div class="min-h-screen bg-background pb-24">
+    <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-12 text-white">
+      <div class="mx-auto max-w-3xl">
+        <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">NOOR ISLAMIC APP</p>
+        <h1 class="text-3xl font-bold leading-tight md:text-4xl">${esc(page.heading)}</h1>
+        <p class="mt-4 max-w-2xl text-base leading-7 text-white/85">${esc(page.intro)}</p>
+      </div>
+    </header>
+    <main class="mx-auto max-w-3xl space-y-5 px-4 py-7">
+      ${page.sections.map(([heading, content]) => `
+        <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <h2 class="text-xl font-bold text-foreground">${esc(heading)}</h2>
+          <p class="mt-3 leading-7 text-muted-foreground">${esc(content)}</p>
+        </section>
+      `).join("")}
+      <p class="pt-3 text-center text-sm text-muted-foreground">For questions, corrections or source concerns, please visit <a href="/contact" class="font-semibold text-primary">Support &amp; Feedback</a>.</p>
+    </main>
+  </div>
+`;
+
+const findBundledStory = (slug) => BUNDLED_STORIES.find((story) => story.slug === slug);
+
 
 const HADITH_LANG_META = {
   bangla: { label: "বাংলা", title: "সহিহ বুখারী শরীফ", subtitle: "আরবি + বাংলা অনুবাদ", field: "bengali", file: null, rtl: false, read: "বিস্তারিত পড়ুন" },
@@ -308,41 +533,62 @@ export default async function handler(req, res) {
 
   try {
     // --- Homepage ---
-    // Keep the initial HTML useful and calm while the React app loads. The old
-    // implementation rendered a full-screen, patterned skeleton which looked
-    // like a broken home page on slower WebViews and TWA launches.
+    // Keep the first byte visually consistent with the React fallback. This is
+    // deliberately a compact, layout-matched skeleton rather than a branded
+    // splash screen, so slow WebViews never show a misleading intermediate page.
     if (routePath === "/") {
       bodyContent = `
-        <div class="min-h-screen bg-background text-foreground flex flex-col items-center justify-center p-6 text-center" data-noor-ssr-home>
-          <div class="w-20 h-20 mb-8 animate-pulse bg-primary/20 rounded-3xl flex items-center justify-center">
-             <img src="/pwa-icon-192.png" alt="Noor" class="w-12 h-12 opacity-50" />
-          </div>
-          <h1 class="text-2xl font-bold mb-2">নূর ইসলামিক অ্যাপ</h1>
-          <p class="text-muted-foreground mb-8">অ্যাপটি লোড হচ্ছে, দয়া করে অপেক্ষা করুন...</p>
-          
-          <div class="grid grid-cols-2 gap-4 w-full max-w-md">
-            <div class="bg-card border border-border rounded-2xl p-4 opacity-50">
-              <p class="text-xs font-bold text-primary">কুরআন</p>
+        <div class="min-h-screen bg-background px-4 pb-28 pt-5 text-foreground" data-noor-ssr-home role="status" aria-live="polite" aria-label="Loading page">
+          <div class="mx-auto w-full max-w-2xl">
+            <div class="flex items-center justify-between gap-4 px-1 py-2">
+              <div class="flex items-center gap-3 min-w-0">
+                <div aria-hidden="true" class="noor-skeleton-shimmer h-11 w-11 shrink-0 rounded-2xl"></div>
+                <div class="space-y-2 min-w-0">
+                  <div aria-hidden="true" class="noor-skeleton-shimmer h-4 w-32 rounded-2xl"></div>
+                  <div aria-hidden="true" class="noor-skeleton-shimmer h-3 w-20 rounded-full"></div>
+                </div>
+              </div>
+              <div aria-hidden="true" class="noor-skeleton-shimmer h-10 w-10 shrink-0 rounded-full"></div>
             </div>
-            <div class="bg-card border border-border rounded-2xl p-4 opacity-50">
-              <p class="text-xs font-bold text-primary">হাদীস</p>
+            <div class="mt-5 space-y-4">
+              <div aria-hidden="true" class="noor-skeleton-shimmer h-44 w-full rounded-[2rem]"></div>
+              <div class="grid grid-cols-2 gap-3">
+                <div aria-hidden="true" class="noor-skeleton-shimmer h-24 w-full rounded-3xl"></div>
+                <div aria-hidden="true" class="noor-skeleton-shimmer h-24 w-full rounded-3xl"></div>
+              </div>
+              <div aria-hidden="true" class="noor-skeleton-shimmer h-28 w-full rounded-3xl"></div>
+              <div class="space-y-3">
+                <div class="rounded-3xl border border-border/50 bg-card p-4 shadow-sm">
+                  <div class="flex items-start gap-3">
+                    <div aria-hidden="true" class="noor-skeleton-shimmer h-12 w-12 shrink-0 rounded-2xl"></div>
+                    <div class="min-w-0 flex-1 space-y-3">
+                      <div aria-hidden="true" class="noor-skeleton-shimmer h-4 w-3/4 rounded-2xl"></div>
+                      <div aria-hidden="true" class="noor-skeleton-shimmer h-3 w-1/2 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+                <div class="rounded-3xl border border-border/50 bg-card p-4 shadow-sm">
+                  <div class="flex items-start gap-3">
+                    <div aria-hidden="true" class="noor-skeleton-shimmer h-12 w-12 shrink-0 rounded-2xl"></div>
+                    <div class="min-w-0 flex-1 space-y-3">
+                      <div aria-hidden="true" class="noor-skeleton-shimmer h-4 w-3/4 rounded-2xl"></div>
+                      <div aria-hidden="true" class="noor-skeleton-shimmer h-3 w-1/2 rounded-full"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
-
-          <script>
-            // Safety timeout: if React doesn't mount in 5 seconds, something is wrong with the cache
-            setTimeout(function() {
-              if (document.querySelector('[data-noor-ssr-home]')) {
-                console.warn('React failed to mount, attempting recovery...');
-                if ('serviceWorker' in navigator) {
-                  navigator.serviceWorker.getRegistrations().then(function(regs) {
-                    for(let r of regs) r.unregister();
-                  });
-                }
-                window.location.reload(true);
-              }
-            }, 5000);
-          </script>
+          <div class="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-2xl border-t border-border/60 bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
+            <div class="grid grid-cols-5 gap-3">
+              ${Array.from({ length: 5 }).map(() => `
+                <div class="flex flex-col items-center gap-2">
+                  <div aria-hidden="true" class="noor-skeleton-shimmer h-7 w-7 rounded-xl"></div>
+                  <div aria-hidden="true" class="noor-skeleton-shimmer h-2.5 w-12 rounded-full"></div>
+                </div>
+              `).join("")}
+            </div>
+          </div>
         </div>
       `;
     }
@@ -747,36 +993,62 @@ export default async function handler(req, res) {
     // --- Story Detail Page ---
     else if (routePath.startsWith("/stories/")) {
       const slug = routePath.split("/")[2];
-      const { data: story } = await supabase
-        .from("admin_content")
-        .select("*")
-        .eq("slug", slug)
-        .eq("content_type", "story")
-        .eq("status", "published")
-        .maybeSingle();
+      let story = findBundledStory(slug);
+
+      if (!story) {
+        const { data } = await supabase
+          .from("admin_content")
+          .select("*")
+          .eq("slug", slug)
+          .eq("content_type", "story")
+          .eq("status", "published")
+          .maybeSingle();
+        story = data;
+      }
 
       if (story) {
-        title = `${story.title} | NoorApp`;
-        description = esc(story.content?.substring(0, 160) || "Read this beautiful Islamic story on NoorApp.");
-        
-        // Construct dynamic OG image URL from Supabase storage
-        const ogImage = `https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/og-images/stories/${slug}.webp`;
+        const storyTitle = story.title_bn || story.title || story.title_en || "Islamic Story";
+        const storyContent = story.content_bn || story.content || story.content_en || "Read this beautiful Islamic story on NoorApp.";
+        const storyDescription = story.seo?.meta_description || story.seo?.open_graph?.["og:description"] || story.moral_bn || story.moral_en || storyContent.slice(0, 160);
+        const ogImage = story.og_image_url || story.seo?.open_graph?.["og:image"] || `https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/og-images/stories/${slug}.webp`;
+        const sourceLabel = story.reference || story.source_detail || story.source_name || "Islamic source reference";
+        const moral = story.moral_bn || story.moral_en || "আল্লাহর উপর ভরসা, সত্য ও উত্তম চরিত্রের শিক্ষা গ্রহণ করুন।";
+
+        title = `${story.seo?.title || storyTitle} | NoorApp`;
+        description = storyDescription;
         req.storyOgImage = ogImage;
 
         bodyContent = `
           <div class="min-h-screen bg-background pb-24">
-            <article class="max-w-3xl mx-auto p-4 space-y-6">
+            <article class="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
               <header class="space-y-4">
-                <h1 class="text-3xl font-bold">${esc(story.title)}</h1>
-                <img src="${ogImage}" alt="${esc(story.title)}" class="w-full rounded-2xl shadow-lg mb-6" />
+                <p class="text-sm font-semibold uppercase tracking-wide text-primary">Islamic Story</p>
+                <h1 class="text-3xl font-bold leading-tight md:text-4xl">${esc(storyTitle)}</h1>
+                <p class="text-base leading-7 text-muted-foreground">${esc(storyDescription)}</p>
+                <img src="${esc(ogImage)}" alt="${esc(storyTitle)}" class="w-full rounded-2xl shadow-lg" loading="eager" />
               </header>
-              <div class="prose prose-emerald max-w-none dark:prose-invert">
-                ${esc(story.content).replace(/\n/g, '<br/>')}
+              <div class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                <h2 class="text-lg font-bold text-primary">গল্পের শিক্ষা</h2>
+                <p class="mt-2 leading-7 text-foreground/85">${esc(moral)}</p>
               </div>
+              <div class="prose prose-emerald max-w-none dark:prose-invert">
+                ${esc(storyContent).replace(/\n/g, '<br/>')}
+              </div>
+              <footer class="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
+                <strong class="text-foreground">উৎস ও রেফারেন্স:</strong> ${esc(sourceLabel)}
+              </footer>
             </article>
           </div>
         `;
       }
+    }
+
+    // --- Public Trust, Legal and Feature Pages ---
+    else if (STATIC_PAGE_COPY[routePath]) {
+      const page = STATIC_PAGE_COPY[routePath];
+      title = page.title;
+      description = page.description;
+      bodyContent = renderStaticPage(page);
     }
 
     // --- Contact Page ---
@@ -836,6 +1108,15 @@ export default async function handler(req, res) {
         .font-bangla-serif { font-family: 'Noto Serif Bengali', serif !important; }
         .font-arabic { font-family: 'Scheherazade New', 'Amiri', serif !important; }
         [dir="rtl"] { text-align: right; }
+        @keyframes noor-skeleton-shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .noor-skeleton-shimmer {
+          background: linear-gradient(105deg, hsl(210 20% 94%) 24%, hsl(158 45% 82% / .52) 42%, hsl(210 20% 94%) 60%);
+          background-size: 300% 100%;
+          animation: noor-skeleton-shimmer 1.8s ease-in-out infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .noor-skeleton-shimmer { animation: none; background-position: 0 0; }
+        }
       </style>
     `;
     

@@ -38,11 +38,22 @@ self.addEventListener('push', (event) => {
   const imageUrl = data.image_url || undefined;
   const deepLink = data.deep_link || '/';
 
+  const legacyIcon = 'https://noorapp.in/notification-icon.png';
+  const legacyBadge = 'https://noorapp.in/badge-icon.png';
+  const incomingIcon = data.icon || data.icon_url || '';
+  const incomingBadge = data.badge || data.badge_url || '';
+  const iconUrl = incomingIcon && incomingIcon !== legacyIcon && !incomingIcon.endsWith('/notification-icon.svg')
+    ? incomingIcon
+    : 'https://www.noorapp.in/notification-icon.png';
+  const badgeUrl = incomingBadge && incomingBadge !== legacyBadge && !incomingBadge.endsWith('/badge-icon.svg')
+    ? incomingBadge
+    : 'https://www.noorapp.in/badge-icon.png';
+
   const options = {
     body,
-    icon: data.icon || 'https://noorapp.in/notification-icon.png',
-    badge: data.badge || 'https://noorapp.in/badge-icon.png',
-    data: { deepLink },
+    icon: iconUrl,
+    badge: badgeUrl,
+    data: { deepLink, iconUrl, badgeUrl },
     ...(imageUrl ? { image: imageUrl } : {}),
   };
 

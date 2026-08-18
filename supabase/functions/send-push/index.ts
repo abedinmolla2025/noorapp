@@ -10,7 +10,11 @@ const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers":
     "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
+
+const DEFAULT_NOTIFICATION_ICON = "https://www.noorapp.in/notification-icon.png";
+const DEFAULT_NOTIFICATION_BADGE = "https://www.noorapp.in/badge-icon.png";
 
 type SendPushRequest = {
   notificationId: string;
@@ -174,8 +178,8 @@ async function sendWebPushMessage(opts: {
   const payload = JSON.stringify({
     title: opts.title,
     body: opts.body,
-    icon: opts.iconUrl || "https://noorapp.in/notification-icon.png",
-    badge: opts.badgeUrl || "https://noorapp.in/badge-icon.png",
+    icon: opts.iconUrl || DEFAULT_NOTIFICATION_ICON,
+    badge: opts.badgeUrl || DEFAULT_NOTIFICATION_BADGE,
     image_url: opts.imageUrl,
     deep_link: opts.deepLink,
   });
@@ -308,11 +312,13 @@ async function sendFcmMessage(opts: {
           body: opts.body,
           ...(opts.imageUrl ? { image_url: opts.imageUrl } : {}),
           ...(opts.deepLink ? { deep_link: opts.deepLink } : {}),
+          icon_url: DEFAULT_NOTIFICATION_ICON,
+          badge_url: DEFAULT_NOTIFICATION_BADGE,
         },
         android: {
           priority: "high",
           notification: {
-            icon: "notification_icon",
+            icon: "ic_notification_icon",
             color: "#0d9f6e",
             sound: "default",
           }

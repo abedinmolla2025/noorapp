@@ -9,7 +9,11 @@ async function createImage(src: string): Promise<HTMLImageElement> {
   return await new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
-    img.onload = () => resolve(img);
+    img.onload = () => {
+      // Keep the browser's intrinsic SVG dimensions. Forcing width/height here
+      // changes the coordinate system used by react-easy-crop and causes lean/blank exports.
+      resolve(img);
+    };
     img.onerror = reject;
     img.src = src;
   });
@@ -27,15 +31,30 @@ async function cropToBlob(params: {
   const { imageSrc, crop, outputType, quality, outputWidth, outputHeight, maskShape = "square" } = params;
 
   const image = await createImage(imageSrc);
+  
+  const sourceW = image.naturalWidth || image.width || 512;
+  const sourceH = image.naturalHeight || image.height || 512;
+
+  // react-easy-crop returns pixels in the image's intrinsic coordinate system.
+  // Clamp them so an SVG with a missing/implicit size cannot export a blank canvas.
+  const sx = Math.max(0, Math.min(sourceW - 1, crop.x));
+  const sy = Math.max(0, Math.min(sourceH - 1, crop.y));
+  const sw = Math.max(1, Math.min(sourceW - sx, crop.width));
+  const sh = Math.max(1, Math.min(sourceH - sy, crop.height));
+
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const ctx = canvas.getContext("2d", { alpha: true });
   if (!ctx) throw new Error("Canvas not supported");
 
+  // Calculate target dimensions
   const targetW = outputWidth ? Math.max(1, Math.floor(outputWidth)) : Math.max(1, Math.floor(crop.width));
   const targetH = outputHeight ? Math.max(1, Math.floor(outputHeight)) : Math.max(1, Math.floor(crop.height));
   canvas.width = targetW;
   canvas.height = targetH;
 
+  // Ensure high quality and transparency
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = "high";
 
   if (maskShape === "circle") {
@@ -47,12 +66,14 @@ async function cropToBlob(params: {
     ctx.clip();
   }
 
+  // Draw the image. 
+  // react-easy-crop provides crop in pixels relative to the image's "natural" size.
   ctx.drawImage(
     image,
-    crop.x,
-    crop.y,
-    crop.width,
-    crop.height,
+    sx,
+    sy,
+    sw,
+    sh,
     0,
     0,
     canvas.width,
@@ -81,7 +102,8 @@ export function ImageCropDialog(props: {
   maskShape?: "square" | "circle";
   showPositionPresets?: boolean;
   showShapePresets?: boolean;
-  onConfirm: (blob: Blob, meta?: { maskShape: "square" | "circle" }) => void | Promise<void>;
+  showAspectPresets?: boolean;
+  onConfirm: (blob: Blob, meta?: { maskShape: "square" | "circle"; aspect: number }) => void | Promise<void>;
 }) {
   const {
     open,
@@ -96,6 +118,7 @@ export function ImageCropDialog(props: {
     maskShape = "square",
     showPositionPresets = false,
     showShapePresets = false,
+    showAspectPresets = false,
     onConfirm,
   } = props;
 
@@ -104,11 +127,13 @@ export function ImageCropDialog(props: {
   const [croppedPixels, setCroppedPixels] = useState<Area | null>(null);
   const [saving, setSaving] = useState(false);
   const [selectedMaskShape, setSelectedMaskShape] = useState<"square" | "circle">(maskShape);
+  const [selectedAspect, setSelectedAspect] = useState(aspect);
 
   useEffect(() => {
     // Keep the dialog UI in sync with caller defaults.
     setSelectedMaskShape(maskShape);
-  }, [maskShape, open]);
+    setSelectedAspect(aspect);
+  }, [aspect, maskShape, open]);
 
   const disabled = useMemo(() => !imageSrc || !croppedPixels || saving, [imageSrc, croppedPixels, saving]);
 
@@ -130,7 +155,7 @@ export function ImageCropDialog(props: {
         outputHeight,
         maskShape: selectedMaskShape,
       });
-      await onConfirm(blob, { maskShape: selectedMaskShape });
+      await onConfirm(blob, { maskShape: selectedMaskShape, aspect: selectedAspect });
       onOpenChange(false);
     } finally {
       setSaving(false);
@@ -157,7 +182,7 @@ export function ImageCropDialog(props: {
                 image={imageSrc}
                 crop={crop}
                 zoom={zoom}
-                aspect={aspect}
+                aspect={selectedAspect}
                 cropShape={cropShape}
                 onCropChange={setCrop}
                 onZoomChange={setZoom}
@@ -173,6 +198,59 @@ export function ImageCropDialog(props: {
             </div>
             <Slider value={[zoom]} min={1} max={3} step={0.01} onValueChange={(v) => setZoom(v[0] ?? 1)} />
           </div>
+
+          {showAspectPresets ? (
+            <div className="grid gap-2">
+              <p className="text-sm font-medium">Logo format</p>
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  variant={selectedAspect === 3 / 1 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedAspect(3 / 1);
+                    setSelectedMaskShape("square");
+                  }}
+                >
+                  Wide 3:1
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedAspect === 16 / 9 ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedAspect(16 / 9);
+                    setSelectedMaskShape("square");
+                  }}
+                >
+                  Landscape 16:9
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedAspect === 1 && selectedMaskShape === "circle" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedAspect(1);
+                    setSelectedMaskShape("circle");
+                  }}
+                >
+                  Circle 1:1
+                </Button>
+                <Button
+                  type="button"
+                  variant={selectedAspect === 1 && selectedMaskShape === "square" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => {
+                    setSelectedAspect(1);
+                    setSelectedMaskShape("square");
+                  }}
+                >
+                  Square 1:1
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">The crop preview and exported file update to the selected format.</p>
+            </div>
+          ) : null}
 
           {showPositionPresets ? (
             <div className="grid gap-2">
@@ -196,7 +274,9 @@ export function ImageCropDialog(props: {
               </div>
               <p className="text-xs text-muted-foreground">Tip: drag inside the crop area for precise positioning.</p>
             </div>
-          ) : showShapePresets ? (
+          ) : null}
+
+          {showShapePresets && !showAspectPresets ? (
             <div className="grid gap-2">
               <p className="text-sm font-medium">Crop preset</p>
               <div className="flex flex-wrap gap-2">
@@ -217,7 +297,7 @@ export function ImageCropDialog(props: {
                   Square
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">Tip: drag inside the crop area for positioning.</p>
+              <p className="text-xs text-muted-foreground">Tip: drag inside the crop area for precise positioning.</p>
             </div>
           ) : null}
         </div>

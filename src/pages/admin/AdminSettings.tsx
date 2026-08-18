@@ -240,14 +240,29 @@ export default function AdminSettings() {
                     setBranding={setBranding}
                     seo={seo}
                     setSeo={setSeo}
+                    notifications={notifications}
+                    setNotifications={setNotifications}
                     onAutoSaveSetting={(key, value) => {
-                      updateSettingMutation.mutate({ key, value });
+                      const settingsKey = key === 'notifications' ? NOTIFICATIONS_KEY : key === 'seo' ? SEO_KEY : BRANDING_KEY;
+                      updateSettingMutation.mutate({ key: settingsKey, value });
                     }}
                   />
-                  <BrandingSeoLivePreview branding={branding} seo={seo} />
+                  <BrandingSeoLivePreview branding={branding} seo={seo} notifications={notifications} />
                 </div>
 
-                <div className="flex justify-end">
+                <div className="flex justify-end gap-2">
+                  <Button 
+                    variant="outline"
+                    onClick={() => {
+                      handleSave(BRANDING_KEY, branding);
+                      handleSave(SEO_KEY, seo);
+                      handleSave(NOTIFICATIONS_KEY, notifications);
+                    }}
+                    disabled={updateSettingMutation.isPending}
+                  >
+                    {updateSettingMutation.isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Save all assets
+                  </Button>
                   <Button 
                     onClick={() => handleSave(BRANDING_KEY, branding)}
                     disabled={updateSettingMutation.isPending}

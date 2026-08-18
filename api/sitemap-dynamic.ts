@@ -1,4 +1,4 @@
-const ORIGIN = "https://noorapp.in";
+const ORIGIN = "https://www.noorapp.in";
 
 type ResponseLike = {
   setHeader: (name: string, value: string) => void;

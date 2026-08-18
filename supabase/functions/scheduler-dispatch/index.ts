@@ -14,6 +14,34 @@ const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VAPID_PUBLIC = Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE = Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY")!;
 const FCM_JSON = (Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ?? "").trim();
+const DEFAULT_NOTIFICATION_ICON = "https://www.noorapp.in/notification-icon.png";
+const DEFAULT_NOTIFICATION_BADGE = "https://www.noorapp.in/badge-icon.png";
+
+function safeAssetUrl(value: unknown, fallback: string): string {
+  if (typeof value !== "string" || !value.trim()) return fallback;
+  try {
+    const url = new URL(value);
+    return url.protocol === "https:" ? url.toString() : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+async function getNotificationAssets(svc: ReturnType<typeof createClient>): Promise<{ icon: string; badge: string }> {
+  const { data } = await svc
+    .from("app_settings")
+    .select("setting_key, setting_value")
+    .in("setting_key", ["branding", "notifications"]);
+
+  const rows = new Map<string, any>((data ?? []).map((row: any) => [String(row.setting_key), row.setting_value ?? {}]));
+  const branding = rows.get("branding") ?? {};
+  const notifications = rows.get("notifications") ?? {};
+
+  return {
+    icon: safeAssetUrl(notifications.defaultIconUrl || branding.iconUrl, DEFAULT_NOTIFICATION_ICON),
+    badge: safeAssetUrl(notifications.defaultBadgeUrl || branding.faviconUrl, DEFAULT_NOTIFICATION_BADGE),
+  };
+}
 
 webpush.setVapidDetails(
   "https://noorapp.in",
@@ -225,7 +253,7 @@ async function pickContent(
 /* ---------------- web push delivery ---------------- */
 async function deliver(
   svc: ReturnType<typeof createClient>,
-  opts: { title: string; body: string; imageUrl: string | null; deepLink: string | null; target: string }
+  opts: { title: string; body: string; imageUrl: string | null; deepLink: string | null; target: string; iconUrl: string; badgeUrl: string }
 ): Promise<{ total: number; sent: number; failed: number }> {
   const hasFcm = !!FCM_JSON;
   const allowed = opts.target === "web"
@@ -255,8 +283,8 @@ async function deliver(
           JSON.stringify({
             title: opts.title,
             body: opts.body,
-            icon: "https://noorapp.in/notification-icon.png",
-            badge: "https://noorapp.in/badge-icon.png",
+            icon: opts.iconUrl,
+            badge: opts.badgeUrl,
             image_url: opts.imageUrl,
             deep_link: opts.deepLink,
           }),
@@ -297,11 +325,15 @@ async function deliver(
                 body: opts.body,
                 ...(opts.imageUrl ? { image_url: opts.imageUrl } : {}),
                 ...(opts.deepLink ? { deep_link: opts.deepLink } : {}),
+                icon_url: opts.iconUrl,
+                badge_url: opts.badgeUrl,
               },
               android: { 
                 priority: "high",
                 notification: {
-                  icon: "notification_icon",
+                  // FCM Android uses a drawable resource name, not a remote URL.
+                  // The web/PWA path receives the remote icon and badge in data below.
+                  icon: "ic_notification_icon",
                   color: "#0d9f6e",
                   sound: "default",
                 }
@@ -403,7 +435,8 @@ async function dispatchSchedule(svc: ReturnType<typeof createClient>, id: string
   }
 
   const startedAt = new Date().toISOString();
-  const { total, sent, failed } = await deliver(svc, { ...copy, imageUrl, deepLink, target: s.target });
+  const assets = await getNotificationAssets(svc);
+  const { total, sent, failed } = await deliver(svc, { ...copy, imageUrl, deepLink, target: s.target, iconUrl: assets.icon, badgeUrl: assets.badge });
   await svc.from("scheduler_notification_runs").insert({
     schedule_id: s.id,
     schedule_name: s.name,
@@ -421,9 +454,22 @@ async function dispatchSchedule(svc: ReturnType<typeof createClient>, id: string
 }
 
 /* ---------------- main handler ---------------- */
+const CORS_HEADERS = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+};
+
+function jsonResponse(payload: unknown, status = 200): Response {
+  return new Response(JSON.stringify(payload), {
+    status,
+    headers: { ...CORS_HEADERS, "Content-Type": "application/json" },
+  });
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: { "Access-Control-Allow-Origin": "*" } });
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
   const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
@@ -433,7 +479,7 @@ Deno.serve(async (req: Request) => {
     // Single schedule: admin test / preview
     if (typeof body.schedule_id === "string" && body.schedule_id) {
       const result = await dispatchSchedule(svc, body.schedule_id as string);
-      return new Response(JSON.stringify(result), { status: 200, headers: { "Content-Type": "application/json" } });
+      return jsonResponse(result);
     }
 
     // Bulk: pg_cron dispatch
@@ -444,7 +490,7 @@ Deno.serve(async (req: Request) => {
       .eq("enabled", true)
       .lte("next_run_at", nowIso)
       .limit(20);
-    if (dueErr) return new Response(JSON.stringify({ ok: false, error: dueErr.message }), { status: 500, headers: { "Content-Type": "application/json" } });
+    if (dueErr) return jsonResponse({ ok: false, error: dueErr.message }, 500);
 
     const results: { id: string; name: string; total?: number; sent?: number; failed?: number }[] = [];
     for (const row of due ?? []) {
@@ -461,8 +507,8 @@ Deno.serve(async (req: Request) => {
       await svc.from("scheduler_schedules").update({ next_run_at: next ?? null }).eq("id", s.id);
     }
 
-    return new Response(JSON.stringify({ ok: true, dispatched: results.length, results }), { status: 200, headers: { "Content-Type": "application/json" } });
+    return jsonResponse({ ok: true, dispatched: results.length, results });
   } catch (e) {
-    return new Response(JSON.stringify({ ok: false, error: e instanceof Error ? e.message : String(e) }), { status: 500, headers: { "Content-Type": "application/json" } });
+    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
 });

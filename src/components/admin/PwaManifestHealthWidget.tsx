@@ -6,7 +6,12 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 
-const MANIFEST_URL = "https://noorapp.in/manifest.json";
+const MANIFEST_PATH = "/manifest.json";
+
+function manifestUrl(): string {
+  if (typeof window === "undefined") return MANIFEST_PATH;
+  return new URL(MANIFEST_PATH, window.location.origin).toString();
+}
 
 type IconCheck = {
   src: string;
@@ -134,7 +139,7 @@ export default function PwaManifestHealthWidget() {
     setReport((r) => ({ ...r, status: "loading" }));
 
     try {
-      const res = await fetch(`${MANIFEST_URL}?_=${Date.now()}`, { cache: "no-store" });
+      const res = await fetch(`${MANIFEST_PATH}?_=${Date.now()}`, { cache: "no-store" });
       if (!res.ok) throw new Error(`Manifest HTTP ${res.status}`);
       const json = await res.json();
       const icons = Array.isArray(json?.icons) ? json.icons : [];
@@ -223,7 +228,7 @@ export default function PwaManifestHealthWidget() {
           </Button>
         </div>
         <p className="text-xs text-muted-foreground mt-1 break-all">
-          Source: <span className="font-mono">{MANIFEST_URL}</span>
+          Source: <span className="font-mono">{manifestUrl()}</span>
         </p>
         {report.checkedAt ? (
           <p className="text-xs text-muted-foreground">Last checked: {report.checkedAt}</p>

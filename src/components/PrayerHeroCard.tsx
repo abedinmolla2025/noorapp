@@ -168,12 +168,12 @@ const PrayerHeroCard = ({ prayerData, athanSettings }: PrayerHeroCardProps) => {
                 {brandingLoaded && (
                 <div className="flex items-center gap-2">
                   <div className="flex items-center gap-1.5">
-                    <div className="relative w-10 h-10 flex-shrink-0">
+                    <div className="relative h-10 flex-shrink-0 flex items-center">
                       <div className="absolute -inset-0.5 bg-white rounded-full blur-sm opacity-25" />
                       <button
                         type="button"
                         aria-label="NOOR logo"
-                        className="relative z-10 block rounded-full"
+                        className="relative z-10 block"
                         onClick={(e) => {
                           // prevent navigating to /prayer-times when triggering admin unlock
                           e.stopPropagation();
@@ -189,7 +189,7 @@ const PrayerHeroCard = ({ prayerData, athanSettings }: PrayerHeroCardProps) => {
                         <img
                           src={branding.logoUrl || noorLogo}
                           alt={branding.appName || "NOOR Logo"}
-                          className="w-10 h-10 rounded-full object-cover"
+                          className="h-10 w-auto max-w-[120px] object-contain"
                           onError={(event) => {
                             const image = event.currentTarget;
                             if (image.src !== noorLogo) {
@@ -197,7 +197,10 @@ const PrayerHeroCard = ({ prayerData, athanSettings }: PrayerHeroCardProps) => {
                               image.src = noorLogo;
                             }
                           }}
-                          style={{ boxShadow: "0 0 8px 2px rgba(255, 255, 255, 0.25)" }}
+                          style={{ 
+                            filter: "drop-shadow(0 0 4px rgba(255, 255, 255, 0.4))",
+                            borderRadius: branding.logoUrl?.includes("circle") ? "9999px" : "4px"
+                          }}
                         />
                       </button>
                     </div>

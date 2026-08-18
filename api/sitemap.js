@@ -1,4 +1,4 @@
-const ORIGIN = "https://noorapp.in";
+const ORIGIN = "https://www.noorapp.in";
 
 function xmlEscape(value) {
   return String(value)

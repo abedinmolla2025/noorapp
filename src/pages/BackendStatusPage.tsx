@@ -1,5 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
-import { createClient } from "@supabase/supabase-js";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowLeft, RefreshCw, ShieldCheck, ShieldX } from "lucide-react";
 
@@ -8,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, supabasePublic } from "@/integrations/supabase/client";
 
 type CheckStatus = "pending" | "pass" | "fail";
 
@@ -58,20 +57,8 @@ const BackendStatusPage = () => {
     { key: "rpc_is_admin", label: "DB function: is_admin(user)", status: "pending" },
   ]);
 
-  const anonClient = useMemo(() => {
-    const url = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-    const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined;
-
-    if (!url || !key) return null;
-
-    return createClient(url, key, {
-      auth: {
-        persistSession: false,
-        autoRefreshToken: false,
-        detectSessionInUrl: false,
-      },
-    });
-  }, []);
+  // Reuse the app-wide session-free client to avoid multiple GoTrueClient instances.
+  const anonClient = supabasePublic;
 
   const setCheck = (key: string, patch: Partial<DiagnosticCheck>) => {
     setChecks((prev) => prev.map((c) => (c.key === key ? { ...c, ...patch } : c)));

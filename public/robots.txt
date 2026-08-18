@@ -15,4 +15,4 @@ Allow: /
 Disallow: /admin/
 Disallow: /api/
 
-Sitemap: https://noorapp.in/sitemap.xml
+Sitemap: https://www.noorapp.in/sitemap.xml

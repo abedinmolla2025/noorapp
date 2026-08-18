@@ -13,7 +13,7 @@ import {
 import { useState, useRef } from "react";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { Send, History as HistoryIcon, Zap, Moon, Upload, X } from "lucide-react";
+import { Send, History as HistoryIcon, Zap, Moon, Upload, X, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
@@ -104,6 +104,7 @@ const AdminNotifications = () => {
 
         const res = await supabase.functions.invoke("send-push", {
           body: { notificationId: inserted.id, platform: targetPlatform },
+          headers: { Authorization: `Bearer ${token}` },
         });
 
         if (res.error) {
@@ -254,7 +255,7 @@ const AdminNotifications = () => {
             Create and send push notifications to NOOR users
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Button variant="outline" size="sm" asChild>
             <Link to="/admin/notifications/history">
               <HistoryIcon className="h-4 w-4 mr-2" />
@@ -265,6 +266,12 @@ const AdminNotifications = () => {
             <Link to="/admin/notifications/diagnostics">
               <Zap className="h-4 w-4 mr-2" />
               Diagnostics
+            </Link>
+          </Button>
+          <Button variant="default" size="sm" className="bg-emerald-600 hover:bg-emerald-700" asChild>
+            <Link to="/admin/scheduler">
+              <Calendar className="h-4 w-4 mr-2" />
+              Scheduler
             </Link>
           </Button>
         </div>

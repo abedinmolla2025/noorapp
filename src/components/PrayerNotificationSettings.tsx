@@ -8,7 +8,7 @@ import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { Bell, MapPin, Clock, Loader2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
-import { supabase } from "@/integrations/supabase/client";
+import { supabasePublic } from "@/integrations/supabase/client";
 
 const PREFERENCES_STORAGE_KEY = "noor_prayer_notification_preferences";
 const DEVICE_ID_KEY = "noor_device_id";
@@ -132,7 +132,7 @@ export function PrayerNotificationSettings() {
         updated_at: new Date().toISOString(),
       };
 
-      const { error } = await supabase
+      const { error } = await supabasePublic
         .from("user_notification_preferences" as any)
         .upsert(payload as any, { onConflict: "device_id" });
 

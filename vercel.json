@@ -54,6 +54,8 @@
     { "source": "/ads.txt", "destination": "/ads.txt" },
     { "source": "/manifest.json", "destination": "/manifest.json" },
     { "source": "/sw.js", "destination": "/sw.js" },
+    { "source": "/admin", "destination": "/app.html" },
+    { "source": "/admin/:path*", "destination": "/app.html" },
     { "source": "/(.*\\.png)", "destination": "/$1" },
     { "source": "/(.*\\.jpg)", "destination": "/$1" },
     { "source": "/(.*\\.jpeg)", "destination": "/$1" },
