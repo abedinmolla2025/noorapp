@@ -318,9 +318,16 @@ export function SeoHead() {
   const canonicalPath = normalizedPath === "/names" ? "/baby-names" : normalizedPath;
   // IMPORTANT: We ignore pageSeo?.canonical_url if it points to the homepage while the current route is NOT the homepage.
   // This prevents the "Crawled - currently not indexed" issue caused by stale DB overrides.
-  const rawDbCanonical = pageSeo?.canonical_url;
+  const rawDbCanonical = pageSeo?.canonical_url?.trim();
+  // Database overrides may contain legacy www, preview, or unrelated hosts.
+  // Only a canonical URL on the production non-www host may override this route.
+  const isProductionCanonical = rawDbCanonical === SITE_ORIGIN
+    || rawDbCanonical === `${SITE_ORIGIN}/`
+    || rawDbCanonical?.startsWith(`${SITE_ORIGIN}/`);
   const isHomepageCanonical = rawDbCanonical === SITE_ORIGIN || rawDbCanonical === `${SITE_ORIGIN}/`;
-  const shouldUseDbCanonical = rawDbCanonical && (!isHomepageCanonical || normalizedPath === "/");
+  const shouldUseDbCanonical = Boolean(
+    rawDbCanonical && isProductionCanonical && (!isHomepageCanonical || normalizedPath === "/"),
+  );
 
   const canonical = sanitizeCanonical(
     shouldUseDbCanonical ? rawDbCanonical : `${SITE_ORIGIN}${canonicalPath}`,
