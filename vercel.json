@@ -2,6 +2,7 @@
   "trailingSlash": false,
   "redirects": [
     { "source": "/privacy", "destination": "/privacy-policy", "statusCode": 301 },
+    { "source": "/data-sources", "destination": "/sources", "statusCode": 301 },
     { "source": "/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
     { "source": "/hadith/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
     { "source": "/sahih-al-bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
@@ -34,7 +35,7 @@
       "source": "/sitemap(.*).xml",
       "headers": [
         { "key": "Content-Type", "value": "application/xml; charset=utf-8" },
-        { "key": "Cache-Control", "value": "public, max-age=3600, s-maxage=86400" }
+        { "key": "Cache-Control", "value": "public, max-age=0, s-maxage=300, stale-while-revalidate=300" }
       ]
     }
   ],

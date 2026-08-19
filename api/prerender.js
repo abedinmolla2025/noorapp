@@ -2,7 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 
-const SITE_ORIGIN = "https://www.noorapp.in";
+const SITE_ORIGIN = "https://noorapp.in";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
 
@@ -134,6 +134,36 @@ const esc = (s) => {
     .replace(/"/g, "&quot;")
     .replace(/'/g, "&#039;");
 };
+
+const shortenMetaText = (value, limit) => {
+  const text = String(value || "").trim().replace(/\s+/g, " ");
+  if (text.length <= limit) return text;
+  const clipped = text.slice(0, limit + 1);
+  const boundary = clipped.lastIndexOf(" ");
+  return (boundary > 25 ? clipped.slice(0, boundary) : clipped.slice(0, limit)).replace(/[\s,;:—–-]+$/u, "").trim();
+};
+
+const uniqueStoryTitle = (value) => {
+  const base = String(value || "Islamic Story")
+    .trim()
+    .replace(/(?:\s*\|\s*Noor(?:\s*App)?)+$/iu, "")
+    .trim();
+  return shortenMetaText(`${base} | Noor`, 70);
+};
+
+const enrichStoryDescription = (value, title) => {
+  const base = String(value || "").trim().replace(/\s+/g, " ");
+  const expanded = base.length >= 90
+    ? base
+    : `${base || title} — read this Islamic story, its authentic lesson and reflection on Noor.`;
+  return shortenMetaText(expanded, 160);
+};
+
+const storyFallbackLabel = (slug) => String(slug || "islamic-story")
+  .split("-")
+  .filter(Boolean)
+  .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+  .join(" ");
 
 const ISLAMIC_PATTERN_HTML = ISLAMIC_PATTERN.replace(/"/g, "&quot;");
 const HADITH_CARD_STYLE = `background-image: ${ISLAMIC_PATTERN_HTML}, linear-gradient(to bottom right, hsl(158,55%,25%), hsl(158,64%,20%))`;
@@ -587,6 +617,7 @@ export default async function handler(req, res) {
     if (routePath === "/") {
       bodyContent = `
         <div class="min-h-screen bg-background px-4 pb-28 pt-5 text-foreground" data-noor-ssr-home role="status" aria-live="polite" aria-label="Loading page">
+          <h1 class="sr-only">Noor Islamic App — Quran, Hadith, Dua and Prayer Times</h1>
           <div class="mx-auto w-full max-w-2xl">
             <div class="flex items-center justify-between gap-4 px-1 py-2">
               <div class="flex items-center gap-3 min-w-0">
@@ -705,7 +736,11 @@ export default async function handler(req, res) {
           if (json.code === 200) {
             const ar = json.data[0];
             const bn = json.data[1];
-            title = `Surah ${ar.englishName} (${ar.name}) — বাংলা অর্থ ও আরবি | Noor`;
+            title = shortenMetaText(`Surah ${ar.englishName} (${ar.name}) — বাংলা অর্থ ও আরবি | Noor`, 70);
+            description = shortenMetaText(
+              `Read Surah ${ar.englishName}, the ${ar.numberOfAyahs}-verse chapter of the Holy Quran, with Arabic text and Bengali translation on Noor.`,
+              160,
+            );
             
             const ayahs = ar.ayahs.map((a, i) => `
               <div class="p-6 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
@@ -800,9 +835,16 @@ export default async function handler(req, res) {
         const chapterMap = new Map(chapterList.map((chapter) => [Number(chapter.chapter_number), chapter]));
         const rows = await loadHadithRowsSsr(lang, chapterId);
         const currentChapter = chapterId ? chapterMap.get(chapterId) : null;
-        const pageTitle = currentChapter ? `${getHadithChapterName(currentChapter, lang)} — ${meta.label} | Noor` : `${meta.title} — ${meta.label} | Noor`;
-        title = pageTitle;
-        description = `${meta.title} ${meta.subtitle}. Read authentic Hadith on Noor.`;
+        const chapterName = currentChapter
+          ? getHadithChapterName(currentChapter, lang)
+          : (chapterId ? `${meta.title} — Chapter ${chapterId}` : meta.title);
+        title = shortenMetaText(`${chapterName} — ${meta.label} | Noor`, 70);
+        description = shortenMetaText(
+          chapterId
+            ? `Read ${chapterName}, chapter ${chapterId} of Sahih Al-Bukhari in ${meta.label}, with authentic Arabic Hadith and translation on Noor.`
+            : `${meta.title} ${meta.subtitle}. Browse authentic Hadith chapters with Arabic text and translation on Noor.`,
+          160,
+        );
         canonicalUrl = `${SITE_ORIGIN}${routePath}`;
 
         const detail = hadithNumber ? rows.find((row) => row.number === hadithNumber) : null;
@@ -845,6 +887,7 @@ export default async function handler(req, res) {
     // --- Hadith Root Page ---
     else if (routePath === "/hadith") {
       title = "Hadith Collections — হাদিস সংকলন | Noor";
+      description = "Browse authentic Hadith collections on Noor, including Sahih Al-Bukhari with Arabic text and Bengali, English and Urdu translations.";
       bodyContent = `
         <div class="min-h-screen bg-background">
           <header class="bg-gradient-to-br from-amber-500 to-orange-600 p-8 text-white text-center">
@@ -1010,7 +1053,8 @@ export default async function handler(req, res) {
 
     // --- Stories Root Page ---
     else if (routePath === "/stories") {
-      title = "Islamic Stories | NoorApp";
+      title = "Islamic Stories | Noor";
+      description = "Read Islamic stories of the Prophets, Sahaba and inspiring lessons of faith, character and mercy on Noor.";
       
       const { data: stories } = await supabase
         .from("admin_content")
@@ -1064,8 +1108,8 @@ export default async function handler(req, res) {
         const sourceLabel = story.reference || story.source_detail || story.source_name || "Islamic source reference";
         const moral = story.moral_bn || story.moral_en || "আল্লাহর উপর ভরসা, সত্য ও উত্তম চরিত্রের শিক্ষা গ্রহণ করুন।";
 
-        title = `${story.seo?.title || storyTitle} | NoorApp`;
-        description = storyDescription;
+        title = uniqueStoryTitle(story.seo?.title || storyTitle);
+        description = enrichStoryDescription(storyDescription, storyTitle);
         req.storyOgImage = ogImage;
 
         bodyContent = `
@@ -1090,6 +1134,10 @@ export default async function handler(req, res) {
             </article>
           </div>
         `;
+      } else {
+        const fallbackTitle = storyFallbackLabel(slug);
+        title = uniqueStoryTitle(`${fallbackTitle} | Islamic Story`);
+        description = enrichStoryDescription("", fallbackTitle);
       }
     }
 
@@ -1104,6 +1152,7 @@ export default async function handler(req, res) {
     // --- Contact Page ---
     else if (routePath === "/contact") {
       title = "Contact Us | Noor";
+      description = "Contact Noor support for help with Quran, Hadith, Dua, prayer times, account questions and feedback about the Islamic app.";
       bodyContent = `
         <div class="min-h-screen bg-background p-4">
           <header class="mb-8">
@@ -1179,7 +1228,8 @@ export default async function handler(req, res) {
     });
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
-    res.setHeader("Cache-Control", "public, s-maxage=31536000, stale-while-revalidate=604800, max-age=3600");
+    // Metadata changes must reach Googlebot and visitors promptly after each release.
+    res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=300");
     res.setHeader("X-Noor-Prerender", "v101");
     res.setHeader("X-Noor-OG-Image", req.storyOgImage || "default");
     res.status(200).send(finalHtml);
