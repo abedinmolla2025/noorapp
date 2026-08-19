@@ -823,9 +823,9 @@ export default async function handler(req, res) {
         const meta = HADITH_LANG_META[lang];
         const chapterToken = parts[3] || "";
         const hadithToken = parts[4] || "";
-        const chapterMatch = chapterToken.match(/^(?:chapter-)?(\\d+)$/);
+        const chapterMatch = chapterToken.match(/^(?:chapter-)?(\d+)$/);
         const chapterId = chapterMatch ? Number(chapterMatch[1]) : null;
-        const hadithNumber = /^\\d+$/.test(hadithToken) ? Number(hadithToken) : null;
+        const hadithNumber = /^\d+$/.test(hadithToken) ? Number(hadithToken) : null;
         const { data: chapterData } = await supabase
           .from("hadith_chapters")
           .select("chapter_number, title, title_bn, title_ar, hadith_count")
