@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { useNavigate, useParams, Link } from "react-router-dom";
+import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { ArrowLeft, BookOpen, Sparkles, Heart, Star, Clock, ScrollText, ChevronRight, ChevronLeft, Share2, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -268,7 +268,6 @@ type NavSibling = { slug: string; title: string };
 
 const DuaDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
   const { toast } = useToast();
   const [dua, setDua] = useState<DuaRow | null>(null);
   const [related, setRelated] = useState<DuaRow[]>([]);
@@ -493,9 +492,14 @@ const DuaDetailPage = () => {
       <div className="min-h-screen bg-[hsl(158,64%,18%)] flex flex-col items-center justify-center p-6 text-center">
         <Helmet><meta name="robots" content="noindex" /></Helmet>
         <p className="text-white text-lg mb-4">এই দোয়াটি খুঁজে পাওয়া যায়নি।</p>
-        <Link to="/dua" className="px-4 py-2 rounded-full bg-[hsl(45,93%,58%)] text-[hsl(158,64%,15%)] font-medium">
-          সব দোয়া দেখুন
-        </Link>
+        <div className="flex items-center justify-center gap-3">
+          <Link to="/dua" className="px-4 py-2 rounded-full bg-[hsl(45,93%,58%)] text-[hsl(158,64%,15%)] font-medium">
+            সব দোয়া দেখুন
+          </Link>
+          <Link to="/" className="px-4 py-2 rounded-full border border-white/30 text-white font-medium hover:bg-white/10">
+            হোমে যান
+          </Link>
+        </div>
       </div>
     );
   }
@@ -540,17 +544,34 @@ const DuaDetailPage = () => {
         style={{ backgroundImage: ISLAMIC_PATTERN }}
       >
         <div className="flex items-center gap-3 px-4 py-4">
-          <button
-            onClick={() => navigate(-1)}
+          {/* Social deep links have no in-app history. Always return visitors to
+              the Dua collection rather than sending them back to the share app. */}
+          <Link
+            to="/dua"
             className="p-2 -ml-2 hover:bg-white/10 rounded-full transition-colors"
-            aria-label="Back"
+            aria-label="দোয়া সংকলনে ফিরুন"
+            title="সব দোয়া"
           >
             <ArrowLeft className="w-5 h-5 text-white" />
-          </button>
+          </Link>
           <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-[hsl(45,93%,58%)] to-[hsl(45,93%,48%)] flex items-center justify-center">
             <BookOpen className="w-4 h-4 text-[hsl(158,64%,15%)]" />
           </div>
-          <h1 className="text-xl font-bold text-white truncate">{text.title}</h1>
+          <h1 className="min-w-0 flex-1 text-xl font-bold text-white truncate">{text.title}</h1>
+          <nav className="flex shrink-0 items-center gap-1" aria-label="দ্রুত নেভিগেশন">
+            <Link
+              to="/dua"
+              className="rounded-full bg-white/10 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-white/20"
+            >
+              দোয়া
+            </Link>
+            <Link
+              to="/"
+              className="rounded-full border border-white/20 px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-white/10"
+            >
+              হোম
+            </Link>
+          </nav>
         </div>
 
         {/* Language Selector */}
