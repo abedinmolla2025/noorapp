@@ -838,7 +838,17 @@ export default async function handler(req, res) {
         const chapterName = currentChapter
           ? getHadithChapterName(currentChapter, lang)
           : (chapterId ? `${meta.title} — Chapter ${chapterId}` : meta.title);
-        title = shortenMetaText(`${chapterName} — ${meta.label} | Noor`, 70);
+        const chapterOrdinal = lang === "bangla"
+          ? `অধ্যায় ${chapterId}`
+          : lang === "urdu"
+            ? `باب ${chapterId}`
+            : `Chapter ${chapterId}`;
+        title = shortenMetaText(
+          chapterId
+            ? `${chapterName} (${chapterOrdinal}) — ${meta.label} | Noor`
+            : `${chapterName} — ${meta.label} | Noor`,
+          70,
+        );
         description = shortenMetaText(
           chapterId
             ? `Read ${chapterName}, chapter ${chapterId} of Sahih Al-Bukhari in ${meta.label}, with authentic Arabic Hadith and translation on Noor.`
