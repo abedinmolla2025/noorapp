@@ -1,6 +1,23 @@
-import { PlayCircle } from "lucide-react";
+import {
+  Home,
+  BookOpen,
+  Clock,
+  Calendar,
+  ScrollText,
+  PlayCircle,
+  Info,
+  Mail,
+  ShieldCheck,
+  FileText,
+  LayoutGrid,
+  HandHeart,
+  Star,
+  Baby,
+  HelpCircle,
+  Navigation,
+  BookMarked,
+} from "lucide-react";
 import { useMemo } from "react";
-import PremiumIcon, { type PremiumIconName } from "./PremiumIcon";
 
 export type FooterLinksSettings = {
   playStoreUrl?: string;
@@ -13,29 +30,29 @@ export type FooterLinksSettings = {
   developerLine?: string;
 };
 
-const coreLinks: Array<{ label: string; path: string; icon: PremiumIconName }> = [
-  { label: "Home", path: "/", icon: "home" },
-  { label: "Quran", path: "/quran", icon: "quran" },
-  { label: "Hadith", path: "/hadith", icon: "hadith" },
-  { label: "Dua", path: "/dua", icon: "dua" },
-  { label: "Islamic Quiz", path: "/quiz", icon: "quiz" },
+const coreLinks = [
+  { label: "Home", path: "/", icon: Home },
+  { label: "Quran", path: "/quran", icon: BookOpen },
+  { label: "Hadith", path: "/hadith", icon: ScrollText },
+  { label: "Dua", path: "/dua", icon: HandHeart },
+  { label: "Islamic Quiz", path: "/quiz", icon: HelpCircle },
 ];
 
-const toolLinks: Array<{ label: string; path: string; icon: PremiumIconName }> = [
-  { label: "Prayer Times", path: "/prayer-times", icon: "prayer-times" },
-  { label: "Islamic Calendar", path: "/calendar", icon: "calendar" },
-  { label: "99 Names of Allah", path: "/99-names", icon: "names" },
-  { label: "Baby Names", path: "/baby-names", icon: "baby" },
-  { label: "Qibla Finder", path: "/qibla", icon: "qibla" },
+const toolLinks = [
+  { label: "Prayer Times", path: "/prayer-times", icon: Clock },
+  { label: "Islamic Calendar", path: "/calendar", icon: Calendar },
+  { label: "99 Names of Allah", path: "/99-names", icon: Star },
+  { label: "Baby Names", path: "/baby-names", icon: Baby },
+  { label: "Qibla Finder", path: "/qibla", icon: Navigation },
 ];
 
-const companyLinks: Array<{ label: string; path: string; icon: PremiumIconName }> = [
-  { label: "About Us", path: "/about", icon: "about" },
-  { label: "Contact Us", path: "/contact", icon: "contact" },
-  { label: "Privacy Policy", path: "/privacy-policy", icon: "privacy" },
-  { label: "Terms", path: "/terms", icon: "terms" },
-  { label: "Data Sources", path: "/sources", icon: "sources" },
-  { label: "Sitemap", path: "/sitemap", icon: "sitemap" },
+const companyLinks = [
+  { label: "About Us", path: "/about", icon: Info },
+  { label: "Contact Us", path: "/contact", icon: Mail },
+  { label: "Privacy Policy", path: "/privacy-policy", icon: ShieldCheck },
+  { label: "Terms", path: "/terms", icon: FileText },
+  { label: "Data Sources", path: "/sources", icon: BookMarked },
+  { label: "Sitemap", path: "/sitemap", icon: LayoutGrid },
 ];
 
 export default function FooterSection({
@@ -56,7 +73,8 @@ export default function FooterSection({
     [settings?.websiteUrl]
   );
 
-  const renderLink = (link: { label: string; path: string; icon: PremiumIconName; external?: boolean }) => {
+  const renderLink = (link: { label: string; path: string; icon: React.ElementType; external?: boolean }) => {
+    const Icon = link.icon;
     const cls =
       "inline-flex items-center gap-2 text-[13px] leading-none text-muted-foreground transition-all duration-150 hover:text-primary hover:scale-[1.02] active:scale-[0.98]";
 
@@ -64,7 +82,7 @@ export default function FooterSection({
       return (
         <li key={link.path}>
           <a href={link.path} target="_blank" rel="noreferrer" className={cls}>
-            <PremiumIcon name={link.icon} className="h-[20px] w-[20px] shrink-0" />
+            <Icon className="h-[15px] w-[15px] shrink-0" />
             {link.label}
           </a>
         </li>

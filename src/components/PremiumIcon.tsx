@@ -1,9 +1,7 @@
 import React from 'react';
 
-export type PremiumIconName = 'home' | 'quran' | 'hadith' | 'calendar' | 'support' | 'settings' | 'dua' | 'quiz' | 'prayer-times' | 'names' | 'baby' | 'qibla' | 'about' | 'contact' | 'privacy' | 'terms' | 'sources' | 'sitemap';
-
 interface PremiumIconProps {
-  name: PremiumIconName;
+  name: 'home' | 'quran' | 'hadith' | 'calendar' | 'support' | 'settings';
   className?: string;
   active?: boolean;
 }
