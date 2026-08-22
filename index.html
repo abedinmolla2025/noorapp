@@ -12,13 +12,15 @@
     <meta name="msvalidate.01" content="BD28A1AD6076D784011352F0CB5D0B75" />
     
     <!-- Icons & Manifest -->
-    <link rel="icon" type="image/png" sizes="32x32" href="/pwa-icon-192.png?v=2" />
-    <link rel="icon" type="image/png" sizes="16x16" href="/pwa-icon-192.png?v=2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/pwa-icon-192.png?v=2" />
-    <link rel="shortcut icon" href="/favicon.ico?v=2" />
+    <!-- Dedicated small favicon sizes prevent Google/browser downscaling from a padded PWA icon. -->
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png?v=3" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png?v=3" />
+    <link rel="icon" type="image/png" sizes="48x48" href="/favicon-48.png?v=3" />
+    <link rel="shortcut icon" href="/favicon.ico?v=3" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=3" />
     
     <!-- Static fallback manifest; overridden dynamically by GlobalConfigContext -->
-    <link rel="manifest" href="/manifest.json?v=2" />
+    <link rel="manifest" href="/manifest.json?v=3" />
 
     <!-- Premium Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
