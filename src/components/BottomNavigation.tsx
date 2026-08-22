@@ -49,7 +49,7 @@ const navItems: NavItem[] = [
   {
     id: "support",
     iconName: "support",
-    label: "Help & Support",
+    label: "Help",
     labelBn: "সহায়তা",
     path: "/contact",
   },
