@@ -46,7 +46,7 @@ export type Story = {
   image_url?: string;
   og_image_url?: string;
   og_image_data?: { url?: string; image_url?: string };
-  audio_embed_code?: string;
+  audio_url?: string;
   audio_trailer_url?: string;
 };
 
@@ -112,7 +112,7 @@ function rowToStory(row: any, index: number): Story {
     reading_time_minutes: row.reading_time_minutes ?? meta.reading_time_minutes ?? undefined,
     is_featured: row.is_featured ?? meta.is_featured ?? undefined,
     og_image_url: row.image_url ?? row.og_image_url ?? meta.og_image_url ?? meta.og_image_data?.url ?? meta.og_image_data?.image_url ?? row.seo?.open_graph?.["og:image"] ?? undefined,
-    audio_embed_code: row.audio_embed_code ?? undefined,
+    audio_url: row.audio_url ?? undefined,
     audio_trailer_url: row.audio_trailer_url ?? undefined,
     updated_at: row.updated_at ?? undefined,
   };

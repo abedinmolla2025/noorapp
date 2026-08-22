@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
@@ -77,76 +77,66 @@ export default function StoryDetailPage() {
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  const [audioError, setAudioError] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   const location = useLocation();
   const isTrailerMode = new URLSearchParams(location.search).get("trailer") === "true" || location.pathname.endsWith("/trailer");
 
   useEffect(() => {
-    // Load SoundCloud Widget API
-    const script = document.createElement("script");
-    script.src = "https://w.soundcloud.com/player/api.js";
-    script.async = true;
-    document.body.appendChild(script);
+    const audio = audioRef.current;
+    if (!audio) return;
 
-    script.onload = () => {
-      const iframe = document.getElementById("sc-player") as HTMLIFrameElement;
-      if (iframe && (window as any).SC) {
-        const widget = (window as any).SC.Widget(iframe);
-        
-        widget.bind((window as any).SC.Widget.Events.READY, () => {
-          widget.getDuration((d: number) => setDuration(d));
-        });
+    audio.pause();
+    audio.currentTime = 0;
+    setIsPlaying(false);
+    setCurrentTime(0);
+    setDuration(0);
+    setAudioError(false);
 
-        widget.bind((window as any).SC.Widget.Events.PLAY_PROGRESS, (event: any) => {
-          setCurrentTime(event.currentPosition);
-        });
-
-        widget.bind((window as any).SC.Widget.Events.PLAY, () => setIsPlaying(true));
-        widget.bind((window as any).SC.Widget.Events.PAUSE, () => setIsPlaying(false));
-        widget.bind((window as any).SC.Widget.Events.FINISH, () => {
-          setIsPlaying(false);
-          setCurrentTime(0);
-        });
-      }
-    };
+    if (story?.audio_url) {
+      audio.src = story.audio_url;
+      audio.load();
+    } else {
+      audio.removeAttribute("src");
+      audio.load();
+    }
 
     return () => {
-      if (document.body.contains(script)) {
-        document.body.removeChild(script);
-      }
+      audio.pause();
     };
-  }, [story?.audio_embed_code]);
+  }, [story?.audio_url]);
 
   const togglePlay = () => {
-    const iframe = document.getElementById("sc-player") as HTMLIFrameElement;
-    if (!iframe) return;
-    const widget = (window as any).SC.Widget(iframe);
-    widget.toggle();
+    const audio = audioRef.current;
+    if (!audio || !story?.audio_url) return;
+    if (audio.paused) {
+      audio.play().catch(() => setAudioError(true));
+    } else {
+      audio.pause();
+    }
   };
 
   const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
-    const iframe = document.getElementById("sc-player") as HTMLIFrameElement;
-    if (!iframe) return;
-    const widget = (window as any).SC.Widget(iframe);
-    widget.seekTo(time);
+    const time = Number(e.target.value);
+    const audio = audioRef.current;
+    if (!audio || !Number.isFinite(time)) return;
+    audio.currentTime = time;
     setCurrentTime(time);
   };
 
   const seekOffset = (seconds: number) => {
-    const iframe = document.getElementById("sc-player") as HTMLIFrameElement;
-    if (!iframe) return;
-    const widget = (window as any).SC.Widget(iframe);
-    widget.getPosition((pos: number) => {
-      widget.seekTo(pos + seconds * 1000);
-    });
+    const audio = audioRef.current;
+    if (!audio) return;
+    audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + seconds));
+    setCurrentTime(audio.currentTime);
   };
 
-  const formatTime = (ms: number) => {
-    if (!ms) return "0:00";
-    const totalSeconds = Math.floor(ms / 1000);
+  const formatTime = (seconds: number) => {
+    if (!seconds || !Number.isFinite(seconds)) return "0:00";
+    const totalSeconds = Math.floor(seconds);
     const minutes = Math.floor(totalSeconds / 60);
-    const seconds = totalSeconds % 60;
-    return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    const remainder = totalSeconds % 60;
+    return `${minutes}:${remainder.toString().padStart(2, "0")}`;
   };
 
   if (!loading && !story) {
@@ -510,10 +500,10 @@ export default function StoryDetailPage() {
             <img 
               src={ogImage} 
               alt={story.title_en} 
-              className={`w-full aspect-video object-cover transition-all duration-700 ${story.audio_embed_code ? 'group-hover:scale-105 group-hover:brightness-[0.3] brightness-[0.8]' : ''}`}
+              className={`w-full aspect-video object-cover transition-all duration-700 ${story.audio_url ? 'group-hover:scale-105 group-hover:brightness-[0.3] brightness-[0.8]' : ''}`}
             />
             
-            {story.audio_embed_code && (
+            {story.audio_url && (
               <div className="absolute inset-0 flex flex-col items-center justify-center p-6 text-white opacity-0 group-hover:opacity-100 transition-all duration-500 transform translate-y-4 group-hover:translate-y-0">
                 <div className="mb-4 text-center">
                   <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-emerald-600/90 mb-4 animate-bounce">
@@ -525,7 +515,7 @@ export default function StoryDetailPage() {
               </div>
             )}
             
-            {!story.audio_embed_code && (
+            {!story.audio_url && (
               <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black/80 to-transparent">
                 <h3 className="text-xl font-bold text-white">{lang === "bn" ? story.title_bn : story.title_en}</h3>
               </div>
@@ -533,7 +523,7 @@ export default function StoryDetailPage() {
           </div>
 
           {/* Premium Mockup Integrated Audio Player */}
-          {story.audio_embed_code && (
+          {story.audio_url && (
             <div className="relative -mt-24 mx-2 sm:mx-8 z-20">
               <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.5)] border border-emerald-500/30 bg-[#0a1a1a]/80 backdrop-blur-3xl transition-all duration-500 hover:border-emerald-400/50 group/player">
                 {/* Emerald Glow */}
@@ -629,16 +619,31 @@ export default function StoryDetailPage() {
                     </div>
                   </div>
 
-                  {/* Hidden SoundCloud Player (Controlled via API) */}
-                  <div 
-                    className="opacity-0 absolute pointer-events-none"
-                    dangerouslySetInnerHTML={{ 
-                      __html: story.audio_embed_code
-                        .replace(/iframe/g, 'iframe id="sc-player"')
-                        .replace(/visual=true/g, 'visual=false')
-                        .replace(/auto_play=true/g, 'auto_play=false')
+                  <audio
+                    ref={audioRef}
+                    preload="metadata"
+                    className="hidden"
+                    onLoadedMetadata={(event) => {
+                      setDuration(event.currentTarget.duration);
+                      setAudioError(false);
+                    }}
+                    onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
+                    onPlay={() => setIsPlaying(true)}
+                    onPause={() => setIsPlaying(false)}
+                    onEnded={() => {
+                      setIsPlaying(false);
+                      setCurrentTime(0);
+                    }}
+                    onError={() => {
+                      setIsPlaying(false);
+                      setAudioError(true);
                     }}
                   />
+                  {audioError && (
+                    <p className="mt-4 text-center text-xs text-red-300">
+                      অডিওটি চালানো যাচ্ছে না। URL, public access এবং CORS সেটিংস পরীক্ষা করুন।
+                    </p>
+                  )}
                 </div>
               </div>
 

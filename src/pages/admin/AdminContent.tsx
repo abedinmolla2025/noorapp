@@ -46,7 +46,7 @@ import {
 import { DuaOgBulkGeneratePanel } from '@/components/admin/dua/DuaOgBulkGeneratePanel';
 import { ContentOgBulkGeneratePanel } from '@/components/admin/content/og/ContentOgBulkGeneratePanel';
 import { StoryImportPanel } from '@/components/admin/story/StoryImportPanel';
-import { StoryAudioEmbedInput } from '@/components/admin/story/StoryAudioEmbedInput';
+import { StoryAudioUrlInput } from '@/components/admin/story/StoryAudioUrlInput';
 import { ContentSeoGeneratorPanel } from '@/components/admin/content/shared/ContentSeoGeneratorPanel';
 import { useOgStorageIndex } from '@/hooks/admin/content/useOgStorageIndex';
 import { STORY_CATEGORIES, estimateReadingMinutes } from '@/lib/stories';
@@ -143,7 +143,6 @@ interface AdminContentRow {
   navigation?: any | null;
   engagement?: any | null;
   growth?: any | null;
-  audio_embed_code?: string | null;
   audio_trailer_url?: string | null;
 }
 
@@ -343,7 +342,6 @@ export default function AdminContent() {
     navigation_json: '',
     engagement_json: '',
     growth_json: '',
-    audio_embed_code: '',
     audio_trailer_url: '',
   });
   const [isSaving, setIsSaving] = useState(false);
@@ -851,7 +849,6 @@ export default function AdminContent() {
     navigation_json: '',
     engagement_json: '',
     growth_json: '',
-    audio_embed_code: '',
     audio_trailer_url: '',
   });
 
@@ -928,7 +925,6 @@ export default function AdminContent() {
       navigation_json: jsonToStr(item.navigation ?? item.metadata?.navigation),
       engagement_json: jsonToStr(item.engagement ?? item.metadata?.engagement),
       growth_json: jsonToStr(item.growth ?? item.metadata?.growth),
-      audio_embed_code: item.audio_embed_code ?? '',
       audio_trailer_url: item.audio_trailer_url ?? '',
     });
     setSelectedId(item.id);
@@ -1079,7 +1075,7 @@ export default function AdminContent() {
                   engagement: parseJson('engagement', editForm.engagement_json),
                   growth: parseJson('growth', editForm.growth_json),
                 },
-                audio_embed_code: editForm.audio_embed_code || null,
+                audio_url: editForm.audio_url || null,
                 audio_trailer_url: editForm.audio_trailer_url || null,
               };
             })()
@@ -2230,9 +2226,9 @@ export default function AdminContent() {
 
                     {effectiveType === 'story' && (
                       <div className="sm:col-span-2">
-                        <StoryAudioEmbedInput
-                          value={editForm.audio_embed_code}
-                          onChange={(v) => setEditForm((p) => ({ ...p, audio_embed_code: v }))}
+                        <StoryAudioUrlInput
+                          value={editForm.audio_url}
+                          onChange={(v) => setEditForm((p) => ({ ...p, audio_url: v }))}
                         />
                       </div>
                     )}

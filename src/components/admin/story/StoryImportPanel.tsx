@@ -45,7 +45,8 @@ export function storyRowFromJson(story: Story, publish: boolean) {
     related_stories:
       (story.navigation?.related_stories ?? story.growth?.related ?? []).map((r: any) => r.slug || r) || null,
     tags: Array.isArray(story.seo?.keywords) ? (story.seo?.keywords as string[]) : (story.tags || null),
-    audio_embed_code: story.audio_embed_code ?? null,
+    audio_url: story.audio_url ?? null,
+    audio_trailer_url: story.audio_trailer_url ?? null,
     status: publish ? 'published' : 'draft',
     is_published: publish,
     ...(publish ? { published_at: new Date().toISOString() } : {}),
@@ -238,6 +239,8 @@ export function StoryImportPanel({
           reading_time_minutes: row.reading_time_minutes || meta.reading_time_minutes || undefined,
           is_featured: row.is_featured ?? meta.is_featured ?? undefined,
           og_image_url: row.og_image_url || undefined,
+          audio_url: row.audio_url || undefined,
+          audio_trailer_url: row.audio_trailer_url || undefined,
           updated_at: row.updated_at || undefined,
         };
       });
