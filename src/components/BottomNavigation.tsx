@@ -6,7 +6,7 @@ import { useGlobalConfig } from "@/context/GlobalConfigContext";
 import PremiumIcon from "./PremiumIcon";
 
 interface NavItem {
-  iconName: 'home' | 'quran' | 'hadith' | 'calendar' | 'inbox' | 'settings';
+  iconName: 'home' | 'quran' | 'hadith' | 'calendar' | 'support' | 'settings';
   label: string;
   labelBn: string;
   id: string;
@@ -47,11 +47,11 @@ const navItems: NavItem[] = [
     moduleKey: "calendar",
   },
   {
-    id: "notifications",
-    iconName: "inbox",
-    label: "Inbox",
-    labelBn: "ইনবক্স",
-    path: "/notifications",
+    id: "support",
+    iconName: "support",
+    label: "Help & Support",
+    labelBn: "সহায়তা",
+    path: "/contact",
   },
   {
     id: "settings",
@@ -86,7 +86,7 @@ const BottomNavigation = () => {
       case "hadith": safeImport(import("../pages/HadithPage")); break;
       case "calendar": safeImport(import("../pages/IslamicCalendarPage")); break;
       case "settings": safeImport(import("../pages/SettingsPage")); break;
-      case "notifications": safeImport(import("../pages/NotificationsPage")); break;
+      case "support": safeImport(import("../pages/ContactPage")); break;
       default: break;
     }
   };
@@ -124,6 +124,7 @@ const BottomNavigation = () => {
                 )}
 
                 <motion.div
+                  title={item.id === "support" ? "Support & Feedback" : undefined}
                   className="transition-transform"
                   animate={active ? { y: [0, -3, 0] } : { y: 0 }}
                   transition={{ duration: 0.3 }}

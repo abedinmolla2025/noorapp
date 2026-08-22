@@ -1,7 +1,7 @@
 import React from 'react';
 
 interface PremiumIconProps {
-  name: 'home' | 'quran' | 'hadith' | 'calendar' | 'inbox' | 'settings';
+  name: 'home' | 'quran' | 'hadith' | 'calendar' | 'support' | 'settings';
   className?: string;
   active?: boolean;
 }
