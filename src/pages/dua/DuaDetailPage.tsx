@@ -59,6 +59,15 @@ interface DuaRow {
 
 const SITE_ORIGIN = "https://noorapp.in";
 const FALLBACK_OG = `${SITE_ORIGIN}/og-dua.png`;
+const LOCAL_CANONICAL_OG_SLUGS = new Set([
+  "al-baqarah-2-285", "al-baqarah-2-286", "ayatul-kursi", "dua-after-wudu",
+  "dua-before-entering-toilet", "dua-before-sleeping", "dua-for-parents",
+  "dua-for-sehri-intention-for-fasting", "dua-for-the-sick", "dua-for-travel",
+  "dua-in-times-of-distress", "dua-when-looking-in-the-mirror",
+  "dua-when-provoked-while-fasting", "dua-when-wearing-new-clothes",
+  "surah-al-falaq", "surah-al-fatihah", "surah-al-ikhlas", "surah-al-ikhlas-2",
+  "surah-an-nas", "ইসমে-আযমের-দোয়া-অত্যন্ত-ফজিলতপূর্ণ",
+]);
 
 const isLegacyMissingSlugImage = (url: string) =>
   /^https:\/\/noorapp\.in\/assets\/og-images\/[^/?]+\.png(?:\?|$)/i.test(url);
@@ -376,6 +385,11 @@ const DuaDetailPage = () => {
   // Get OG image URL from database or JSON
   const ogImageUrl = useMemo(() => {
     if (!dua) return FALLBACK_OG;
+
+    // Canonical local assets take precedence over legacy database paths for the upgraded set.
+    if (dua.slug && LOCAL_CANONICAL_OG_SLUGS.has(dua.slug)) {
+      return `${SITE_ORIGIN}/assets/dua-og/${encodeURIComponent(dua.slug)}` + ".webp";
+    }
 
     // 1. Check direct image_url field (used by Admin Panel uploads)
     if (

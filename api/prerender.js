@@ -5,6 +5,15 @@ import path from "path";
 const SITE_ORIGIN = "https://noorapp.in";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
+const LOCAL_CANONICAL_OG_SLUGS = new Set([
+  "al-baqarah-2-285", "al-baqarah-2-286", "ayatul-kursi", "dua-after-wudu",
+  "dua-before-entering-toilet", "dua-before-sleeping", "dua-for-parents",
+  "dua-for-sehri-intention-for-fasting", "dua-for-the-sick", "dua-for-travel",
+  "dua-in-times-of-distress", "dua-when-looking-in-the-mirror",
+  "dua-when-provoked-while-fasting", "dua-when-wearing-new-clothes",
+  "surah-al-falaq", "surah-al-fatihah", "surah-al-ikhlas", "surah-al-ikhlas-2",
+  "surah-an-nas", "ইসমে-আযমের-দোয়া-অত্যন্ত-ফজিলতপূর্ণ",
+]);
 
 const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
@@ -205,6 +214,9 @@ const resolveStoredSocialImage = (raw, folder = "dua-og") => {
 };
 
 const getDuaOgImage = (dua) => {
+  if (dua?.slug && LOCAL_CANONICAL_OG_SLUGS.has(dua.slug)) {
+    return `${SITE_ORIGIN}/assets/dua-og/${encodeURIComponent(dua.slug)}.webp`;
+  }
   const ogData = dua?.og_image_data && typeof dua.og_image_data === "object" ? dua.og_image_data : {};
   const seoData = dua?.seo && typeof dua.seo === "object" ? dua.seo : {};
   const openGraph = seoData.open_graph && typeof seoData.open_graph === "object" ? seoData.open_graph : {};
