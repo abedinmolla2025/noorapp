@@ -45,6 +45,7 @@
     }
   },
   "rewrites": [
+    { "source": "/sitemap", "destination": "/api/prerender?path=/sitemap" },
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
     { "source": "/sitemap-(.*).xml", "destination": "/api/sitemap" },
     { "source": "/sitemap-index.xml", "destination": "/api/sitemap" },
