@@ -124,11 +124,11 @@ export default function SeoIntroSection() {
           </Link>{" "}
           available for Bengali Muslims. Browse authenticated narrations from the six major hadith
           collections, including{" "}
-          <Link to="/hadith/bukhari" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link to="/hadith/sahih-bukhari" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Bukhari
           </Link>{" "}
           — the most authenticated hadith collection in Islam — and{" "}
-          <Link to="/hadith/muslim" className="font-medium text-primary underline-offset-2 hover:underline">
+          <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Muslim
           </Link>
           , compiled by Imam Muslim after examining over 300,000 narrations. Every hadith is
@@ -220,6 +220,22 @@ export default function SeoIntroSection() {
           </li>
         </ul>
 
+        <section className="mt-6 rounded-xl border border-primary/20 bg-primary/5 px-4 py-4">
+          <h2 className="mb-2 text-[15px] font-bold text-foreground">Content sources and editorial care</h2>
+          <p className="text-[12px] leading-relaxed text-muted-foreground">
+            Noor is a digital learning tool, not a substitute for a qualified scholar. We identify
+            the source of Quran, Hadith, dua and story content where the record provides it, and we
+            welcome corrections from readers. Read our editorial source notes and report an error
+            from the dedicated sources page.
+          </p>
+          <Link
+            to="/sources"
+            className="mt-2 inline-block text-[12px] font-semibold text-primary underline-offset-2 hover:underline"
+          >
+            View sources and editorial process →
+          </Link>
+        </section>
+
         {/* FAQ Section */}
         <h2 className="mb-3 mt-6 text-[15px] font-bold text-foreground">
           Frequently Asked Questions
@@ -257,11 +273,11 @@ export default function SeoIntroSection() {
             </h3>
             <p className="text-[12px] text-muted-foreground">
               Yes. Noor includes{" "}
-              <Link to="/hadith/bukhari" className="font-medium text-primary hover:underline">
+              <Link to="/hadith/sahih-bukhari" className="font-medium text-primary hover:underline">
                 Sahih Bukhari
               </Link>{" "}
               with Arabic text and Bengali translation. You can also read{" "}
-              <Link to="/hadith/muslim" className="font-medium text-primary hover:underline">
+              <Link to="/hadith" className="font-medium text-primary hover:underline">
                 Sahih Muslim
               </Link>
               , Jami at-Tirmidhi, and Sunan Abu Dawud from the Hadith section.

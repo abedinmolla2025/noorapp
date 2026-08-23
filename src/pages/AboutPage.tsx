@@ -176,7 +176,7 @@ const AboutPage = () => {
               {[
                 { label: "Read Quran", href: "/quran" },
                 { label: "Hadith Collections", href: "/hadith" },
-                { label: "Sahih Bukhari", href: "/hadith/bukhari" },
+                { label: "Sahih Bukhari", href: "/hadith/sahih-bukhari" },
                 { label: "Daily Duas", href: "/dua" },
                 { label: "Prayer Times", href: "/prayer-times" },
                 { label: "Islamic Quiz", href: "/quiz" },

@@ -6,14 +6,14 @@ export default function IslamicAppPage() {
   return (
     <div className="min-h-screen bg-background pb-28">
       <Helmet>
-        <title>Best Islamic App – Quran, Hadith, Dua & Prayer Times | Noor</title>
+        <title>Noor Islamic App – Quran, Hadith, Dua & Prayer Times</title>
         <meta
           name="description"
-          content="Noor is the best free Islamic app for Bengali Muslims. Read Quran with Bengali translation, Hadith, daily duas, prayer times, Qibla direction & Islamic quiz — all free on Android."
+          content="Learn about Noor, a free Islamic learning app with Quran, Hadith, daily duas, prayer times, Qibla direction and Islamic quiz tools."
         />
         <link rel="canonical" href="https://noorapp.in/islamic-app" />
         <meta name="robots" content="index,follow" />
-        <meta property="og:title" content="Best Islamic App – Quran, Hadith, Dua & Prayer Times | Noor" />
+        <meta property="og:title" content="Noor Islamic App – Quran, Hadith, Dua & Prayer Times" />
         <meta
           property="og:description"
           content="Noor is the best free Islamic app for Bengali Muslims. Download now for Quran, Hadith, Dua, Prayer Times, Qibla & Islamic quiz."
@@ -30,7 +30,6 @@ export default function IslamicAppPage() {
           "description": "Free Islamic app for Muslims – Quran, Hadith, Prayer Times, Dua, Qibla, Islamic Calendar, Quiz & more.",
           "url": "https://noorapp.in",
           "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
-          "aggregateRating": { "@type": "AggregateRating", "ratingValue": "4.8", "ratingCount": "1200" }
         })}</script>
       </Helmet>
 
@@ -81,14 +80,14 @@ export default function IslamicAppPage() {
             📚 Hadith App – Authentic Collections Free
           </h2>
           <p>
-            Noor offers one of the most comprehensive free <Link to="/hadith" className="text-primary font-medium hover:underline">Hadith apps</Link> available. Browse authenticated narrations from the six major hadith collections:
+            Noor provides a free <Link to="/hadith" className="text-primary font-medium hover:underline">Hadith library</Link> for browsing and study. Browse authenticated narrations from the six major hadith collections:
           </p>
           <ul className="mt-3 ml-4 list-disc space-y-2">
             <li>
-              <Link to="/hadith/bukhari" className="text-primary font-medium hover:underline">Sahih Bukhari</Link> — The most authentic hadith collection, compiled by Imam Bukhari (রহ.)
+              <Link to="/hadith/sahih-bukhari" className="text-primary font-medium hover:underline">Sahih Bukhari</Link> — The most authentic hadith collection, compiled by Imam Bukhari (রহ.)
             </li>
             <li>
-              <Link to="/hadith/muslim" className="text-primary font-medium hover:underline">Sahih Muslim</Link> — Second most authoritative collection, meticulously authenticated
+              <Link to="/hadith" className="text-primary font-medium hover:underline">Sahih Muslim</Link> — Second most authoritative collection, meticulously authenticated
             </li>
             <li>
               <Link to="/hadith/tirmidhi" className="text-primary font-medium hover:underline">Jami at-Tirmidhi</Link> — Covers fiqh, seerah and virtues with unique hadith grading
@@ -116,7 +115,7 @@ export default function IslamicAppPage() {
             <li>Support for all cities in India and Bangladesh</li>
           </ul>
           <p className="mt-3">
-            <strong>সঠিক নামাজের সময়সূচী — ফজর থেকে এশা পর্যন্ত।</strong> Our prayer time app is trusted by thousands of Muslims who rely on it every day for their five daily prayers.
+            <strong>সঠিক নামাজের সময়সূচী — ফজর থেকে এশা পর্যন্ত।</strong> Our prayer time app is designed to help users check their daily prayer schedule.
           </p>
         </section>
 
@@ -172,13 +171,10 @@ export default function IslamicAppPage() {
 
         <section>
           <h2 className="text-[16px] font-bold text-foreground mb-3">
-            🌍 Islamic App for Muslim App Bangladesh & India
+            🌍 Islamic App for Bengali Readers in India & Bangladesh
           </h2>
           <p>
-            Noor was built from the ground up for the Bengali Muslim community — a community of over
-            300 million people spread across Bangladesh and West Bengal, India. We understand the need
-            for a high-quality <strong>Muslim app in Bengali</strong> that feels native, works offline,
-            and respects the traditions of Islamic scholarship.
+            Noor was built with Bengali-speaking Muslims in mind, especially readers in Bangladesh and West Bengal, India. The goal is to provide a clear <strong>Islamic app in Bengali</strong> that is easy to use and respectful of Islamic scholarship.
           </p>
           <p className="mt-3">
             Our app supports both Bangla and English interfaces, making it accessible to Muslims across

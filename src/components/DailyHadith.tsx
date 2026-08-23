@@ -286,7 +286,7 @@ const DailyHadith = () => {
           <motion.button 
             whileHover={{ scale: 1.02, x: 3 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/hadith/bukhari")}
+            onClick={() => navigate("/hadith/sahih-bukhari")}
             className="flex items-center justify-center gap-2 px-5 py-2.5 md:py-3 bg-gradient-to-r from-amber-400/15 to-amber-500/10 border border-amber-400/30 hover:border-amber-400/50 text-white font-semibold rounded-xl transition-all group"
           >
             <span>আরও পড়ুন</span>
