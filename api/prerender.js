@@ -615,59 +615,43 @@ export default async function handler(req, res) {
     // deliberately a compact, layout-matched skeleton rather than a branded
     // splash screen, so slow WebViews never show a misleading intermediate page.
     if (routePath === "/") {
+      title = "Noor – Quran, Hadith, Dua & Prayer Times";
+      description = "Explore Noor's free Islamic learning tools: Quran reading, Hadith collections, daily Duas, prayer times, Islamic stories and more.";
       bodyContent = `
-        <div class="min-h-screen bg-background px-4 pb-28 pt-5 text-foreground" data-noor-ssr-home role="status" aria-live="polite" aria-label="Loading page">
-          <h1 class="sr-only">Noor Islamic App — Quran, Hadith, Dua and Prayer Times</h1>
-          <div class="mx-auto w-full max-w-2xl">
-            <div class="flex items-center justify-between gap-4 px-1 py-2">
-              <div class="flex items-center gap-3 min-w-0">
-                <div aria-hidden="true" class="noor-skeleton-shimmer h-11 w-11 shrink-0 rounded-2xl"></div>
-                <div class="space-y-2 min-w-0">
-                  <div aria-hidden="true" class="noor-skeleton-shimmer h-4 w-32 rounded-2xl"></div>
-                  <div aria-hidden="true" class="noor-skeleton-shimmer h-3 w-20 rounded-full"></div>
-                </div>
-              </div>
-              <div aria-hidden="true" class="noor-skeleton-shimmer h-10 w-10 shrink-0 rounded-full"></div>
+        <div class="min-h-screen bg-background pb-24 text-foreground">
+          <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-12 text-white">
+            <div class="mx-auto max-w-3xl">
+              <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">NOOR ISLAMIC APP</p>
+              <h1 class="text-3xl font-bold leading-tight md:text-4xl">Quran, Hadith, Dua &amp; Prayer Times</h1>
+              <p class="mt-4 max-w-2xl text-base leading-7 text-white/85">Noor is a free Islamic learning platform for Bengali and English readers. Read, listen and study Islamic resources with clear navigation, source notes and practical daily tools.</p>
             </div>
-            <div class="mt-5 space-y-4">
-              <div aria-hidden="true" class="noor-skeleton-shimmer h-44 w-full rounded-[2rem]"></div>
-              <div class="grid grid-cols-2 gap-3">
-                <div aria-hidden="true" class="noor-skeleton-shimmer h-24 w-full rounded-3xl"></div>
-                <div aria-hidden="true" class="noor-skeleton-shimmer h-24 w-full rounded-3xl"></div>
+          </header>
+          <main class="mx-auto max-w-3xl space-y-6 px-4 py-7">
+            <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="text-xl font-bold text-foreground">Explore Noor</h2>
+              <p class="mt-3 leading-7 text-muted-foreground">Use the tools below to read the Quran, browse Hadith, find daily supplications and plan your worship. Each section is available directly without a subscription.</p>
+              <nav aria-label="Primary Islamic resources" class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                <a href="/quran" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Read Quran</a>
+                <a href="/hadith" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Hadith</a>
+                <a href="/dua" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Daily Duas</a>
+                <a href="/prayer-times" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Prayer Times</a>
+                <a href="/prayer-guide" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Prayer Guide</a>
+                <a href="/stories" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Islamic Stories</a>
+              </nav>
+            </section>
+            <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="text-xl font-bold text-foreground">What makes the site useful?</h2>
+              <div class="mt-3 space-y-3 leading-7 text-muted-foreground">
+                <p><strong class="text-foreground">Reading and listening:</strong> Browse Quran chapters with Arabic text, translations and available recitation features.</p>
+                <p><strong class="text-foreground">Daily practice:</strong> Check local prayer times, read Duas, use the Qibla finder and keep a personal learning routine.</p>
+                <p><strong class="text-foreground">Responsible study:</strong> Noor is a digital learning tool, not a substitute for a qualified scholar. Source notes and correction guidance are available on the <a href="/sources" class="font-semibold text-primary">Islamic sources</a> page.</p>
               </div>
-              <div aria-hidden="true" class="noor-skeleton-shimmer h-28 w-full rounded-3xl"></div>
-              <div class="space-y-3">
-                <div class="rounded-3xl border border-border/50 bg-card p-4 shadow-sm">
-                  <div class="flex items-start gap-3">
-                    <div aria-hidden="true" class="noor-skeleton-shimmer h-12 w-12 shrink-0 rounded-2xl"></div>
-                    <div class="min-w-0 flex-1 space-y-3">
-                      <div aria-hidden="true" class="noor-skeleton-shimmer h-4 w-3/4 rounded-2xl"></div>
-                      <div aria-hidden="true" class="noor-skeleton-shimmer h-3 w-1/2 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-                <div class="rounded-3xl border border-border/50 bg-card p-4 shadow-sm">
-                  <div class="flex items-start gap-3">
-                    <div aria-hidden="true" class="noor-skeleton-shimmer h-12 w-12 shrink-0 rounded-2xl"></div>
-                    <div class="min-w-0 flex-1 space-y-3">
-                      <div aria-hidden="true" class="noor-skeleton-shimmer h-4 w-3/4 rounded-2xl"></div>
-                      <div aria-hidden="true" class="noor-skeleton-shimmer h-3 w-1/2 rounded-full"></div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-          <div class="fixed inset-x-0 bottom-0 z-20 mx-auto max-w-2xl border-t border-border/60 bg-background/95 px-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] pt-3 backdrop-blur-md">
-            <div class="grid grid-cols-5 gap-3">
-              ${Array.from({ length: 5 }).map(() => `
-                <div class="flex flex-col items-center gap-2">
-                  <div aria-hidden="true" class="noor-skeleton-shimmer h-7 w-7 rounded-xl"></div>
-                  <div aria-hidden="true" class="noor-skeleton-shimmer h-2.5 w-12 rounded-full"></div>
-                </div>
-              `).join("")}
-            </div>
-          </div>
+            </section>
+            <section class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+              <h2 class="text-xl font-bold text-foreground">About Noor</h2>
+              <p class="mt-3 leading-7 text-muted-foreground">Learn about the project, its editorial approach and how to contact the developer. Please visit <a href="/about" class="font-semibold text-primary">About Noor</a>, <a href="/contact" class="font-semibold text-primary">Support &amp; Feedback</a>, or the <a href="/privacy-policy" class="font-semibold text-primary">Privacy Policy</a>.</p>
+            </section>
+          </main>
         </div>
       `;
     }
@@ -1151,6 +1135,45 @@ export default async function handler(req, res) {
       }
     }
 
+    // --- Crawlable HTML sitemap ---
+    else if (routePath === "/sitemap") {
+      title = "Sitemap — Noor Islamic App";
+      description = "Browse Noor's public Quran, Hadith, Dua, prayer, learning, support and policy pages.";
+      bodyContent = `
+        <div class="min-h-screen bg-background pb-24">
+          <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-10 text-white">
+            <div class="mx-auto max-w-3xl">
+              <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">NOOR ISLAMIC APP</p>
+              <h1 class="text-3xl font-bold">Sitemap</h1>
+              <p class="mt-3 text-white/85">Browse the public pages and learning tools available on Noor.</p>
+            </div>
+          </header>
+          <main class="mx-auto max-w-3xl space-y-6 px-4 py-7">
+            <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="text-xl font-bold">Islamic resources</h2>
+              <ul class="mt-4 grid grid-cols-2 gap-3 text-sm sm:grid-cols-3">
+                <li><a class="text-primary hover:underline" href="/quran">Quran</a></li>
+                <li><a class="text-primary hover:underline" href="/hadith">Hadith</a></li>
+                <li><a class="text-primary hover:underline" href="/dua">Daily Duas</a></li>
+                <li><a class="text-primary hover:underline" href="/prayer-times">Prayer Times</a></li>
+                <li><a class="text-primary hover:underline" href="/prayer-guide">Prayer Guide</a></li>
+                <li><a class="text-primary hover:underline" href="/stories">Islamic Stories</a></li>
+                <li><a class="text-primary hover:underline" href="/99-names">99 Names of Allah</a></li>
+                <li><a class="text-primary hover:underline" href="/baby-names">Islamic Baby Names</a></li>
+                <li><a class="text-primary hover:underline" href="/calendar">Islamic Calendar</a></li>
+                <li><a class="text-primary hover:underline" href="/quiz">Islamic Quiz</a></li>
+                <li><a class="text-primary hover:underline" href="/qibla">Qibla Finder</a></li>
+                <li><a class="text-primary hover:underline" href="/tasbih">Tasbih Counter</a></li>
+              </ul>
+            </section>
+            <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="text-xl font-bold">About and support</h2>
+              <ul class="mt-4 space-y-2 text-sm"><li><a class="text-primary hover:underline" href="/about">About Noor</a></li><li><a class="text-primary hover:underline" href="/sources">Islamic Sources</a></li><li><a class="text-primary hover:underline" href="/contact">Support &amp; Feedback</a></li><li><a class="text-primary hover:underline" href="/privacy-policy">Privacy Policy</a></li><li><a class="text-primary hover:underline" href="/terms">Terms &amp; Conditions</a></li></ul>
+            </section>
+          </main>
+        </div>
+      `;
+    }
     // --- Public Trust, Legal and Feature Pages ---
     else if (STATIC_PAGE_COPY[routePath]) {
       const page = STATIC_PAGE_COPY[routePath];
