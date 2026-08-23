@@ -140,9 +140,9 @@ const LANG_SUFFIX: Record<DuaLang, "" | "_en" | "_hi" | "_ur"> = {
 const normalizeDuaDisplayText = (value: string | null | undefined) => {
   if (!value) return "";
   const normalized = String(value)
-    .replace(/\\r\\n/g, "\n")
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\n")
+    .replace(/\\+r\\+n/g, "\n")
+    .replace(/\\+n/g, "\n")
+    .replace(/\\+r/g, "\n")
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n");
   const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);

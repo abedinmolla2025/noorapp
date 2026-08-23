@@ -137,9 +137,9 @@ const esc = (s) => {
 const normalizeDuaDisplayText = (value) => {
   if (!value) return "";
   const normalized = String(value)
-    .replace(/\\r\\n/g, "\n")
-    .replace(/\\n/g, "\n")
-    .replace(/\\r/g, "\n")
+    .replace(/\\+r\\+n/g, "\n")
+    .replace(/\\+n/g, "\n")
+    .replace(/\\+r/g, "\n")
     .replace(/\r\n/g, "\n")
     .replace(/\r/g, "\n");
   const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
