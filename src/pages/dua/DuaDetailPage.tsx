@@ -135,6 +135,24 @@ const LANG_SUFFIX: Record<DuaLang, "" | "_en" | "_hi" | "_ur"> = {
   urdu: "_ur",
 };
 
+// Imported Dua records may contain escaped newline markers and accidental
+// repeated lines. Normalize only the displayed text.
+const normalizeDuaDisplayText = (value: string | null | undefined) => {
+  if (!value) return "";
+  const normalized = String(value)
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\r/g, "\n")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+  const lines = normalized.split("\n").map((line) => line.trim()).filter(Boolean);
+  const deduped: string[] = [];
+  for (const line of lines) {
+    if (line !== deduped[deduped.length - 1]) deduped.push(line);
+  }
+  return deduped.join("\n");
+};
+
 // Language-aware text resolver — falls back to Bengali when missing
 const getDuaText = (dua: DuaRow, language: DuaLang) => {
   const suf = LANG_SUFFIX[language];
@@ -145,9 +163,12 @@ const getDuaText = (dua: DuaRow, language: DuaLang) => {
     : "content_pronunciation") as keyof DuaRow;
   return {
     title: (dua[titleKey] as string | null) || dua.title || "",
-    meaning: (dua[contentKey] as string | null) || dua.content || "",
-    pronunciation:
+    meaning: normalizeDuaDisplayText(
+      (dua[contentKey] as string | null) || dua.content || "",
+    ),
+    pronunciation: normalizeDuaDisplayText(
       (dua[pronKey] as string | null) || dua.content_pronunciation || "",
+    ),
   };
 };
 
