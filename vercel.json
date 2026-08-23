@@ -26,7 +26,7 @@
       ]
     },
     {
-      "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)",
+      "source": "/((?!api|assets|favicon|robots|sitemap\\.xml|sitemap-|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)",
       "headers": [
         { "key": "Cache-Control", "value": "no-store, max-age=0, must-revalidate" }
       ]
@@ -64,7 +64,7 @@
     { "source": "/(.*\\.webp)", "destination": "/$1" },
     { "source": "/(.*\\.mp3)", "destination": "/$1" },
     { "source": "/", "destination": "/api/prerender?path=/" },
-    { "source": "/((?!api|assets|favicon|robots|sitemap|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)", "destination": "/api/prerender?path=/$1" },
+    { "source": "/((?!api|assets|favicon|robots|sitemap\\.xml|sitemap-|ads\\.txt|sw\\.js|manifest\\.json|\\.well-known/).*)", "destination": "/api/prerender?path=/$1" },
     { "source": "/(.*)", "destination": "/app.html" }
   ]
 }
