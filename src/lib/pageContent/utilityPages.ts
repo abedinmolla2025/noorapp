@@ -312,7 +312,7 @@ export const quizContent: IslamicEducationalSectionProps = {
     },
     {
       q: "How many questions are in the pool?",
-      a: "Noor's question bank contains 300+ authentic questions and rotates 5 new ones each day so you can play consistently for months without repetition.",
+      a: "Noor's question bank contains 315 unique questions and rotates 5 new ones each day so you can play consistently for months without repetition.",
     },
     {
       q: "Are the answers verified by scholars?",
