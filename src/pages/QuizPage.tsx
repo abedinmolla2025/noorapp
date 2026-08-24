@@ -30,6 +30,7 @@ interface Question {
   options_en?: string[] | null;
   correctAnswer: number;
   category: string;
+  difficulty?: string | null;
 }
 
 interface LeaderboardEntry {
@@ -117,29 +118,47 @@ const QuizPage = () => {
     }
   }, [progress.totalPoints, progress.correctAnswers]);
 
-  // Fetch questions from local JSON file
+  // Questions are stored in Supabase; the local JSON remains a resilience fallback only.
   const { data: allQuestions = [], isLoading: questionsLoading } = useQuery({
-    queryKey: ["quiz-questions"],
-    queryFn: async () => {
-      try {
-        const response = await fetch("/quiz-questions-90.json");
-        if (!response.ok) throw new Error("Failed to load questions");
-        const data = await response.json();
-        
-        return (data || []).map((q: any) => ({
-          question: q.question,
-          question_bn: q.question_bn ?? q.question, // base field is Bangla
+    queryKey: ["quiz-questions", "supabase"],
+    queryFn: async (): Promise<Question[]> => {
+      const { data, error } = await supabase
+        .from("quiz_questions")
+        .select("question, question_bn, question_en, options, options_bn, options_en, correct_answer, category, difficulty")
+        .eq("is_active", true)
+        .order("order_index", { ascending: true })
+        .order("created_at", { ascending: true })
+        .limit(500);
+
+      if (!error && data && data.length > 0) {
+        return data.map((q: any) => ({
+          question: q.question_bn ?? q.question_en ?? q.question ?? "",
+          question_bn: q.question_bn ?? q.question ?? null,
           question_en: q.question_en ?? null,
-          options: q.options as string[],
-          options_bn: q.options_bn ?? q.options, // base field is Bangla
-          options_en: q.options_en ?? null,
+          options: (q.options_bn ?? q.options_en ?? q.options ?? []) as string[],
+          options_bn: (q.options_bn ?? q.options ?? null) as string[] | null,
+          options_en: (q.options_en ?? null) as string[] | null,
           correctAnswer: q.correct_answer,
-          category: q.category,
+          category: q.category ?? "General",
+          difficulty: q.difficulty ?? "medium",
         }));
-      } catch (error) {
-        console.error("Failed to load quiz questions:", error);
-        return [];
       }
+
+      if (error) console.error("Failed to load quiz questions from Supabase:", error);
+      const response = await fetch("/quiz-questions-90.json");
+      if (!response.ok) throw new Error("Failed to load quiz questions");
+      const localData = await response.json();
+      return (localData || []).map((q: any) => ({
+        question: q.question,
+        question_bn: q.question_bn ?? q.question,
+        question_en: q.question_en ?? null,
+        options: q.options as string[],
+        options_bn: q.options_bn ?? q.options,
+        options_en: q.options_en ?? null,
+        correctAnswer: q.correct_answer,
+        category: q.category,
+        difficulty: q.difficulty ?? "medium",
+      }));
     },
     staleTime: 5 * 60 * 1000,
   });
@@ -1563,7 +1582,7 @@ const QuizPage = () => {
         </p>
         <h3 className="text-base font-medium text-foreground">কুইজের বৈশিষ্ট্য — Quiz Features</h3>
         <ul className="list-disc list-inside space-y-1">
-          <li>প্রতিদিন ৫টি নতুন প্রশ্ন — 5 fresh questions every day from a pool of 300+</li>
+          <li>প্রতিদিন ৫টি নতুন প্রশ্ন — 5 fresh questions every day from a verified pool of 315 unique questions</li>
           <li>বাংলা ও ইংরেজি উভয় ভাষায় — Bilingual Bengali & English support</li>
           <li>সঠিক উত্তরে ১০ XP — Earn 10 XP per correct answer</li>
           <li>ব্যাজ ও সার্টিফিকেট অর্জন — Unlock badges and generate certificates</li>

@@ -1,0 +1,1101 @@
+{
+  "local_total": 285,
+  "live_total": 300,
+  "local_unique_keys": 285,
+  "live_unique_keys": 296,
+  "overlap_unique_keys": 266,
+  "missing_from_live_count": 19,
+  "not_in_local_count": 30,
+  "local_duplicate_groups": {},
+  "live_duplicate_groups": {
+    "when is tahajjud prayer performed?": 2,
+    "in which hijri year was the conquest of makkah?": 2,
+    "how many prophets are mentioned by name in the quran?": 2,
+    "which angel will blow the trumpet on the day of judgment?": 2
+  },
+  "missing_from_live": [
+    {
+      "question": "কোন নবীকে 'কালিমুল্লাহ' বলা হয়?",
+      "question_en": "Which Prophet is called 'Kalimullah' (The one who spoke to Allah)?",
+      "options": [
+        "মুহাম্মদ (সা.)",
+        "ইব্রাহিম (আ.)",
+        "মূসা (আ.)",
+        "ঈসা (আ.)"
+      ],
+      "options_en": [
+        "Muhammad (PBUH)",
+        "Ibrahim (AS)",
+        "Musa (AS)",
+        "Isa (AS)"
+      ],
+      "correct_answer": 2,
+      "category": "Prophets",
+      "difficulty": "medium"
+    },
+    {
+      "question": "জুমআর নামাজে কতটি রাকাত ফরজ?",
+      "question_en": "How many Fard Rak'ahs are in Jumu'ah (Friday) prayer?",
+      "options": [
+        "২",
+        "৩",
+        "৪",
+        "৬"
+      ],
+      "options_en": [
+        "2",
+        "3",
+        "4",
+        "6"
+      ],
+      "correct_answer": 0,
+      "category": "Prayer",
+      "difficulty": "easy"
+    },
+    {
+      "question": "কুরআনে কতবার 'আল্লাহ' শব্দটি এসেছে?",
+      "question_en": "How many times does the word 'Allah' appear in the Quran?",
+      "options": [
+        "২,০০০",
+        "২,৬৯৮",
+        "৩,০০০",
+        "৩,৫০০"
+      ],
+      "options_en": [
+        "2,000",
+        "2,698",
+        "3,000",
+        "3,500"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "hard"
+    },
+    {
+      "question": "কোন সূরাকে 'কুরআনের হৃদয়' বলা হয়?",
+      "question_en": "Which Surah is called the 'Heart of the Quran'?",
+      "options": [
+        "আল-ফাতিহা",
+        "আল-বাকারাহ",
+        "ইয়াসীন",
+        "আর-রহমান"
+      ],
+      "options_en": [
+        "Al-Fatiha",
+        "Al-Baqarah",
+        "Yasin",
+        "Ar-Rahman"
+      ],
+      "correct_answer": 2,
+      "category": "Quran",
+      "difficulty": "medium"
+    },
+    {
+      "question": "কোন যুদ্ধকে 'ফুরকান দিবস' বলা হয়?",
+      "question_en": "Which battle is called the 'Day of Furqan' (Criterion)?",
+      "options": [
+        "উহুদ",
+        "খন্দক",
+        "বদর",
+        "খাইবার"
+      ],
+      "options_en": [
+        "Uhud",
+        "Khandaq (Trench)",
+        "Badr",
+        "Khaibar"
+      ],
+      "correct_answer": 2,
+      "category": "History",
+      "difficulty": "medium"
+    },
+    {
+      "question": "সাহাবীদের মধ্যে কাকে 'ফারুক' উপাধি দেওয়া হয়েছিল?",
+      "question_en": "Which companion was given the title 'Al-Faruq'?",
+      "options": [
+        "আবু বকর (রা.)",
+        "উমর (রা.)",
+        "উসমান (রা.)",
+        "আলী (রা.)"
+      ],
+      "options_en": [
+        "Abu Bakr (RA)",
+        "Umar (RA)",
+        "Uthman (RA)",
+        "Ali (RA)"
+      ],
+      "correct_answer": 1,
+      "category": "History",
+      "difficulty": "easy"
+    },
+    {
+      "question": "'আর-রহমান' নামের অর্থ কী?",
+      "question_en": "What is the meaning of 'Ar-Rahman'?",
+      "options": [
+        "পরম দয়ালু",
+        "সর্বশক্তিমান",
+        "পরম জ্ঞানী",
+        "সর্বশ্রোতা"
+      ],
+      "options_en": [
+        "The Most Merciful",
+        "The Almighty",
+        "The All-Knowing",
+        "The All-Hearing"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "easy"
+    },
+    {
+      "question": "কোন দুই পাহাড়ের মধ্যে সাঈ করতে হয়?",
+      "question_en": "Between which two hills is Sa'i performed?",
+      "options": [
+        "আরাফাত ও মুজদালিফা",
+        "সাফা ও মারওয়া",
+        "মিনা ও আরাফাত",
+        "জাবালে নূর ও হেরা"
+      ],
+      "options_en": [
+        "Arafat and Muzdalifah",
+        "Safa and Marwa",
+        "Mina and Arafat",
+        "Jabal al-Noor and Hira"
+      ],
+      "correct_answer": 1,
+      "category": "Hajj",
+      "difficulty": "easy"
+    },
+    {
+      "question": "কুরআনের কোন সূরায় 'বিসমিল্লাহ' দুইবার এসেছে?",
+      "question_en": "In which Surah does 'Bismillah' appear twice?",
+      "options": [
+        "আল-ফাতিহা",
+        "আল-নমল",
+        "আন-নাহল",
+        "আল-বাকারাহ"
+      ],
+      "options_en": [
+        "Al-Fatiha",
+        "An-Naml",
+        "An-Nahl",
+        "Al-Baqarah"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "hard"
+    },
+    {
+      "question": "ফরজ নামাজে কত রাকাত সুন্নত?",
+      "question_en": "How many Rak'ahs of Sunnah are there with the Fard prayers?",
+      "options": [
+        "১২",
+        "১৪",
+        "১৬",
+        "১৮"
+      ],
+      "options_en": [
+        "12",
+        "14",
+        "16",
+        "18"
+      ],
+      "correct_answer": 0,
+      "category": "Prayer",
+      "difficulty": "medium"
+    },
+    {
+      "question": "রমজানের কোন রাতকে 'হাজার মাসের চেয়ে উত্তম' বলা হয়েছে?",
+      "question_en": "Which night of Ramadan is described as 'better than a thousand months'?",
+      "options": [
+        "১ রমজান",
+        "১৫ রমজান",
+        "লাইলাতুল কদর",
+        "২৭ রমজান"
+      ],
+      "options_en": [
+        "1st Ramadan",
+        "15th Ramadan",
+        "Lailatul Qadr",
+        "27th Ramadan"
+      ],
+      "correct_answer": 2,
+      "category": "Special Days",
+      "difficulty": "easy"
+    },
+    {
+      "question": "'আল-মালিক' নামের অর্থ কী?",
+      "question_en": "What is the meaning of 'Al-Malik'?",
+      "options": [
+        "পরম মালিক",
+        "পরম দয়ালু",
+        "সর্বশক্তিমান",
+        "সর্বজ্ঞ"
+      ],
+      "options_en": [
+        "The Sovereign/King",
+        "The Most Merciful",
+        "The Almighty",
+        "The All-Knowing"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "easy"
+    },
+    {
+      "question": "কোন সূরাকে 'উম্মুল কুরআন' বলা হয়?",
+      "question_en": "Which Surah is called 'Umm al-Quran' (Mother of the Quran)?",
+      "options": [
+        "আল-বাকারাহ",
+        "আল-ফাতিহা",
+        "ইয়াসীন",
+        "আর-রহমান"
+      ],
+      "options_en": [
+        "Al-Baqarah",
+        "Al-Fatiha",
+        "Yasin",
+        "Ar-Rahman"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "medium"
+    },
+    {
+      "question": "'আল-কুদ্দুস' নামের অর্থ কী?",
+      "question_en": "What is the meaning of 'Al-Quddus'?",
+      "options": [
+        "পবিত্র",
+        "দয়ালু",
+        "ক্ষমাশীল",
+        "মহান"
+      ],
+      "options_en": [
+        "The Holy",
+        "The Merciful",
+        "The Forgiving",
+        "The Great"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "medium"
+    },
+    {
+      "question": "কোন সাহাবীকে 'সাইফুল্লাহ' উপাধি দেওয়া হয়েছিল?",
+      "question_en": "Which companion was given the title 'Saifullah' (Sword of Allah)?",
+      "options": [
+        "আবু উবাইদা (রা.)",
+        "খালিদ বিন ওয়ালিদ (রা.)",
+        "সাদ বিন আবি ওয়াক্কাস (রা.)",
+        "আলী (রা.)"
+      ],
+      "options_en": [
+        "Abu Ubaidah (RA)",
+        "Khalid bin Walid (RA)",
+        "Sa'd bin Abi Waqqas (RA)",
+        "Ali (RA)"
+      ],
+      "correct_answer": 1,
+      "category": "History",
+      "difficulty": "medium"
+    },
+    {
+      "question": "কোন নবীকে 'রূহুল্লাহ' বলা হয়?",
+      "question_en": "Which Prophet is called 'Ruhullah' (Spirit of Allah)?",
+      "options": [
+        "মুহাম্মদ (সা.)",
+        "মূসা (আ.)",
+        "ঈসা (আ.)",
+        "ইব্রাহিম (আ.)"
+      ],
+      "options_en": [
+        "Muhammad (PBUH)",
+        "Musa (AS)",
+        "Isa (AS)",
+        "Ibrahim (AS)"
+      ],
+      "correct_answer": 2,
+      "category": "Prophets",
+      "difficulty": "medium"
+    },
+    {
+      "question": "ফজরের নামাজে কত রাকাত সুন্নত ও ফরজ?",
+      "question_en": "How many Sunnah and Fard Rak'ahs are in Fajr prayer?",
+      "options": [
+        "২ সুন্নত ২ ফরজ",
+        "৪ সুন্নত ২ ফরজ",
+        "২ সুন্নত ৪ ফরজ",
+        "৪ সুন্নত ৪ ফরজ"
+      ],
+      "options_en": [
+        "2 Sunnah 2 Fard",
+        "4 Sunnah 2 Fard",
+        "2 Sunnah 4 Fard",
+        "4 Sunnah 4 Fard"
+      ],
+      "correct_answer": 0,
+      "category": "Prayer",
+      "difficulty": "easy"
+    },
+    {
+      "question": "'আল-আলিম' নামের অর্থ কী?",
+      "question_en": "What is the meaning of 'Al-Aleem'?",
+      "options": [
+        "সর্বজ্ঞ",
+        "পরম দয়ালু",
+        "মহাশক্তিধর",
+        "সর্বশ্রোতা"
+      ],
+      "options_en": [
+        "The All-Knowing",
+        "The Most Merciful",
+        "The Almighty",
+        "The All-Hearing"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "easy"
+    },
+    {
+      "question": "'আল-হাকিম' নামের অর্থ কী?",
+      "question_en": "What is the meaning of 'Al-Hakeem'?",
+      "options": [
+        "প্রজ্ঞাময়",
+        "দয়ালু",
+        "ক্ষমাশীল",
+        "শক্তিশালী"
+      ],
+      "options_en": [
+        "The All-Wise",
+        "The Merciful",
+        "The Forgiving",
+        "The Powerful"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "medium"
+    }
+  ],
+  "not_in_local": [
+    {
+      "id": "7ff963fe-1dd0-4b89-b1e7-aae7167b696b",
+      "question": "কুরআনে সবচেয়ে বেশি উল্লেখিত নবী কে?",
+      "question_bn": null,
+      "question_en": "Which prophet is mentioned the most in the Quran?",
+      "options": [
+        "মুসা (আ.)",
+        "ইব্রাহিম (আ.)",
+        "ঈসা (আ.)",
+        "মুহাম্মদ (সা.)"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Musa (AS)",
+        "Ibrahim (AS)",
+        "Isa (AS)",
+        "Muhammad (PBUH)"
+      ],
+      "correct_answer": 0,
+      "category": "Quran",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 98
+    },
+    {
+      "id": "8b2920fd-1348-482c-9d0f-7ec8a4d68175",
+      "question": "বিসমিল্লাহ ছাড়া কোন সূরা শুরু হয়েছে?",
+      "question_bn": null,
+      "question_en": "Which Surah starts without Bismillah?",
+      "options": [
+        "আত-তাওবাহ",
+        "আল-ফাতিহা",
+        "আল-বাকারাহ",
+        "আন-নাস"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "At-Tawbah",
+        "Al-Fatiha",
+        "Al-Baqarah",
+        "An-Nas"
+      ],
+      "correct_answer": 0,
+      "category": "Quran",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 100
+    },
+    {
+      "id": "f3b63b75-8d4f-43cc-af5f-2d415b0f8b3d",
+      "question": "আয়াতুল কুরসি কোন সূরায় আছে?",
+      "question_bn": null,
+      "question_en": "In which Surah is Ayatul Kursi?",
+      "options": [
+        "আল-বাকারাহ",
+        "আল-ইমরান",
+        "আন-নিসা",
+        "আল-মায়িদাহ"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Al-Baqarah",
+        "Al-Imran",
+        "An-Nisa",
+        "Al-Maidah"
+      ],
+      "correct_answer": 0,
+      "category": "Quran",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 94
+    },
+    {
+      "id": "fdc6963f-3100-4935-94bd-d94e49ec3628",
+      "question": "ইসলামের প্রথম মুয়াজ্জিন কে?",
+      "question_bn": null,
+      "question_en": "Who was the first Muezzin of Islam?",
+      "options": [
+        "আবু বকর (রা.)",
+        "বিলাল (রা.)",
+        "উমর (রা.)",
+        "আলী (রা.)"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Abu Bakr (RA)",
+        "Bilal (RA)",
+        "Umar (RA)",
+        "Ali (RA)"
+      ],
+      "correct_answer": 1,
+      "category": "Seerah",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 109
+    },
+    {
+      "id": "16657e2b-c596-4d77-9912-204db7bb6626",
+      "question": "নবী ইউনুস (আ.) কোন প্রাণীর পেটে ছিলেন?",
+      "question_bn": null,
+      "question_en": "In which creature's belly was Prophet Yunus (AS)?",
+      "options": [
+        "তিমি মাছ",
+        "হাঙর",
+        "ডলফিন",
+        "তিমিঙ্গিল"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Whale",
+        "Shark",
+        "Dolphin",
+        "Sea monster"
+      ],
+      "correct_answer": 0,
+      "category": "Prophets",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 125
+    },
+    {
+      "id": "713c1853-27b9-49a5-8b2b-0e28b4a7f84c",
+      "question": "সূরা ফাতিহায় কতটি আয়াত আছে?",
+      "question_bn": null,
+      "question_en": "How many verses are in Surah Fatiha?",
+      "options": [
+        "৫",
+        "৬",
+        "৭",
+        "৮"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "5",
+        "6",
+        "7",
+        "8"
+      ],
+      "correct_answer": 2,
+      "category": "Quran",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 159
+    },
+    {
+      "id": "3c67af7a-0389-4c99-a473-38650118a834",
+      "question": "তারাবীহ নামাজ কোন মাসে পড়া হয়?",
+      "question_bn": null,
+      "question_en": "In which month is Tarawih prayer performed?",
+      "options": [
+        "শাবান",
+        "রমজান",
+        "শাওয়াল",
+        "রজব"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Shaban",
+        "Ramadan",
+        "Shawwal",
+        "Rajab"
+      ],
+      "correct_answer": 1,
+      "category": "Prayer",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 204
+    },
+    {
+      "id": "05a21517-1f16-4cab-9738-f566c6e41625",
+      "question": "কোন নবীকে কালিমুল্লাহ বলা হয়?",
+      "question_bn": null,
+      "question_en": "Which Prophet is called Kalimullah (The one who spoke to Allah)?",
+      "options": [
+        "মুহাম্মদ (সা.)",
+        "ইব্রাহিম (আ.)",
+        "মূসা (আ.)",
+        "ঈসা (আ.)"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Muhammad (PBUH)",
+        "Ibrahim (AS)",
+        "Musa (AS)",
+        "Isa (AS)"
+      ],
+      "correct_answer": 2,
+      "category": "Prophets",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 317
+    },
+    {
+      "id": "0ba7b20a-bbc3-4556-9808-5a7f6c2f9cea",
+      "question": "কোন যুদ্ধকে ফুরকান দিবস বলা হয়?",
+      "question_bn": null,
+      "question_en": "Which battle is called the Day of Furqan (Criterion)?",
+      "options": [
+        "উহুদ",
+        "খন্দক",
+        "বদর",
+        "খাইবার"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Uhud",
+        "Khandaq (Trench)",
+        "Badr",
+        "Khaibar"
+      ],
+      "correct_answer": 2,
+      "category": "History",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 326
+    },
+    {
+      "id": "2d8b8a13-41aa-41da-a698-d6d73ec7a3d5",
+      "question": "কুরআনে কতবার আল্লাহ শব্দটি এসেছে?",
+      "question_bn": null,
+      "question_en": "How many times does the word Allah appear in the Quran?",
+      "options": [
+        "২,০০০",
+        "২,৬৯৮",
+        "৩,০০০",
+        "৩,৫০০"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "2,000",
+        "2,698",
+        "3,000",
+        "3,500"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "hard",
+      "is_active": true,
+      "order_index": 321
+    },
+    {
+      "id": "091718c7-c6bc-41e9-a945-135ad3b702a6",
+      "question": "ফরজ নামাজে কত রাকাত সুন্নত?",
+      "question_bn": null,
+      "question_en": "How many Rakahs of Sunnah are there with the Fard prayers?",
+      "options": [
+        "১২",
+        "১৪",
+        "১৬",
+        "১৮"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "12",
+        "14",
+        "16",
+        "18"
+      ],
+      "correct_answer": 0,
+      "category": "Prayer",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 334
+    },
+    {
+      "id": "0c8c45cd-6447-4d2b-acbc-878e3715c697",
+      "question": "ফজরের নামাজে কত রাকাত সুন্নত ও ফরজ?",
+      "question_bn": null,
+      "question_en": "How many Sunnah and Fard Rakahs are in Fajr prayer?",
+      "options": [
+        "২ সুন্নত ২ ফরজ",
+        "৪ সুন্নত ২ ফরজ",
+        "২ সুন্নত ৪ ফরজ",
+        "৪ সুন্নত ৪ ফরজ"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "2 Sunnah 2 Fard",
+        "4 Sunnah 2 Fard",
+        "2 Sunnah 4 Fard",
+        "4 Sunnah 4 Fard"
+      ],
+      "correct_answer": 0,
+      "category": "Prayer",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 351
+    },
+    {
+      "id": "8b06f5c4-8d0e-4eec-b2ae-6b94a0df5d5e",
+      "question": "কোন সূরাকে কুরআনের হৃদয় বলা হয়?",
+      "question_bn": null,
+      "question_en": "Which Surah is called the Heart of the Quran?",
+      "options": [
+        "আল-ফাতিহা",
+        "আল-বাকারাহ",
+        "ইয়াসীন",
+        "আর-রহমান"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Al-Fatiha",
+        "Al-Baqarah",
+        "Yasin",
+        "Ar-Rahman"
+      ],
+      "correct_answer": 2,
+      "category": "Quran",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 360
+    },
+    {
+      "id": "a7c5492f-a01f-4b8f-8fd2-15b2995836fa",
+      "question": "আল-হাকিম নামের অর্থ কী?",
+      "question_bn": null,
+      "question_en": "What is the meaning of Al-Hakeem?",
+      "options": [
+        "প্রজ্ঞাময়",
+        "দয়ালু",
+        "ক্ষমাশীল",
+        "শক্তিশালী"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "The All-Wise",
+        "The Merciful",
+        "The Forgiving",
+        "The Powerful"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 358
+    },
+    {
+      "id": "a8a1f099-d316-4bb9-b748-73bf6d30b2f9",
+      "question": "কোন সূরাকে উম্মুল কুরআন বলা হয়?",
+      "question_bn": null,
+      "question_en": "Which Surah is called Umm al-Quran (Mother of the Quran)?",
+      "options": [
+        "আল-বাকারাহ",
+        "আল-ফাতিহা",
+        "ইয়াসীন",
+        "আর-রহমান"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Al-Baqarah",
+        "Al-Fatiha",
+        "Yasin",
+        "Ar-Rahman"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 341
+    },
+    {
+      "id": "b9b8a99d-6354-4ad0-84e7-d9eec64d978c",
+      "question": "আল-আলিম নামের অর্থ কী?",
+      "question_bn": null,
+      "question_en": "What is the meaning of Al-Aleem?",
+      "options": [
+        "সর্বজ্ঞ",
+        "পরম দয়ালু",
+        "মহাশক্তিধর",
+        "সর্বশ্রোতা"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "The All-Knowing",
+        "The Most Merciful",
+        "The Almighty",
+        "The All-Hearing"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 352
+    },
+    {
+      "id": "c5eb9615-b201-48b1-8474-92401aa2fcc1",
+      "question": "আল-কুদ্দুস নামের অর্থ কী?",
+      "question_bn": null,
+      "question_en": "What is the meaning of Al-Quddus?",
+      "options": [
+        "পবিত্র",
+        "দয়ালু",
+        "ক্ষমাশীল",
+        "মহান"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "The Holy",
+        "The Merciful",
+        "The Forgiving",
+        "The Great"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 342
+    },
+    {
+      "id": "d54ef3fd-05a1-4d2d-a538-dda0f3146001",
+      "question": "রমজানের কোন রাতকে হাজার মাসের চেয়ে উত্তম বলা হয়েছে?",
+      "question_bn": null,
+      "question_en": "Which night of Ramadan is described as better than a thousand months?",
+      "options": [
+        "১ রমজান",
+        "১৫ রমজান",
+        "লাইলাতুল কদর",
+        "২৭ রমজান"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "1st Ramadan",
+        "15th Ramadan",
+        "Lailatul Qadr",
+        "27th Ramadan"
+      ],
+      "correct_answer": 2,
+      "category": "Special Days",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 336
+    },
+    {
+      "id": "e06d0f16-301d-4721-83dc-3ced7471447c",
+      "question": "কোন দুই পাহাড়ের মধ্যে সাঈ করতে হয়?",
+      "question_bn": null,
+      "question_en": "Between which two hills is Sai performed?",
+      "options": [
+        "আরাফাত ও মুজদালিফা",
+        "সাফা ও মারওয়া",
+        "মিনা ও আরাফাত",
+        "জাবালে নূর ও হেরা"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Arafat and Muzdalifah",
+        "Safa and Marwa",
+        "Mina and Arafat",
+        "Jabal al-Noor and Hira"
+      ],
+      "correct_answer": 1,
+      "category": "Hajj",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 333
+    },
+    {
+      "id": "f4f3d5dd-ff68-465c-968a-41b81d9ebf88",
+      "question": "কোন নবীকে রূহুল্লাহ বলা হয়?",
+      "question_bn": null,
+      "question_en": "Which Prophet is called Ruhullah (Spirit of Allah)?",
+      "options": [
+        "মুহাম্মদ (সা.)",
+        "মূসা (আ.)",
+        "ঈসা (আ.)",
+        "ইব্রাহিম (আ.)"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Muhammad (PBUH)",
+        "Musa (AS)",
+        "Isa (AS)",
+        "Ibrahim (AS)"
+      ],
+      "correct_answer": 2,
+      "category": "Prophets",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 350
+    },
+    {
+      "id": "1653909f-349a-4825-914d-15202f682786",
+      "question": "আর-রহমান নামের অর্থ কী?",
+      "question_bn": null,
+      "question_en": "What is the meaning of Ar-Rahman?",
+      "options": [
+        "পরম দয়ালু",
+        "সর্বশক্তিমান",
+        "পরম জ্ঞানী",
+        "সর্বশ্রোতা"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "The Most Merciful",
+        "The Almighty",
+        "The All-Knowing",
+        "The All-Hearing"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 374
+    },
+    {
+      "id": "1a52f940-44a3-4693-8a3e-46f255f6ac49",
+      "question": "কোন সূরাকে কুরআনের হৃদয় বলা হয়?",
+      "question_bn": null,
+      "question_en": "Which Surah is called Heart of the Quran?",
+      "options": [
+        "আল-ফাতিহা",
+        "আল-বাকারাহ",
+        "ইয়াসীন",
+        "আর-রহমান"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Al-Fatiha",
+        "Al-Baqarah",
+        "Yasin",
+        "Ar-Rahman"
+      ],
+      "correct_answer": 2,
+      "category": "Quran",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 388
+    },
+    {
+      "id": "3e3b31e4-b206-458c-87a9-f45de0b23251",
+      "question": "জুমআর নামাজে কতটি রাকাত ফরজ?",
+      "question_bn": null,
+      "question_en": "How many Fard Rakahs are in Jumuah (Friday) prayer?",
+      "options": [
+        "২",
+        "৩",
+        "৪",
+        "৬"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "2",
+        "3",
+        "4",
+        "6"
+      ],
+      "correct_answer": 0,
+      "category": "Prayer",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 361
+    },
+    {
+      "id": "404b63d2-3288-4afd-8614-9f5c126a9fc9",
+      "question": "আল-মালিক নামের অর্থ কী?",
+      "question_bn": null,
+      "question_en": "What is the meaning of Al-Malik?",
+      "options": [
+        "পরম মালিক",
+        "পরম দয়ালু",
+        "সর্বশক্তিমান",
+        "সর্বজ্ঞ"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "The Sovereign/King",
+        "The Most Merciful",
+        "The Almighty",
+        "The All-Knowing"
+      ],
+      "correct_answer": 0,
+      "category": "Names of Allah",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 375
+    },
+    {
+      "id": "5a9a9c52-62d9-42bf-95fb-bab4b6c05e23",
+      "question": "কোন সাহাবীকে সাইফুল্লাহ উপাধি দেওয়া হয়েছিল?",
+      "question_bn": null,
+      "question_en": "Which companion was given the title Saifullah (Sword of Allah)?",
+      "options": [
+        "আবু উবাইদা (রা.)",
+        "খালিদ বিন ওয়ালিদ (রা.)",
+        "সাদ বিন আবি ওয়াক্কাস (রা.)",
+        "আলী (রা.)"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Abu Ubaidah (RA)",
+        "Khalid bin Walid (RA)",
+        "Sa'd bin Abi Waqqas (RA)",
+        "Ali (RA)"
+      ],
+      "correct_answer": 1,
+      "category": "History",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 382
+    },
+    {
+      "id": "70216418-2f86-47ab-8339-ff1871042c33",
+      "question": "সাহাবীদের মধ্যে কাকে ফারুক উপাধি দেওয়া হয়েছিল?",
+      "question_bn": null,
+      "question_en": "Which companion was given the title Al-Faruq?",
+      "options": [
+        "আবু বকর (রা.)",
+        "উমর (রা.)",
+        "উসমান (রা.)",
+        "আলী (রা.)"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Abu Bakr (RA)",
+        "Umar (RA)",
+        "Uthman (RA)",
+        "Ali (RA)"
+      ],
+      "correct_answer": 1,
+      "category": "History",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 370
+    },
+    {
+      "id": "7281acb7-57a0-46ce-9cab-092d2c40f303",
+      "question": "কোন সূরায় বিসমিল্লাহ দুইবার এসেছে?",
+      "question_bn": null,
+      "question_en": "In which Surah does Bismillah appear twice?",
+      "options": [
+        "আল-ফাতিহা",
+        "আল-নমল",
+        "আন-নাহল",
+        "আল-বাকারাহ"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Al-Fatiha",
+        "An-Naml",
+        "An-Nahl",
+        "Al-Baqarah"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "hard",
+      "is_active": true,
+      "order_index": 379
+    },
+    {
+      "id": "885164bb-7993-4471-af30-341c7d6fcae4",
+      "question": "যাকাতের হার কত শতাংশ?",
+      "question_bn": null,
+      "question_en": "What is the rate of Zakat in percentage?",
+      "options": [
+        "২%",
+        "২.৫%",
+        "৫%",
+        "১০%"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "2%",
+        "2.5%",
+        "5%",
+        "10%"
+      ],
+      "correct_answer": 1,
+      "category": "Zakat",
+      "difficulty": "easy",
+      "is_active": true,
+      "order_index": 367
+    },
+    {
+      "id": "dabea1dd-c60c-4e8a-895e-edc713deb370",
+      "question": "মদিনায় হিজরত কোন খ্রিস্টীয় সালে হয়েছিল?",
+      "question_bn": null,
+      "question_en": "In which year CE did the Hijra to Medina take place?",
+      "options": [
+        "৬১০",
+        "৬২২",
+        "৬৩০",
+        "৬৪০"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "610",
+        "622",
+        "630",
+        "640"
+      ],
+      "correct_answer": 1,
+      "category": "History",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 389
+    },
+    {
+      "id": "f2d00410-87f6-46e7-87af-97c20e955e35",
+      "question": "কোন সূরা পড়লে কবরের আজাব থেকে রক্ষা পাওয়া যায়?",
+      "question_bn": null,
+      "question_en": "Which Surah protects from the punishment of the grave?",
+      "options": [
+        "আল-ফাতিহা",
+        "আল-মুলক",
+        "ইয়াসীন",
+        "আল-কাহফ"
+      ],
+      "options_bn": null,
+      "options_en": [
+        "Al-Fatiha",
+        "Al-Mulk",
+        "Yasin",
+        "Al-Kahf"
+      ],
+      "correct_answer": 1,
+      "category": "Quran",
+      "difficulty": "medium",
+      "is_active": true,
+      "order_index": 390
+    }
+  ]
+}

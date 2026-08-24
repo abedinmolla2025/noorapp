@@ -12,6 +12,7 @@ import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { Download, Upload } from "lucide-react";
 import { z } from "zod";
+import { supabase } from "@/integrations/supabase/client";
 
 const QuizQuestionSchema = z
   .object({
@@ -86,10 +87,25 @@ export function QuizBulkImportDialog() {
     }
     setImporting(true);
     try {
-      const existingQuestions = getStoredQuestions();
-      const allQuestions = [...existingQuestions, ...preview];
-      saveQuestions(allQuestions);
-      
+      const rows = preview.map((q, index) => ({
+        question: q.question_bn || q.question,
+        options: q.options_bn || q.options,
+        correct_answer: q.correct_answer,
+        category: q.category,
+        difficulty: q.difficulty || "medium",
+        is_active: q.is_active ?? true,
+        question_bn: q.question_bn || q.question,
+        question_en: q.question_en || null,
+        options_bn: q.options_bn || q.options,
+        options_en: q.options_en || null,
+        order_index: index,
+      }));
+
+      for (let start = 0; start < rows.length; start += 100) {
+        const { error } = await supabase.from("quiz_questions").insert(rows.slice(start, start + 100));
+        if (error) throw error;
+      }
+
       const skipped = (previewStats?.duplicates_existing ?? 0) + (previewStats?.duplicates_in_file ?? 0);
       toast.success(`Imported ${preview.length} | Skipped duplicates ${skipped}`);
       setIsOpen(false);
@@ -121,8 +137,14 @@ export function QuizBulkImportDialog() {
         }
       });
 
-      const existingQuestions = getStoredQuestions();
-      const existingKeys = new Set(existingQuestions.map(deriveQuestionKey));
+      const { data: existingRows, error: existingError } = await supabase
+        .from("quiz_questions")
+        .select("question, question_bn, question_en")
+        .limit(500);
+      if (existingError) throw existingError;
+      const existingKeys = new Set(
+        (existingRows || []).map((q: any) => normalizeKey((q.question_en || q.question_bn || q.question || "").trim()))
+      );
       const seenInFile = new Set<string>();
       const unique: QuizQuestion[] = [];
       let duplicatesExisting = 0;

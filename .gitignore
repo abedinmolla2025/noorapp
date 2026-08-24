@@ -39,3 +39,9 @@ run_migrations2.py
 .vercel
 .env*
 src/data/audio/
+
+# Local audit/import working files
+tmp_*.json
+tmp_*.sql
+scripts/__pycache__/
+audio/

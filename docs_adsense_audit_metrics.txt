@@ -1,0 +1,82 @@
+records 218
+slug 218 / 218
+title_bn 218 / 218
+arabic 218 / 218
+translation_bn 163 / 218
+pronunciation 218 / 218
+when_to_recite_bn 160 / 218
+benefits 160 / 218
+reference 218 / 218
+source_type 218 / 218
+authenticity 218 / 218
+audio_url 160 / 218
+og_image_data 218 / 218
+seo 218 / 218
+DUP slug unique 218 duplicate_groups 0 duplicate_records 0
+DUP title_bn unique 214 duplicate_groups 4 duplicate_records 4
+DUP arabic unique 216 duplicate_groups 2 duplicate_records 2
+DUP translation_bn unique 163 duplicate_groups 0 duplicate_records 0
+DUP when_to_recite_bn unique 8 duplicate_groups 8 duplicate_records 152
+DUP reference unique 214 duplicate_groups 2 duplicate_records 4
+short_arabic_under_40 49
+short_translation_under_80 137
+escaped_newline_any 8
+missing_core_by_record
+161 আয়নায় দেখার দোয়া translation_bn,when_to_recite_bn
+162 নতুন জামাকাপড় পরার দোয়া translation_bn,when_to_recite_bn
+163 সূরা ইখলাস translation_bn,when_to_recite_bn
+164 জাহান্নাম থেকে বাঁচার দোয়া when_to_recite_bn
+165 ঘুমানোর আগের দোয়া translation_bn,when_to_recite_bn
+166 সূরা ইখলাস translation_bn,when_to_recite_bn
+167 রোযা অবস্থায় ঝগড়ার সময় দোয়া translation_bn,when_to_recite_bn
+168 রোগীর জন্য দোয়া translation_bn,when_to_recite_bn
+169 টয়লেটে প্রবেশের দোয়া translation_bn,when_to_recite_bn
+170 আয়াতুল কুরসী translation_bn,when_to_recite_bn
+171 সূরা ফালাক্ব translation_bn,when_to_recite_bn
+172 পিতা-মাতার জন্য দোয়া translation_bn,when_to_recite_bn
+173 সফরের দোয়া translation_bn,when_to_recite_bn
+174 সেহরির দোয়া (রোযার নিয়ত) translation_bn,when_to_recite_bn
+175 সূরা নাস translation_bn,when_to_recite_bn
+176 অযুর পর দোয়া translation_bn,when_to_recite_bn
+177 তারাবীর নামাজের দোয়া translation_bn,when_to_recite_bn
+178 ইসমে আযমের দোয়া (অত্যন্ত ফজিলতপূর্ণ) translation_bn,when_to_recite_bn
+179 সূরা বাকারা ২:২৮৬ translation_bn,when_to_recite_bn
+180 সূরা বাকারা ২:২৮৫ translation_bn,when_to_recite_bn
+181 বিপদের সময় দোয়া translation_bn,when_to_recite_bn
+182 সন্তানের জন্য দোয়া translation_bn,when_to_recite_bn
+183 বৃষ্টির সময় দোয়া translation_bn,when_to_recite_bn
+184 উপকারী জ্ঞানের দোয়া translation_bn,when_to_recite_bn
+185 চিন্তা ও দুঃখ দূরের দোয়া translation_bn,when_to_recite_bn
+186 ইফতারের দোয়া translation_bn,when_to_recite_bn
+187 খাবার শেষের দোয়া translation_bn,when_to_recite_bn
+188 সায়্যিদুল ইস্তিগফার translation_bn,when_to_recite_bn
+189 বদনজর থেকে রক্ষার দোয়া translation_bn,when_to_recite_bn
+190 বিতর নামাজের দোয়া কুনুত translation_bn,when_to_recite_bn
+191 সূরা আল-ফাতিহা translation_bn,when_to_recite_bn
+192 জানাযার দোয়া translation_bn,when_to_recite_bn
+193 লাইলাতুল কদরের বিশেষ দোয়া translation_bn,when_to_recite_bn
+194 হজ্জের তালবিয়া translation_bn,when_to_recite_bn
+195 খাবার শুরুর দোয়া translation_bn,when_to_recite_bn
+196 জাদু ও অশুভ শক্তির বিরুদ্ধে কুরআনের শক্তিশালী আয়াত when_to_recite_bn
+197 সকালের যিকির when_to_recite_bn
+198 ইস্তিখারার দোয়া translation_bn,when_to_recite_bn
+199 মসজিদ থেকে বের হওয়ার দোয়া translation_bn,when_to_recite_bn
+200 সূরা ফালাক translation_bn,when_to_recite_bn
+201 সূরা আন-নাস translation_bn,when_to_recite_bn
+202 হেদায়েতের দোয়া translation_bn,when_to_recite_bn
+203 সাহুর/সেহরির দোয়া (রোজার নিয়ত) translation_bn,when_to_recite_bn
+204 জ্ঞান বৃদ্ধির দোয়া translation_bn,when_to_recite_bn
+205 সালাতের পরে দোয়া translation_bn,when_to_recite_bn
+206 লাইলাতুল ক্বদরের দোয়া translation_bn,when_to_recite_bn
+207 সন্ধ্যার যিকির translation_bn,when_to_recite_bn
+208 ঈমান বৃদ্ধির দোয়া translation_bn,when_to_recite_bn
+209 আয়াতুল কুরসি translation_bn,when_to_recite_bn
+210 ইউনুস (আ.) এর দোয়া translation_bn,when_to_recite_bn
+211 মসজিদে প্রবেশের দোয়া translation_bn,when_to_recite_bn
+212 ইফতারের দোয়া translation_bn,when_to_recite_bn
+213 দুরূদ ইব্রাহীম translation_bn,when_to_recite_bn
+214 ঘুম থেকে জাগার দোয়া translation_bn,when_to_recite_bn
+215 রমযান মাসের বিশেষ দোয়া translation_bn,when_to_recite_bn
+216 টয়লেট থেকে বের হওয়ার দোয়া translation_bn,when_to_recite_bn
+217 কবর জিয়ারতের দোয়া translation_bn,when_to_recite_bn
+218 ঘর থেকে বের হওয়ার দোয়া translation_bn,when_to_recite_bn

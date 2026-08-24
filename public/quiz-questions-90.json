@@ -2,8 +2,18 @@
   {
     "question": "কুরআন কত সূরা নিয়ে গঠিত?",
     "question_en": "How many Surahs are in the Quran?",
-    "options": ["১১৪", "১১৫", "১১৩", "১১২"],
-    "options_en": ["114", "115", "113", "112"],
+    "options": [
+      "১১৪",
+      "১১৫",
+      "১১৩",
+      "১১২"
+    ],
+    "options_en": [
+      "114",
+      "115",
+      "113",
+      "112"
+    ],
     "correct_answer": 0,
     "category": "Quran",
     "difficulty": "easy"
@@ -11,8 +21,18 @@
   {
     "question": "ইসলামের পাঁচ স্তম্ভের প্রথমটি কী?",
     "question_en": "What is the first pillar of Islam?",
-    "options": ["নামাজ", "রোজা", "শাহাদাহ", "যাকাত"],
-    "options_en": ["Salah (Prayer)", "Sawm (Fasting)", "Shahada (Declaration of Faith)", "Zakat"],
+    "options": [
+      "নামাজ",
+      "রোজা",
+      "শাহাদাহ",
+      "যাকাত"
+    ],
+    "options_en": [
+      "Salah (Prayer)",
+      "Sawm (Fasting)",
+      "Shahada (Declaration of Faith)",
+      "Zakat"
+    ],
     "correct_answer": 2,
     "category": "Pillars",
     "difficulty": "easy"
@@ -20,8 +40,18 @@
   {
     "question": "কুরআন কোন মাসে নাযিল হয়েছিল?",
     "question_en": "In which month was the Quran revealed?",
-    "options": ["শাবান", "রজব", "রমজান", "মুহররম"],
-    "options_en": ["Sha'ban", "Rajab", "Ramadan", "Muharram"],
+    "options": [
+      "শাবান",
+      "রজব",
+      "রমজান",
+      "মুহররম"
+    ],
+    "options_en": [
+      "Sha'ban",
+      "Rajab",
+      "Ramadan",
+      "Muharram"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "easy"
@@ -29,8 +59,18 @@
   {
     "question": "কুরআনের সবচেয়ে দীর্ঘ সূরা কোনটি?",
     "question_en": "Which is the longest Surah of the Quran?",
-    "options": ["আল-ইমরান", "আন-নিসা", "আল-বাকারাহ", "আল-মায়িদাহ"],
-    "options_en": ["Al-Imran", "An-Nisa", "Al-Baqarah", "Al-Ma'idah"],
+    "options": [
+      "আল-ইমরান",
+      "আন-নিসা",
+      "আল-বাকারাহ",
+      "আল-মায়িদাহ"
+    ],
+    "options_en": [
+      "Al-Imran",
+      "An-Nisa",
+      "Al-Baqarah",
+      "Al-Ma'idah"
+    ],
     "correct_answer": 2,
     "category": "Quran",
     "difficulty": "easy"
@@ -38,8 +78,18 @@
   {
     "question": "ইসলামে প্রতিদিন কতটি ফরজ নামাজ?",
     "question_en": "How many obligatory (Fard) prayers are there daily in Islam?",
-    "options": ["৩", "৪", "৫", "৬"],
-    "options_en": ["3", "4", "5", "6"],
+    "options": [
+      "৩",
+      "৪",
+      "৫",
+      "৬"
+    ],
+    "options_en": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
     "correct_answer": 2,
     "category": "Pillars",
     "difficulty": "easy"
@@ -47,8 +97,18 @@
   {
     "question": "হজ্জের সময় কোন স্থানে যেতে হয়?",
     "question_en": "Which place must be visited during Hajj?",
-    "options": ["মদিনা", "মক্কা", "জেরুজালেম", "কায়রো"],
-    "options_en": ["Madinah", "Makkah", "Jerusalem", "Cairo"],
+    "options": [
+      "মদিনা",
+      "মক্কা",
+      "জেরুজালেম",
+      "কায়রো"
+    ],
+    "options_en": [
+      "Madinah",
+      "Makkah",
+      "Jerusalem",
+      "Cairo"
+    ],
     "correct_answer": 1,
     "category": "Pillars",
     "difficulty": "easy"
@@ -56,8 +116,18 @@
   {
     "question": "নবী মুহাম্মদ (সা.) কত বছর বয়সে নবুওয়াত পান?",
     "question_en": "At what age did Prophet Muhammad (PBUH) receive prophethood?",
-    "options": ["৩০", "৩৫", "৪০", "৪৫"],
-    "options_en": ["30", "35", "40", "45"],
+    "options": [
+      "৩০",
+      "৩৫",
+      "৪০",
+      "৪৫"
+    ],
+    "options_en": [
+      "30",
+      "35",
+      "40",
+      "45"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "easy"
@@ -65,8 +135,18 @@
   {
     "question": "কুরআনের সবচেয়ে ছোট সূরা কোনটি?",
     "question_en": "Which is the shortest Surah of the Quran?",
-    "options": ["আল-ফাতিহা", "আল-ইখলাস", "আল-কাউসার", "আল-আসর"],
-    "options_en": ["Al-Fatiha", "Al-Ikhlas", "Al-Kawthar", "Al-Asr"],
+    "options": [
+      "আল-ফাতিহা",
+      "আল-ইখলাস",
+      "আল-কাউসার",
+      "আল-আসর"
+    ],
+    "options_en": [
+      "Al-Fatiha",
+      "Al-Ikhlas",
+      "Al-Kawthar",
+      "Al-Asr"
+    ],
     "correct_answer": 2,
     "category": "Quran",
     "difficulty": "medium"
@@ -74,8 +154,18 @@
   {
     "question": "ইসলামের প্রথম খলিফা কে ছিলেন?",
     "question_en": "Who was the first Caliph of Islam?",
-    "options": ["উমর (রা.)", "আবু বকর (রা.)", "উসমান (রা.)", "আলী (রা.)"],
-    "options_en": ["Umar (RA)", "Abu Bakr (RA)", "Uthman (RA)", "Ali (RA)"],
+    "options": [
+      "উমর (রা.)",
+      "আবু বকর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "options_en": [
+      "Umar (RA)",
+      "Abu Bakr (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "easy"
@@ -83,8 +173,18 @@
   {
     "question": "জান্নাতের কতটি স্তর আছে?",
     "question_en": "How many levels does Jannah (Paradise) have?",
-    "options": ["৫", "৭", "৮", "১০"],
-    "options_en": ["5", "7", "8", "10"],
+    "options": [
+      "৫",
+      "৭",
+      "৮",
+      "১০"
+    ],
+    "options_en": [
+      "5",
+      "7",
+      "8",
+      "10"
+    ],
     "correct_answer": 1,
     "category": "Basics",
     "difficulty": "medium"
@@ -92,8 +192,18 @@
   {
     "question": "ওহী বহনকারী ফেরেশতার নাম কী?",
     "question_en": "What is the name of the angel who carried revelation?",
-    "options": ["মিকাইল", "জিবরীল", "ইস্রাফিল", "আজরাইল"],
-    "options_en": ["Mikail", "Jibreel (Gabriel)", "Israfeel", "Azrael"],
+    "options": [
+      "মিকাইল",
+      "জিবরীল",
+      "ইস্রাফিল",
+      "আজরাইল"
+    ],
+    "options_en": [
+      "Mikail",
+      "Jibreel (Gabriel)",
+      "Israfeel",
+      "Azrael"
+    ],
     "correct_answer": 1,
     "category": "Angels",
     "difficulty": "easy"
@@ -101,8 +211,18 @@
   {
     "question": "রমজান মাসের শেষ ১০ দিনের মধ্যে কোন রাত?",
     "question_en": "Which night falls in the last 10 days of Ramadan?",
-    "options": ["লাইলাতুল মিরাজ", "লাইলাতুল বারাআত", "লাইলাতুল কদর", "লাইলাতুল ইসরা"],
-    "options_en": ["Lailatul Miraj", "Lailatul Bara'at", "Lailatul Qadr", "Lailatul Isra"],
+    "options": [
+      "লাইলাতুল মিরাজ",
+      "লাইলাতুল বারাআত",
+      "লাইলাতুল কদর",
+      "লাইলাতুল ইসরা"
+    ],
+    "options_en": [
+      "Lailatul Miraj",
+      "Lailatul Bara'at",
+      "Lailatul Qadr",
+      "Lailatul Isra"
+    ],
     "correct_answer": 2,
     "category": "Special Days",
     "difficulty": "easy"
@@ -110,8 +230,18 @@
   {
     "question": "যাকাত প্রদান করা ফরজ হওয়ার জন্য ন্যূনতম সম্পদের পরিমাণ কী বলা হয়?",
     "question_en": "What is the minimum amount of wealth required for Zakat to be obligatory?",
-    "options": ["নিসাব", "সাদাকাহ", "ফিতরা", "খুমুস"],
-    "options_en": ["Nisab", "Sadaqah", "Fitra", "Khumus"],
+    "options": [
+      "নিসাব",
+      "সাদাকাহ",
+      "ফিতরা",
+      "খুমুস"
+    ],
+    "options_en": [
+      "Nisab",
+      "Sadaqah",
+      "Fitra",
+      "Khumus"
+    ],
     "correct_answer": 0,
     "category": "Pillars",
     "difficulty": "medium"
@@ -119,8 +249,18 @@
   {
     "question": "হযরত ইব্রাহিম (আ.) এর পুত্রের নাম কী যাকে তিনি কুরবানি করতে চেয়েছিলেন?",
     "question_en": "What is the name of Prophet Ibrahim (AS)'s son whom he was willing to sacrifice?",
-    "options": ["ইসহাক (আ.)", "ইসমাইল (আ.)", "ইয়াকুব (আ.)", "ইউসুফ (আ.)"],
-    "options_en": ["Ishaq (AS)", "Ismail (AS)", "Yaqub (AS)", "Yusuf (AS)"],
+    "options": [
+      "ইসহাক (আ.)",
+      "ইসমাইল (আ.)",
+      "ইয়াকুব (আ.)",
+      "ইউসুফ (আ.)"
+    ],
+    "options_en": [
+      "Ishaq (AS)",
+      "Ismail (AS)",
+      "Yaqub (AS)",
+      "Yusuf (AS)"
+    ],
     "correct_answer": 1,
     "category": "Prophets",
     "difficulty": "easy"
@@ -128,8 +268,18 @@
   {
     "question": "কুরআনে কতটি পারা আছে?",
     "question_en": "How many Juz (parts) are in the Quran?",
-    "options": ["২৮", "৩০", "৩২", "৩৫"],
-    "options_en": ["28", "30", "32", "35"],
+    "options": [
+      "২৮",
+      "৩০",
+      "৩২",
+      "৩৫"
+    ],
+    "options_en": [
+      "28",
+      "30",
+      "32",
+      "35"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "easy"
@@ -137,8 +287,18 @@
   {
     "question": "মুসলমানদের প্রথম মসজিদের নাম কী?",
     "question_en": "What is the name of the first mosque built by Muslims?",
-    "options": ["মসজিদুল হারাম", "মসজিদে নবভী", "মসজিদে কুবা", "মসজিদুল আকসা"],
-    "options_en": ["Masjid al-Haram", "Masjid an-Nabawi", "Masjid Quba", "Masjid al-Aqsa"],
+    "options": [
+      "মসজিদুল হারাম",
+      "মসজিদে নবভী",
+      "মসজিদে কুবা",
+      "মসজিদুল আকসা"
+    ],
+    "options_en": [
+      "Masjid al-Haram",
+      "Masjid an-Nabawi",
+      "Masjid Quba",
+      "Masjid al-Aqsa"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "medium"
@@ -146,8 +306,18 @@
   {
     "question": "তাহাজ্জুদ নামাজ কখন পড়া হয়?",
     "question_en": "When is Tahajjud prayer performed?",
-    "options": ["ফজরের আগে", "রাতের শেষাংশে", "মাগরিবের পরে", "ইশার পরে"],
-    "options_en": ["Before Fajr", "In the last part of the night", "After Maghrib", "After Isha"],
+    "options": [
+      "ফজরের আগে",
+      "রাতের শেষাংশে",
+      "মাগরিবের পরে",
+      "ইশার পরে"
+    ],
+    "options_en": [
+      "Before Fajr",
+      "In the last part of the night",
+      "After Maghrib",
+      "After Isha"
+    ],
     "correct_answer": 1,
     "category": "Prayer",
     "difficulty": "medium"
@@ -155,8 +325,18 @@
   {
     "question": "হিজরি সালের প্রথম মাস কোনটি?",
     "question_en": "What is the first month of the Hijri calendar?",
-    "options": ["রমজান", "মুহররম", "সফর", "রবিউল আউয়াল"],
-    "options_en": ["Ramadan", "Muharram", "Safar", "Rabi al-Awwal"],
+    "options": [
+      "রমজান",
+      "মুহররম",
+      "সফর",
+      "রবিউল আউয়াল"
+    ],
+    "options_en": [
+      "Ramadan",
+      "Muharram",
+      "Safar",
+      "Rabi al-Awwal"
+    ],
     "correct_answer": 1,
     "category": "Basics",
     "difficulty": "easy"
@@ -164,8 +344,18 @@
   {
     "question": "কোন নবীকে 'কালিমুল্লাহ' বলা হয়?",
     "question_en": "Which Prophet is called 'Kalimullah' (The one who spoke to Allah)?",
-    "options": ["মুহাম্মদ (সা.)", "ইব্রাহিম (আ.)", "মূসা (আ.)", "ঈসা (আ.)"],
-    "options_en": ["Muhammad (PBUH)", "Ibrahim (AS)", "Musa (AS)", "Isa (AS)"],
+    "options": [
+      "মুহাম্মদ (সা.)",
+      "ইব্রাহিম (আ.)",
+      "মূসা (আ.)",
+      "ঈসা (আ.)"
+    ],
+    "options_en": [
+      "Muhammad (PBUH)",
+      "Ibrahim (AS)",
+      "Musa (AS)",
+      "Isa (AS)"
+    ],
     "correct_answer": 2,
     "category": "Prophets",
     "difficulty": "medium"
@@ -173,8 +363,18 @@
   {
     "question": "ইসলামের পাঁচ স্তম্ভের শেষটি কী?",
     "question_en": "What is the last pillar of Islam?",
-    "options": ["নামাজ", "যাকাত", "রোজা", "হজ্জ"],
-    "options_en": ["Salah (Prayer)", "Zakat", "Sawm (Fasting)", "Hajj"],
+    "options": [
+      "নামাজ",
+      "যাকাত",
+      "রোজা",
+      "হজ্জ"
+    ],
+    "options_en": [
+      "Salah (Prayer)",
+      "Zakat",
+      "Sawm (Fasting)",
+      "Hajj"
+    ],
     "correct_answer": 3,
     "category": "Pillars",
     "difficulty": "easy"
@@ -182,8 +382,18 @@
   {
     "question": "সূরা আল-ফাতিহায় কতটি আয়াত আছে?",
     "question_en": "How many verses are in Surah Al-Fatiha?",
-    "options": ["৫", "৬", "৭", "৮"],
-    "options_en": ["5", "6", "7", "8"],
+    "options": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "options_en": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
     "correct_answer": 2,
     "category": "Quran",
     "difficulty": "easy"
@@ -191,8 +401,18 @@
   {
     "question": "কোন ফেরেশতা বৃষ্টি ও রিজিকের দায়িত্বে আছেন?",
     "question_en": "Which angel is responsible for rain and sustenance?",
-    "options": ["জিবরীল", "মিকাইল", "ইস্রাফিল", "মালাকুল মাউত"],
-    "options_en": ["Jibreel", "Mikail", "Israfeel", "Malak al-Mawt"],
+    "options": [
+      "জিবরীল",
+      "মিকাইল",
+      "ইস্রাফিল",
+      "মালাকুল মাউত"
+    ],
+    "options_en": [
+      "Jibreel",
+      "Mikail",
+      "Israfeel",
+      "Malak al-Mawt"
+    ],
     "correct_answer": 1,
     "category": "Angels",
     "difficulty": "medium"
@@ -200,8 +420,18 @@
   {
     "question": "জুমআর নামাজে কতটি রাকাত ফরজ?",
     "question_en": "How many Fard Rak'ahs are in Jumu'ah (Friday) prayer?",
-    "options": ["২", "৩", "৪", "৬"],
-    "options_en": ["2", "3", "4", "6"],
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৬"
+    ],
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "6"
+    ],
     "correct_answer": 0,
     "category": "Prayer",
     "difficulty": "easy"
@@ -209,8 +439,18 @@
   {
     "question": "হযরত নূহ (আ.) কত বছর তাঁর জাতির কাছে দাওয়াত দিয়েছিলেন?",
     "question_en": "How many years did Prophet Nuh (AS) preach to his people?",
-    "options": ["৫০০", "৭০০", "৯৫০", "১০০০"],
-    "options_en": ["500", "700", "950", "1000"],
+    "options": [
+      "৫০০",
+      "৭০০",
+      "৯৫০",
+      "১০০০"
+    ],
+    "options_en": [
+      "500",
+      "700",
+      "950",
+      "1000"
+    ],
     "correct_answer": 2,
     "category": "Prophets",
     "difficulty": "medium"
@@ -218,8 +458,18 @@
   {
     "question": "কুরআনে কতবার 'আল্লাহ' শব্দটি এসেছে?",
     "question_en": "How many times does the word 'Allah' appear in the Quran?",
-    "options": ["২,০০০", "২,৬৯৮", "৩,০০০", "৩,৫০০"],
-    "options_en": ["2,000", "2,698", "3,000", "3,500"],
+    "options": [
+      "২,০০০",
+      "২,৬৯৮",
+      "৩,০০০",
+      "৩,৫০০"
+    ],
+    "options_en": [
+      "2,000",
+      "2,698",
+      "3,000",
+      "3,500"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "hard"
@@ -227,8 +477,18 @@
   {
     "question": "ঈদুল ফিতরের নামাজ কখন পড়া হয়?",
     "question_en": "When is the Eid ul-Fitr prayer performed?",
-    "options": ["ফজরের সময়", "সূর্যোদয়ের পর", "যোহরের সময়", "মাগরিবের সময়"],
-    "options_en": ["At Fajr time", "After sunrise", "At Zuhr time", "At Maghrib time"],
+    "options": [
+      "ফজরের সময়",
+      "সূর্যোদয়ের পর",
+      "যোহরের সময়",
+      "মাগরিবের সময়"
+    ],
+    "options_en": [
+      "At Fajr time",
+      "After sunrise",
+      "At Zuhr time",
+      "At Maghrib time"
+    ],
     "correct_answer": 1,
     "category": "Special Days",
     "difficulty": "easy"
@@ -236,8 +496,18 @@
   {
     "question": "কোন সূরাকে 'কুরআনের হৃদয়' বলা হয়?",
     "question_en": "Which Surah is called the 'Heart of the Quran'?",
-    "options": ["আল-ফাতিহা", "আল-বাকারাহ", "ইয়াসীন", "আর-রহমান"],
-    "options_en": ["Al-Fatiha", "Al-Baqarah", "Yasin", "Ar-Rahman"],
+    "options": [
+      "আল-ফাতিহা",
+      "আল-বাকারাহ",
+      "ইয়াসীন",
+      "আর-রহমান"
+    ],
+    "options_en": [
+      "Al-Fatiha",
+      "Al-Baqarah",
+      "Yasin",
+      "Ar-Rahman"
+    ],
     "correct_answer": 2,
     "category": "Quran",
     "difficulty": "medium"
@@ -245,8 +515,18 @@
   {
     "question": "হজ্জের সময় কোন পাহাড়ে ওকুফ করতে হয়?",
     "question_en": "On which mountain must pilgrims stand during Hajj?",
-    "options": ["জাবালে নূর", "জাবালে উহুদ", "আরাফাত", "সাফা"],
-    "options_en": ["Jabal al-Noor", "Jabal Uhud", "Arafat", "Safa"],
+    "options": [
+      "জাবালে নূর",
+      "জাবালে উহুদ",
+      "আরাফাত",
+      "সাফা"
+    ],
+    "options_en": [
+      "Jabal al-Noor",
+      "Jabal Uhud",
+      "Arafat",
+      "Safa"
+    ],
     "correct_answer": 2,
     "category": "Hajj",
     "difficulty": "medium"
@@ -254,8 +534,18 @@
   {
     "question": "মদিনায় হিজরতের বছর থেকে হিজরি সাল শুরু হয়। এটি কোন খ্রিস্টীয় সালে?",
     "question_en": "The Hijri calendar starts from the migration to Madinah. Which year CE was this?",
-    "options": ["৬১০", "৬২২", "৬৩০", "৬৪০"],
-    "options_en": ["610", "622", "630", "640"],
+    "options": [
+      "৬১০",
+      "৬২২",
+      "৬৩০",
+      "৬৪০"
+    ],
+    "options_en": [
+      "610",
+      "622",
+      "630",
+      "640"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "medium"
@@ -263,8 +553,18 @@
   {
     "question": "আল্লাহর কতটি সুন্দর নাম রয়েছে?",
     "question_en": "How many beautiful names does Allah have?",
-    "options": ["৭৭", "৮৮", "৯৯", "১০০"],
-    "options_en": ["77", "88", "99", "100"],
+    "options": [
+      "৭৭",
+      "৮৮",
+      "৯৯",
+      "১০০"
+    ],
+    "options_en": [
+      "77",
+      "88",
+      "99",
+      "100"
+    ],
     "correct_answer": 2,
     "category": "Names of Allah",
     "difficulty": "easy"
@@ -272,8 +572,18 @@
   {
     "question": "সিয়ামের আরবি অর্থ কী?",
     "question_en": "What is the Arabic meaning of Siyam?",
-    "options": ["উপবাস", "বিরত থাকা", "ধৈর্য ধরা", "ত্যাগ করা"],
-    "options_en": ["Starvation", "To abstain", "To be patient", "To sacrifice"],
+    "options": [
+      "উপবাস",
+      "বিরত থাকা",
+      "ধৈর্য ধরা",
+      "ত্যাগ করা"
+    ],
+    "options_en": [
+      "Starvation",
+      "To abstain",
+      "To be patient",
+      "To sacrifice"
+    ],
     "correct_answer": 1,
     "category": "Fasting",
     "difficulty": "medium"
@@ -281,8 +591,18 @@
   {
     "question": "কোন যুদ্ধকে 'ফুরকান দিবস' বলা হয়?",
     "question_en": "Which battle is called the 'Day of Furqan' (Criterion)?",
-    "options": ["উহুদ", "খন্দক", "বদর", "খাইবার"],
-    "options_en": ["Uhud", "Khandaq (Trench)", "Badr", "Khaibar"],
+    "options": [
+      "উহুদ",
+      "খন্দক",
+      "বদর",
+      "খাইবার"
+    ],
+    "options_en": [
+      "Uhud",
+      "Khandaq (Trench)",
+      "Badr",
+      "Khaibar"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "medium"
@@ -290,8 +610,18 @@
   {
     "question": "তাওয়াফ করার সময় কোন পাথরের দিক থেকে শুরু করতে হয়?",
     "question_en": "From which stone does Tawaf begin?",
-    "options": ["হাজরে আসওয়াদ", "রুকনে ইয়ামানি", "মাকামে ইব্রাহিম", "মিনা"],
-    "options_en": ["Hajar al-Aswad (Black Stone)", "Rukn al-Yamani", "Maqam Ibrahim", "Mina"],
+    "options": [
+      "হাজরে আসওয়াদ",
+      "রুকনে ইয়ামানি",
+      "মাকামে ইব্রাহিম",
+      "মিনা"
+    ],
+    "options_en": [
+      "Hajar al-Aswad (Black Stone)",
+      "Rukn al-Yamani",
+      "Maqam Ibrahim",
+      "Mina"
+    ],
     "correct_answer": 0,
     "category": "Hajj",
     "difficulty": "medium"
@@ -299,8 +629,18 @@
   {
     "question": "কোন নবী সবচেয়ে বেশিবার কুরআনে উল্লেখ করা হয়েছে?",
     "question_en": "Which Prophet is mentioned the most times in the Quran?",
-    "options": ["মুহাম্মদ (সা.)", "ইব্রাহিম (আ.)", "মূসা (আ.)", "ঈসা (আ.)"],
-    "options_en": ["Muhammad (PBUH)", "Ibrahim (AS)", "Musa (AS)", "Isa (AS)"],
+    "options": [
+      "মুহাম্মদ (সা.)",
+      "ইব্রাহিম (আ.)",
+      "মূসা (আ.)",
+      "ঈসা (আ.)"
+    ],
+    "options_en": [
+      "Muhammad (PBUH)",
+      "Ibrahim (AS)",
+      "Musa (AS)",
+      "Isa (AS)"
+    ],
     "correct_answer": 2,
     "category": "Prophets",
     "difficulty": "medium"
@@ -308,8 +648,18 @@
   {
     "question": "সাহাবীদের মধ্যে কাকে 'ফারুক' উপাধি দেওয়া হয়েছিল?",
     "question_en": "Which companion was given the title 'Al-Faruq'?",
-    "options": ["আবু বকর (রা.)", "উমর (রা.)", "উসমান (রা.)", "আলী (রা.)"],
-    "options_en": ["Abu Bakr (RA)", "Umar (RA)", "Uthman (RA)", "Ali (RA)"],
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "easy"
@@ -317,8 +667,18 @@
   {
     "question": "কোন সূরায় বিসমিল্লাহ নেই?",
     "question_en": "Which Surah does not begin with Bismillah?",
-    "options": ["আল-ফাতিহা", "আত-তাওবাহ", "আল-ইখলাস", "আন-নাস"],
-    "options_en": ["Al-Fatiha", "At-Tawbah", "Al-Ikhlas", "An-Nas"],
+    "options": [
+      "আল-ফাতিহা",
+      "আত-তাওবাহ",
+      "আল-ইখলাস",
+      "আন-নাস"
+    ],
+    "options_en": [
+      "Al-Fatiha",
+      "At-Tawbah",
+      "Al-Ikhlas",
+      "An-Nas"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "medium"
@@ -326,8 +686,18 @@
   {
     "question": "যাকাতের হার কত শতাংশ?",
     "question_en": "What is the rate of Zakat?",
-    "options": ["২%", "২.৫%", "৫%", "১০%"],
-    "options_en": ["2%", "2.5%", "5%", "10%"],
+    "options": [
+      "২%",
+      "২.৫%",
+      "৫%",
+      "১০%"
+    ],
+    "options_en": [
+      "2%",
+      "2.5%",
+      "5%",
+      "10%"
+    ],
     "correct_answer": 1,
     "category": "Zakat",
     "difficulty": "easy"
@@ -335,8 +705,18 @@
   {
     "question": "কোন মাসে শবে মিরাজ হয়েছিল?",
     "question_en": "In which month did the Night of Miraj (Ascension) occur?",
-    "options": ["রজব", "শাবান", "রমজান", "যিলহজ্জ"],
-    "options_en": ["Rajab", "Sha'ban", "Ramadan", "Dhul Hijjah"],
+    "options": [
+      "রজব",
+      "শাবান",
+      "রমজান",
+      "যিলহজ্জ"
+    ],
+    "options_en": [
+      "Rajab",
+      "Sha'ban",
+      "Ramadan",
+      "Dhul Hijjah"
+    ],
     "correct_answer": 0,
     "category": "Special Days",
     "difficulty": "medium"
@@ -344,8 +724,18 @@
   {
     "question": "নামাজে সর্বপ্রথম কোনটি পড়তে হয়?",
     "question_en": "What is said first when starting prayer?",
-    "options": ["সূরা ফাতিহা", "তাকবীর", "দোয়া ইস্তিফতাহ", "সানা"],
-    "options_en": ["Surah Fatiha", "Takbir (Allahu Akbar)", "Dua Istiftah", "Thana"],
+    "options": [
+      "সূরা ফাতিহা",
+      "তাকবীর",
+      "দোয়া ইস্তিফতাহ",
+      "সানা"
+    ],
+    "options_en": [
+      "Surah Fatiha",
+      "Takbir (Allahu Akbar)",
+      "Dua Istiftah",
+      "Thana"
+    ],
     "correct_answer": 1,
     "category": "Prayer",
     "difficulty": "easy"
@@ -353,8 +743,18 @@
   {
     "question": "আয়াতুল কুরসি কোন সূরায় আছে?",
     "question_en": "In which Surah is Ayatul Kursi found?",
-    "options": ["আল-ফাতিহা", "আল-বাকারাহ", "আলে-ইমরান", "আন-নিসা"],
-    "options_en": ["Al-Fatiha", "Al-Baqarah", "Al-Imran", "An-Nisa"],
+    "options": [
+      "আল-ফাতিহা",
+      "আল-বাকারাহ",
+      "আলে-ইমরান",
+      "আন-নিসা"
+    ],
+    "options_en": [
+      "Al-Fatiha",
+      "Al-Baqarah",
+      "Al-Imran",
+      "An-Nisa"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "easy"
@@ -362,8 +762,18 @@
   {
     "question": "কোন ফেরেশতা কিয়ামতের দিন শিঙ্গায় ফুঁক দেবেন?",
     "question_en": "Which angel will blow the trumpet on the Day of Judgment?",
-    "options": ["জিবরীল", "মিকাইল", "ইস্রাফিল", "আজরাইল"],
-    "options_en": ["Jibreel", "Mikail", "Israfeel", "Azrael"],
+    "options": [
+      "জিবরীল",
+      "মিকাইল",
+      "ইস্রাফিল",
+      "আজরাইল"
+    ],
+    "options_en": [
+      "Jibreel",
+      "Mikail",
+      "Israfeel",
+      "Azrael"
+    ],
     "correct_answer": 2,
     "category": "Angels",
     "difficulty": "medium"
@@ -371,8 +781,18 @@
   {
     "question": "হজ্জের কোন দিন কুরবানি করা হয়?",
     "question_en": "On which day of Hajj is the sacrifice (Qurbani) performed?",
-    "options": ["৮ যিলহজ্জ", "৯ যিলহজ্জ", "১০ যিলহজ্জ", "১১ যিলহজ্জ"],
-    "options_en": ["8th Dhul Hijjah", "9th Dhul Hijjah", "10th Dhul Hijjah", "11th Dhul Hijjah"],
+    "options": [
+      "৮ যিলহজ্জ",
+      "৯ যিলহজ্জ",
+      "১০ যিলহজ্জ",
+      "১১ যিলহজ্জ"
+    ],
+    "options_en": [
+      "8th Dhul Hijjah",
+      "9th Dhul Hijjah",
+      "10th Dhul Hijjah",
+      "11th Dhul Hijjah"
+    ],
     "correct_answer": 2,
     "category": "Hajj",
     "difficulty": "easy"
@@ -380,8 +800,18 @@
   {
     "question": "সাদাকাতুল ফিতর কখন প্রদান করতে হয়?",
     "question_en": "When should Sadaqatul Fitr be given?",
-    "options": ["রমজানের শুরুতে", "ঈদের নামাজের আগে", "ঈদের দিন", "রমজানের যেকোনো সময়"],
-    "options_en": ["At the beginning of Ramadan", "Before Eid prayer", "On the day of Eid", "Any time during Ramadan"],
+    "options": [
+      "রমজানের শুরুতে",
+      "ঈদের নামাজের আগে",
+      "ঈদের দিন",
+      "রমজানের যেকোনো সময়"
+    ],
+    "options_en": [
+      "At the beginning of Ramadan",
+      "Before Eid prayer",
+      "On the day of Eid",
+      "Any time during Ramadan"
+    ],
     "correct_answer": 1,
     "category": "Fasting",
     "difficulty": "easy"
@@ -389,8 +819,18 @@
   {
     "question": "কুরআনে কতটি সিজদায়ে তিলাওয়াত আছে?",
     "question_en": "How many Sajdah of Tilawat are in the Quran?",
-    "options": ["১০", "১২", "১৪", "১৬"],
-    "options_en": ["10", "12", "14", "16"],
+    "options": [
+      "১০",
+      "১২",
+      "১৪",
+      "১৬"
+    ],
+    "options_en": [
+      "10",
+      "12",
+      "14",
+      "16"
+    ],
     "correct_answer": 2,
     "category": "Quran",
     "difficulty": "medium"
@@ -398,8 +838,18 @@
   {
     "question": "'আর-রহমান' নামের অর্থ কী?",
     "question_en": "What is the meaning of 'Ar-Rahman'?",
-    "options": ["পরম দয়ালু", "সর্বশক্তিমান", "পরম জ্ঞানী", "সর্বশ্রোতা"],
-    "options_en": ["The Most Merciful", "The Almighty", "The All-Knowing", "The All-Hearing"],
+    "options": [
+      "পরম দয়ালু",
+      "সর্বশক্তিমান",
+      "পরম জ্ঞানী",
+      "সর্বশ্রোতা"
+    ],
+    "options_en": [
+      "The Most Merciful",
+      "The Almighty",
+      "The All-Knowing",
+      "The All-Hearing"
+    ],
     "correct_answer": 0,
     "category": "Names of Allah",
     "difficulty": "easy"
@@ -407,8 +857,18 @@
   {
     "question": "খন্দকের যুদ্ধ কত হিজরিতে সংঘটিত হয়?",
     "question_en": "In which Hijri year did the Battle of Khandaq (Trench) take place?",
-    "options": ["৩", "৪", "৫", "৬"],
-    "options_en": ["3", "4", "5", "6"],
+    "options": [
+      "৩",
+      "৪",
+      "৫",
+      "৬"
+    ],
+    "options_en": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "hard"
@@ -416,8 +876,18 @@
   {
     "question": "রোজার নিয়ত কখন করতে হয়?",
     "question_en": "When should the intention (Niyyah) for fasting be made?",
-    "options": ["সেহরির আগে", "সেহরির সময়", "ফজরের আগে", "ফজরের পর"],
-    "options_en": ["Before Suhoor", "During Suhoor", "Before Fajr", "After Fajr"],
+    "options": [
+      "সেহরির আগে",
+      "সেহরির সময়",
+      "ফজরের আগে",
+      "ফজরের পর"
+    ],
+    "options_en": [
+      "Before Suhoor",
+      "During Suhoor",
+      "Before Fajr",
+      "After Fajr"
+    ],
     "correct_answer": 2,
     "category": "Fasting",
     "difficulty": "medium"
@@ -425,8 +895,18 @@
   {
     "question": "তাশাহহুদে কোন নবীর প্রতি সালাম পাঠ করা হয়?",
     "question_en": "Which Prophets are sent blessings upon in Tashahhud?",
-    "options": ["শুধু মুহাম্মদ (সা.)", "মুহাম্মদ (সা.) ও ইব্রাহিম (আ.)", "সকল নবী", "শুধু উলুল আজম নবীগণ"],
-    "options_en": ["Only Muhammad (PBUH)", "Muhammad (PBUH) and Ibrahim (AS)", "All Prophets", "Only Ulul Azm Prophets"],
+    "options": [
+      "শুধু মুহাম্মদ (সা.)",
+      "মুহাম্মদ (সা.) ও ইব্রাহিম (আ.)",
+      "সকল নবী",
+      "শুধু উলুল আজম নবীগণ"
+    ],
+    "options_en": [
+      "Only Muhammad (PBUH)",
+      "Muhammad (PBUH) and Ibrahim (AS)",
+      "All Prophets",
+      "Only Ulul Azm Prophets"
+    ],
     "correct_answer": 1,
     "category": "Prayer",
     "difficulty": "medium"
@@ -434,8 +914,18 @@
   {
     "question": "মক্কা বিজয় কোন হিজরি সালে হয়?",
     "question_en": "In which Hijri year was the Conquest of Makkah?",
-    "options": ["৬", "৭", "৮", "৯"],
-    "options_en": ["6", "7", "8", "9"],
+    "options": [
+      "৬",
+      "৭",
+      "৮",
+      "৯"
+    ],
+    "options_en": [
+      "6",
+      "7",
+      "8",
+      "9"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "medium"
@@ -443,8 +933,18 @@
   {
     "question": "কোন দুই পাহাড়ের মধ্যে সাঈ করতে হয়?",
     "question_en": "Between which two hills is Sa'i performed?",
-    "options": ["আরাফাত ও মুজদালিফা", "সাফা ও মারওয়া", "মিনা ও আরাফাত", "জাবালে নূর ও হেরা"],
-    "options_en": ["Arafat and Muzdalifah", "Safa and Marwa", "Mina and Arafat", "Jabal al-Noor and Hira"],
+    "options": [
+      "আরাফাত ও মুজদালিফা",
+      "সাফা ও মারওয়া",
+      "মিনা ও আরাফাত",
+      "জাবালে নূর ও হেরা"
+    ],
+    "options_en": [
+      "Arafat and Muzdalifah",
+      "Safa and Marwa",
+      "Mina and Arafat",
+      "Jabal al-Noor and Hira"
+    ],
     "correct_answer": 1,
     "category": "Hajj",
     "difficulty": "easy"
@@ -452,8 +952,18 @@
   {
     "question": "কুরআনের কোন সূরায় 'বিসমিল্লাহ' দুইবার এসেছে?",
     "question_en": "In which Surah does 'Bismillah' appear twice?",
-    "options": ["আল-ফাতিহা", "আল-নমল", "আন-নাহল", "আল-বাকারাহ"],
-    "options_en": ["Al-Fatiha", "An-Naml", "An-Nahl", "Al-Baqarah"],
+    "options": [
+      "আল-ফাতিহা",
+      "আল-নমল",
+      "আন-নাহল",
+      "আল-বাকারাহ"
+    ],
+    "options_en": [
+      "Al-Fatiha",
+      "An-Naml",
+      "An-Nahl",
+      "Al-Baqarah"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "hard"
@@ -461,8 +971,18 @@
   {
     "question": "ফরজ নামাজে কত রাকাত সুন্নত?",
     "question_en": "How many Rak'ahs of Sunnah are there with the Fard prayers?",
-    "options": ["১২", "১৪", "১৬", "১৮"],
-    "options_en": ["12", "14", "16", "18"],
+    "options": [
+      "১২",
+      "১৪",
+      "১৬",
+      "১৮"
+    ],
+    "options_en": [
+      "12",
+      "14",
+      "16",
+      "18"
+    ],
     "correct_answer": 0,
     "category": "Prayer",
     "difficulty": "medium"
@@ -470,8 +990,18 @@
   {
     "question": "হযরত ইউসুফ (আ.) কোন দেশের বাদশাহ হয়েছিলেন?",
     "question_en": "Which country did Prophet Yusuf (AS) become ruler of?",
-    "options": ["ফিলিস্তিন", "মিশর", "ইরাক", "সিরিয়া"],
-    "options_en": ["Palestine", "Egypt", "Iraq", "Syria"],
+    "options": [
+      "ফিলিস্তিন",
+      "মিশর",
+      "ইরাক",
+      "সিরিয়া"
+    ],
+    "options_en": [
+      "Palestine",
+      "Egypt",
+      "Iraq",
+      "Syria"
+    ],
     "correct_answer": 1,
     "category": "Prophets",
     "difficulty": "easy"
@@ -479,8 +1009,18 @@
   {
     "question": "রমজানের কোন রাতকে 'হাজার মাসের চেয়ে উত্তম' বলা হয়েছে?",
     "question_en": "Which night of Ramadan is described as 'better than a thousand months'?",
-    "options": ["১ রমজান", "১৫ রমজান", "লাইলাতুল কদর", "২৭ রমজান"],
-    "options_en": ["1st Ramadan", "15th Ramadan", "Lailatul Qadr", "27th Ramadan"],
+    "options": [
+      "১ রমজান",
+      "১৫ রমজান",
+      "লাইলাতুল কদর",
+      "২৭ রমজান"
+    ],
+    "options_en": [
+      "1st Ramadan",
+      "15th Ramadan",
+      "Lailatul Qadr",
+      "27th Ramadan"
+    ],
     "correct_answer": 2,
     "category": "Special Days",
     "difficulty": "easy"
@@ -488,8 +1028,18 @@
   {
     "question": "'আল-মালিক' নামের অর্থ কী?",
     "question_en": "What is the meaning of 'Al-Malik'?",
-    "options": ["পরম মালিক", "পরম দয়ালু", "সর্বশক্তিমান", "সর্বজ্ঞ"],
-    "options_en": ["The Sovereign/King", "The Most Merciful", "The Almighty", "The All-Knowing"],
+    "options": [
+      "পরম মালিক",
+      "পরম দয়ালু",
+      "সর্বশক্তিমান",
+      "সর্বজ্ঞ"
+    ],
+    "options_en": [
+      "The Sovereign/King",
+      "The Most Merciful",
+      "The Almighty",
+      "The All-Knowing"
+    ],
     "correct_answer": 0,
     "category": "Names of Allah",
     "difficulty": "easy"
@@ -497,8 +1047,18 @@
   {
     "question": "ইসলামে প্রথম মুয়াজ্জিন কে ছিলেন?",
     "question_en": "Who was the first Muezzin in Islam?",
-    "options": ["আবু বকর (রা.)", "উমর (রা.)", "বিলাল (রা.)", "আলী (রা.)"],
-    "options_en": ["Abu Bakr (RA)", "Umar (RA)", "Bilal (RA)", "Ali (RA)"],
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "বিলাল (রা.)",
+      "আলী (রা.)"
+    ],
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Bilal (RA)",
+      "Ali (RA)"
+    ],
     "correct_answer": 2,
     "category": "History",
     "difficulty": "easy"
@@ -506,8 +1066,18 @@
   {
     "question": "হজ্জের সময় শয়তানকে পাথর মারার স্থানকে কী বলা হয়?",
     "question_en": "What is the place called where stones are thrown at the devil during Hajj?",
-    "options": ["মিনা", "জামারাত", "মুজদালিফা", "আরাফাত"],
-    "options_en": ["Mina", "Jamarat", "Muzdalifah", "Arafat"],
+    "options": [
+      "মিনা",
+      "জামারাত",
+      "মুজদালিফা",
+      "আরাফাত"
+    ],
+    "options_en": [
+      "Mina",
+      "Jamarat",
+      "Muzdalifah",
+      "Arafat"
+    ],
     "correct_answer": 1,
     "category": "Hajj",
     "difficulty": "medium"
@@ -515,8 +1085,18 @@
   {
     "question": "তারাবিহ নামাজ কোন মাসে পড়া হয়?",
     "question_en": "In which month is Taraweeh prayer performed?",
-    "options": ["শাবান", "রমজান", "রজব", "যিলকদ"],
-    "options_en": ["Sha'ban", "Ramadan", "Rajab", "Dhul Qi'dah"],
+    "options": [
+      "শাবান",
+      "রমজান",
+      "রজব",
+      "যিলকদ"
+    ],
+    "options_en": [
+      "Sha'ban",
+      "Ramadan",
+      "Rajab",
+      "Dhul Qi'dah"
+    ],
     "correct_answer": 1,
     "category": "Prayer",
     "difficulty": "easy"
@@ -524,8 +1104,18 @@
   {
     "question": "কুরআনে কতজন নবীর নাম উল্লেখ আছে?",
     "question_en": "How many Prophets are mentioned by name in the Quran?",
-    "options": ["২০", "২৫", "৩০", "৩৫"],
-    "options_en": ["20", "25", "30", "35"],
+    "options": [
+      "২০",
+      "২৫",
+      "৩০",
+      "৩৫"
+    ],
+    "options_en": [
+      "20",
+      "25",
+      "30",
+      "35"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "medium"
@@ -533,8 +1123,18 @@
   {
     "question": "জাকাতুল মাল কাদের উপর ফরজ?",
     "question_en": "On whom is Zakat al-Mal obligatory?",
-    "options": ["সবার উপর", "ধনী ব্যক্তিদের উপর", "নিসাব পরিমাণ সম্পদের মালিকদের উপর", "ব্যবসায়ীদের উপর"],
-    "options_en": ["Everyone", "Wealthy people", "Those who own wealth equal to Nisab", "Business owners"],
+    "options": [
+      "সবার উপর",
+      "ধনী ব্যক্তিদের উপর",
+      "নিসাব পরিমাণ সম্পদের মালিকদের উপর",
+      "ব্যবসায়ীদের উপর"
+    ],
+    "options_en": [
+      "Everyone",
+      "Wealthy people",
+      "Those who own wealth equal to Nisab",
+      "Business owners"
+    ],
     "correct_answer": 2,
     "category": "Zakat",
     "difficulty": "medium"
@@ -542,8 +1142,18 @@
   {
     "question": "হযরত আদম (আ.) কে কী দিয়ে সৃষ্টি করা হয়েছিল?",
     "question_en": "From what was Prophet Adam (AS) created?",
-    "options": ["আগুন", "মাটি", "পানি", "বাতাস"],
-    "options_en": ["Fire", "Clay/Earth", "Water", "Air"],
+    "options": [
+      "আগুন",
+      "মাটি",
+      "পানি",
+      "বাতাস"
+    ],
+    "options_en": [
+      "Fire",
+      "Clay/Earth",
+      "Water",
+      "Air"
+    ],
     "correct_answer": 1,
     "category": "Prophets",
     "difficulty": "easy"
@@ -551,8 +1161,18 @@
   {
     "question": "ঈদুল আযহা কোন মাসে পালন করা হয়?",
     "question_en": "In which month is Eid ul-Adha celebrated?",
-    "options": ["রমজান", "শাওয়াল", "যিলকদ", "যিলহজ্জ"],
-    "options_en": ["Ramadan", "Shawwal", "Dhul Qi'dah", "Dhul Hijjah"],
+    "options": [
+      "রমজান",
+      "শাওয়াল",
+      "যিলকদ",
+      "যিলহজ্জ"
+    ],
+    "options_en": [
+      "Ramadan",
+      "Shawwal",
+      "Dhul Qi'dah",
+      "Dhul Hijjah"
+    ],
     "correct_answer": 3,
     "category": "Special Days",
     "difficulty": "easy"
@@ -560,8 +1180,18 @@
   {
     "question": "কোন সূরাকে 'উম্মুল কুরআন' বলা হয়?",
     "question_en": "Which Surah is called 'Umm al-Quran' (Mother of the Quran)?",
-    "options": ["আল-বাকারাহ", "আল-ফাতিহা", "ইয়াসীন", "আর-রহমান"],
-    "options_en": ["Al-Baqarah", "Al-Fatiha", "Yasin", "Ar-Rahman"],
+    "options": [
+      "আল-বাকারাহ",
+      "আল-ফাতিহা",
+      "ইয়াসীন",
+      "আর-রহমান"
+    ],
+    "options_en": [
+      "Al-Baqarah",
+      "Al-Fatiha",
+      "Yasin",
+      "Ar-Rahman"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "medium"
@@ -569,8 +1199,18 @@
   {
     "question": "'আল-কুদ্দুস' নামের অর্থ কী?",
     "question_en": "What is the meaning of 'Al-Quddus'?",
-    "options": ["পবিত্র", "দয়ালু", "ক্ষমাশীল", "মহান"],
-    "options_en": ["The Holy", "The Merciful", "The Forgiving", "The Great"],
+    "options": [
+      "পবিত্র",
+      "দয়ালু",
+      "ক্ষমাশীল",
+      "মহান"
+    ],
+    "options_en": [
+      "The Holy",
+      "The Merciful",
+      "The Forgiving",
+      "The Great"
+    ],
     "correct_answer": 0,
     "category": "Names of Allah",
     "difficulty": "medium"
@@ -578,8 +1218,18 @@
   {
     "question": "মুসলমানদের প্রথম কিবলা কোনটি ছিল?",
     "question_en": "What was the first Qibla (direction of prayer) for Muslims?",
-    "options": ["কাবা", "মসজিদুল আকসা", "মসজিদে নবভী", "মসজিদে কুবা"],
-    "options_en": ["Kaaba", "Masjid al-Aqsa", "Masjid an-Nabawi", "Masjid Quba"],
+    "options": [
+      "কাবা",
+      "মসজিদুল আকসা",
+      "মসজিদে নবভী",
+      "মসজিদে কুবা"
+    ],
+    "options_en": [
+      "Kaaba",
+      "Masjid al-Aqsa",
+      "Masjid an-Nabawi",
+      "Masjid Quba"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "medium"
@@ -587,8 +1237,18 @@
   {
     "question": "রোজা ভাঙার জন্য কী দিয়ে ইফতার করা সুন্নত?",
     "question_en": "What is the Sunnah food to break the fast with?",
-    "options": ["পানি", "খেজুর", "দুধ", "রুটি"],
-    "options_en": ["Water", "Dates", "Milk", "Bread"],
+    "options": [
+      "পানি",
+      "খেজুর",
+      "দুধ",
+      "রুটি"
+    ],
+    "options_en": [
+      "Water",
+      "Dates",
+      "Milk",
+      "Bread"
+    ],
     "correct_answer": 1,
     "category": "Fasting",
     "difficulty": "easy"
@@ -596,8 +1256,18 @@
   {
     "question": "জান্নাতুল ফিরদাউস কী?",
     "question_en": "What is Jannatul Firdaus?",
-    "options": ["জান্নাতের নাম", "জান্নাতের সর্বোচ্চ স্তর", "জান্নাতের দরজা", "জান্নাতের নদী"],
-    "options_en": ["Name of Jannah", "The highest level of Jannah", "Door of Jannah", "River of Jannah"],
+    "options": [
+      "জান্নাতের নাম",
+      "জান্নাতের সর্বোচ্চ স্তর",
+      "জান্নাতের দরজা",
+      "জান্নাতের নদী"
+    ],
+    "options_en": [
+      "Name of Jannah",
+      "The highest level of Jannah",
+      "Door of Jannah",
+      "River of Jannah"
+    ],
     "correct_answer": 1,
     "category": "Basics",
     "difficulty": "medium"
@@ -605,8 +1275,18 @@
   {
     "question": "হজ্জের ইহরাম বাঁধার সময় পুরুষদের কোন রঙের কাপড় পরতে হয়?",
     "question_en": "What color cloth must men wear when entering Ihram for Hajj?",
-    "options": ["সাদা", "সবুজ", "কালো", "নীল"],
-    "options_en": ["White", "Green", "Black", "Blue"],
+    "options": [
+      "সাদা",
+      "সবুজ",
+      "কালো",
+      "নীল"
+    ],
+    "options_en": [
+      "White",
+      "Green",
+      "Black",
+      "Blue"
+    ],
     "correct_answer": 0,
     "category": "Hajj",
     "difficulty": "easy"
@@ -614,8 +1294,18 @@
   {
     "question": "তাকবীরে তাহরিমা কোথায় বলা হয়?",
     "question_en": "When is the Takbir Tahrimah said?",
-    "options": ["নামাজের শেষে", "নামাজের শুরুতে", "রুকুতে যাওয়ার সময়", "সিজদায় যাওয়ার সময়"],
-    "options_en": ["At the end of prayer", "At the beginning of prayer", "When going to Ruku", "When going to Sujud"],
+    "options": [
+      "নামাজের শেষে",
+      "নামাজের শুরুতে",
+      "রুকুতে যাওয়ার সময়",
+      "সিজদায় যাওয়ার সময়"
+    ],
+    "options_en": [
+      "At the end of prayer",
+      "At the beginning of prayer",
+      "When going to Ruku",
+      "When going to Sujud"
+    ],
     "correct_answer": 1,
     "category": "Prayer",
     "difficulty": "easy"
@@ -623,8 +1313,18 @@
   {
     "question": "কুরআনের কোন সূরায় আল্লাহর ৯৯টি নামের উল্লেখ আছে?",
     "question_en": "Which Surah mentions 99 names of Allah?",
-    "options": ["আল-হাশর", "আল-আরাফ", "তা-হা", "আল-আনআম"],
-    "options_en": ["Al-Hashr", "Al-A'raf", "Ta-Ha", "Al-An'am"],
+    "options": [
+      "আল-হাশর",
+      "আল-আরাফ",
+      "তা-হা",
+      "আল-আনআম"
+    ],
+    "options_en": [
+      "Al-Hashr",
+      "Al-A'raf",
+      "Ta-Ha",
+      "Al-An'am"
+    ],
     "correct_answer": 0,
     "category": "Names of Allah",
     "difficulty": "hard"
@@ -632,8 +1332,18 @@
   {
     "question": "হযরত সুলাইমান (আ.) এর পিতার নাম কী?",
     "question_en": "What is the name of Prophet Sulaiman (AS)'s father?",
-    "options": ["দাউদ (আ.)", "ইসহাক (আ.)", "ইয়াকুব (আ.)", "মূসা (আ.)"],
-    "options_en": ["Dawud (AS)", "Ishaq (AS)", "Yaqub (AS)", "Musa (AS)"],
+    "options": [
+      "দাউদ (আ.)",
+      "ইসহাক (আ.)",
+      "ইয়াকুব (আ.)",
+      "মূসা (আ.)"
+    ],
+    "options_en": [
+      "Dawud (AS)",
+      "Ishaq (AS)",
+      "Yaqub (AS)",
+      "Musa (AS)"
+    ],
     "correct_answer": 0,
     "category": "Prophets",
     "difficulty": "medium"
@@ -641,8 +1351,18 @@
   {
     "question": "কোন সাহাবীকে 'সাইফুল্লাহ' উপাধি দেওয়া হয়েছিল?",
     "question_en": "Which companion was given the title 'Saifullah' (Sword of Allah)?",
-    "options": ["আবু উবাইদা (রা.)", "খালিদ বিন ওয়ালিদ (রা.)", "সাদ বিন আবি ওয়াক্কাস (রা.)", "আলী (রা.)"],
-    "options_en": ["Abu Ubaidah (RA)", "Khalid bin Walid (RA)", "Sa'd bin Abi Waqqas (RA)", "Ali (RA)"],
+    "options": [
+      "আবু উবাইদা (রা.)",
+      "খালিদ বিন ওয়ালিদ (রা.)",
+      "সাদ বিন আবি ওয়াক্কাস (রা.)",
+      "আলী (রা.)"
+    ],
+    "options_en": [
+      "Abu Ubaidah (RA)",
+      "Khalid bin Walid (RA)",
+      "Sa'd bin Abi Waqqas (RA)",
+      "Ali (RA)"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "medium"
@@ -650,8 +1370,18 @@
   {
     "question": "হজ্জের তাওয়াফ কতবার কাবা ঘুরতে হয়?",
     "question_en": "How many times must one circle the Kaaba during Tawaf?",
-    "options": ["৫", "৭", "৯", "১১"],
-    "options_en": ["5", "7", "9", "11"],
+    "options": [
+      "৫",
+      "৭",
+      "৯",
+      "১১"
+    ],
+    "options_en": [
+      "5",
+      "7",
+      "9",
+      "11"
+    ],
     "correct_answer": 1,
     "category": "Hajj",
     "difficulty": "easy"
@@ -659,8 +1389,18 @@
   {
     "question": "সূরা আল-মুলক কত পারায় আছে?",
     "question_en": "In which Juz (part) is Surah Al-Mulk?",
-    "options": ["২৮", "২৯", "৩০", "২৭"],
-    "options_en": ["28", "29", "30", "27"],
+    "options": [
+      "২৮",
+      "২৯",
+      "৩০",
+      "২৭"
+    ],
+    "options_en": [
+      "28",
+      "29",
+      "30",
+      "27"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "medium"
@@ -668,8 +1408,18 @@
   {
     "question": "কোন নবীকে 'রূহুল্লাহ' বলা হয়?",
     "question_en": "Which Prophet is called 'Ruhullah' (Spirit of Allah)?",
-    "options": ["মুহাম্মদ (সা.)", "মূসা (আ.)", "ঈসা (আ.)", "ইব্রাহিম (আ.)"],
-    "options_en": ["Muhammad (PBUH)", "Musa (AS)", "Isa (AS)", "Ibrahim (AS)"],
+    "options": [
+      "মুহাম্মদ (সা.)",
+      "মূসা (আ.)",
+      "ঈসা (আ.)",
+      "ইব্রাহিম (আ.)"
+    ],
+    "options_en": [
+      "Muhammad (PBUH)",
+      "Musa (AS)",
+      "Isa (AS)",
+      "Ibrahim (AS)"
+    ],
     "correct_answer": 2,
     "category": "Prophets",
     "difficulty": "medium"
@@ -677,8 +1427,18 @@
   {
     "question": "ফজরের নামাজে কত রাকাত সুন্নত ও ফরজ?",
     "question_en": "How many Sunnah and Fard Rak'ahs are in Fajr prayer?",
-    "options": ["২ সুন্নত ২ ফরজ", "৪ সুন্নত ২ ফরজ", "২ সুন্নত ৪ ফরজ", "৪ সুন্নত ৪ ফরজ"],
-    "options_en": ["2 Sunnah 2 Fard", "4 Sunnah 2 Fard", "2 Sunnah 4 Fard", "4 Sunnah 4 Fard"],
+    "options": [
+      "২ সুন্নত ২ ফরজ",
+      "৪ সুন্নত ২ ফরজ",
+      "২ সুন্নত ৪ ফরজ",
+      "৪ সুন্নত ৪ ফরজ"
+    ],
+    "options_en": [
+      "2 Sunnah 2 Fard",
+      "4 Sunnah 2 Fard",
+      "2 Sunnah 4 Fard",
+      "4 Sunnah 4 Fard"
+    ],
     "correct_answer": 0,
     "category": "Prayer",
     "difficulty": "easy"
@@ -686,8 +1446,18 @@
   {
     "question": "'আল-আলিম' নামের অর্থ কী?",
     "question_en": "What is the meaning of 'Al-Aleem'?",
-    "options": ["সর্বজ্ঞ", "পরম দয়ালু", "মহাশক্তিধর", "সর্বশ্রোতা"],
-    "options_en": ["The All-Knowing", "The Most Merciful", "The Almighty", "The All-Hearing"],
+    "options": [
+      "সর্বজ্ঞ",
+      "পরম দয়ালু",
+      "মহাশক্তিধর",
+      "সর্বশ্রোতা"
+    ],
+    "options_en": [
+      "The All-Knowing",
+      "The Most Merciful",
+      "The Almighty",
+      "The All-Hearing"
+    ],
     "correct_answer": 0,
     "category": "Names of Allah",
     "difficulty": "easy"
@@ -695,8 +1465,18 @@
   {
     "question": "হিজরতের সময় নবী (সা.) এর সাথে কোন সাহাবী ছিলেন?",
     "question_en": "Which companion was with the Prophet (PBUH) during the Hijra?",
-    "options": ["উমর (রা.)", "আবু বকর (রা.)", "আলী (রা.)", "উসমান (রা.)"],
-    "options_en": ["Umar (RA)", "Abu Bakr (RA)", "Ali (RA)", "Uthman (RA)"],
+    "options": [
+      "উমর (রা.)",
+      "আবু বকর (রা.)",
+      "আলী (রা.)",
+      "উসমান (রা.)"
+    ],
+    "options_en": [
+      "Umar (RA)",
+      "Abu Bakr (RA)",
+      "Ali (RA)",
+      "Uthman (RA)"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "easy"
@@ -704,8 +1484,18 @@
   {
     "question": "রোজা রাখার নিয়তের সময় কোন দোয়া পড়া হয়?",
     "question_en": "What dua is recited when making intention for fasting?",
-    "options": ["সুবহানাল্লাহ", "আলহামদুলিল্লাহ", "নাওয়াইতু আন আসুমা", "বিসমিল্লাহ"],
-    "options_en": ["SubhanAllah", "Alhamdulillah", "Nawaitu an Asuma", "Bismillah"],
+    "options": [
+      "সুবহানাল্লাহ",
+      "আলহামদুলিল্লাহ",
+      "নাওয়াইতু আন আসুমা",
+      "বিসমিল্লাহ"
+    ],
+    "options_en": [
+      "SubhanAllah",
+      "Alhamdulillah",
+      "Nawaitu an Asuma",
+      "Bismillah"
+    ],
     "correct_answer": 2,
     "category": "Fasting",
     "difficulty": "medium"
@@ -713,8 +1503,18 @@
   {
     "question": "কুরআনে সবচেয়ে ছোট আয়াত কোনটি?",
     "question_en": "Which is the shortest verse in the Quran?",
-    "options": ["সূরা আল-কাউসার এর ১ম আয়াত", "সূরা আর-রহমান এর ১ম আয়াত", "সূরা আল-মুদ্দাসসির এর ৩য় আয়াত", "সূরা আল-আসর এর ১ম আয়াত"],
-    "options_en": ["First verse of Al-Kawthar", "First verse of Ar-Rahman", "Third verse of Al-Muddathir", "First verse of Al-Asr"],
+    "options": [
+      "সূরা আল-কাউসার এর ১ম আয়াত",
+      "সূরা আর-রহমান এর ১ম আয়াত",
+      "সূরা আল-মুদ্দাসসির এর ৩য় আয়াত",
+      "সূরা আল-আসর এর ১ম আয়াত"
+    ],
+    "options_en": [
+      "First verse of Al-Kawthar",
+      "First verse of Ar-Rahman",
+      "Third verse of Al-Muddathir",
+      "First verse of Al-Asr"
+    ],
     "correct_answer": 1,
     "category": "Quran",
     "difficulty": "hard"
@@ -722,8 +1522,18 @@
   {
     "question": "মসজিদুল হারামে কতটি মিনারেট আছে?",
     "question_en": "How many minarets does Masjid al-Haram have?",
-    "options": ["৭", "৯", "১১", "১৩"],
-    "options_en": ["7", "9", "11", "13"],
+    "options": [
+      "৭",
+      "৯",
+      "১১",
+      "১৩"
+    ],
+    "options_en": [
+      "7",
+      "9",
+      "11",
+      "13"
+    ],
     "correct_answer": 1,
     "category": "Basics",
     "difficulty": "hard"
@@ -731,8 +1541,18 @@
   {
     "question": "হযরত ইউনুস (আ.) কোন প্রাণীর পেটে ছিলেন?",
     "question_en": "In the belly of which creature was Prophet Yunus (AS)?",
-    "options": ["তিমি মাছ", "হাঙ্গর", "ডলফিন", "তিমি"],
-    "options_en": ["Whale", "Shark", "Dolphin", "Whale (large fish)"],
+    "options": [
+      "তিমি মাছ",
+      "হাঙ্গর",
+      "ডলফিন",
+      "তিমি"
+    ],
+    "options_en": [
+      "Whale",
+      "Shark",
+      "Dolphin",
+      "Whale (large fish)"
+    ],
     "correct_answer": 0,
     "category": "Prophets",
     "difficulty": "easy"
@@ -740,8 +1560,18 @@
   {
     "question": "শবে বরাত কোন মাসে পালন করা হয়?",
     "question_en": "In which month is Shab-e-Barat observed?",
-    "options": ["রজব", "শাবান", "রমজান", "শাওয়াল"],
-    "options_en": ["Rajab", "Sha'ban", "Ramadan", "Shawwal"],
+    "options": [
+      "রজব",
+      "শাবান",
+      "রমজান",
+      "শাওয়াল"
+    ],
+    "options_en": [
+      "Rajab",
+      "Sha'ban",
+      "Ramadan",
+      "Shawwal"
+    ],
     "correct_answer": 1,
     "category": "Special Days",
     "difficulty": "easy"
@@ -749,8 +1579,18 @@
   {
     "question": "জান্নাতে প্রবেশের জন্য কতটি দরজা আছে?",
     "question_en": "How many gates are there to enter Jannah (Paradise)?",
-    "options": ["৫", "৭", "৮", "১০"],
-    "options_en": ["5", "7", "8", "10"],
+    "options": [
+      "৫",
+      "৭",
+      "৮",
+      "১০"
+    ],
+    "options_en": [
+      "5",
+      "7",
+      "8",
+      "10"
+    ],
     "correct_answer": 2,
     "category": "Basics",
     "difficulty": "medium"
@@ -758,8 +1598,18 @@
   {
     "question": "'আল-হাকিম' নামের অর্থ কী?",
     "question_en": "What is the meaning of 'Al-Hakeem'?",
-    "options": ["প্রজ্ঞাময়", "দয়ালু", "ক্ষমাশীল", "শক্তিশালী"],
-    "options_en": ["The All-Wise", "The Merciful", "The Forgiving", "The Powerful"],
+    "options": [
+      "প্রজ্ঞাময়",
+      "দয়ালু",
+      "ক্ষমাশীল",
+      "শক্তিশালী"
+    ],
+    "options_en": [
+      "The All-Wise",
+      "The Merciful",
+      "The Forgiving",
+      "The Powerful"
+    ],
     "correct_answer": 0,
     "category": "Names of Allah",
     "difficulty": "medium"
@@ -767,8 +1617,18 @@
   {
     "question": "হযরত মুহাম্মদ (সা.) কত বছর জীবিত ছিলেন?",
     "question_en": "How many years did Prophet Muhammad (PBUH) live?",
-    "options": ["৬০", "৬৩", "৬৫", "৭০"],
-    "options_en": ["60", "63", "65", "70"],
+    "options": [
+      "৬০",
+      "৬৩",
+      "৬৫",
+      "৭০"
+    ],
+    "options_en": [
+      "60",
+      "63",
+      "65",
+      "70"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "easy"
@@ -776,10 +1636,5366 @@
   {
     "question": "ইসলামে সর্বপ্রথম শহীদ মহিলা কে?",
     "question_en": "Who was the first female martyr in Islam?",
-    "options": ["খাদিজা (রা.)", "সুমাইয়া (রা.)", "ফাতিমা (রা.)", "আয়েশা (রা.)"],
-    "options_en": ["Khadijah (RA)", "Sumayyah (RA)", "Fatimah (RA)", "Aisha (RA)"],
+    "options": [
+      "খাদিজা (রা.)",
+      "সুমাইয়া (রা.)",
+      "ফাতিমা (রা.)",
+      "আয়েশা (রা.)"
+    ],
+    "options_en": [
+      "Khadijah (RA)",
+      "Sumayyah (RA)",
+      "Fatimah (RA)",
+      "Aisha (RA)"
+    ],
     "correct_answer": 1,
     "category": "History",
     "difficulty": "medium"
+  },
+  {
+    "question": "কুরআনে মোট কতটি আয়াত আছে?",
+    "options": [
+      "৬২৩৬",
+      "৬٦৬৬",
+      "৬০০০",
+      "৬৫০০"
+    ],
+    "question_en": "How many verses are in the Quran?",
+    "question_bn": "কুরআনে মোট কতটি আয়াত আছে?",
+    "options_en": [
+      "6236",
+      "6666",
+      "6000",
+      "6500"
+    ],
+    "options_bn": [
+      "৬২৩৬",
+      "৬٦৬৬",
+      "৬০০০",
+      "৬৫০০"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সূরা ইয়াসিনকে কুরআনের কী বলা হয়?",
+    "options": [
+      "কুরআনের হৃদয়",
+      "কুরআনের চোখ",
+      "কুরআনের মুকুট",
+      "কুরআনের আলো"
+    ],
+    "question_en": "What is Surah Yasin called?",
+    "question_bn": "সূরা ইয়াসিনকে কুরআনের কী বলা হয়?",
+    "options_en": [
+      "Heart of Quran",
+      "Eye of Quran",
+      "Crown of Quran",
+      "Light of Quran"
+    ],
+    "options_bn": [
+      "কুরআনের হৃদয়",
+      "কুরআনের চোখ",
+      "কুরআনের মুকুট",
+      "কুরআনের আলো"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "কুরআনের সর্বশেষ নাযিলকৃত সূরা কোনটি?",
+    "options": [
+      "আন-নাসর",
+      "আল-মায়িদাহ",
+      "আত-তাওবাহ",
+      "আল-বাকারাহ"
+    ],
+    "question_en": "Which is the last revealed Surah of the Quran?",
+    "question_bn": "কুরআনের সর্বশেষ নাযিলকৃত সূরা কোনটি?",
+    "options_en": [
+      "An-Nasr",
+      "Al-Maidah",
+      "At-Tawbah",
+      "Al-Baqarah"
+    ],
+    "options_bn": [
+      "আন-নাসর",
+      "আল-মায়িদাহ",
+      "আত-তাওবাহ",
+      "আল-বাকারাহ"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "সূরা আর-রহমানে কোন আয়াতটি বারবার পুনরাবৃত্তি হয়েছে?",
+    "options": [
+      "ফাবিআইয়ি আলা-ই রাব্বিকুমা তুকাযযিবান",
+      "বিসমিল্লাহ",
+      "আলহামদুলিল্লাহ",
+      "সুবহানাল্লাহ"
+    ],
+    "question_en": "Which verse is repeated in Surah Ar-Rahman?",
+    "question_bn": "সূরা আর-রহমানে কোন আয়াতটি বারবার পুনরাবৃত্তি হয়েছে?",
+    "options_en": [
+      "Fabi ayyi ala-i rabbikuma tukazziban",
+      "Bismillah",
+      "Alhamdulillah",
+      "SubhanAllah"
+    ],
+    "options_bn": [
+      "ফাবিআইয়ি আলা-ই রাব্বিকুমা তুকাযযিবান",
+      "বিসমিল্লাহ",
+      "আলহামদুলিল্লাহ",
+      "সুবহানাল্লাহ"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সূরা আল-কাহফ পড়ার ফজিলত কী?",
+    "options": [
+      "দাজ্জাল থেকে রক্ষা",
+      "ধনসম্পদ বৃদ্ধি",
+      "সন্তান লাভ",
+      "রোগমুক্তি"
+    ],
+    "question_en": "What is the virtue of reading Surah Al-Kahf?",
+    "question_bn": "সূরা আল-কাহফ পড়ার ফজিলত কী?",
+    "options_en": [
+      "Protection from Dajjal",
+      "Increase in wealth",
+      "Having children",
+      "Cure from illness"
+    ],
+    "options_bn": [
+      "দাজ্জাল থেকে রক্ষা",
+      "ধনসম্পদ বৃদ্ধি",
+      "সন্তান লাভ",
+      "রোগমুক্তি"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সূরা মুলক পড়লে কী ফজিলত পাওয়া যায়?",
+    "options": [
+      "কবরের আজাব থেকে রক্ষা",
+      "ধনসম্পদ বৃদ্ধি",
+      "জান্নাতের গ্যারান্টি",
+      "সব গুনাহ মাফ"
+    ],
+    "question_en": "What is the virtue of reciting Surah Mulk?",
+    "question_bn": "সূরা মুলক পড়লে কী ফজিলত পাওয়া যায়?",
+    "options_en": [
+      "Protection from grave punishment",
+      "Increase in wealth",
+      "Guarantee of Jannah",
+      "All sins forgiven"
+    ],
+    "options_bn": [
+      "কবরের আজাব থেকে রক্ষা",
+      "ধনসম্পদ বৃদ্ধি",
+      "জান্নাতের গ্যারান্টি",
+      "সব গুনাহ মাফ"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) কোন শহরে জন্মগ্রহণ করেন?",
+    "options": [
+      "মদিনা",
+      "মক্কা",
+      "তায়েফ",
+      "জেদ্দা"
+    ],
+    "question_en": "In which city was Prophet Muhammad (PBUH) born?",
+    "question_bn": "নবী মুহাম্মদ (সা.) কোন শহরে জন্মগ্রহণ করেন?",
+    "options_en": [
+      "Medina",
+      "Makkah",
+      "Taif",
+      "Jeddah"
+    ],
+    "options_bn": [
+      "মদিনা",
+      "মক্কা",
+      "তায়েফ",
+      "জেদ্দা"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) এর মায়ের নাম কী?",
+    "options": [
+      "আমিনা",
+      "খাদিজা",
+      "ফাতিমা",
+      "আয়েশা"
+    ],
+    "question_en": "What was the name of Prophet Muhammad's mother?",
+    "question_bn": "নবী মুহাম্মদ (সা.) এর মায়ের নাম কী?",
+    "options_en": [
+      "Amina",
+      "Khadijah",
+      "Fatima",
+      "Aisha"
+    ],
+    "options_bn": [
+      "আমিনা",
+      "খাদিজা",
+      "ফাতিমা",
+      "আয়েশা"
+    ],
+    "correct_answer": 0,
+    "category": "Seerah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) এর দুধমাতার নাম কী?",
+    "options": [
+      "হালিমা সাদিয়া",
+      "সুমাইয়া",
+      "আসমা",
+      "উম্মে আইমান"
+    ],
+    "question_en": "What was the name of Prophet Muhammad's wet nurse?",
+    "question_bn": "নবী মুহাম্মদ (সা.) এর দুধমাতার নাম কী?",
+    "options_en": [
+      "Halima Saadia",
+      "Sumayyah",
+      "Asma",
+      "Umm Ayman"
+    ],
+    "options_bn": [
+      "হালিমা সাদিয়া",
+      "সুমাইয়া",
+      "আসমা",
+      "উম্মে আইমান"
+    ],
+    "correct_answer": 0,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "হিজরত কোন সালে হয়েছিল?",
+    "options": [
+      "৬২০ খ্রিস্টাব্দ",
+      "৬২২ খ্রিস্টাব্দ",
+      "৬২৪ খ্রিস্টাব্দ",
+      "৬৩০ খ্রিস্টাব্দ"
+    ],
+    "question_en": "In which year did the Hijra take place?",
+    "question_bn": "হিজরত কোন সালে হয়েছিল?",
+    "options_en": [
+      "620 CE",
+      "622 CE",
+      "624 CE",
+      "630 CE"
+    ],
+    "options_bn": [
+      "৬২০ খ্রিস্টাব্দ",
+      "৬২২ খ্রিস্টাব্দ",
+      "৬২৪ খ্রিস্টাব্দ",
+      "৬৩০ খ্রিস্টাব্দ"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "বদর যুদ্ধ কোন হিজরি সালে সংঘটিত হয়?",
+    "options": [
+      "১ হিজরি",
+      "২ হিজরি",
+      "৩ হিজরি",
+      "৪ হিজরি"
+    ],
+    "question_en": "In which Hijri year did the Battle of Badr take place?",
+    "question_bn": "বদর যুদ্ধ কোন হিজরি সালে সংঘটিত হয়?",
+    "options_en": [
+      "1 Hijri",
+      "2 Hijri",
+      "3 Hijri",
+      "4 Hijri"
+    ],
+    "options_bn": [
+      "১ হিজরি",
+      "২ হিজরি",
+      "৩ হিজরি",
+      "৪ হিজরি"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "উহুদ যুদ্ধে মুসলমানদের পতাকাবাহী কে ছিলেন?",
+    "options": [
+      "আলী (রা.)",
+      "হামযা (রা.)",
+      "মুসআব ইবনে উমাইর (রা.)",
+      "খালিদ বিন ওয়ালিদ (রা.)"
+    ],
+    "question_en": "Who was the flag bearer of Muslims in the Battle of Uhud?",
+    "question_bn": "উহুদ যুদ্ধে মুসলমানদের পতাকাবাহী কে ছিলেন?",
+    "options_en": [
+      "Ali (RA)",
+      "Hamza (RA)",
+      "Musab ibn Umair (RA)",
+      "Khalid bin Walid (RA)"
+    ],
+    "options_bn": [
+      "আলী (রা.)",
+      "হামযা (রা.)",
+      "মুসআব ইবনে উমাইর (রা.)",
+      "খালিদ বিন ওয়ালিদ (রা.)"
+    ],
+    "correct_answer": 2,
+    "category": "Islamic History",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামের প্রথম শহীদ কে?",
+    "options": [
+      "হামযা (রা.)",
+      "সুমাইয়া (রা.)",
+      "বিলাল (রা.)",
+      "আম্মার (রা.)"
+    ],
+    "question_en": "Who was the first martyr of Islam?",
+    "question_bn": "ইসলামের প্রথম শহীদ কে?",
+    "options_en": [
+      "Hamza (RA)",
+      "Sumayyah (RA)",
+      "Bilal (RA)",
+      "Ammar (RA)"
+    ],
+    "options_bn": [
+      "হামযা (রা.)",
+      "সুমাইয়া (রা.)",
+      "বিলাল (রা.)",
+      "আম্মার (রা.)"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) কত বছর বয়সে খাদিজা (রা.) কে বিয়ে করেন?",
+    "options": [
+      "২০",
+      "২৫",
+      "৩০",
+      "৩৫"
+    ],
+    "question_en": "At what age did Prophet Muhammad (PBUH) marry Khadijah (RA)?",
+    "question_bn": "নবী মুহাম্মদ (সা.) কত বছর বয়সে খাদিজা (রা.) কে বিয়ে করেন?",
+    "options_en": [
+      "20",
+      "25",
+      "30",
+      "35"
+    ],
+    "options_bn": [
+      "২০",
+      "২৫",
+      "৩০",
+      "৩৫"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ফরজ নামাজ কখন ফরজ হয়?",
+    "options": [
+      "হিজরতের আগে",
+      "মিরাজের রাতে",
+      "মদিনায়",
+      "বদর যুদ্ধের পর"
+    ],
+    "question_en": "When was the five daily prayers made obligatory?",
+    "question_bn": "ফরজ নামাজ কখন ফরজ হয়?",
+    "options_en": [
+      "Before Hijra",
+      "Night of Miraj",
+      "In Medina",
+      "After Battle of Badr"
+    ],
+    "options_bn": [
+      "হিজরতের আগে",
+      "মিরাজের রাতে",
+      "মদিনায়",
+      "বদর যুদ্ধের পর"
+    ],
+    "correct_answer": 1,
+    "category": "Pillars",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসরা ও মিরাজ কোন মাসে হয়েছিল?",
+    "options": [
+      "রমজান",
+      "রজব",
+      "শাবান",
+      "মুহাররম"
+    ],
+    "question_en": "In which month did Isra and Miraj occur?",
+    "question_bn": "ইসরা ও মিরাজ কোন মাসে হয়েছিল?",
+    "options_en": [
+      "Ramadan",
+      "Rajab",
+      "Shaban",
+      "Muharram"
+    ],
+    "options_bn": [
+      "রমজান",
+      "রজব",
+      "শাবান",
+      "মুহাররম"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "হজ্জ কোন মাসে পালন করা হয়?",
+    "options": [
+      "রমজান",
+      "শাওয়াল",
+      "জিলকদ",
+      "জিলহজ্জ"
+    ],
+    "question_en": "In which month is Hajj performed?",
+    "question_bn": "হজ্জ কোন মাসে পালন করা হয়?",
+    "options_en": [
+      "Ramadan",
+      "Shawwal",
+      "Dhul Qadah",
+      "Dhul Hijjah"
+    ],
+    "options_bn": [
+      "রমজান",
+      "শাওয়াল",
+      "জিলকদ",
+      "জিলহজ্জ"
+    ],
+    "correct_answer": 3,
+    "category": "Pillars",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সিয়াম বা রোজা কোন হিজরি সালে ফরজ হয়?",
+    "options": [
+      "১ হিজরি",
+      "২ হিজরি",
+      "৩ হিজরি",
+      "৫ হিজরি"
+    ],
+    "question_en": "In which Hijri year was fasting made obligatory?",
+    "question_bn": "সিয়াম বা রোজা কোন হিজরি সালে ফরজ হয়?",
+    "options_en": [
+      "1 Hijri",
+      "2 Hijri",
+      "3 Hijri",
+      "5 Hijri"
+    ],
+    "options_bn": [
+      "১ হিজরি",
+      "২ হিজরি",
+      "৩ হিজরি",
+      "৫ হিজরি"
+    ],
+    "correct_answer": 1,
+    "category": "Pillars",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ঈদুল ফিতরের নামাজ কত রাকাত?",
+    "options": [
+      "২",
+      "৪",
+      "৬",
+      "৮"
+    ],
+    "question_en": "How many rakahs is the Eid ul-Fitr prayer?",
+    "question_bn": "ঈদুল ফিতরের নামাজ কত রাকাত?",
+    "options_en": [
+      "2",
+      "4",
+      "6",
+      "8"
+    ],
+    "options_bn": [
+      "২",
+      "৪",
+      "৬",
+      "৮"
+    ],
+    "correct_answer": 0,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "জুমার নামাজের খুতবা কত টি?",
+    "options": [
+      "১",
+      "২",
+      "৩",
+      "৪"
+    ],
+    "question_en": "How many Khutbahs are there in Jumu'ah prayer?",
+    "question_bn": "জুমার নামাজের খুতবা কত টি?",
+    "options_en": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "options_bn": [
+      "১",
+      "২",
+      "৩",
+      "৪"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ওযুতে কতটি ফরজ আছে?",
+    "options": [
+      "৩",
+      "৪",
+      "৫",
+      "৬"
+    ],
+    "question_en": "How many Fard (obligatory) acts are in Wudu?",
+    "question_bn": "ওযুতে কতটি ফরজ আছে?",
+    "options_en": [
+      "3",
+      "4",
+      "5",
+      "6"
+    ],
+    "options_bn": [
+      "৩",
+      "৪",
+      "৫",
+      "৬"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "তায়াম্মুম কখন করা যায়?",
+    "options": [
+      "পানি না পাওয়া গেলে",
+      "সবসময়",
+      "শুধু সফরে",
+      "শুধু রমজানে"
+    ],
+    "question_en": "When can Tayammum be performed?",
+    "question_bn": "তায়াম্মুম কখন করা যায়?",
+    "options_en": [
+      "When water is unavailable",
+      "Always",
+      "Only during travel",
+      "Only in Ramadan"
+    ],
+    "options_bn": [
+      "পানি না পাওয়া গেলে",
+      "সবসময়",
+      "শুধু সফরে",
+      "শুধু রমজানে"
+    ],
+    "correct_answer": 0,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "গোসলের ফরজ কতটি?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many Fard acts are in Ghusl?",
+    "question_bn": "গোসলের ফরজ কতটি?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী আদম (আ.) কে কোথায় সৃষ্টি করা হয়?",
+    "options": [
+      "পৃথিবীতে",
+      "জান্নাতে",
+      "আসমানে",
+      "আরশে"
+    ],
+    "question_en": "Where was Prophet Adam (AS) created?",
+    "question_bn": "নবী আদম (আ.) কে কোথায় সৃষ্টি করা হয়?",
+    "options_en": [
+      "On Earth",
+      "In Jannah",
+      "In the sky",
+      "On the Throne"
+    ],
+    "options_bn": [
+      "পৃথিবীতে",
+      "জান্নাতে",
+      "আসমানে",
+      "আরশে"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী নূহ (আ.) এর মহাপ্লাবন কতদিন স্থায়ী হয়েছিল?",
+    "options": [
+      "৩০ দিন",
+      "৪০ দিন",
+      "৫০ দিন",
+      "৬০ দিন"
+    ],
+    "question_en": "How long did Prophet Nuh's flood last?",
+    "question_bn": "নবী নূহ (আ.) এর মহাপ্লাবন কতদিন স্থায়ী হয়েছিল?",
+    "options_en": [
+      "30 days",
+      "40 days",
+      "50 days",
+      "60 days"
+    ],
+    "options_bn": [
+      "৩০ দিন",
+      "৪০ দিন",
+      "৫০ দিন",
+      "৬০ দিন"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "নবী ইউসুফ (আ.) এর কতজন ভাই ছিলেন?",
+    "options": [
+      "১০",
+      "১১",
+      "১২",
+      "১৩"
+    ],
+    "question_en": "How many brothers did Prophet Yusuf (AS) have?",
+    "question_bn": "নবী ইউসুফ (আ.) এর কতজন ভাই ছিলেন?",
+    "options_en": [
+      "10",
+      "11",
+      "12",
+      "13"
+    ],
+    "options_bn": [
+      "১০",
+      "১১",
+      "১২",
+      "১৩"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী সুলাইমান (আ.) কোন প্রাণীদের ভাষা বুঝতেন?",
+    "options": [
+      "শুধু পাখি",
+      "শুধু পিঁপড়া",
+      "সকল প্রাণী ও পাখি",
+      "শুধু ঘোড়া"
+    ],
+    "question_en": "Which creatures' language could Prophet Sulaiman (AS) understand?",
+    "question_bn": "নবী সুলাইমান (আ.) কোন প্রাণীদের ভাষা বুঝতেন?",
+    "options_en": [
+      "Only birds",
+      "Only ants",
+      "All animals and birds",
+      "Only horses"
+    ],
+    "options_bn": [
+      "শুধু পাখি",
+      "শুধু পিঁপড়া",
+      "সকল প্রাণী ও পাখি",
+      "শুধু ঘোড়া"
+    ],
+    "correct_answer": 2,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী দাউদ (আ.) কোন কিতাব পেয়েছিলেন?",
+    "options": [
+      "তাওরাত",
+      "যাবুর",
+      "ইনজিল",
+      "সহিফা"
+    ],
+    "question_en": "Which scripture did Prophet Dawud (AS) receive?",
+    "question_bn": "নবী দাউদ (আ.) কোন কিতাব পেয়েছিলেন?",
+    "options_en": [
+      "Torah",
+      "Zabur",
+      "Injil",
+      "Suhuf"
+    ],
+    "options_bn": [
+      "তাওরাত",
+      "যাবুর",
+      "ইনজিল",
+      "সহিফা"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী ঈসা (আ.) কোন কিতাব পেয়েছিলেন?",
+    "options": [
+      "তাওরাত",
+      "যাবুর",
+      "ইনজিল",
+      "কুরআন"
+    ],
+    "question_en": "Which scripture did Prophet Isa (AS) receive?",
+    "question_bn": "নবী ঈসা (আ.) কোন কিতাব পেয়েছিলেন?",
+    "options_en": [
+      "Torah",
+      "Zabur",
+      "Injil",
+      "Quran"
+    ],
+    "options_bn": [
+      "তাওরাত",
+      "যাবুর",
+      "ইনজিল",
+      "কুরআন"
+    ],
+    "correct_answer": 2,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুসা (আ.) কোন কিতাব পেয়েছিলেন?",
+    "options": [
+      "তাওরাত",
+      "যাবুর",
+      "ইনজিল",
+      "কুরআন"
+    ],
+    "question_en": "Which scripture did Prophet Musa (AS) receive?",
+    "question_bn": "নবী মুসা (আ.) কোন কিতাব পেয়েছিলেন?",
+    "options_en": [
+      "Torah",
+      "Zabur",
+      "Injil",
+      "Quran"
+    ],
+    "options_bn": [
+      "তাওরাত",
+      "যাবুর",
+      "ইনজিল",
+      "কুরআন"
+    ],
+    "correct_answer": 0,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ফেরাউন কোন নবীর বিরোধী ছিলেন?",
+    "options": [
+      "ইব্রাহিম (আ.)",
+      "মুসা (আ.)",
+      "ঈসা (আ.)",
+      "নূহ (আ.)"
+    ],
+    "question_en": "Which prophet did Pharaoh oppose?",
+    "question_bn": "ফেরাউন কোন নবীর বিরোধী ছিলেন?",
+    "options_en": [
+      "Ibrahim (AS)",
+      "Musa (AS)",
+      "Isa (AS)",
+      "Nuh (AS)"
+    ],
+    "options_bn": [
+      "ইব্রাহিম (আ.)",
+      "মুসা (আ.)",
+      "ঈসা (আ.)",
+      "নূহ (আ.)"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী আইয়ুব (আ.) কিসের জন্য বিখ্যাত?",
+    "options": [
+      "জ্ঞান",
+      "ধৈর্য",
+      "শক্তি",
+      "সম্পদ"
+    ],
+    "question_en": "What is Prophet Ayyub (AS) known for?",
+    "question_bn": "নবী আইয়ুব (আ.) কিসের জন্য বিখ্যাত?",
+    "options_en": [
+      "Knowledge",
+      "Patience",
+      "Strength",
+      "Wealth"
+    ],
+    "options_bn": [
+      "জ্ঞান",
+      "ধৈর্য",
+      "শক্তি",
+      "সম্পদ"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "কাবা ঘর কে নির্মাণ করেন?",
+    "options": [
+      "মুহাম্মদ (সা.)",
+      "ইব্রাহিম (আ.) ও ইসমাইল (আ.)",
+      "আদম (আ.)",
+      "নূহ (আ.)"
+    ],
+    "question_en": "Who built the Kaaba?",
+    "question_bn": "কাবা ঘর কে নির্মাণ করেন?",
+    "options_en": [
+      "Muhammad (PBUH)",
+      "Ibrahim (AS) and Ismail (AS)",
+      "Adam (AS)",
+      "Nuh (AS)"
+    ],
+    "options_bn": [
+      "মুহাম্মদ (সা.)",
+      "ইব্রাহিম (আ.) ও ইসমাইল (আ.)",
+      "আদম (আ.)",
+      "নূহ (আ.)"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "হাজরে আসওয়াদ কী?",
+    "options": [
+      "কাবার দরজা",
+      "একটি কালো পাথর",
+      "জমজম কূপ",
+      "মিনার স্তম্ভ"
+    ],
+    "question_en": "What is Hajar al-Aswad?",
+    "question_bn": "হাজরে আসওয়াদ কী?",
+    "options_en": [
+      "Door of Kaaba",
+      "A black stone",
+      "Zamzam well",
+      "Pillar of Mina"
+    ],
+    "options_bn": [
+      "কাবার দরজা",
+      "একটি কালো পাথর",
+      "জমজম কূপ",
+      "মিনার স্তম্ভ"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "জমজম কূপ কোথায় অবস্থিত?",
+    "options": [
+      "মদিনায়",
+      "মক্কায়",
+      "জেরুজালেমে",
+      "তায়েফে"
+    ],
+    "question_en": "Where is the Zamzam well located?",
+    "question_bn": "জমজম কূপ কোথায় অবস্থিত?",
+    "options_en": [
+      "In Medina",
+      "In Makkah",
+      "In Jerusalem",
+      "In Taif"
+    ],
+    "options_bn": [
+      "মদিনায়",
+      "মক্কায়",
+      "জেরুজালেমে",
+      "তায়েফে"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সাফা ও মারওয়ার মধ্যে সায়ি কতবার করতে হয়?",
+    "options": [
+      "৫ বার",
+      "৬ বার",
+      "৭ বার",
+      "৮ বার"
+    ],
+    "question_en": "How many times must one walk between Safa and Marwah?",
+    "question_bn": "সাফা ও মারওয়ার মধ্যে সায়ি কতবার করতে হয়?",
+    "options_en": [
+      "5 times",
+      "6 times",
+      "7 times",
+      "8 times"
+    ],
+    "options_bn": [
+      "৫ বার",
+      "৬ বার",
+      "৭ বার",
+      "৮ বার"
+    ],
+    "correct_answer": 2,
+    "category": "Hajj",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "আরাফাতের দিন কোন তারিখে?",
+    "options": [
+      "৮ জিলহজ্জ",
+      "৯ জিলহজ্জ",
+      "১০ জিলহজ্জ",
+      "১১ জিলহজ্জ"
+    ],
+    "question_en": "On which date is the Day of Arafah?",
+    "question_bn": "আরাফাতের দিন কোন তারিখে?",
+    "options_en": [
+      "8 Dhul Hijjah",
+      "9 Dhul Hijjah",
+      "10 Dhul Hijjah",
+      "11 Dhul Hijjah"
+    ],
+    "options_bn": [
+      "৮ জিলহজ্জ",
+      "৯ জিলহজ্জ",
+      "১০ জিলহজ্জ",
+      "১১ জিলহজ্জ"
+    ],
+    "correct_answer": 1,
+    "category": "Hajj",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ঈদুল আযহা কোন তারিখে পালিত হয়?",
+    "options": [
+      "৯ জিলহজ্জ",
+      "১০ জিলহজ্জ",
+      "১১ জিলহজ্জ",
+      "১২ জিলহজ্জ"
+    ],
+    "question_en": "On which date is Eid ul-Adha celebrated?",
+    "question_bn": "ঈদুল আযহা কোন তারিখে পালিত হয়?",
+    "options_en": [
+      "9 Dhul Hijjah",
+      "10 Dhul Hijjah",
+      "11 Dhul Hijjah",
+      "12 Dhul Hijjah"
+    ],
+    "options_bn": [
+      "৯ জিলহজ্জ",
+      "১০ জিলহজ্জ",
+      "১১ জিলহজ্জ",
+      "১২ জিলহজ্জ"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামি ক্যালেন্ডারের প্রথম মাস কোনটি?",
+    "options": [
+      "সফর",
+      "মুহাররম",
+      "রবিউল আউয়াল",
+      "রজব"
+    ],
+    "question_en": "What is the first month of the Islamic calendar?",
+    "question_bn": "ইসলামি ক্যালেন্ডারের প্রথম মাস কোনটি?",
+    "options_en": [
+      "Safar",
+      "Muharram",
+      "Rabi ul-Awwal",
+      "Rajab"
+    ],
+    "options_bn": [
+      "সফর",
+      "মুহাররম",
+      "রবিউল আউয়াল",
+      "রজব"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আশুরা কোন তারিখে পালিত হয়?",
+    "options": [
+      "১ মুহাররম",
+      "১০ মুহাররম",
+      "১৫ মুহাররম",
+      "২৭ মুহাররম"
+    ],
+    "question_en": "On which date is Ashura observed?",
+    "question_bn": "আশুরা কোন তারিখে পালিত হয়?",
+    "options_en": [
+      "1 Muharram",
+      "10 Muharram",
+      "15 Muharram",
+      "27 Muharram"
+    ],
+    "options_bn": [
+      "১ মুহাররম",
+      "১০ মুহাররম",
+      "১৫ মুহাররম",
+      "২৭ মুহাররম"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "শবে বরাত কোন রাতে পালিত হয়?",
+    "options": [
+      "১৫ রজব",
+      "১৫ শাবান",
+      "২৭ রমজান",
+      "১০ মুহাররম"
+    ],
+    "question_en": "On which night is Shab-e-Barat observed?",
+    "question_bn": "শবে বরাত কোন রাতে পালিত হয়?",
+    "options_en": [
+      "15 Rajab",
+      "15 Shaban",
+      "27 Ramadan",
+      "10 Muharram"
+    ],
+    "options_bn": [
+      "১৫ রজব",
+      "১৫ শাবান",
+      "২৭ রমজান",
+      "১০ মুহাররম"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইমানের স্তম্ভ কতটি?",
+    "options": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "question_en": "How many pillars of Iman (faith) are there?",
+    "question_bn": "ইমানের স্তম্ভ কতটি?",
+    "options_en": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "options_bn": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাকদিরে বিশ্বাস করা কিসের অংশ?",
+    "options": [
+      "ইসলামের স্তম্ভ",
+      "ইমানের স্তম্ভ",
+      "ইহসান",
+      "শরীয়াহ"
+    ],
+    "question_en": "Belief in Qadar is part of what?",
+    "question_bn": "তাকদিরে বিশ্বাস করা কিসের অংশ?",
+    "options_en": [
+      "Pillars of Islam",
+      "Pillars of Iman",
+      "Ihsan",
+      "Shariah"
+    ],
+    "options_bn": [
+      "ইসলামের স্তম্ভ",
+      "ইমানের স্তম্ভ",
+      "ইহসান",
+      "শরীয়াহ"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ফেরেশতাদের কী দিয়ে সৃষ্টি করা হয়েছে?",
+    "options": [
+      "মাটি",
+      "আগুন",
+      "নূর (আলো)",
+      "পানি"
+    ],
+    "question_en": "What were angels created from?",
+    "question_bn": "ফেরেশতাদের কী দিয়ে সৃষ্টি করা হয়েছে?",
+    "options_en": [
+      "Clay",
+      "Fire",
+      "Noor (Light)",
+      "Water"
+    ],
+    "options_bn": [
+      "মাটি",
+      "আগুন",
+      "নূর (আলো)",
+      "পানি"
+    ],
+    "correct_answer": 2,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "জ্বিনদের কী দিয়ে সৃষ্টি করা হয়েছে?",
+    "options": [
+      "মাটি",
+      "আগুন",
+      "নূর",
+      "পানি"
+    ],
+    "question_en": "What were Jinn created from?",
+    "question_bn": "জ্বিনদের কী দিয়ে সৃষ্টি করা হয়েছে?",
+    "options_en": [
+      "Clay",
+      "Fire",
+      "Noor",
+      "Water"
+    ],
+    "options_bn": [
+      "মাটি",
+      "আগুন",
+      "নূর",
+      "পানি"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসরাফিল (আ.) এর দায়িত্ব কী?",
+    "options": [
+      "ওহী বহন",
+      "শিঙায় ফুঁক দেওয়া",
+      "রিজিক বণ্টন",
+      "জান কবজ করা"
+    ],
+    "question_en": "What is the duty of Angel Israfil (AS)?",
+    "question_bn": "ইসরাফিল (আ.) এর দায়িত্ব কী?",
+    "options_en": [
+      "Carrying revelation",
+      "Blowing the trumpet",
+      "Distributing provision",
+      "Taking souls"
+    ],
+    "options_bn": [
+      "ওহী বহন",
+      "শিঙায় ফুঁক দেওয়া",
+      "রিজিক বণ্টন",
+      "জান কবজ করা"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "মিকাইল (আ.) এর দায়িত্ব কী?",
+    "options": [
+      "ওহী বহন",
+      "শিঙায় ফুঁক দেওয়া",
+      "রিজিক ও প্রকৃতি নিয়ন্ত্রণ",
+      "জান কবজ করা"
+    ],
+    "question_en": "What is the duty of Angel Mikail (AS)?",
+    "question_bn": "মিকাইল (আ.) এর দায়িত্ব কী?",
+    "options_en": [
+      "Carrying revelation",
+      "Blowing the trumpet",
+      "Provision and nature",
+      "Taking souls"
+    ],
+    "options_bn": [
+      "ওহী বহন",
+      "শিঙায় ফুঁক দেওয়া",
+      "রিজিক ও প্রকৃতি নিয়ন্ত্রণ",
+      "জান কবজ করা"
+    ],
+    "correct_answer": 2,
+    "category": "Aqeedah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "আজরাইল (আ.) এর দায়িত্ব কী?",
+    "options": [
+      "ওহী বহন",
+      "শিঙায় ফুঁক দেওয়া",
+      "রিজিক বণ্টন",
+      "জান কবজ করা"
+    ],
+    "question_en": "What is the duty of Angel Azrael (AS)?",
+    "question_bn": "আজরাইল (আ.) এর দায়িত্ব কী?",
+    "options_en": [
+      "Carrying revelation",
+      "Blowing the trumpet",
+      "Distributing provision",
+      "Taking souls"
+    ],
+    "options_bn": [
+      "ওহী বহন",
+      "শিঙায় ফুঁক দেওয়া",
+      "রিজিক বণ্টন",
+      "জান কবজ করা"
+    ],
+    "correct_answer": 3,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সহীহ বুখারী হাদীস সংকলনকারী কে?",
+    "options": [
+      "ইমাম মুসলিম",
+      "ইমাম বুখারী",
+      "ইমাম তিরমিযী",
+      "ইমাম আবু দাউদ"
+    ],
+    "question_en": "Who compiled Sahih Bukhari?",
+    "question_bn": "সহীহ বুখারী হাদীস সংকলনকারী কে?",
+    "options_en": [
+      "Imam Muslim",
+      "Imam Bukhari",
+      "Imam Tirmidhi",
+      "Imam Abu Dawud"
+    ],
+    "options_bn": [
+      "ইমাম মুসলিম",
+      "ইমাম বুখারী",
+      "ইমাম তিরমিযী",
+      "ইমাম আবু দাউদ"
+    ],
+    "correct_answer": 1,
+    "category": "Hadith",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সিহাহ সিত্তাহ কী?",
+    "options": [
+      "৬টি প্রধান হাদীস গ্রন্থ",
+      "৬টি সূরা",
+      "৬টি ফেরেশতা",
+      "৬টি নবী"
+    ],
+    "question_en": "What is Sihah Sitta?",
+    "question_bn": "সিহাহ সিত্তাহ কী?",
+    "options_en": [
+      "6 major Hadith books",
+      "6 Surahs",
+      "6 Angels",
+      "6 Prophets"
+    ],
+    "options_bn": [
+      "৬টি প্রধান হাদীস গ্রন্থ",
+      "৬টি সূরা",
+      "৬টি ফেরেশতা",
+      "৬টি নবী"
+    ],
+    "correct_answer": 0,
+    "category": "Hadith",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "হাদীসে কুদসি কী?",
+    "options": [
+      "নবীর নিজের কথা",
+      "আল্লাহর কথা নবীর ভাষায়",
+      "সাহাবীর কথা",
+      "কুরআনের আয়াত"
+    ],
+    "question_en": "What is Hadith Qudsi?",
+    "question_bn": "হাদীসে কুদসি কী?",
+    "options_en": [
+      "Prophet's own words",
+      "Allah's words in Prophet's language",
+      "Companion's words",
+      "Quranic verse"
+    ],
+    "options_bn": [
+      "নবীর নিজের কথা",
+      "আল্লাহর কথা নবীর ভাষায়",
+      "সাহাবীর কথা",
+      "কুরআনের আয়াত"
+    ],
+    "correct_answer": 1,
+    "category": "Hadith",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে কত প্রকার তাওহীদ আছে?",
+    "options": [
+      "১",
+      "২",
+      "৩",
+      "৪"
+    ],
+    "question_en": "How many types of Tawheed are there in Islam?",
+    "question_bn": "ইসলামে কত প্রকার তাওহীদ আছে?",
+    "options_en": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "options_bn": [
+      "১",
+      "২",
+      "৩",
+      "৪"
+    ],
+    "correct_answer": 2,
+    "category": "Aqeedah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "শিরক কী?",
+    "options": [
+      "মিথ্যা বলা",
+      "আল্লাহর সাথে অংশীদার করা",
+      "চুরি করা",
+      "গীবত করা"
+    ],
+    "question_en": "What is Shirk?",
+    "question_bn": "শিরক কী?",
+    "options_en": [
+      "Lying",
+      "Associating partners with Allah",
+      "Stealing",
+      "Backbiting"
+    ],
+    "options_bn": [
+      "মিথ্যা বলা",
+      "আল্লাহর সাথে অংশীদার করা",
+      "চুরি করা",
+      "গীবত করা"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "কুফর কী?",
+    "options": [
+      "অবিশ্বাস",
+      "দান করা",
+      "নামাজ পড়া",
+      "রোজা রাখা"
+    ],
+    "question_en": "What is Kufr?",
+    "question_bn": "কুফর কী?",
+    "options_en": [
+      "Disbelief",
+      "Charity",
+      "Praying",
+      "Fasting"
+    ],
+    "options_bn": [
+      "অবিশ্বাস",
+      "দান করা",
+      "নামাজ পড়া",
+      "রোজা রাখা"
+    ],
+    "correct_answer": 0,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নিফাক কী?",
+    "options": [
+      "সততা",
+      "মুনাফিকি/কপটতা",
+      "দানশীলতা",
+      "বীরত্ব"
+    ],
+    "question_en": "What is Nifaq?",
+    "question_bn": "নিফাক কী?",
+    "options_en": [
+      "Honesty",
+      "Hypocrisy",
+      "Generosity",
+      "Bravery"
+    ],
+    "options_bn": [
+      "সততা",
+      "মুনাফিকি/কপটতা",
+      "দানশীলতা",
+      "বীরত্ব"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাওবা শব্দের অর্থ কী?",
+    "options": [
+      "ক্ষমা",
+      "প্রত্যাবর্তন/অনুতাপ",
+      "দান",
+      "প্রার্থনা"
+    ],
+    "question_en": "What does Tawbah mean?",
+    "question_bn": "তাওবা শব্দের অর্থ কী?",
+    "options_en": [
+      "Forgiveness",
+      "Repentance",
+      "Charity",
+      "Prayer"
+    ],
+    "options_bn": [
+      "ক্ষমা",
+      "প্রত্যাবর্তন/অনুতাপ",
+      "দান",
+      "প্রার্থনা"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইস্তেখারা নামাজ কেন পড়া হয়?",
+    "options": [
+      "গুনাহ মাফের জন্য",
+      "সিদ্ধান্ত নেওয়ার জন্য",
+      "রোগমুক্তির জন্য",
+      "ধনসম্পদের জন্য"
+    ],
+    "question_en": "Why is Istikhara prayer performed?",
+    "question_bn": "ইস্তেখারা নামাজ কেন পড়া হয়?",
+    "options_en": [
+      "For forgiveness",
+      "For decision making",
+      "For healing",
+      "For wealth"
+    ],
+    "options_bn": [
+      "গুনাহ মাফের জন্য",
+      "সিদ্ধান্ত নেওয়ার জন্য",
+      "রোগমুক্তির জন্য",
+      "ধনসম্পদের জন্য"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সালাতুল জানাযা কত রাকাত?",
+    "options": [
+      "২ রাকাত",
+      "৪ রাকাত",
+      "কোনো রাকাত নেই, ৪ তাকবীর",
+      "৩ রাকাত"
+    ],
+    "question_en": "How many rakahs is Salatul Janazah?",
+    "question_bn": "সালাতুল জানাযা কত রাকাত?",
+    "options_en": [
+      "2 rakahs",
+      "4 rakahs",
+      "No rakahs, 4 Takbirs",
+      "3 rakahs"
+    ],
+    "options_bn": [
+      "২ রাকাত",
+      "৪ রাকাত",
+      "কোনো রাকাত নেই, ৪ তাকবীর",
+      "৩ রাকাত"
+    ],
+    "correct_answer": 2,
+    "category": "Prayer",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সূরা ইখলাস কুরআনের কত ভাগের সমান?",
+    "options": [
+      "অর্ধেক",
+      "এক-তৃতীয়াংশ",
+      "এক-চতুর্থাংশ",
+      "এক-পঞ্চমাংশ"
+    ],
+    "question_en": "Surah Ikhlas is equal to what fraction of the Quran?",
+    "question_bn": "সূরা ইখলাস কুরআনের কত ভাগের সমান?",
+    "options_en": [
+      "Half",
+      "One-third",
+      "One-quarter",
+      "One-fifth"
+    ],
+    "options_bn": [
+      "অর্ধেক",
+      "এক-তৃতীয়াংশ",
+      "এক-চতুর্থাংশ",
+      "এক-পঞ্চমাংশ"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "মসজিদে নববী কোথায় অবস্থিত?",
+    "options": [
+      "মক্কা",
+      "মদিনা",
+      "জেরুজালেম",
+      "কায়রো"
+    ],
+    "question_en": "Where is Masjid an-Nabawi located?",
+    "question_bn": "মসজিদে নববী কোথায় অবস্থিত?",
+    "options_en": [
+      "Makkah",
+      "Medina",
+      "Jerusalem",
+      "Cairo"
+    ],
+    "options_bn": [
+      "মক্কা",
+      "মদিনা",
+      "জেরুজালেম",
+      "কায়রো"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মসজিদুল আকসা কোথায় অবস্থিত?",
+    "options": [
+      "মক্কা",
+      "মদিনা",
+      "জেরুজালেম",
+      "দামেস্ক"
+    ],
+    "question_en": "Where is Masjid al-Aqsa located?",
+    "question_bn": "মসজিদুল আকসা কোথায় অবস্থিত?",
+    "options_en": [
+      "Makkah",
+      "Medina",
+      "Jerusalem",
+      "Damascus"
+    ],
+    "options_bn": [
+      "মক্কা",
+      "মদিনা",
+      "জেরুজালেম",
+      "দামেস্ক"
+    ],
+    "correct_answer": 2,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে তিনটি পবিত্র মসজিদ কোনগুলো?",
+    "options": [
+      "মসজিদুল হারাম, মসজিদে নববী, মসজিদুল আকসা",
+      "মসজিদুল হারাম, মসজিদে কুবা, মসজিদুল আকসা",
+      "মসজিদুল হারাম, মসজিদে নববী, মসজিদে কুবা",
+      "মসজিদে কুবা, মসজিদুল আকসা, মসজিদে নববী"
+    ],
+    "question_en": "What are the three holy mosques in Islam?",
+    "question_bn": "ইসলামে তিনটি পবিত্র মসজিদ কোনগুলো?",
+    "options_en": [
+      "Masjid al-Haram, Masjid an-Nabawi, Masjid al-Aqsa",
+      "Masjid al-Haram, Masjid Quba, Masjid al-Aqsa",
+      "Masjid al-Haram, Masjid an-Nabawi, Masjid Quba",
+      "Masjid Quba, Masjid al-Aqsa, Masjid an-Nabawi"
+    ],
+    "options_bn": [
+      "মসজিদুল হারাম, মসজিদে নববী, মসজিদুল আকসা",
+      "মসজিদুল হারাম, মসজিদে কুবা, মসজিদুল আকসা",
+      "মসজিদুল হারাম, মসজিদে নববী, মসজিদে কুবা",
+      "মসজিদে কুবা, মসজিদুল আকসা, মসজিদে নববী"
+    ],
+    "correct_answer": 0,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মসজিদে কুবা কে নির্মাণ করেন?",
+    "options": [
+      "উমর (রা.)",
+      "মুহাম্মদ (সা.)",
+      "আবু বকর (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Who built Masjid Quba?",
+    "question_bn": "মসজিদে কুবা কে নির্মাণ করেন?",
+    "options_en": [
+      "Umar (RA)",
+      "Muhammad (PBUH)",
+      "Abu Bakr (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "উমর (রা.)",
+      "মুহাম্মদ (সা.)",
+      "আবু বকর (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "খন্দক যুদ্ধে পরিখা খননের পরামর্শ কে দেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "সালমান ফারসি (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Who suggested digging the trench in Battle of Khandaq?",
+    "question_bn": "খন্দক যুদ্ধে পরিখা খননের পরামর্শ কে দেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Salman Farsi (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "সালমান ফারসি (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 2,
+    "category": "Islamic History",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "হুদাইবিয়ার সন্ধি কোন হিজরি সালে হয়?",
+    "options": [
+      "৪ হিজরি",
+      "৫ হিজরি",
+      "৬ হিজরি",
+      "৭ হিজরি"
+    ],
+    "question_en": "In which Hijri year was the Treaty of Hudaybiyyah?",
+    "question_bn": "হুদাইবিয়ার সন্ধি কোন হিজরি সালে হয়?",
+    "options_en": [
+      "4 Hijri",
+      "5 Hijri",
+      "6 Hijri",
+      "7 Hijri"
+    ],
+    "options_bn": [
+      "৪ হিজরি",
+      "৫ হিজরি",
+      "৬ হিজরি",
+      "৭ হিজরি"
+    ],
+    "correct_answer": 2,
+    "category": "Islamic History",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামের দ্বিতীয় খলিফা কে ছিলেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Who was the second Caliph of Islam?",
+    "question_bn": "ইসলামের দ্বিতীয় খলিফা কে ছিলেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামের তৃতীয় খলিফা কে ছিলেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Who was the third Caliph of Islam?",
+    "question_bn": "ইসলামের তৃতীয় খলিফা কে ছিলেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 2,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামের চতুর্থ খলিফা কে ছিলেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Who was the fourth Caliph of Islam?",
+    "question_bn": "ইসলামের চতুর্থ খলিফা কে ছিলেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 3,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "কুরআন সংকলনের নির্দেশ কোন খলিফা দেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Which Caliph ordered the compilation of the Quran?",
+    "question_bn": "কুরআন সংকলনের নির্দেশ কোন খলিফা দেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 0,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "কুরআনের স্ট্যান্ডার্ড কপি কোন খলিফার সময় তৈরি হয়?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "During which Caliph's time was the standard Quran copy made?",
+    "question_bn": "কুরআনের স্ট্যান্ডার্ড কপি কোন খলিফার সময় তৈরি হয়?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 2,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইতিকাফ কী?",
+    "options": [
+      "মসজিদে অবস্থান",
+      "দান করা",
+      "হজ্জ পালন",
+      "কুরআন মুখস্ত করা"
+    ],
+    "question_en": "What is Itikaf?",
+    "question_bn": "ইতিকাফ কী?",
+    "options_en": [
+      "Staying in mosque",
+      "Giving charity",
+      "Performing Hajj",
+      "Memorizing Quran"
+    ],
+    "options_bn": [
+      "মসজিদে অবস্থান",
+      "দান করা",
+      "হজ্জ পালন",
+      "কুরআন মুখস্ত করা"
+    ],
+    "correct_answer": 0,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সদকাতুল ফিতর কখন দিতে হয়?",
+    "options": [
+      "রমজানের শুরুতে",
+      "ঈদুল ফিতরের আগে",
+      "ঈদুল আযহায়",
+      "যেকোনো সময়"
+    ],
+    "question_en": "When must Sadaqatul Fitr be given?",
+    "question_bn": "সদকাতুল ফিতর কখন দিতে হয়?",
+    "options_en": [
+      "Start of Ramadan",
+      "Before Eid ul-Fitr",
+      "On Eid ul-Adha",
+      "Anytime"
+    ],
+    "options_bn": [
+      "রমজানের শুরুতে",
+      "ঈদুল ফিতরের আগে",
+      "ঈদুল আযহায়",
+      "যেকোনো সময়"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আকিকা কী?",
+    "options": [
+      "বিয়ের অনুষ্ঠান",
+      "সন্তান জন্মের পর পশু জবাই",
+      "হজ্জের অনুষ্ঠান",
+      "জানাযা নামাজ"
+    ],
+    "question_en": "What is Aqiqah?",
+    "question_bn": "আকিকা কী?",
+    "options_en": [
+      "Wedding ceremony",
+      "Animal sacrifice after birth",
+      "Hajj ritual",
+      "Funeral prayer"
+    ],
+    "options_bn": [
+      "বিয়ের অনুষ্ঠান",
+      "সন্তান জন্মের পর পশু জবাই",
+      "হজ্জের অনুষ্ঠান",
+      "জানাযা নামাজ"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ছেলে সন্তানের আকিকায় কতটি পশু জবাই করা সুন্নত?",
+    "options": [
+      "১টি",
+      "২টি",
+      "৩টি",
+      "৪টি"
+    ],
+    "question_en": "How many animals for Aqiqah of a boy?",
+    "question_bn": "ছেলে সন্তানের আকিকায় কতটি পশু জবাই করা সুন্নত?",
+    "options_en": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "options_bn": [
+      "১টি",
+      "২টি",
+      "৩টি",
+      "৪টি"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "খতনা কী?",
+    "options": [
+      "একটি সুন্নত আমল",
+      "ফরজ ইবাদত",
+      "নফল নামাজ",
+      "দোয়া"
+    ],
+    "question_en": "What is Khitan (circumcision)?",
+    "question_bn": "খতনা কী?",
+    "options_en": [
+      "A Sunnah practice",
+      "Fard worship",
+      "Nafil prayer",
+      "Dua"
+    ],
+    "options_bn": [
+      "একটি সুন্নত আমল",
+      "ফরজ ইবাদত",
+      "নফল নামাজ",
+      "দোয়া"
+    ],
+    "correct_answer": 0,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে মৃত ব্যক্তিকে কোন দিকে মুখ করে দাফন করা হয়?",
+    "options": [
+      "পূর্ব দিকে",
+      "পশ্চিম দিকে",
+      "কিবলার দিকে",
+      "উত্তর দিকে"
+    ],
+    "question_en": "In which direction is a Muslim buried facing?",
+    "question_bn": "ইসলামে মৃত ব্যক্তিকে কোন দিকে মুখ করে দাফন করা হয়?",
+    "options_en": [
+      "East",
+      "West",
+      "Facing Qibla",
+      "North"
+    ],
+    "options_bn": [
+      "পূর্ব দিকে",
+      "পশ্চিম দিকে",
+      "কিবলার দিকে",
+      "উত্তর দিকে"
+    ],
+    "correct_answer": 2,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "তাসবীহ ফাতেমী কী?",
+    "options": [
+      "৩৩ সুবহানাল্লাহ, ৩৩ আলহামদুলিল্লাহ, ৩৪ আল্লাহু আকবার",
+      "১০০ সুবহানাল্লাহ",
+      "৩৩ আস্তাগফিরুল্লাহ",
+      "৩৩ লা ইলাহা ইল্লাল্লাহ"
+    ],
+    "question_en": "What is Tasbih Fatimi?",
+    "question_bn": "তাসবীহ ফাতেমী কী?",
+    "options_en": [
+      "33 SubhanAllah, 33 Alhamdulillah, 34 Allahu Akbar",
+      "100 SubhanAllah",
+      "33 Astaghfirullah",
+      "33 La ilaha illallah"
+    ],
+    "options_bn": [
+      "৩৩ সুবহানাল্লাহ, ৩৩ আলহামদুলিল্লাহ, ৩৪ আল্লাহু আকবার",
+      "১০০ সুবহানাল্লাহ",
+      "৩৩ আস্তাগফিরুল্লাহ",
+      "৩৩ লা ইলাহা ইল্লাল্লাহ"
+    ],
+    "correct_answer": 0,
+    "category": "Dhikr",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "দুরূদ শরীফ পড়ার ফজিলত কী?",
+    "options": [
+      "গুনাহ মাফ",
+      "আল্লাহর রহমত নাযিল",
+      "সম্পদ বৃদ্ধি",
+      "সব কিছু"
+    ],
+    "question_en": "What is the virtue of reciting Durood Sharif?",
+    "question_bn": "দুরূদ শরীফ পড়ার ফজিলত কী?",
+    "options_en": [
+      "Sins forgiven",
+      "Allah's mercy descends",
+      "Wealth increase",
+      "All of the above"
+    ],
+    "options_bn": [
+      "গুনাহ মাফ",
+      "আল্লাহর রহমত নাযিল",
+      "সম্পদ বৃদ্ধি",
+      "সব কিছু"
+    ],
+    "correct_answer": 1,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সুবহানাল্লাহ শব্দের অর্থ কী?",
+    "options": [
+      "আল্লাহ মহান",
+      "আল্লাহ পবিত্র",
+      "আল্লাহু আকবার",
+      "আল্লাহর কাছে ক্ষমা চাই"
+    ],
+    "question_en": "What does SubhanAllah mean?",
+    "question_bn": "সুবহানাল্লাহ শব্দের অর্থ কী?",
+    "options_en": [
+      "Allah is Great",
+      "Glory be to Allah",
+      "Allah is Greatest",
+      "I seek forgiveness from Allah"
+    ],
+    "options_bn": [
+      "আল্লাহ মহান",
+      "আল্লাহ পবিত্র",
+      "আল্লাহু আকবার",
+      "আল্লাহর কাছে ক্ষমা চাই"
+    ],
+    "correct_answer": 1,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আলহামদুলিল্লাহ শব্দের অর্থ কী?",
+    "options": [
+      "আল্লাহ পবিত্র",
+      "সমস্ত প্রশংসা আল্লাহর",
+      "আল্লাহ মহান",
+      "ক্ষমা চাই"
+    ],
+    "question_en": "What does Alhamdulillah mean?",
+    "question_bn": "আলহামদুলিল্লাহ শব্দের অর্থ কী?",
+    "options_en": [
+      "Glory to Allah",
+      "All praise is for Allah",
+      "Allah is Great",
+      "I seek forgiveness"
+    ],
+    "options_bn": [
+      "আল্লাহ পবিত্র",
+      "সমস্ত প্রশংসা আল্লাহর",
+      "আল্লাহ মহান",
+      "ক্ষমা চাই"
+    ],
+    "correct_answer": 1,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আল্লাহু আকবার শব্দের অর্থ কী?",
+    "options": [
+      "আল্লাহ পবিত্র",
+      "আল্লাহর প্রশংসা",
+      "আল্লাহ সর্বশ্রেষ্ঠ",
+      "ক্ষমা চাই"
+    ],
+    "question_en": "What does Allahu Akbar mean?",
+    "question_bn": "আল্লাহু আকবার শব্দের অর্থ কী?",
+    "options_en": [
+      "Glory to Allah",
+      "Praise to Allah",
+      "Allah is the Greatest",
+      "I seek forgiveness"
+    ],
+    "options_bn": [
+      "আল্লাহ পবিত্র",
+      "আল্লাহর প্রশংসা",
+      "আল্লাহ সর্বশ্রেষ্ঠ",
+      "ক্ষমা চাই"
+    ],
+    "correct_answer": 2,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "লা ইলাহা ইল্লাল্লাহ এর অর্থ কী?",
+    "options": [
+      "আল্লাহ মহান",
+      "আল্লাহ ছাড়া কোনো ইলাহ নেই",
+      "আল্লাহর প্রশংসা",
+      "আল্লাহ পবিত্র"
+    ],
+    "question_en": "What does La ilaha illallah mean?",
+    "question_bn": "লা ইলাহা ইল্লাল্লাহ এর অর্থ কী?",
+    "options_en": [
+      "Allah is Great",
+      "There is no god but Allah",
+      "Praise to Allah",
+      "Glory to Allah"
+    ],
+    "options_bn": [
+      "আল্লাহ মহান",
+      "আল্লাহ ছাড়া কোনো ইলাহ নেই",
+      "আল্লাহর প্রশংসা",
+      "আল্লাহ পবিত্র"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে হালাল ও হারাম নির্ধারণ করেন কে?",
+    "options": [
+      "আলেমগণ",
+      "আল্লাহ",
+      "সরকার",
+      "সমাজ"
+    ],
+    "question_en": "Who determines Halal and Haram in Islam?",
+    "question_bn": "ইসলামে হালাল ও হারাম নির্ধারণ করেন কে?",
+    "options_en": [
+      "Scholars",
+      "Allah",
+      "Government",
+      "Society"
+    ],
+    "options_bn": [
+      "আলেমগণ",
+      "আল্লাহ",
+      "সরকার",
+      "সমাজ"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সুদ (রিবা) ইসলামে কী?",
+    "options": [
+      "হালাল",
+      "হারাম",
+      "মাকরুহ",
+      "মুস্তাহাব"
+    ],
+    "question_en": "What is Riba (usury) in Islam?",
+    "question_bn": "সুদ (রিবা) ইসলামে কী?",
+    "options_en": [
+      "Halal",
+      "Haram",
+      "Makruh",
+      "Mustahab"
+    ],
+    "options_bn": [
+      "হালাল",
+      "হারাম",
+      "মাকরুহ",
+      "মুস্তাহাব"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে মদ্যপান কী?",
+    "options": [
+      "হালাল",
+      "মাকরুহ",
+      "হারাম",
+      "মুবাহ"
+    ],
+    "question_en": "What is alcohol consumption in Islam?",
+    "question_bn": "ইসলামে মদ্যপান কী?",
+    "options_en": [
+      "Halal",
+      "Makruh",
+      "Haram",
+      "Mubah"
+    ],
+    "options_bn": [
+      "হালাল",
+      "মাকরুহ",
+      "হারাম",
+      "মুবাহ"
+    ],
+    "correct_answer": 2,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "গীবত কী?",
+    "options": [
+      "মিথ্যা বলা",
+      "অনুপস্থিতিতে কারো দোষ বলা",
+      "চুরি করা",
+      "ঝগড়া করা"
+    ],
+    "question_en": "What is Gheebah?",
+    "question_bn": "গীবত কী?",
+    "options_en": [
+      "Lying",
+      "Backbiting",
+      "Stealing",
+      "Arguing"
+    ],
+    "options_bn": [
+      "মিথ্যা বলা",
+      "অনুপস্থিতিতে কারো দোষ বলা",
+      "চুরি করা",
+      "ঝগড়া করা"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে প্রতিবেশীর হক কতটুকু?",
+    "options": [
+      "সামান্য",
+      "খুবই গুরুত্বপূর্ণ",
+      "ঐচ্ছিক",
+      "শুধু মুসলিম প্রতিবেশীর"
+    ],
+    "question_en": "How important is the right of neighbors in Islam?",
+    "question_bn": "ইসলামে প্রতিবেশীর হক কতটুকু?",
+    "options_en": [
+      "Slightly",
+      "Very important",
+      "Optional",
+      "Only Muslim neighbors"
+    ],
+    "options_bn": [
+      "সামান্য",
+      "খুবই গুরুত্বপূর্ণ",
+      "ঐচ্ছিক",
+      "শুধু মুসলিম প্রতিবেশীর"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে এতিমের সম্পদ খাওয়া কী?",
+    "options": [
+      "হালাল",
+      "মাকরুহ",
+      "কবিরা গুনাহ",
+      "মুবাহ"
+    ],
+    "question_en": "What is consuming orphan's wealth in Islam?",
+    "question_bn": "ইসলামে এতিমের সম্পদ খাওয়া কী?",
+    "options_en": [
+      "Halal",
+      "Makruh",
+      "Major sin",
+      "Mubah"
+    ],
+    "options_bn": [
+      "হালাল",
+      "মাকরুহ",
+      "কবিরা গুনাহ",
+      "মুবাহ"
+    ],
+    "correct_answer": 2,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) এর শেষ খুতবা কোথায় দেন?",
+    "options": [
+      "মদিনায়",
+      "মক্কায়",
+      "আরাফাতের ময়দানে",
+      "তায়েফে"
+    ],
+    "question_en": "Where did Prophet Muhammad (PBUH) deliver his farewell sermon?",
+    "question_bn": "নবী মুহাম্মদ (সা.) এর শেষ খুতবা কোথায় দেন?",
+    "options_en": [
+      "In Medina",
+      "In Makkah",
+      "At the plains of Arafat",
+      "In Taif"
+    ],
+    "options_bn": [
+      "মদিনায়",
+      "মক্কায়",
+      "আরাফাতের ময়দানে",
+      "তায়েফে"
+    ],
+    "correct_answer": 2,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "বিদায় হজ্জ কোন হিজরি সালে হয়?",
+    "options": [
+      "৮ হিজরি",
+      "৯ হিজরি",
+      "১০ হিজরি",
+      "১১ হিজরি"
+    ],
+    "question_en": "In which Hijri year was the Farewell Hajj?",
+    "question_bn": "বিদায় হজ্জ কোন হিজরি সালে হয়?",
+    "options_en": [
+      "8 Hijri",
+      "9 Hijri",
+      "10 Hijri",
+      "11 Hijri"
+    ],
+    "options_bn": [
+      "৮ হিজরি",
+      "৯ হিজরি",
+      "১০ হিজরি",
+      "১১ হিজরি"
+    ],
+    "correct_answer": 2,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) কত বছর বয়সে ইন্তেকাল করেন?",
+    "options": [
+      "৬০",
+      "৬৩",
+      "৬৫",
+      "৭০"
+    ],
+    "question_en": "At what age did Prophet Muhammad (PBUH) pass away?",
+    "question_bn": "নবী মুহাম্মদ (সা.) কত বছর বয়সে ইন্তেকাল করেন?",
+    "options_en": [
+      "60",
+      "63",
+      "65",
+      "70"
+    ],
+    "options_bn": [
+      "৬০",
+      "৬৩",
+      "৬৫",
+      "৭০"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "খালিদ বিন ওয়ালিদ (রা.) কে কী উপাধি দেওয়া হয়?",
+    "options": [
+      "আল-ফারুক",
+      "সাইফুল্লাহ",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "question_en": "What title was given to Khalid bin Walid (RA)?",
+    "question_bn": "খালিদ বিন ওয়ালিদ (রা.) কে কী উপাধি দেওয়া হয়?",
+    "options_en": [
+      "Al-Faruq",
+      "Saifullah (Sword of Allah)",
+      "Al-Amin",
+      "Dhun-Nurain"
+    ],
+    "options_bn": [
+      "আল-ফারুক",
+      "সাইফুল্লাহ",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "উমর (রা.) এর উপাধি কী ছিল?",
+    "options": [
+      "আল-সিদ্দিক",
+      "আল-ফারুক",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "question_en": "What was Umar (RA)'s title?",
+    "question_bn": "উমর (রা.) এর উপাধি কী ছিল?",
+    "options_en": [
+      "As-Siddiq",
+      "Al-Faruq",
+      "Al-Amin",
+      "Dhun-Nurain"
+    ],
+    "options_bn": [
+      "আল-সিদ্দিক",
+      "আল-ফারুক",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আবু বকর (রা.) এর উপাধি কী ছিল?",
+    "options": [
+      "আল-সিদ্দিক",
+      "আল-ফারুক",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "question_en": "What was Abu Bakr (RA)'s title?",
+    "question_bn": "আবু বকর (রা.) এর উপাধি কী ছিল?",
+    "options_en": [
+      "As-Siddiq",
+      "Al-Faruq",
+      "Al-Amin",
+      "Dhun-Nurain"
+    ],
+    "options_bn": [
+      "আল-সিদ্দিক",
+      "আল-ফারুক",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "correct_answer": 0,
+    "category": "Islamic History",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "উসমান (রা.) এর উপাধি কী ছিল?",
+    "options": [
+      "আল-সিদ্দিক",
+      "আল-ফারুক",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "question_en": "What was Uthman (RA)'s title?",
+    "question_bn": "উসমান (রা.) এর উপাধি কী ছিল?",
+    "options_en": [
+      "As-Siddiq",
+      "Al-Faruq",
+      "Al-Amin",
+      "Dhun-Nurain"
+    ],
+    "options_bn": [
+      "আল-সিদ্দিক",
+      "আল-ফারুক",
+      "আল-আমিন",
+      "যুন-নুরাইন"
+    ],
+    "correct_answer": 3,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) এর চাচার নাম কী যিনি তাঁকে লালনপালন করেন?",
+    "options": [
+      "আবু লাহাব",
+      "আবু তালিব",
+      "আব্বাস",
+      "হামযা"
+    ],
+    "question_en": "What is the name of the uncle who raised Prophet Muhammad (PBUH)?",
+    "question_bn": "নবী মুহাম্মদ (সা.) এর চাচার নাম কী যিনি তাঁকে লালনপালন করেন?",
+    "options_en": [
+      "Abu Lahab",
+      "Abu Talib",
+      "Abbas",
+      "Hamza"
+    ],
+    "options_bn": [
+      "আবু লাহাব",
+      "আবু তালিব",
+      "আব্বাস",
+      "হামযা"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "হামযা (রা.) কে কোন উপাধিতে ভূষিত করা হয়?",
+    "options": [
+      "সাইফুল্লাহ",
+      "আসাদুল্লাহ (আল্লাহর সিংহ)",
+      "আল-ফারুক",
+      "আল-আমিন"
+    ],
+    "question_en": "What title was Hamza (RA) given?",
+    "question_bn": "হামযা (রা.) কে কোন উপাধিতে ভূষিত করা হয়?",
+    "options_en": [
+      "Saifullah",
+      "Asadullah (Lion of Allah)",
+      "Al-Faruq",
+      "Al-Amin"
+    ],
+    "options_bn": [
+      "সাইফুল্লাহ",
+      "আসাদুল্লাহ (আল্লাহর সিংহ)",
+      "আল-ফারুক",
+      "আল-আমিন"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ফাতিমা (রা.) কার কন্যা ছিলেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "মুহাম্মদ (সা.)",
+      "আলী (রা.)"
+    ],
+    "question_en": "Whose daughter was Fatima (RA)?",
+    "question_bn": "ফাতিমা (রা.) কার কন্যা ছিলেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Muhammad (PBUH)",
+      "Ali (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "মুহাম্মদ (সা.)",
+      "আলী (রা.)"
+    ],
+    "correct_answer": 2,
+    "category": "Seerah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "হাসান ও হুসাইন (রা.) কার সন্তান ছিলেন?",
+    "options": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.) ও ফাতিমা (রা.)"
+    ],
+    "question_en": "Whose children were Hasan and Husain (RA)?",
+    "question_bn": "হাসান ও হুসাইন (রা.) কার সন্তান ছিলেন?",
+    "options_en": [
+      "Abu Bakr (RA)",
+      "Umar (RA)",
+      "Uthman (RA)",
+      "Ali (RA) and Fatima (RA)"
+    ],
+    "options_bn": [
+      "আবু বকর (রা.)",
+      "উমর (রা.)",
+      "উসমান (রা.)",
+      "আলী (রা.) ও ফাতিমা (রা.)"
+    ],
+    "correct_answer": 3,
+    "category": "Seerah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইমাম আবু হানিফা (রহ.) কোন মাযহাবের প্রতিষ্ঠাতা?",
+    "options": [
+      "হানাফি",
+      "শাফেয়ী",
+      "মালেকী",
+      "হাম্বলী"
+    ],
+    "question_en": "Which school of thought did Imam Abu Hanifa (RA) found?",
+    "question_bn": "ইমাম আবু হানিফা (রহ.) কোন মাযহাবের প্রতিষ্ঠাতা?",
+    "options_en": [
+      "Hanafi",
+      "Shafi",
+      "Maliki",
+      "Hanbali"
+    ],
+    "options_bn": [
+      "হানাফি",
+      "শাফেয়ী",
+      "মালেকী",
+      "হাম্বলী"
+    ],
+    "correct_answer": 0,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইমাম শাফেয়ী (রহ.) কোন মাযহাবের প্রতিষ্ঠাতা?",
+    "options": [
+      "হানাফি",
+      "শাফেয়ী",
+      "মালেকী",
+      "হাম্বলী"
+    ],
+    "question_en": "Which school of thought did Imam Shafi (RA) found?",
+    "question_bn": "ইমাম শাফেয়ী (রহ.) কোন মাযহাবের প্রতিষ্ঠাতা?",
+    "options_en": [
+      "Hanafi",
+      "Shafi",
+      "Maliki",
+      "Hanbali"
+    ],
+    "options_bn": [
+      "হানাফি",
+      "শাফেয়ী",
+      "মালেকী",
+      "হাম্বলী"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে চারটি প্রধান মাযহাব কী কী?",
+    "options": [
+      "হানাফি, শাফেয়ী, মালেকী, হাম্বলী",
+      "হানাফি, শাফেয়ী, জাফরী, হাম্বলী",
+      "হানাফি, দেওবন্দী, বেরেলভী, সালাফী",
+      "শাফেয়ী, মালেকী, আশআরী, মাতুরিদী"
+    ],
+    "question_en": "What are the four main schools of thought?",
+    "question_bn": "ইসলামে চারটি প্রধান মাযহাব কী কী?",
+    "options_en": [
+      "Hanafi, Shafi, Maliki, Hanbali",
+      "Hanafi, Shafi, Jafari, Hanbali",
+      "Hanafi, Deobandi, Barelvi, Salafi",
+      "Shafi, Maliki, Ashari, Maturidi"
+    ],
+    "options_bn": [
+      "হানাফি, শাফেয়ী, মালেকী, হাম্বলী",
+      "হানাফি, শাফেয়ী, জাফরী, হাম্বলী",
+      "হানাফি, দেওবন্দী, বেরেলভী, সালাফী",
+      "শাফেয়ী, মালেকী, আশআরী, মাতুরিদী"
+    ],
+    "correct_answer": 0,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "শাওয়াল মাসে কত দিন রোজা রাখা সুন্নত?",
+    "options": [
+      "৩ দিন",
+      "৬ দিন",
+      "১০ দিন",
+      "১৫ দিন"
+    ],
+    "question_en": "How many days of fasting in Shawwal is Sunnah?",
+    "question_bn": "শাওয়াল মাসে কত দিন রোজা রাখা সুন্নত?",
+    "options_en": [
+      "3 days",
+      "6 days",
+      "10 days",
+      "15 days"
+    ],
+    "options_bn": [
+      "৩ দিন",
+      "৬ দিন",
+      "১০ দিন",
+      "১৫ দিন"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "আরাফার দিন রোজা রাখলে কত বছরের গুনাহ মাফ হয়?",
+    "options": [
+      "১ বছর",
+      "২ বছর (আগের ও পরের)",
+      "৩ বছর",
+      "৫ বছর"
+    ],
+    "question_en": "How many years of sins are forgiven by fasting on Arafah?",
+    "question_bn": "আরাফার দিন রোজা রাখলে কত বছরের গুনাহ মাফ হয়?",
+    "options_en": [
+      "1 year",
+      "2 years (previous and next)",
+      "3 years",
+      "5 years"
+    ],
+    "options_bn": [
+      "১ বছর",
+      "২ বছর (আগের ও পরের)",
+      "৩ বছর",
+      "৫ বছর"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "প্রতি সোমবার ও বৃহস্পতিবার রোজা রাখা কী?",
+    "options": [
+      "ফরজ",
+      "ওয়াজিব",
+      "সুন্নত",
+      "মাকরুহ"
+    ],
+    "question_en": "What is fasting on Mondays and Thursdays?",
+    "question_bn": "প্রতি সোমবার ও বৃহস্পতিবার রোজা রাখা কী?",
+    "options_en": [
+      "Fard",
+      "Wajib",
+      "Sunnah",
+      "Makruh"
+    ],
+    "options_bn": [
+      "ফরজ",
+      "ওয়াজিব",
+      "সুন্নত",
+      "মাকরুহ"
+    ],
+    "correct_answer": 2,
+    "category": "Fiqh",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আল্লাহর ৯৯ নামকে কী বলা হয়?",
+    "options": [
+      "আসমাউল হুসনা",
+      "আসমাউল কুরআন",
+      "সিফাতুল্লাহ",
+      "তাওহীদ"
+    ],
+    "question_en": "What are the 99 names of Allah called?",
+    "question_bn": "আল্লাহর ৯৯ নামকে কী বলা হয়?",
+    "options_en": [
+      "Asmaul Husna",
+      "Asmaul Quran",
+      "Sifatullah",
+      "Tawheed"
+    ],
+    "options_bn": [
+      "আসমাউল হুসনা",
+      "আসমাউল কুরআন",
+      "সিফাতুল্লাহ",
+      "তাওহীদ"
+    ],
+    "correct_answer": 0,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আর-রহমান নামের অর্থ কী?",
+    "options": [
+      "পরম দয়ালু",
+      "সর্বশক্তিমান",
+      "সর্বজ্ঞ",
+      "সৃষ্টিকর্তা"
+    ],
+    "question_en": "What does Ar-Rahman mean?",
+    "question_bn": "আর-রহমান নামের অর্থ কী?",
+    "options_en": [
+      "Most Merciful",
+      "Almighty",
+      "All-Knowing",
+      "Creator"
+    ],
+    "options_bn": [
+      "পরম দয়ালু",
+      "সর্বশক্তিমান",
+      "সর্বজ্ঞ",
+      "সৃষ্টিকর্তা"
+    ],
+    "correct_answer": 0,
+    "category": "Names of Allah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আল-মালিক নামের অর্থ কী?",
+    "options": [
+      "পবিত্র",
+      "সার্বভৌম রাজা",
+      "দয়ালু",
+      "রক্ষাকারী"
+    ],
+    "question_en": "What does Al-Malik mean?",
+    "question_bn": "আল-মালিক নামের অর্থ কী?",
+    "options_en": [
+      "Holy",
+      "Sovereign King",
+      "Merciful",
+      "Protector"
+    ],
+    "options_bn": [
+      "পবিত্র",
+      "সার্বভৌম রাজা",
+      "দয়ালু",
+      "রক্ষাকারী"
+    ],
+    "correct_answer": 1,
+    "category": "Names of Allah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আস-সালাম নামের অর্থ কী?",
+    "options": [
+      "শান্তিদাতা",
+      "সর্বশক্তিমান",
+      "সৃষ্টিকর্তা",
+      "রক্ষক"
+    ],
+    "question_en": "What does As-Salam mean?",
+    "question_bn": "আস-সালাম নামের অর্থ কী?",
+    "options_en": [
+      "Source of Peace",
+      "Almighty",
+      "Creator",
+      "Protector"
+    ],
+    "options_bn": [
+      "শান্তিদাতা",
+      "সর্বশক্তিমান",
+      "সৃষ্টিকর্তা",
+      "রক্ষক"
+    ],
+    "correct_answer": 0,
+    "category": "Names of Allah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আল-খালিক নামের অর্থ কী?",
+    "options": [
+      "রক্ষক",
+      "সৃষ্টিকর্তা",
+      "রিজিকদাতা",
+      "শক্তিমান"
+    ],
+    "question_en": "What does Al-Khaliq mean?",
+    "question_bn": "আল-খালিক নামের অর্থ কী?",
+    "options_en": [
+      "Protector",
+      "Creator",
+      "Provider",
+      "Powerful"
+    ],
+    "options_bn": [
+      "রক্ষক",
+      "সৃষ্টিকর্তা",
+      "রিজিকদাতা",
+      "শক্তিমান"
+    ],
+    "correct_answer": 1,
+    "category": "Names of Allah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আর-রাজ্জাক নামের অর্থ কী?",
+    "options": [
+      "সৃষ্টিকর্তা",
+      "রিজিকদাতা",
+      "ক্ষমাশীল",
+      "দয়ালু"
+    ],
+    "question_en": "What does Ar-Razzaq mean?",
+    "question_bn": "আর-রাজ্জাক নামের অর্থ কী?",
+    "options_en": [
+      "Creator",
+      "Provider",
+      "Forgiving",
+      "Merciful"
+    ],
+    "options_bn": [
+      "সৃষ্টিকর্তা",
+      "রিজিকদাতা",
+      "ক্ষমাশীল",
+      "দয়ালু"
+    ],
+    "correct_answer": 1,
+    "category": "Names of Allah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আল-গাফফার নামের অর্থ কী?",
+    "options": [
+      "সর্বশক্তিমান",
+      "সর্বজ্ঞ",
+      "মহাক্ষমাশীল",
+      "সৃষ্টিকর্তা"
+    ],
+    "question_en": "What does Al-Ghaffar mean?",
+    "question_bn": "আল-গাফফার নামের অর্থ কী?",
+    "options_en": [
+      "Almighty",
+      "All-Knowing",
+      "Most Forgiving",
+      "Creator"
+    ],
+    "options_bn": [
+      "সর্বশক্তিমান",
+      "সর্বজ্ঞ",
+      "মহাক্ষমাশীল",
+      "সৃষ্টিকর্তা"
+    ],
+    "correct_answer": 2,
+    "category": "Names of Allah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "কুরআনে কতটি সিজদার আয়াত আছে?",
+    "options": [
+      "১২",
+      "১৪",
+      "১৫",
+      "১৬"
+    ],
+    "question_en": "How many Sajdah verses are in the Quran?",
+    "question_bn": "কুরআনে কতটি সিজদার আয়াত আছে?",
+    "options_en": [
+      "12",
+      "14",
+      "15",
+      "16"
+    ],
+    "options_bn": [
+      "১২",
+      "১৪",
+      "১৫",
+      "১৬"
+    ],
+    "correct_answer": 2,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "কুরআনে কতটি মানযিল আছে?",
+    "options": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "question_en": "How many Manzils are in the Quran?",
+    "question_bn": "কুরআনে কতটি মানযিল আছে?",
+    "options_en": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "options_bn": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "correct_answer": 2,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "কুরআনে কতটি রুকু আছে?",
+    "options": [
+      "৫৪০",
+      "৫৫৮",
+      "৫৬০",
+      "৫৭০"
+    ],
+    "question_en": "How many Rukus are in the Quran?",
+    "question_bn": "কুরআনে কতটি রুকু আছে?",
+    "options_en": [
+      "540",
+      "558",
+      "560",
+      "570"
+    ],
+    "options_bn": [
+      "৫৪০",
+      "৫৫৮",
+      "৫৬০",
+      "৫৭০"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "সূরা বাকারার কতটি আয়াত আছে?",
+    "options": [
+      "২৮০",
+      "২৮৬",
+      "২৯০",
+      "৩০০"
+    ],
+    "question_en": "How many verses are in Surah Baqarah?",
+    "question_bn": "সূরা বাকারার কতটি আয়াত আছে?",
+    "options_en": [
+      "280",
+      "286",
+      "290",
+      "300"
+    ],
+    "options_bn": [
+      "২৮০",
+      "২৮৬",
+      "২৯০",
+      "৩০০"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "কুরআন নাযিল হতে কত বছর লেগেছিল?",
+    "options": [
+      "২০ বছর",
+      "২২ বছর",
+      "২৩ বছর",
+      "২৫ বছর"
+    ],
+    "question_en": "How many years did the Quran take to be revealed?",
+    "question_bn": "কুরআন নাযিল হতে কত বছর লেগেছিল?",
+    "options_en": [
+      "20 years",
+      "22 years",
+      "23 years",
+      "25 years"
+    ],
+    "options_bn": [
+      "২০ বছর",
+      "২২ বছর",
+      "২৩ বছর",
+      "২৫ বছর"
+    ],
+    "correct_answer": 2,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "মক্কায় নাযিলকৃত সূরাকে কী বলে?",
+    "options": [
+      "মাদানী",
+      "মক্কী",
+      "হেজাজী",
+      "কুরাইশী"
+    ],
+    "question_en": "What are surahs revealed in Makkah called?",
+    "question_bn": "মক্কায় নাযিলকৃত সূরাকে কী বলে?",
+    "options_en": [
+      "Madani",
+      "Makki",
+      "Hijazi",
+      "Quraishi"
+    ],
+    "options_bn": [
+      "মাদানী",
+      "মক্কী",
+      "হেজাজী",
+      "কুরাইশী"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মদিনায় নাযিলকৃত সূরাকে কী বলে?",
+    "options": [
+      "মক্কী",
+      "মাদানী",
+      "হেজাজী",
+      "আরবী"
+    ],
+    "question_en": "What are surahs revealed in Medina called?",
+    "question_bn": "মদিনায় নাযিলকৃত সূরাকে কী বলে?",
+    "options_en": [
+      "Makki",
+      "Madani",
+      "Hijazi",
+      "Arabi"
+    ],
+    "options_bn": [
+      "মক্কী",
+      "মাদানী",
+      "হেজাজী",
+      "আরবী"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "জুমার দিনের ফজিলত সম্পর্কে কুরআনে কোন সূরা আছে?",
+    "options": [
+      "আল-বাকারাহ",
+      "আল-জুমুআ",
+      "আল-কাহফ",
+      "ইয়াসিন"
+    ],
+    "question_en": "Which Surah in the Quran discusses the virtues of Friday?",
+    "question_bn": "জুমার দিনের ফজিলত সম্পর্কে কুরআনে কোন সূরা আছে?",
+    "options_en": [
+      "Al-Baqarah",
+      "Al-Jumuah",
+      "Al-Kahf",
+      "Yasin"
+    ],
+    "options_bn": [
+      "আল-বাকারাহ",
+      "আল-জুমুআ",
+      "আল-কাহফ",
+      "ইয়াসিন"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে সপ্তাহের সেরা দিন কোনটি?",
+    "options": [
+      "সোমবার",
+      "বৃহস্পতিবার",
+      "শুক্রবার",
+      "শনিবার"
+    ],
+    "question_en": "Which is the best day of the week in Islam?",
+    "question_bn": "ইসলামে সপ্তাহের সেরা দিন কোনটি?",
+    "options_en": [
+      "Monday",
+      "Thursday",
+      "Friday",
+      "Saturday"
+    ],
+    "options_bn": [
+      "সোমবার",
+      "বৃহস্পতিবার",
+      "শুক্রবার",
+      "শনিবার"
+    ],
+    "correct_answer": 2,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ফজরের নামাজ কত রাকাত ফরজ?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "১"
+    ],
+    "question_en": "How many Fard rakahs in Fajr prayer?",
+    "question_bn": "ফজরের নামাজ কত রাকাত ফরজ?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "1"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "১"
+    ],
+    "correct_answer": 0,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "জোহরের নামাজ কত রাকাত ফরজ?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many Fard rakahs in Dhuhr prayer?",
+    "question_bn": "জোহরের নামাজ কত রাকাত ফরজ?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 2,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "আসরের নামাজ কত রাকাত ফরজ?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many Fard rakahs in Asr prayer?",
+    "question_bn": "আসরের নামাজ কত রাকাত ফরজ?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 2,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মাগরিবের নামাজ কত রাকাত ফরজ?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many Fard rakahs in Maghrib prayer?",
+    "question_bn": "মাগরিবের নামাজ কত রাকাত ফরজ?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইশার নামাজ কত রাকাত ফরজ?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many Fard rakahs in Isha prayer?",
+    "question_bn": "ইশার নামাজ কত রাকাত ফরজ?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 2,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "বিতর নামাজ কত রাকাত?",
+    "options": [
+      "১ অথবা ৩",
+      "২",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many rakahs is Witr prayer?",
+    "question_bn": "বিতর নামাজ কত রাকাত?",
+    "options_en": [
+      "1 or 3",
+      "2",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "১ অথবা ৩",
+      "২",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 0,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "কিবলা কোন দিকে?",
+    "options": [
+      "পূর্ব",
+      "পশ্চিম",
+      "কাবার দিকে",
+      "উত্তর"
+    ],
+    "question_en": "In which direction is the Qibla?",
+    "question_bn": "কিবলা কোন দিকে?",
+    "options_en": [
+      "East",
+      "West",
+      "Towards Kaaba",
+      "North"
+    ],
+    "options_bn": [
+      "পূর্ব",
+      "পশ্চিম",
+      "কাবার দিকে",
+      "উত্তর"
+    ],
+    "correct_answer": 2,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "প্রথম কিবলা কোনটি ছিল?",
+    "options": [
+      "কাবা",
+      "মসজিদুল আকসা",
+      "মসজিদে নববী",
+      "মসজিদে কুবা"
+    ],
+    "question_en": "What was the first Qibla?",
+    "question_bn": "প্রথম কিবলা কোনটি ছিল?",
+    "options_en": [
+      "Kaaba",
+      "Masjid al-Aqsa",
+      "Masjid an-Nabawi",
+      "Masjid Quba"
+    ],
+    "options_bn": [
+      "কাবা",
+      "মসজিদুল আকসা",
+      "মসজিদে নববী",
+      "মসজিদে কুবা"
+    ],
+    "correct_answer": 1,
+    "category": "Islamic History",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "কিবলা পরিবর্তনের আয়াত কোন সূরায়?",
+    "options": [
+      "আল-ইমরান",
+      "আল-বাকারাহ",
+      "আন-নিসা",
+      "আল-মায়িদাহ"
+    ],
+    "question_en": "The verse of change of Qibla is in which Surah?",
+    "question_bn": "কিবলা পরিবর্তনের আয়াত কোন সূরায়?",
+    "options_en": [
+      "Al-Imran",
+      "Al-Baqarah",
+      "An-Nisa",
+      "Al-Maidah"
+    ],
+    "options_bn": [
+      "আল-ইমরান",
+      "আল-বাকারাহ",
+      "আন-নিসা",
+      "আল-মায়িদাহ"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে ওমরাহ কী?",
+    "options": [
+      "ফরজ তীর্থযাত্রা",
+      "ছোট তীর্থযাত্রা",
+      "দান",
+      "রোজা"
+    ],
+    "question_en": "What is Umrah in Islam?",
+    "question_bn": "ইসলামে ওমরাহ কী?",
+    "options_en": [
+      "Obligatory pilgrimage",
+      "Minor pilgrimage",
+      "Charity",
+      "Fasting"
+    ],
+    "options_bn": [
+      "ফরজ তীর্থযাত্রা",
+      "ছোট তীর্থযাত্রা",
+      "দান",
+      "রোজা"
+    ],
+    "correct_answer": 1,
+    "category": "Hajj",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাওয়াফ কী?",
+    "options": [
+      "নামাজ",
+      "কাবা প্রদক্ষিণ",
+      "সায়ি",
+      "দোয়া"
+    ],
+    "question_en": "What is Tawaf?",
+    "question_bn": "তাওয়াফ কী?",
+    "options_en": [
+      "Prayer",
+      "Circumambulation of Kaaba",
+      "Sai",
+      "Dua"
+    ],
+    "options_bn": [
+      "নামাজ",
+      "কাবা প্রদক্ষিণ",
+      "সায়ি",
+      "দোয়া"
+    ],
+    "correct_answer": 1,
+    "category": "Hajj",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাওয়াফ কতবার করতে হয়?",
+    "options": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "question_en": "How many rounds of Tawaf are performed?",
+    "question_bn": "তাওয়াফ কতবার করতে হয়?",
+    "options_en": [
+      "5",
+      "6",
+      "7",
+      "8"
+    ],
+    "options_bn": [
+      "৫",
+      "৬",
+      "৭",
+      "৮"
+    ],
+    "correct_answer": 2,
+    "category": "Hajj",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মিনায় কতটি জামরাতে পাথর মারা হয়?",
+    "options": [
+      "১",
+      "২",
+      "৩",
+      "৪"
+    ],
+    "question_en": "How many Jamarat are stoned in Mina?",
+    "question_bn": "মিনায় কতটি জামরাতে পাথর মারা হয়?",
+    "options_en": [
+      "1",
+      "2",
+      "3",
+      "4"
+    ],
+    "options_bn": [
+      "১",
+      "২",
+      "৩",
+      "৪"
+    ],
+    "correct_answer": 2,
+    "category": "Hajj",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইহরাম কী?",
+    "options": [
+      "একটি দোয়া",
+      "পবিত্র অবস্থা ও পোশাক",
+      "একটি নামাজ",
+      "একটি রোজা"
+    ],
+    "question_en": "What is Ihram?",
+    "question_bn": "ইহরাম কী?",
+    "options_en": [
+      "A dua",
+      "Sacred state and garment",
+      "A prayer",
+      "A fast"
+    ],
+    "options_bn": [
+      "একটি দোয়া",
+      "পবিত্র অবস্থা ও পোশাক",
+      "একটি নামাজ",
+      "একটি রোজা"
+    ],
+    "correct_answer": 1,
+    "category": "Hajj",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মুযদালিফা কোথায় অবস্থিত?",
+    "options": [
+      "মক্কায়",
+      "মিনা ও আরাফাতের মধ্যে",
+      "মদিনায়",
+      "তায়েফে"
+    ],
+    "question_en": "Where is Muzdalifah located?",
+    "question_bn": "মুযদালিফা কোথায় অবস্থিত?",
+    "options_en": [
+      "In Makkah",
+      "Between Mina and Arafat",
+      "In Medina",
+      "In Taif"
+    ],
+    "options_bn": [
+      "মক্কায়",
+      "মিনা ও আরাফাতের মধ্যে",
+      "মদিনায়",
+      "তায়েফে"
+    ],
+    "correct_answer": 1,
+    "category": "Hajj",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী ইসমাইল (আ.) কোন জাতির পূর্বপুরুষ?",
+    "options": [
+      "বনী ইসরাইল",
+      "আরব",
+      "মিশরীয়",
+      "রোমান"
+    ],
+    "question_en": "Prophet Ismail (AS) is the ancestor of which people?",
+    "question_bn": "নবী ইসমাইল (আ.) কোন জাতির পূর্বপুরুষ?",
+    "options_en": [
+      "Bani Israel",
+      "Arabs",
+      "Egyptians",
+      "Romans"
+    ],
+    "options_bn": [
+      "বনী ইসরাইল",
+      "আরব",
+      "মিশরীয়",
+      "রোমান"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী ইসহাক (আ.) কোন জাতির পূর্বপুরুষ?",
+    "options": [
+      "আরব",
+      "বনী ইসরাইল",
+      "মিশরীয়",
+      "পারসিক"
+    ],
+    "question_en": "Prophet Ishaq (AS) is the ancestor of which people?",
+    "question_bn": "নবী ইসহাক (আ.) কোন জাতির পূর্বপুরুষ?",
+    "options_en": [
+      "Arabs",
+      "Bani Israel",
+      "Egyptians",
+      "Persians"
+    ],
+    "options_bn": [
+      "আরব",
+      "বনী ইসরাইল",
+      "মিশরীয়",
+      "পারসিক"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী ইয়াকুব (আ.) এর অপর নাম কী?",
+    "options": [
+      "ইসরাইল",
+      "ইসমাইল",
+      "ইদ্রিস",
+      "ইলিয়াস"
+    ],
+    "question_en": "What is another name for Prophet Yaqub (AS)?",
+    "question_bn": "নবী ইয়াকুব (আ.) এর অপর নাম কী?",
+    "options_en": [
+      "Israel",
+      "Ismail",
+      "Idris",
+      "Ilyas"
+    ],
+    "options_bn": [
+      "ইসরাইল",
+      "ইসমাইল",
+      "ইদ্রিস",
+      "ইলিয়াস"
+    ],
+    "correct_answer": 0,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী ইদ্রিস (আ.) কিসের জন্য পরিচিত?",
+    "options": [
+      "জ্ঞান ও লেখনী",
+      "যুদ্ধ",
+      "বাণিজ্য",
+      "কৃষি"
+    ],
+    "question_en": "What is Prophet Idris (AS) known for?",
+    "question_bn": "নবী ইদ্রিস (আ.) কিসের জন্য পরিচিত?",
+    "options_en": [
+      "Knowledge and writing",
+      "War",
+      "Trade",
+      "Agriculture"
+    ],
+    "options_bn": [
+      "জ্ঞান ও লেখনী",
+      "যুদ্ধ",
+      "বাণিজ্য",
+      "কৃষি"
+    ],
+    "correct_answer": 0,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী হুদ (আ.) কোন জাতির কাছে প্রেরিত হন?",
+    "options": [
+      "আদ",
+      "সামুদ",
+      "মাদইয়ান",
+      "কুরাইশ"
+    ],
+    "question_en": "To which people was Prophet Hud (AS) sent?",
+    "question_bn": "নবী হুদ (আ.) কোন জাতির কাছে প্রেরিত হন?",
+    "options_en": [
+      "Aad",
+      "Thamud",
+      "Madyan",
+      "Quraysh"
+    ],
+    "options_bn": [
+      "আদ",
+      "সামুদ",
+      "মাদইয়ান",
+      "কুরাইশ"
+    ],
+    "correct_answer": 0,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী সালিহ (আ.) কোন জাতির কাছে প্রেরিত হন?",
+    "options": [
+      "আদ",
+      "সামুদ",
+      "মাদইয়ান",
+      "লুতের জাতি"
+    ],
+    "question_en": "To which people was Prophet Salih (AS) sent?",
+    "question_bn": "নবী সালিহ (আ.) কোন জাতির কাছে প্রেরিত হন?",
+    "options_en": [
+      "Aad",
+      "Thamud",
+      "Madyan",
+      "People of Lut"
+    ],
+    "options_bn": [
+      "আদ",
+      "সামুদ",
+      "মাদইয়ান",
+      "লুতের জাতি"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী শুয়াইব (আ.) কোন জাতির কাছে প্রেরিত হন?",
+    "options": [
+      "আদ",
+      "সামুদ",
+      "মাদইয়ান",
+      "বনী ইসরাইল"
+    ],
+    "question_en": "To which people was Prophet Shuaib (AS) sent?",
+    "question_bn": "নবী শুয়াইব (আ.) কোন জাতির কাছে প্রেরিত হন?",
+    "options_en": [
+      "Aad",
+      "Thamud",
+      "Madyan",
+      "Bani Israel"
+    ],
+    "options_bn": [
+      "আদ",
+      "সামুদ",
+      "মাদইয়ান",
+      "বনী ইসরাইল"
+    ],
+    "correct_answer": 2,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী লুত (আ.) এর জাতি কোন পাপে লিপ্ত ছিল?",
+    "options": [
+      "মূর্তিপূজা",
+      "সমকামিতা",
+      "চুরি",
+      "হত্যা"
+    ],
+    "question_en": "What sin was the people of Prophet Lut (AS) engaged in?",
+    "question_bn": "নবী লুত (আ.) এর জাতি কোন পাপে লিপ্ত ছিল?",
+    "options_en": [
+      "Idol worship",
+      "Homosexuality",
+      "Theft",
+      "Murder"
+    ],
+    "options_bn": [
+      "মূর্তিপূজা",
+      "সমকামিতা",
+      "চুরি",
+      "হত্যা"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সূরা তাওবাহ-তে বিসমিল্লাহ নেই কেন?",
+    "options": [
+      "ভুলে যাওয়া হয়েছে",
+      "এটি যুদ্ধ ও শাস্তি সম্পর্কিত",
+      "এটি ছোট সূরা",
+      "এটি মক্কী সূরা"
+    ],
+    "question_en": "Why is there no Bismillah in Surah Tawbah?",
+    "question_bn": "সূরা তাওবাহ-তে বিসমিল্লাহ নেই কেন?",
+    "options_en": [
+      "It was forgotten",
+      "It relates to war and punishment",
+      "It is a short Surah",
+      "It is a Makki Surah"
+    ],
+    "options_bn": [
+      "ভুলে যাওয়া হয়েছে",
+      "এটি যুদ্ধ ও শাস্তি সম্পর্কিত",
+      "এটি ছোট সূরা",
+      "এটি মক্কী সূরা"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "দুই সূরায় বিসমিল্লাহ আছে - একটি ফাতিহা, অন্যটি কোনটি?",
+    "options": [
+      "আল-বাকারাহ",
+      "আন-নামল",
+      "আল-কাহফ",
+      "ইয়াসিন"
+    ],
+    "question_en": "Which Surah has Bismillah twice (besides Fatiha)?",
+    "question_bn": "দুই সূরায় বিসমিল্লাহ আছে - একটি ফাতিহা, অন্যটি কোনটি?",
+    "options_en": [
+      "Al-Baqarah",
+      "An-Naml",
+      "Al-Kahf",
+      "Yasin"
+    ],
+    "options_bn": [
+      "আল-বাকারাহ",
+      "আন-নামল",
+      "আল-কাহফ",
+      "ইয়াসিন"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে নিয়ত কতটা গুরুত্বপূর্ণ?",
+    "options": [
+      "ঐচ্ছিক",
+      "আমলের ভিত্তি",
+      "শুধু নামাজে দরকার",
+      "গুরুত্বপূর্ণ নয়"
+    ],
+    "question_en": "How important is intention (Niyyah) in Islam?",
+    "question_bn": "ইসলামে নিয়ত কতটা গুরুত্বপূর্ণ?",
+    "options_en": [
+      "Optional",
+      "Foundation of deeds",
+      "Only needed in prayer",
+      "Not important"
+    ],
+    "options_bn": [
+      "ঐচ্ছিক",
+      "আমলের ভিত্তি",
+      "শুধু নামাজে দরকার",
+      "গুরুত্বপূর্ণ নয়"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইন্না লিল্লাহি ওয়া ইন্না ইলাইহি রাজিউন কখন বলা হয়?",
+    "options": [
+      "খুশিতে",
+      "বিপদে/মৃত্যুতে",
+      "ঘুমানোর আগে",
+      "খাবারের আগে"
+    ],
+    "question_en": "When do we say Inna lillahi wa inna ilayhi rajiun?",
+    "question_bn": "ইন্না লিল্লাহি ওয়া ইন্না ইলাইহি রাজিউন কখন বলা হয়?",
+    "options_en": [
+      "In happiness",
+      "In calamity/death",
+      "Before sleeping",
+      "Before eating"
+    ],
+    "options_bn": [
+      "খুশিতে",
+      "বিপদে/মৃত্যুতে",
+      "ঘুমানোর আগে",
+      "খাবারের আগে"
+    ],
+    "correct_answer": 1,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মাশাআল্লাহ কখন বলা হয়?",
+    "options": [
+      "বিপদে",
+      "ভালো কিছু দেখলে",
+      "ঘুমানোর আগে",
+      "খাবারের পর"
+    ],
+    "question_en": "When do we say MashaAllah?",
+    "question_bn": "মাশাআল্লাহ কখন বলা হয়?",
+    "options_en": [
+      "In trouble",
+      "When seeing something good",
+      "Before sleeping",
+      "After eating"
+    ],
+    "options_bn": [
+      "বিপদে",
+      "ভালো কিছু দেখলে",
+      "ঘুমানোর আগে",
+      "খাবারের পর"
+    ],
+    "correct_answer": 1,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইনশাআল্লাহ শব্দের অর্থ কী?",
+    "options": [
+      "আল্লাহ চাইলে",
+      "আল্লাহর ইচ্ছায়",
+      "আল্লাহ মহান",
+      "ধন্যবাদ"
+    ],
+    "question_en": "What does InshaAllah mean?",
+    "question_bn": "ইনশাআল্লাহ শব্দের অর্থ কী?",
+    "options_en": [
+      "If Allah wills",
+      "By Allah's will",
+      "Allah is Great",
+      "Thank you"
+    ],
+    "options_bn": [
+      "আল্লাহ চাইলে",
+      "আল্লাহর ইচ্ছায়",
+      "আল্লাহ মহান",
+      "ধন্যবাদ"
+    ],
+    "correct_answer": 0,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "জাযাকাল্লাহু খাইরান শব্দের অর্থ কী?",
+    "options": [
+      "আল্লাহ আপনাকে উত্তম প্রতিদান দিন",
+      "আল্লাহ মহান",
+      "আল্লাহ ক্ষমা করুন",
+      "বিদায়"
+    ],
+    "question_en": "What does JazakAllahu Khairan mean?",
+    "question_bn": "জাযাকাল্লাহু খাইরান শব্দের অর্থ কী?",
+    "options_en": [
+      "May Allah reward you with good",
+      "Allah is Great",
+      "May Allah forgive",
+      "Goodbye"
+    ],
+    "options_bn": [
+      "আল্লাহ আপনাকে উত্তম প্রতিদান দিন",
+      "আল্লাহ মহান",
+      "আল্লাহ ক্ষমা করুন",
+      "বিদায়"
+    ],
+    "correct_answer": 0,
+    "category": "Dhikr",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে সালাম দেওয়া কী?",
+    "options": [
+      "ফরজ",
+      "সুন্নত",
+      "ওয়াজিব",
+      "মাকরুহ"
+    ],
+    "question_en": "What is giving Salam in Islam?",
+    "question_bn": "ইসলামে সালাম দেওয়া কী?",
+    "options_en": [
+      "Fard",
+      "Sunnah",
+      "Wajib",
+      "Makruh"
+    ],
+    "options_bn": [
+      "ফরজ",
+      "সুন্নত",
+      "ওয়াজিব",
+      "মাকরুহ"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সালামের উত্তর দেওয়া কী?",
+    "options": [
+      "সুন্নত",
+      "ফরজ/ওয়াজিব",
+      "মুস্তাহাব",
+      "ঐচ্ছিক"
+    ],
+    "question_en": "What is replying to Salam?",
+    "question_bn": "সালামের উত্তর দেওয়া কী?",
+    "options_en": [
+      "Sunnah",
+      "Fard/Wajib",
+      "Mustahab",
+      "Optional"
+    ],
+    "options_bn": [
+      "সুন্নত",
+      "ফরজ/ওয়াজিব",
+      "মুস্তাহাব",
+      "ঐচ্ছিক"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে ডান হাতে খাওয়া কী?",
+    "options": [
+      "ফরজ",
+      "সুন্নত",
+      "ওয়াজিব",
+      "ঐচ্ছিক"
+    ],
+    "question_en": "What is eating with the right hand in Islam?",
+    "question_bn": "ইসলামে ডান হাতে খাওয়া কী?",
+    "options_en": [
+      "Fard",
+      "Sunnah",
+      "Wajib",
+      "Optional"
+    ],
+    "options_bn": [
+      "ফরজ",
+      "সুন্নত",
+      "ওয়াজিব",
+      "ঐচ্ছিক"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মিসওয়াক কী?",
+    "options": [
+      "একটি দোয়া",
+      "দাঁত পরিষ্কারের সুন্নত",
+      "একটি খাবার",
+      "একটি পানীয়"
+    ],
+    "question_en": "What is Miswak?",
+    "question_bn": "মিসওয়াক কী?",
+    "options_en": [
+      "A dua",
+      "Sunnah teeth cleaning",
+      "A food",
+      "A drink"
+    ],
+    "options_bn": [
+      "একটি দোয়া",
+      "দাঁত পরিষ্কারের সুন্নত",
+      "একটি খাবার",
+      "একটি পানীয়"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে কত ধরনের পানি পবিত্র?",
+    "options": [
+      "১",
+      "২",
+      "৩",
+      "সব প্রাকৃতিক পানি"
+    ],
+    "question_en": "How many types of water are considered pure in Islam?",
+    "question_bn": "ইসলামে কত ধরনের পানি পবিত্র?",
+    "options_en": [
+      "1",
+      "2",
+      "3",
+      "All natural water"
+    ],
+    "options_bn": [
+      "১",
+      "২",
+      "৩",
+      "সব প্রাকৃতিক পানি"
+    ],
+    "correct_answer": 3,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নামাজে সূরা ফাতিহা পড়া কী?",
+    "options": [
+      "সুন্নত",
+      "ফরজ/ওয়াজিব",
+      "মুস্তাহাব",
+      "ঐচ্ছিক"
+    ],
+    "question_en": "What is reciting Surah Fatiha in prayer?",
+    "question_bn": "নামাজে সূরা ফাতিহা পড়া কী?",
+    "options_en": [
+      "Sunnah",
+      "Fard/Wajib",
+      "Mustahab",
+      "Optional"
+    ],
+    "options_bn": [
+      "সুন্নত",
+      "ফরজ/ওয়াজিব",
+      "মুস্তাহাব",
+      "ঐচ্ছিক"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "রুকুতে কী বলতে হয়?",
+    "options": [
+      "সুবহানা রাব্বিয়াল আযীম",
+      "সুবহানা রাব্বিয়াল আলা",
+      "আল্লাহু আকবার",
+      "সামিআল্লাহু লিমান হামিদাহ"
+    ],
+    "question_en": "What do we say in Ruku?",
+    "question_bn": "রুকুতে কী বলতে হয়?",
+    "options_en": [
+      "Subhana Rabbiyal Azeem",
+      "Subhana Rabbiyal Ala",
+      "Allahu Akbar",
+      "Sami Allahu liman hamidah"
+    ],
+    "options_bn": [
+      "সুবহানা রাব্বিয়াল আযীম",
+      "সুবহানা রাব্বিয়াল আলা",
+      "আল্লাহু আকবার",
+      "সামিআল্লাহু লিমান হামিদাহ"
+    ],
+    "correct_answer": 0,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সিজদায় কী বলতে হয়?",
+    "options": [
+      "সুবহানা রাব্বিয়াল আযীম",
+      "সুবহানা রাব্বিয়াল আলা",
+      "আল্লাহু আকবার",
+      "রাব্বানা আতিনা"
+    ],
+    "question_en": "What do we say in Sujud?",
+    "question_bn": "সিজদায় কী বলতে হয়?",
+    "options_en": [
+      "Subhana Rabbiyal Azeem",
+      "Subhana Rabbiyal Ala",
+      "Allahu Akbar",
+      "Rabbana atina"
+    ],
+    "options_bn": [
+      "সুবহানা রাব্বিয়াল আযীম",
+      "সুবহানা রাব্বিয়াল আলা",
+      "আল্লাহু আকবার",
+      "রাব্বানা আতিনা"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাশাহহুদ কখন পড়া হয়?",
+    "options": [
+      "প্রথম রাকাতে",
+      "বৈঠকে",
+      "রুকুতে",
+      "সিজদায়"
+    ],
+    "question_en": "When is Tashahhud recited?",
+    "question_bn": "তাশাহহুদ কখন পড়া হয়?",
+    "options_en": [
+      "In first rakah",
+      "In sitting position",
+      "In Ruku",
+      "In Sujud"
+    ],
+    "options_bn": [
+      "প্রথম রাকাতে",
+      "বৈঠকে",
+      "রুকুতে",
+      "সিজদায়"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নামাজে সালাম ফেরানো কী?",
+    "options": [
+      "সুন্নত",
+      "ফরজ",
+      "মুস্তাহাব",
+      "ঐচ্ছিক"
+    ],
+    "question_en": "What is turning for Salam in prayer?",
+    "question_bn": "নামাজে সালাম ফেরানো কী?",
+    "options_en": [
+      "Sunnah",
+      "Fard",
+      "Mustahab",
+      "Optional"
+    ],
+    "options_bn": [
+      "সুন্নত",
+      "ফরজ",
+      "মুস্তাহাব",
+      "ঐচ্ছিক"
+    ],
+    "correct_answer": 1,
+    "category": "Prayer",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামি ব্যাংকিং এর মূল নীতি কী?",
+    "options": [
+      "সুদ নেওয়া",
+      "সুদমুক্ত লেনদেন",
+      "শুধু দান",
+      "শুধু সঞ্চয়"
+    ],
+    "question_en": "What is the main principle of Islamic banking?",
+    "question_bn": "ইসলামি ব্যাংকিং এর মূল নীতি কী?",
+    "options_en": [
+      "Taking interest",
+      "Interest-free transactions",
+      "Only charity",
+      "Only saving"
+    ],
+    "options_bn": [
+      "সুদ নেওয়া",
+      "সুদমুক্ত লেনদেন",
+      "শুধু দান",
+      "শুধু সঞ্চয়"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ওয়াকফ কী?",
+    "options": [
+      "দান",
+      "ধর্মীয় সম্পত্তি উৎসর্গ",
+      "ব্যবসা",
+      "ঋণ"
+    ],
+    "question_en": "What is Waqf?",
+    "question_bn": "ওয়াকফ কী?",
+    "options_en": [
+      "Donation",
+      "Religious endowment",
+      "Business",
+      "Loan"
+    ],
+    "options_bn": [
+      "দান",
+      "ধর্মীয় সম্পত্তি উৎসর্গ",
+      "ব্যবসা",
+      "ঋণ"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে মীরাস কী?",
+    "options": [
+      "দান",
+      "উত্তরাধিকার আইন",
+      "ব্যবসা",
+      "যাকাত"
+    ],
+    "question_en": "What is Miras in Islam?",
+    "question_bn": "ইসলামে মীরাস কী?",
+    "options_en": [
+      "Donation",
+      "Inheritance law",
+      "Business",
+      "Zakat"
+    ],
+    "options_bn": [
+      "দান",
+      "উত্তরাধিকার আইন",
+      "ব্যবসা",
+      "যাকাত"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "নবী ইব্রাহিম (আ.) কোন শহরে জন্মগ্রহণ করেন?",
+    "options": [
+      "মক্কা",
+      "উর (ইরাক)",
+      "মদিনা",
+      "জেরুজালেম"
+    ],
+    "question_en": "In which city was Prophet Ibrahim (AS) born?",
+    "question_bn": "নবী ইব্রাহিম (আ.) কোন শহরে জন্মগ্রহণ করেন?",
+    "options_en": [
+      "Makkah",
+      "Ur (Iraq)",
+      "Medina",
+      "Jerusalem"
+    ],
+    "options_bn": [
+      "মক্কা",
+      "উর (ইরাক)",
+      "মদিনা",
+      "জেরুজালেম"
+    ],
+    "correct_answer": 1,
+    "category": "Prophets",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "নবী ঈসা (আ.) কে জন্ম দিয়েছিলেন কে?",
+    "options": [
+      "হাওয়া",
+      "সারা",
+      "মরিয়ম",
+      "হাজেরা"
+    ],
+    "question_en": "Who gave birth to Prophet Isa (AS)?",
+    "question_bn": "নবী ঈসা (আ.) কে জন্ম দিয়েছিলেন কে?",
+    "options_en": [
+      "Hawwa",
+      "Sarah",
+      "Maryam",
+      "Hajar"
+    ],
+    "options_bn": [
+      "হাওয়া",
+      "সারা",
+      "মরিয়ম",
+      "হাজেরা"
+    ],
+    "correct_answer": 2,
+    "category": "Prophets",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "কুরআনে মরিয়ম (আ.) এর নামে কোন সূরা আছে?",
+    "options": [
+      "হ্যাঁ, সূরা মরিয়ম",
+      "না",
+      "হ্যাঁ, সূরা নিসা",
+      "হ্যাঁ, সূরা হুদ"
+    ],
+    "question_en": "Is there a Surah named after Maryam (AS) in the Quran?",
+    "question_bn": "কুরআনে মরিয়ম (আ.) এর নামে কোন সূরা আছে?",
+    "options_en": [
+      "Yes, Surah Maryam",
+      "No",
+      "Yes, Surah Nisa",
+      "Yes, Surah Hud"
+    ],
+    "options_bn": [
+      "হ্যাঁ, সূরা মরিয়ম",
+      "না",
+      "হ্যাঁ, সূরা নিসা",
+      "হ্যাঁ, সূরা হুদ"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে জিহাদের প্রকৃত অর্থ কী?",
+    "options": [
+      "যুদ্ধ",
+      "আত্মসংগ্রাম/প্রচেষ্টা",
+      "হত্যা",
+      "আক্রমণ"
+    ],
+    "question_en": "What is the true meaning of Jihad in Islam?",
+    "question_bn": "ইসলামে জিহাদের প্রকৃত অর্থ কী?",
+    "options_en": [
+      "War",
+      "Self-struggle/Striving",
+      "Killing",
+      "Attack"
+    ],
+    "options_bn": [
+      "যুদ্ধ",
+      "আত্মসংগ্রাম/প্রচেষ্টা",
+      "হত্যা",
+      "আক্রমণ"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সবচেয়ে বড় জিহাদ কোনটি?",
+    "options": [
+      "যুদ্ধ",
+      "নফসের বিরুদ্ধে জিহাদ",
+      "দাওয়াত",
+      "হিজরত"
+    ],
+    "question_en": "What is the greatest Jihad?",
+    "question_bn": "সবচেয়ে বড় জিহাদ কোনটি?",
+    "options_en": [
+      "War",
+      "Jihad against the self",
+      "Dawah",
+      "Hijra"
+    ],
+    "options_bn": [
+      "যুদ্ধ",
+      "নফসের বিরুদ্ধে জিহাদ",
+      "দাওয়াত",
+      "হিজরত"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে ইলম (জ্ঞান) অর্জন করা কী?",
+    "options": [
+      "ঐচ্ছিক",
+      "ফরজ",
+      "সুন্নত",
+      "মাকরুহ"
+    ],
+    "question_en": "What is seeking knowledge (Ilm) in Islam?",
+    "question_bn": "ইসলামে ইলম (জ্ঞান) অর্জন করা কী?",
+    "options_en": [
+      "Optional",
+      "Fard (obligatory)",
+      "Sunnah",
+      "Makruh"
+    ],
+    "options_bn": [
+      "ঐচ্ছিক",
+      "ফরজ",
+      "সুন্নত",
+      "মাকরুহ"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে সবর (ধৈর্য) এর পুরস্কার কী?",
+    "options": [
+      "সামান্য সওয়াব",
+      "বেহিসাব সওয়াব",
+      "কোনো সওয়াব নেই",
+      "শুধু দুনিয়ায় সুফল"
+    ],
+    "question_en": "What is the reward of Sabr (patience) in Islam?",
+    "question_bn": "ইসলামে সবর (ধৈর্য) এর পুরস্কার কী?",
+    "options_en": [
+      "Small reward",
+      "Limitless reward",
+      "No reward",
+      "Only worldly benefit"
+    ],
+    "options_bn": [
+      "সামান্য সওয়াব",
+      "বেহিসাব সওয়াব",
+      "কোনো সওয়াব নেই",
+      "শুধু দুনিয়ায় সুফল"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাওয়াক্কুল কী?",
+    "options": [
+      "অলসতা",
+      "আল্লাহর উপর ভরসা",
+      "ভয়",
+      "রাগ"
+    ],
+    "question_en": "What is Tawakkul?",
+    "question_bn": "তাওয়াক্কুল কী?",
+    "options_en": [
+      "Laziness",
+      "Trust in Allah",
+      "Fear",
+      "Anger"
+    ],
+    "options_bn": [
+      "অলসতা",
+      "আল্লাহর উপর ভরসা",
+      "ভয়",
+      "রাগ"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইখলাস কী?",
+    "options": [
+      "মিথ্যা",
+      "আন্তরিকতা/একনিষ্ঠতা",
+      "অহংকার",
+      "লোভ"
+    ],
+    "question_en": "What is Ikhlas?",
+    "question_bn": "ইখলাস কী?",
+    "options_en": [
+      "Falsehood",
+      "Sincerity",
+      "Arrogance",
+      "Greed"
+    ],
+    "options_bn": [
+      "মিথ্যা",
+      "আন্তরিকতা/একনিষ্ঠতা",
+      "অহংকার",
+      "লোভ"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "তাকওয়া কী?",
+    "options": [
+      "ভয়",
+      "আল্লাহ-সচেতনতা",
+      "সাহস",
+      "জ্ঞান"
+    ],
+    "question_en": "What is Taqwa?",
+    "question_bn": "তাকওয়া কী?",
+    "options_en": [
+      "Fear",
+      "God-consciousness",
+      "Courage",
+      "Knowledge"
+    ],
+    "options_bn": [
+      "ভয়",
+      "আল্লাহ-সচেতনতা",
+      "সাহস",
+      "জ্ঞান"
+    ],
+    "correct_answer": 1,
+    "category": "Aqeedah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইহসান কী?",
+    "options": [
+      "ঈমান",
+      "ইসলাম",
+      "সর্বোত্তম আচরণ/এমনভাবে ইবাদত করা যেন আল্লাহকে দেখছেন",
+      "শরীয়াহ"
+    ],
+    "question_en": "What is Ihsan?",
+    "question_bn": "ইহসান কী?",
+    "options_en": [
+      "Iman",
+      "Islam",
+      "Excellence in worship as if seeing Allah",
+      "Shariah"
+    ],
+    "options_bn": [
+      "ঈমান",
+      "ইসলাম",
+      "সর্বোত্তম আচরণ/এমনভাবে ইবাদত করা যেন আল্লাহকে দেখছেন",
+      "শরীয়াহ"
+    ],
+    "correct_answer": 2,
+    "category": "Aqeedah",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "হাদীসে জিবরীলে ইসলাম, ঈমান ও ইহসান সম্পর্কে আলোচনা হয়েছে?",
+    "options": [
+      "হ্যাঁ",
+      "না",
+      "শুধু ইসলাম",
+      "শুধু ঈমান"
+    ],
+    "question_en": "Does the Hadith of Jibreel discuss Islam, Iman and Ihsan?",
+    "question_bn": "হাদীসে জিবরীলে ইসলাম, ঈমান ও ইহসান সম্পর্কে আলোচনা হয়েছে?",
+    "options_en": [
+      "Yes",
+      "No",
+      "Only Islam",
+      "Only Iman"
+    ],
+    "options_bn": [
+      "হ্যাঁ",
+      "না",
+      "শুধু ইসলাম",
+      "শুধু ঈমান"
+    ],
+    "correct_answer": 0,
+    "category": "Hadith",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে রিয়া কী?",
+    "options": [
+      "দানশীলতা",
+      "লোক দেখানো ইবাদত",
+      "সততা",
+      "ধৈর্য"
+    ],
+    "question_en": "What is Riya in Islam?",
+    "question_bn": "ইসলামে রিয়া কী?",
+    "options_en": [
+      "Generosity",
+      "Showing off in worship",
+      "Honesty",
+      "Patience"
+    ],
+    "options_bn": [
+      "দানশীলতা",
+      "লোক দেখানো ইবাদত",
+      "সততা",
+      "ধৈর্য"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "কিবর (অহংকার) সম্পর্কে নবী (সা.) কী বলেছেন?",
+    "options": [
+      "এটি ভালো",
+      "সরিষার দানা পরিমাণ থাকলেও জান্নাতে প্রবেশ করবে না",
+      "এটি অনুমোদিত",
+      "এটি সামান্য গুনাহ"
+    ],
+    "question_en": "What did the Prophet (PBUH) say about Kibr (pride)?",
+    "question_bn": "কিবর (অহংকার) সম্পর্কে নবী (সা.) কী বলেছেন?",
+    "options_en": [
+      "It is good",
+      "Even a mustard seed won't enter Jannah",
+      "It is allowed",
+      "It is a minor sin"
+    ],
+    "options_bn": [
+      "এটি ভালো",
+      "সরিষার দানা পরিমাণ থাকলেও জান্নাতে প্রবেশ করবে না",
+      "এটি অনুমোদিত",
+      "এটি সামান্য গুনাহ"
+    ],
+    "correct_answer": 1,
+    "category": "Hadith",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "হাসাদ (হিংসা) ইসলামে কী?",
+    "options": [
+      "ভালো গুণ",
+      "নিষিদ্ধ",
+      "অনুমোদিত",
+      "ঐচ্ছিক"
+    ],
+    "question_en": "What is Hasad (envy) in Islam?",
+    "question_bn": "হাসাদ (হিংসা) ইসলামে কী?",
+    "options_en": [
+      "Good quality",
+      "Forbidden",
+      "Allowed",
+      "Optional"
+    ],
+    "options_bn": [
+      "ভালো গুণ",
+      "নিষিদ্ধ",
+      "অনুমোদিত",
+      "ঐচ্ছিক"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে সুদকে কিসের সাথে তুলনা করা হয়েছে?",
+    "options": [
+      "দান",
+      "আল্লাহ ও রাসূলের বিরুদ্ধে যুদ্ধ",
+      "ব্যবসা",
+      "সঞ্চয়"
+    ],
+    "question_en": "What is Riba compared to in Islam?",
+    "question_bn": "ইসলামে সুদকে কিসের সাথে তুলনা করা হয়েছে?",
+    "options_en": [
+      "Charity",
+      "War against Allah and His Messenger",
+      "Trade",
+      "Saving"
+    ],
+    "options_bn": [
+      "দান",
+      "আল্লাহ ও রাসূলের বিরুদ্ধে যুদ্ধ",
+      "ব্যবসা",
+      "সঞ্চয়"
+    ],
+    "correct_answer": 1,
+    "category": "Fiqh",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে মুসাফাহা (হাত মেলানো) কী?",
+    "options": [
+      "হারাম",
+      "সুন্নত",
+      "ফরজ",
+      "মাকরুহ"
+    ],
+    "question_en": "What is Musafaha (handshake) in Islam?",
+    "question_bn": "ইসলামে মুসাফাহা (হাত মেলানো) কী?",
+    "options_en": [
+      "Haram",
+      "Sunnah",
+      "Fard",
+      "Makruh"
+    ],
+    "options_bn": [
+      "হারাম",
+      "সুন্নত",
+      "ফরজ",
+      "মাকরুহ"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী (সা.) বলেছেন প্রতিবেশীর হক কত ঘর পর্যন্ত?",
+    "options": [
+      "৫",
+      "৭",
+      "১০",
+      "৪০"
+    ],
+    "question_en": "Up to how many neighbors does the Prophet mention rights for?",
+    "question_bn": "নবী (সা.) বলেছেন প্রতিবেশীর হক কত ঘর পর্যন্ত?",
+    "options_en": [
+      "5",
+      "7",
+      "10",
+      "40"
+    ],
+    "options_bn": [
+      "৫",
+      "৭",
+      "১০",
+      "৪০"
+    ],
+    "correct_answer": 3,
+    "category": "Hadith",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে কাউকে সাহায্য করা কী?",
+    "options": [
+      "ঐচ্ছিক",
+      "সদকা/ইবাদত",
+      "অপ্রয়োজনীয়",
+      "শুধু মুসলিমদের জন্য"
+    ],
+    "question_en": "What is helping others in Islam?",
+    "question_bn": "ইসলামে কাউকে সাহায্য করা কী?",
+    "options_en": [
+      "Optional",
+      "Sadaqah/Worship",
+      "Unnecessary",
+      "Only for Muslims"
+    ],
+    "options_bn": [
+      "ঐচ্ছিক",
+      "সদকা/ইবাদত",
+      "অপ্রয়োজনীয়",
+      "শুধু মুসলিমদের জন্য"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে পশু-পাখির প্রতি দয়া করা কী?",
+    "options": [
+      "অপ্রয়োজনীয়",
+      "ইবাদত/সওয়াবের কাজ",
+      "শুধু সুন্নত",
+      "হারাম"
+    ],
+    "question_en": "What is showing mercy to animals in Islam?",
+    "question_bn": "ইসলামে পশু-পাখির প্রতি দয়া করা কী?",
+    "options_en": [
+      "Unnecessary",
+      "Worship/Rewarded deed",
+      "Only Sunnah",
+      "Haram"
+    ],
+    "options_bn": [
+      "অপ্রয়োজনীয়",
+      "ইবাদত/সওয়াবের কাজ",
+      "শুধু সুন্নত",
+      "হারাম"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সূরা কাফিরুন এর মূল বিষয় কী?",
+    "options": [
+      "নামাজ",
+      "তাওহীদ ও শিরক প্রত্যাখ্যান",
+      "রোজা",
+      "যাকাত"
+    ],
+    "question_en": "What is the main topic of Surah Kafirun?",
+    "question_bn": "সূরা কাফিরুন এর মূল বিষয় কী?",
+    "options_en": [
+      "Prayer",
+      "Tawheed and rejection of Shirk",
+      "Fasting",
+      "Zakat"
+    ],
+    "options_bn": [
+      "নামাজ",
+      "তাওহীদ ও শিরক প্রত্যাখ্যান",
+      "রোজা",
+      "যাকাত"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "সূরা নাস কিসের থেকে আশ্রয় চায়?",
+    "options": [
+      "আগুন",
+      "শয়তানের ওয়াসওয়াসা",
+      "রোগ",
+      "দারিদ্র্য"
+    ],
+    "question_en": "What does Surah Nas seek refuge from?",
+    "question_bn": "সূরা নাস কিসের থেকে আশ্রয় চায়?",
+    "options_en": [
+      "Fire",
+      "Whispers of Shaytan",
+      "Disease",
+      "Poverty"
+    ],
+    "options_bn": [
+      "আগুন",
+      "শয়তানের ওয়াসওয়াসা",
+      "রোগ",
+      "দারিদ্র্য"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সূরা ফালাক কিসের থেকে আশ্রয় চায়?",
+    "options": [
+      "শয়তান",
+      "সৃষ্টির অনিষ্ট",
+      "রোগ",
+      "দারিদ্র্য"
+    ],
+    "question_en": "What does Surah Falaq seek refuge from?",
+    "question_bn": "সূরা ফালাক কিসের থেকে আশ্রয় চায়?",
+    "options_en": [
+      "Shaytan",
+      "Evil of creation",
+      "Disease",
+      "Poverty"
+    ],
+    "options_bn": [
+      "শয়তান",
+      "সৃষ্টির অনিষ্ট",
+      "রোগ",
+      "দারিদ্র্য"
+    ],
+    "correct_answer": 1,
+    "category": "Quran",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "মুয়াওবিযাতাইন কোন দুটি সূরা?",
+    "options": [
+      "ফালাক ও নাস",
+      "ইখলাস ও কাফিরুন",
+      "ফাতিহা ও বাকারাহ",
+      "আসর ও কাউসার"
+    ],
+    "question_en": "Which two Surahs are called Muawwidhatain?",
+    "question_bn": "মুয়াওবিযাতাইন কোন দুটি সূরা?",
+    "options_en": [
+      "Falaq and Nas",
+      "Ikhlas and Kafirun",
+      "Fatiha and Baqarah",
+      "Asr and Kauthar"
+    ],
+    "options_bn": [
+      "ফালাক ও নাস",
+      "ইখলাস ও কাফিরুন",
+      "ফাতিহা ও বাকারাহ",
+      "আসর ও কাউসার"
+    ],
+    "correct_answer": 0,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামি ক্যালেন্ডারে কত মাস আছে?",
+    "options": [
+      "১০",
+      "১১",
+      "১২",
+      "১৩"
+    ],
+    "question_en": "How many months are in the Islamic calendar?",
+    "question_bn": "ইসলামি ক্যালেন্ডারে কত মাস আছে?",
+    "options_en": [
+      "10",
+      "11",
+      "12",
+      "13"
+    ],
+    "options_bn": [
+      "১০",
+      "১১",
+      "১২",
+      "১৩"
+    ],
+    "correct_answer": 2,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে হারাম মাস কতটি?",
+    "options": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "question_en": "How many sacred months are there in Islam?",
+    "question_bn": "ইসলামে হারাম মাস কতটি?",
+    "options_en": [
+      "2",
+      "3",
+      "4",
+      "5"
+    ],
+    "options_bn": [
+      "২",
+      "৩",
+      "৪",
+      "৫"
+    ],
+    "correct_answer": 2,
+    "category": "General",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "চারটি হারাম মাস কী কী?",
+    "options": [
+      "মুহাররম, রজব, জিলকদ, জিলহজ্জ",
+      "রমজান, শাবান, রজব, মুহাররম",
+      "সফর, রবিউল আউয়াল, রজব, শাবান",
+      "শাওয়াল, জিলকদ, জিলহজ্জ, মুহাররম"
+    ],
+    "question_en": "What are the four sacred months?",
+    "question_bn": "চারটি হারাম মাস কী কী?",
+    "options_en": [
+      "Muharram, Rajab, Dhul Qadah, Dhul Hijjah",
+      "Ramadan, Shaban, Rajab, Muharram",
+      "Safar, Rabi ul-Awwal, Rajab, Shaban",
+      "Shawwal, Dhul Qadah, Dhul Hijjah, Muharram"
+    ],
+    "options_bn": [
+      "মুহাররম, রজব, জিলকদ, জিলহজ্জ",
+      "রমজান, শাবান, রজব, মুহাররম",
+      "সফর, রবিউল আউয়াল, রজব, শাবান",
+      "শাওয়াল, জিলকদ, জিলহজ্জ, মুহাররম"
+    ],
+    "correct_answer": 0,
+    "category": "General",
+    "difficulty": "hard",
+    "is_active": true
+  },
+  {
+    "question": "ঈদ মিলাদুন্নবী কোন মাসে পালিত হয়?",
+    "options": [
+      "রমজান",
+      "রবিউল আউয়াল",
+      "মুহাররম",
+      "রজব"
+    ],
+    "question_en": "In which month is Eid Milad-un-Nabi celebrated?",
+    "question_bn": "ঈদ মিলাদুন্নবী কোন মাসে পালিত হয়?",
+    "options_en": [
+      "Ramadan",
+      "Rabi ul-Awwal",
+      "Muharram",
+      "Rajab"
+    ],
+    "options_bn": [
+      "রমজান",
+      "রবিউল আউয়াল",
+      "মুহাররম",
+      "রজব"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "নবী মুহাম্মদ (সা.) এর জন্মতারিখ কত?",
+    "options": [
+      "১০ মুহাররম",
+      "১২ রবিউল আউয়াল",
+      "১৫ শাবান",
+      "২৭ রজব"
+    ],
+    "question_en": "What is the birth date of Prophet Muhammad (PBUH)?",
+    "question_bn": "নবী মুহাম্মদ (সা.) এর জন্মতারিখ কত?",
+    "options_en": [
+      "10 Muharram",
+      "12 Rabi ul-Awwal",
+      "15 Shaban",
+      "27 Rajab"
+    ],
+    "options_bn": [
+      "১০ মুহাররম",
+      "১২ রবিউল আউয়াল",
+      "১৫ শাবান",
+      "২৭ রজব"
+    ],
+    "correct_answer": 1,
+    "category": "Seerah",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে দোয়া কবুলের শ্রেষ্ঠ সময় কোনটি?",
+    "options": [
+      "দুপুরে",
+      "শেষ রাতে/তাহাজ্জুদের সময়",
+      "সকালে",
+      "বিকালে"
+    ],
+    "question_en": "What is the best time for dua acceptance in Islam?",
+    "question_bn": "ইসলামে দোয়া কবুলের শ্রেষ্ঠ সময় কোনটি?",
+    "options_en": [
+      "Noon",
+      "Late night/Tahajjud time",
+      "Morning",
+      "Afternoon"
+    ],
+    "options_bn": [
+      "দুপুরে",
+      "শেষ রাতে/তাহাজ্জুদের সময়",
+      "সকালে",
+      "বিকালে"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "জুমার দিনে দোয়া কবুলের বিশেষ সময় আছে কি?",
+    "options": [
+      "না",
+      "হ্যাঁ, আসর ও মাগরিবের মধ্যে",
+      "হ্যাঁ, সকালে",
+      "হ্যাঁ, দুপুরে"
+    ],
+    "question_en": "Is there a special time for dua acceptance on Friday?",
+    "question_bn": "জুমার দিনে দোয়া কবুলের বিশেষ সময় আছে কি?",
+    "options_en": [
+      "No",
+      "Yes, between Asr and Maghrib",
+      "Yes, in morning",
+      "Yes, at noon"
+    ],
+    "options_bn": [
+      "না",
+      "হ্যাঁ, আসর ও মাগরিবের মধ্যে",
+      "হ্যাঁ, সকালে",
+      "হ্যাঁ, দুপুরে"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে তওবা করার শর্ত কতটি?",
+    "options": [
+      "১",
+      "২",
+      "৩",
+      "৫"
+    ],
+    "question_en": "How many conditions of Tawbah are there?",
+    "question_bn": "ইসলামে তওবা করার শর্ত কতটি?",
+    "options_en": [
+      "1",
+      "2",
+      "3",
+      "5"
+    ],
+    "options_bn": [
+      "১",
+      "২",
+      "৩",
+      "৫"
+    ],
+    "correct_answer": 2,
+    "category": "Fiqh",
+    "difficulty": "medium",
+    "is_active": true
+  },
+  {
+    "question": "ইসলামে শুকরিয়া আদায় করা কী?",
+    "options": [
+      "ঐচ্ছিক",
+      "ইবাদত",
+      "অপ্রয়োজনীয়",
+      "শুধু কথায়"
+    ],
+    "question_en": "What is showing gratitude (Shukr) in Islam?",
+    "question_bn": "ইসলামে শুকরিয়া আদায় করা কী?",
+    "options_en": [
+      "Optional",
+      "Worship",
+      "Unnecessary",
+      "Only in words"
+    ],
+    "options_bn": [
+      "ঐচ্ছিক",
+      "ইবাদত",
+      "অপ্রয়োজনীয়",
+      "শুধু কথায়"
+    ],
+    "correct_answer": 1,
+    "category": "General",
+    "difficulty": "easy",
+    "is_active": true
+  },
+  {
+    "question": "সূরা আসরে আল্লাহ কিসের শপথ করেছেন?",
+    "options": [
+      "চাঁদ",
+      "সূর্য",
+      "সময়/যুগ",
+      "বাতাস"
+    ],
+    "question_en": "What does Allah swear by in Surah Asr?",
+    "question_bn": "সূরা আসরে আল্লাহ কিসের শপথ করেছেন?",
+    "options_en": [
+      "Moon",
+      "Sun",
+      "Time/Age",
+      "Wind"
+    ],
+    "options_bn": [
+      "চাঁদ",
+      "সূর্য",
+      "সময়/যুগ",
+      "বাতাস"
+    ],
+    "correct_answer": 2,
+    "category": "Quran",
+    "difficulty": "medium",
+    "is_active": true
   }
 ]
