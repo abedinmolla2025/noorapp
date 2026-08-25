@@ -54,7 +54,8 @@ jobs:
         run: |
           test -n "$ANDROID_KEYSTORE_BASE64" || { echo "Missing ANDROID_KEYSTORE_BASE64 repository secret"; exit 1; }
           mkdir -p "$RUNNER_TEMP/android-signing"
-          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$RUNNER_TEMP/android-signing/upload-keystore.jks"
+          # Store the binary keystore as hexadecimal to avoid paste corruption.
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | xxd -r -p > "$RUNNER_TEMP/android-signing/upload-keystore.jks"
           test -s "$RUNNER_TEMP/android-signing/upload-keystore.jks"
 
       - name: Build signed release App Bundle
