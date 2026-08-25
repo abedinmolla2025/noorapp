@@ -16,15 +16,15 @@
 
 import groovy.xml.MarkupBuilder
 
+plugins {
+    id 'com.android.application'
+}
+
 def releaseKeystorePath = System.getenv('ANDROID_KEYSTORE_PATH')
 def releaseKeystorePassword = System.getenv('ANDROID_KEYSTORE_PASSWORD')
 def releaseKeyAlias = System.getenv('ANDROID_KEY_ALIAS')
 def releaseKeyPassword = System.getenv('ANDROID_KEY_PASSWORD')
 def hasReleaseSigning = [releaseKeystorePath, releaseKeystorePassword, releaseKeyAlias, releaseKeyPassword].every { it }
-
-plugins {
-    id 'com.android.application'
-}
 
 def twaManifest = [
     applicationId: 'in.noorapp.islamic',
