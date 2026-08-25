@@ -45,3 +45,10 @@ tmp_*.json
 tmp_*.sql
 scripts/__pycache__/
 audio/
+
+# Android signing and build artifacts
+android/*.jks
+android/*.keystore
+android/*.aab
+android/*.apk
+android/app/build/
