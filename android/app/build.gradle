@@ -162,7 +162,8 @@ android {
                 storeFile file(releaseKeystorePath)
                 storePassword releaseKeystorePassword
                 keyAlias releaseKeyAlias
-                keyPassword releaseKeyPassword
+                // The generated upload keystore uses the store password for its key.
+                keyPassword releaseKeystorePassword
             }
         }
     }
