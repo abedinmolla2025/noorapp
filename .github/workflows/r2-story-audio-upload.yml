@@ -13,6 +13,11 @@ on:
         required: false
         default: true
         type: boolean
+      cleanup_existing:
+        description: "Delete only existing objects under stories/ before upload"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -44,6 +49,13 @@ jobs:
 
       - name: Build upload manifest
         run: node scripts/build_r2_story_upload_manifest.mjs story_audio_drive_manifest.json story_audio_upload_manifest.tsv
+
+      - name: Delete existing Story objects when explicitly requested
+        if: ${{ inputs.cleanup_existing == true }}
+        run: |
+          set -Eeuo pipefail
+          echo "Deleting only s3://${R2_BUCKET}/stories/"
+          aws s3 rm "s3://${R2_BUCKET}/stories/" --recursive --endpoint-url "$R2_ENDPOINT" --only-show-errors
 
       - name: Download, validate, and optionally upload Story audio
         env:
