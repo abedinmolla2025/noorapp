@@ -1,0 +1,43 @@
+name: Audit Dua Objects in Cloudflare R2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-dua-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+    steps:
+      - uses: actions/checkout@v4
+      - name: List and compare Dua objects
+        run: |
+          set -Eeuo pipefail
+          test "$R2_BUCKET" = "noorapp-story-audio"
+          aws s3api list-objects-v2 --bucket "$R2_BUCKET" --prefix duas/ --endpoint-url "$R2_ENDPOINT" --output json > r2_dua_objects.json
+          python3 - <<'PY'
+          import csv, json
+          objects=json.load(open('r2_dua_objects.json')).get('Contents',[])
+          actual={x['Key'] for x in objects}
+          expected={r['r2_key'] for r in csv.DictReader(open('dua_214_r2_manifest.tsv',encoding='utf-8'),delimiter='\t')}
+          print('object_count=',len(actual))
+          print('expected_count=',len(expected))
+          print('missing_count=',len(expected-actual))
+          print('unexpected_count=',len(actual-expected))
+          if expected-actual: print('MISSING', *sorted(expected-actual), sep='\n')
+          if actual-expected: print('UNEXPECTED', *sorted(actual-expected), sep='\n')
+          assert expected == actual
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: r2-dua-object-audit-${{ github.run_number }}
+          path: r2_dua_objects.json
+          retention-days: 30
