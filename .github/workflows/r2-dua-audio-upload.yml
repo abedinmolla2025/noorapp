@@ -56,6 +56,7 @@ jobs:
           PY
           if [ "$DRY_RUN" = "true" ]; then exit 0; fi
           aws configure set default.s3.multipart_threshold 5GB
+          processed=0
           while IFS=$'\t' read -r source_name source_url r2_key extension content_type sha256 bytes; do
             [ -n "$source_name" ] || continue
             aws s3 cp "dua_unique_upload/$source_name" "s3://${R2_BUCKET}/${r2_key}" \
@@ -63,7 +64,12 @@ jobs:
               --content-type "$content_type" \
               --cache-control 'public, max-age=31536000, immutable' \
               --only-show-errors
+            processed=$((processed + 1))
           done < <(tail -n +2 dua_214_r2_manifest.tsv)
+          test "$processed" -eq 214
+          first_key=$(sed -n '2p' dua_214_r2_manifest.tsv | cut -f3)
+          aws s3api head-object --bucket "$R2_BUCKET" --key "$first_key" --endpoint-url "$R2_ENDPOINT" >/dev/null
+          echo "Verified first uploaded object: $first_key"
 
       - name: Write upload audit
         run: |
