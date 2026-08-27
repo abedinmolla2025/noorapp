@@ -1,0 +1,81 @@
+name: Upload 214 Unique Dua Audio to Cloudflare R2
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate files and manifest only; do not upload
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  upload-dua-audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      DRY_RUN: ${{ inputs.dry_run }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Validate R2 configuration
+        run: |
+          set -Eeuo pipefail
+          test -n "$R2_ENDPOINT"
+          test -n "$R2_BUCKET"
+          test -n "$AWS_ACCESS_KEY_ID"
+          test -n "$AWS_SECRET_ACCESS_KEY"
+          test "$R2_BUCKET" = "noorapp-story-audio"
+
+      - name: Validate exactly 214 unique files and upload to duas/
+        run: |
+          set -Eeuo pipefail
+          python3 - <<'PY'
+          import csv, hashlib
+          from pathlib import Path
+          rows = list(csv.DictReader(open('dua_214_r2_manifest.tsv', encoding='utf-8'), delimiter='\t'))
+          assert len(rows) == 214
+          assert len({r['sha256'] for r in rows}) == 214
+          assert len({r['r2_key'] for r in rows}) == 214
+          for r in rows:
+              p = Path('dua_unique_upload') / r['source_name']
+              assert p.is_file() and p.stat().st_size == int(r['bytes']), r['source_name']
+              h = hashlib.sha256(p.read_bytes()).hexdigest()
+              assert h == r['sha256'], r['source_name']
+          print('Validated 214 unique source files and 214 unique R2 keys')
+          PY
+          if [ "$DRY_RUN" = "true" ]; then exit 0; fi
+          aws configure set default.s3.multipart_threshold 5GB
+          while IFS=$'\t' read -r source_name source_url r2_key extension content_type sha256 bytes; do
+            [ -n "$source_name" ] || continue
+            aws s3 cp "dua_unique_upload/$source_name" "s3://${R2_BUCKET}/${r2_key}" \
+              --endpoint-url "$R2_ENDPOINT" \
+              --content-type "$content_type" \
+              --cache-control 'public, max-age=31536000, immutable' \
+              --only-show-errors
+          done < <(tail -n +2 dua_214_r2_manifest.tsv)
+
+      - name: Write upload audit
+        run: |
+          set -Eeuo pipefail
+          printf 'manifest_rows='; tail -n +2 dua_214_r2_manifest.tsv | wc -l
+          printf 'uploaded_prefix=duas/\n'
+          printf 'production_audio_url_updates=0\n'
+
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: dua-audio-r2-audit-${{ github.run_number }}
+          path: dua_214_r2_manifest.tsv
+          if-no-files-found: error
+          retention-days: 30

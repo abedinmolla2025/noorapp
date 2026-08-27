@@ -53,6 +53,7 @@ interface DuaRow {
   recommendation_tags: string[] | null;
   recommended_moments: string[] | null;
   image_url: string | null;
+  audio_url: string | null;
   og_image_data: any | null;
   seo: any | null;
 }
@@ -326,7 +327,7 @@ const DuaDetailPage = () => {
       const { data, error } = await supabase
         .from("admin_content")
         .select(
-          "id, slug, title, title_en, title_hi, title_ur, category, subtitle, content_arabic, content_pronunciation, content_pronunciation_en, content_pronunciation_hi, content_pronunciation_ur, content, content_en, content_hi, content_ur, explanation_bn, explanation_en, explanation_hi, explanation_ur, benefits_bn, benefits_en, benefits_hi, benefits_ur, when_to_recite_bn, when_to_recite_en, when_to_recite_hi, when_to_recite_ur, hadith_reference, source_type, reference, authenticity, virtue, virtue_reference, quran_meta, faq, related_duas, recommendation_tags, recommended_moments, image_url, og_image_data, seo"
+          "id, slug, title, title_en, title_hi, title_ur, category, subtitle, content_arabic, content_pronunciation, content_pronunciation_en, content_pronunciation_hi, content_pronunciation_ur, content, content_en, content_hi, content_ur, explanation_bn, explanation_en, explanation_hi, explanation_ur, benefits_bn, benefits_en, benefits_hi, benefits_ur, when_to_recite_bn, when_to_recite_en, when_to_recite_hi, when_to_recite_ur, hadith_reference, source_type, reference, authenticity, virtue, virtue_reference, quran_meta, faq, related_duas, recommendation_tags, recommended_moments, image_url, audio_url, og_image_data, seo"
         )
         .eq("slug", slug)
         .eq("status", "published")
@@ -732,7 +733,7 @@ const DuaDetailPage = () => {
 
         {/* Audio */}
         {dua.content_arabic && (
-          <DuaAudioPlayer arabicText={dua.content_arabic} duaId={dua.id} />
+          <DuaAudioPlayer arabicText={dua.content_arabic} duaId={dua.id} audioUrl={dua.audio_url ?? undefined} />
         )}
 
         <AdSlot placement="web_dua_middle" />
