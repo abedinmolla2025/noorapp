@@ -61,7 +61,7 @@ jobs:
             fi
             processed=$((processed + 1))
             echo "Validated $source_name (${duration}s)"
-          done < new_20_story_r2_manifest.tsv
+          done < <(tail -n +2 new_20_story_r2_manifest.tsv)
           test "$processed" -eq 20
           echo "Processed $processed mapped Story audio files"
 
