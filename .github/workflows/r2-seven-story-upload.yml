@@ -1,0 +1,72 @@
+name: Upload Seven Story Audio to Cloudflare R2
+
+on:
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Validate sources only; do not upload
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  upload-seven-story-audio:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    env:
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+      DRY_RUN: ${{ inputs.dry_run }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Validate configuration
+        run: |
+          set -Eeuo pipefail
+          test -n "$R2_ENDPOINT" && test -n "$R2_BUCKET"
+          test -n "$AWS_ACCESS_KEY_ID" && test -n "$AWS_SECRET_ACCESS_KEY"
+          test "$R2_BUCKET" = "noorapp-story-audio"
+      - name: Install validation tools
+        run: sudo apt-get update -y && sudo apt-get install -y --no-install-recommends ffmpeg
+      - name: Download validate and upload exactly seven files
+        run: |
+          set -Eeuo pipefail
+          mkdir -p "$RUNNER_TEMP/seven-story-audio"
+          : > seven_story_upload_checksums.txt
+          processed=0
+          while IFS=$'\t' read -r source_name source_url slug content_type extension; do
+            [ -n "$source_name" ] || continue
+            file="$RUNNER_TEMP/seven-story-audio/$slug.$extension"
+            echo "Downloading $source_name -> stories/$slug.$extension"
+            curl --fail --location --retry 3 --retry-delay 2 --max-time 900 -o "$file" "$source_url"
+            test -s "$file"
+            duration=$(ffprobe -v error -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 "$file")
+            test -n "$duration"
+            sha256sum "$file" >> seven_story_upload_checksums.txt
+            if [ "$DRY_RUN" != "true" ]; then
+              aws s3 cp "$file" "s3://${R2_BUCKET}/stories/${slug}.${extension}" \
+                --endpoint-url "$R2_ENDPOINT" \
+                --content-type "$content_type" \
+                --cache-control "public, max-age=31536000, immutable" \
+                --only-show-errors
+            fi
+            processed=$((processed + 1))
+            echo "Validated $source_name (${duration}s)"
+          done < <(tail -n +2 new_7_story_r2_manifest.tsv)
+          test "$processed" -eq 7
+          echo "Processed exactly $processed mapped Story audio files"
+      - name: Upload audit artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: seven-story-audio-audit-${{ github.run_number }}
+          path: |
+            new_7_story_r2_manifest.tsv
+            seven_story_upload_checksums.txt
+          if-no-files-found: error
+          retention-days: 30
