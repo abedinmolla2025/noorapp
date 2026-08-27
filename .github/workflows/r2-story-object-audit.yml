@@ -1,0 +1,45 @@
+name: Audit Story Objects in Cloudflare R2
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit-story-objects:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      R2_ENDPOINT: ${{ secrets.R2_ENDPOINT }}
+      R2_BUCKET: ${{ secrets.R2_BUCKET }}
+      AWS_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+      AWS_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+      AWS_DEFAULT_REGION: auto
+    steps:
+      - name: Validate configuration
+        run: |
+          set -Eeuo pipefail
+          test -n "$R2_ENDPOINT" && test -n "$R2_BUCKET"
+          test -n "$AWS_ACCESS_KEY_ID" && test -n "$AWS_SECRET_ACCESS_KEY"
+          test "$R2_BUCKET" = "noorapp-story-audio"
+
+      - name: List Story objects
+        run: |
+          set -Eeuo pipefail
+          aws s3api list-objects-v2 --bucket "$R2_BUCKET" --prefix stories/ --endpoint-url "$R2_ENDPOINT" --output json > r2_story_objects.json
+          python3 - <<'PY'
+          import json
+          d=json.load(open('r2_story_objects.json'))
+          items=d.get('Contents',[])
+          print('object_count=',len(items))
+          for x in sorted(items,key=lambda z:z['Key']):
+              print(x['Key'], x.get('Size'), x.get('LastModified'))
+          PY
+
+      - name: Upload audit artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: r2-story-object-audit-${{ github.run_number }}
+          path: r2_story_objects.json
+          retention-days: 30
