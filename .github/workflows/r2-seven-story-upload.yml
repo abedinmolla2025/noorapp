@@ -38,6 +38,7 @@ jobs:
         run: |
           set -Eeuo pipefail
           mkdir -p "$RUNNER_TEMP/seven-story-audio"
+          aws configure set default.s3.multipart_threshold 5GB
           : > seven_story_upload_checksums.txt
           processed=0
           while IFS=$'\t' read -r source_name source_url slug content_type extension; do
