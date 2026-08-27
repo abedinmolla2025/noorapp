@@ -57,8 +57,12 @@ jobs:
           if [ "$DRY_RUN" = "true" ]; then exit 0; fi
           aws configure set default.s3.multipart_threshold 5GB
           processed=0
-          while IFS=$'\t' read -r source_name source_url r2_key extension content_type sha256 bytes; do
-            [ -n "$source_name" ] || continue
+          while IFS= read -r line; do
+            [ -n "$line" ] || continue
+            source_name=$(printf '%s\n' "$line" | cut -f1)
+            r2_key=$(printf '%s\n' "$line" | cut -f3)
+            content_type=$(printf '%s\n' "$line" | cut -f5)
+            [ -n "$source_name" ] && [ -n "$r2_key" ]
             aws s3 cp "dua_unique_upload/$source_name" "s3://${R2_BUCKET}/${r2_key}" \
               --endpoint-url "$R2_ENDPOINT" \
               --content-type "$content_type" \
