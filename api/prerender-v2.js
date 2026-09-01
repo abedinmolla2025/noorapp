@@ -26,8 +26,31 @@ function template() {
   return "<!doctype html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width,initial-scale=1\"><title>Noor</title><meta name=\"description\" content=\"\"><link rel=\"canonical\" href=\"https://noorapp.in/\"><meta property=\"og:title\" content=\"Noor\"><meta property=\"og:description\" content=\"\"><meta property=\"og:url\" content=\"https://noorapp.in/\"><meta name=\"twitter:title\" content=\"Noor\"><meta name=\"twitter:description\" content=\"\"></head><body><div id=\"root\"></div></body></html>";
 }
 
+function structuredData({ title, description, canonical }) {
+  const graph = [
+    {
+      "@type": "WebSite",
+      "@id": `${ORIGIN}/#website`,
+      "url": ORIGIN,
+      "name": "Noor Islamic App",
+      "description": description,
+      "inLanguage": ["en", "bn"],
+      "publisher": { "@id": `${ORIGIN}/#organization` }
+    },
+    {
+      "@type": "Organization",
+      "@id": `${ORIGIN}/#organization`,
+      "url": ORIGIN,
+      "name": "Noor Islamic App",
+      "description": "Free Quran, Hadith, Dua, prayer times and Islamic learning tools."
+    }
+  ];
+  return `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c")}</script>`;
+}
+
 function inject(html, { title, description, canonical, body }) {
   const tags = [
+    [structuredData({ title, description, canonical }), /<script\s+type=["']application\/ld\+json["'][^>]*>[\s\S]*?<\/script>/i],
     [`<title>${esc(title)}</title>`, /<title[^>]*>[\s\S]*?<\/title>/i],
     [`<meta name=\"description\" content=\"${esc(description)}\" />`, /<meta\s+name=["']description["'][^>]*>/i],
     [`<link rel=\"canonical\" href=\"${esc(canonical)}\" />`, /<link\s+rel=["']canonical["'][^>]*>/i],
