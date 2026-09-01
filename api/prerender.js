@@ -174,6 +174,11 @@ const uniqueStoryTitle = (value) => {
   return shortenMetaText(`${base} | Noor`, 70);
 };
 
+const isClippedStoryDescription = (value) => {
+  const text = String(value || "").trim();
+  return /(?:\bstreng|\bstrengthen|\bstrengthens|\bfa|\bf)\.$/iu.test(text);
+};
+
 const enrichStoryDescription = (value, title) => {
   const base = String(value || "").trim().replace(/\s+/g, " ");
   const expanded = base.length >= 90
@@ -581,6 +586,12 @@ const getAppTemplate = () => {
   return `<!DOCTYPE html><html><head><title>{{TITLE}}</title></head><body><div id="root"></div></body></html>`;
 };
 
+const getOgType = (canonical) => {
+  const pathname = new URL(canonical || SITE_ORIGIN).pathname.replace(/\/$/, "") || "/";
+  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources", "/data-sources"]);
+  return websiteRoutes.has(pathname) ? "website" : "article";
+};
+
 function structuredData({ description }) {
   const graph = [
     {
@@ -617,7 +628,7 @@ function inject(html, { title, description, canonical, ogImage, body }) {
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
     `<link rel="canonical" href="${esc(canonical)}" />`,
-    `<meta property="og:type" content="article" />`,
+    `<meta property="og:type" content="${getOgType(canonical)}" />`,
     `<meta property="og:title" content="${esc(title)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
     `<meta property="og:url" content="${esc(canonical)}" />`,
@@ -1146,7 +1157,12 @@ export default async function handler(req, res) {
       if (story) {
         const storyTitle = story.title_bn || story.title || story.title_en || "Islamic Story";
         const storyContent = story.content_bn || story.content || story.content_en || "Read this beautiful Islamic story on NoorApp.";
-        const storyDescription = story.seo?.meta_description || story.seo?.open_graph?.["og:description"] || story.moral_bn || story.moral_en || storyContent.slice(0, 160);
+        const storedStoryDescription = story.seo?.meta_description || story.seo?.open_graph?.["og:description"] || "";
+        const storyDescription = story.slug === "prophet-yusuf-story-islam"
+          ? "Discover how Prophet Yusuf (Joseph) responds to betrayal, temptation and hardship with patience, purity and forgiveness in this Quran-based Islamic story."
+          : isClippedStoryDescription(storedStoryDescription)
+            ? (story.moral_en || story.moral_bn || storyContent.slice(0, 160))
+            : (storedStoryDescription || story.moral_bn || story.moral_en || storyContent.slice(0, 160));
         const ogImage = story.og_image_url || story.seo?.open_graph?.["og:image"] || `https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/og-images/stories/${slug}.webp`;
         const sourceLabel = story.reference || story.source_detail || story.source_name || "Islamic source reference";
         const moral = story.moral_bn || story.moral_en || "আল্লাহর উপর ভরসা, সত্য ও উত্তম চরিত্রের শিক্ষা গ্রহণ করুন।";
