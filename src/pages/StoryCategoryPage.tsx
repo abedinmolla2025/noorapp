@@ -9,7 +9,7 @@ import {
   STORY_CATEGORIES,
   categoryLabel,
   estimateReadingMinutes,
-  plainExcerpt,
+  storyMetaDescription,
   useStories,
   type Story,
 } from "@/lib/stories";
@@ -137,7 +137,7 @@ function StoryListCard({ story }: { story: Story }) {
           </Link>
         </CardTitle>
         <CardDescription className="text-sm text-muted-foreground line-clamp-2 leading-relaxed">
-          {plainExcerpt(story.seo.meta_description || "", 120)}
+          {storyMetaDescription(story, 140)}
         </CardDescription>
       </CardHeader>
       

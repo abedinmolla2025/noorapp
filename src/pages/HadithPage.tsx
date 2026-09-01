@@ -8,7 +8,7 @@ import BottomNavigation from "@/components/BottomNavigation";
 
 const fallbackBooks = [
   { id: "bukhari", slug: "sahih-bukhari", title: "Sahih Bukhari", title_bn: "সহীহ বুখারী", total_chapters: 97, total_hadiths: 7563 },
-  { id: "muslim", slug: "muslim", title: "Sahih Muslim", title_bn: "সহীহ মুসলিম", total_chapters: 56, total_hadiths: 7563 },
+  { id: "muslim", slug: "muslim", title: "Sahih Muslim", title_bn: "সহীহ মুসলিম", total_chapters: 56 },
   { id: "tirmidhi", slug: "tirmidhi", title: "Jami at-Tirmidhi", title_bn: "জামে তিরমিযী", total_chapters: 49, total_hadiths: 3956 },
   { id: "abu-dawud", slug: "abu-dawud", title: "Sunan Abu Dawud", title_bn: "সুনানে আবু দাউদ", total_chapters: 43, total_hadiths: 5274 },
 ];
@@ -30,6 +30,13 @@ export default function HadithPage() {
   });
 
   const hadithBooks = books ?? fallbackBooks;
+
+  // Counts vary by edition and must not be shown until each book has been verified.
+  const getBookSummary = (book: typeof fallbackBooks[number]) => {
+    const chapters = book.total_chapters ? `${book.total_chapters} chapters` : "Hadith collection";
+    const count = book.id === "muslim" ? undefined : book.total_hadiths;
+    return count ? `${chapters} · ${count.toLocaleString()} hadiths` : `${chapters} · Browse by chapter`;
+  };
 
   // Featured hadiths — only fetch a small set with slug for SEO entry points
   const { data: featured } = useQuery({
@@ -176,7 +183,7 @@ export default function HadithPage() {
                 {book.title_bn}
               </p>
               <p className="mt-0.5 text-[11px] text-gray-400">
-                {(book.total_chapters ?? 0)} chapters · {(book.total_hadiths ?? 0).toLocaleString()} hadiths
+                {getBookSummary(book)}
               </p>
             </div>
 

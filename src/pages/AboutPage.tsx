@@ -76,7 +76,7 @@ const AboutPage = () => {
               {appName} is a comprehensive, free Islamic companion app designed to serve Muslims across the world — particularly in India and Bangladesh. Whether you are looking to read the <a href="/quran" className="text-primary hover:underline">Holy Quran</a>, study authentic <a href="/hadith" className="text-primary hover:underline">Hadith</a> collections, recite daily <a href="/dua" className="text-primary hover:underline">Duas</a>, find accurate <a href="/prayer-times" className="text-primary hover:underline">Prayer Times</a>, or test your Islamic knowledge with our <a href="/quiz" className="text-primary hover:underline">Daily Quiz</a>, {appName} brings everything together in one beautiful, fast, and reliable application.
             </p>
             <p className="text-muted-foreground">
-              Built with modern technology and deep respect for Islamic scholarship, {appName} is not just another religious app — it is a trusted digital companion that millions of Muslims rely on every single day. From the moment you open the app to check Fajr time, to the quiet evening when you read a few pages of the Quran before sleep, {appName} is there to support your spiritual journey.
+              Built with modern technology and deep respect for Islamic scholarship, {appName} is not just another religious app — it is an independent digital companion built to make Islamic learning easier. From the moment you open the app to check Fajr time, to the quiet evening when you read a few pages of the Quran before sleep, {appName} is there to support your spiritual journey.
             </p>
           </section>
 
@@ -99,7 +99,7 @@ const AboutPage = () => {
               <Moon className="h-5 w-5 text-primary" /> Our Islamic Vision
             </h2>
             <p className="text-muted-foreground">
-              In a world where distractions are endless and authentic Islamic resources are scattered across dozens of websites and apps, {appName} was created to be the single, trusted source that a Muslim can turn to throughout the day. We envision a world where every Muslim — from a teenager in Dhaka to a professional in Mumbai — can open one app and instantly access the Quran, check prayer times, read a Hadith, or learn a new Dua.
+              In a world where distractions are endless and authentic Islamic resources are scattered across dozens of websites and apps, {appName} was created to be a practical resource that Muslims can use throughout the day. We envision a world where every Muslim — from a teenager in Dhaka to a professional in Mumbai — can open one app and instantly access the Quran, check prayer times, read a Hadith, or learn a new Dua.
             </p>
             <p className="text-muted-foreground">
               We believe Islamic learning should be a lifelong journey, not a chore. That is why {appName} includes features like the <a href="/quiz" className="text-primary hover:underline">Daily Islamic Quiz</a> — turning knowledge acquisition into an engaging, rewarding experience. Our <a href="/99-names" className="text-primary hover:underline">99 Names of Allah</a> section helps users deepen their connection with the Creator, while the <a href="/prayer-guide" className="text-primary hover:underline">Prayer Guide</a> ensures even new Muslims can learn to pray with confidence.
@@ -151,7 +151,7 @@ const AboutPage = () => {
           <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-6 space-y-3">
             <h2 className="text-lg font-bold">Founder & Developer</h2>
             <p className="text-muted-foreground">
-              {appName} was created and is maintained by <strong className="text-foreground">{devName}</strong> (<span className="font-bangla">{devNameBn}</span>) from {country} (<span className="font-bangla">{countryBn}</span>). Driven by a deep passion for both technology and Islamic learning, {devName} built {appName} with a singular vision: to create the most useful, beautiful, and authentic Islamic app available — and to offer it completely free to the global Muslim community.
+              {appName} was created and is maintained by <strong className="text-foreground">{devName}</strong> (<span className="font-bangla">{devNameBn}</span>) from {country} (<span className="font-bangla">{countryBn}</span>). Driven by a deep passion for both technology and Islamic learning, {devName} built {appName} with a singular vision: to create a useful and accessible Islamic learning app — and to offer it completely free to the global Muslim community.
             </p>
             <p className="text-muted-foreground">
               As a solo developer and practicing Muslim, {devName} brings a unique perspective to {appName}'s development — understanding both the technical challenges of building a world-class application and the spiritual needs of the community it serves. Every line of code is written with the intention of serving Allah (SWT) and benefiting the Ummah.

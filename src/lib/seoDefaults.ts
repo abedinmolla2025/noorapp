@@ -20,9 +20,9 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
       "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.",
   },
   "/islamic-app": {
-    title: "Best Islamic App – Quran, Hadith, Dua & Prayer Times",
+    title: "Islamic App – Quran, Hadith, Dua & Prayer Times",
     description:
-      "Noor is the best free Islamic app for Bengali Muslims. Download for Quran, Hadith, Dua, Prayer Times, Qibla, Islamic calendar & daily quiz — available on Android.",
+      "Noor brings Quran reading, Hadith, Duas, Prayer Times, Qibla, Islamic calendar and a daily quiz together for Bengali-speaking Muslims.",
   },
   "/quran": {
     title: "Quran Reader — পবিত্র কুরআন | NOOR",
@@ -50,9 +50,9 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
       "Browse authentic Hadith collections — Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi & Sunan Abu Dawud with Arabic text and translations in Bangla, English & Urdu.",
   },
   "/hadith/sahih-bukhari": {
-    title: "Sahih al-Bukhari Hadith Collection (7563 Hadiths) – Noor App",
+    title: "Sahih al-Bukhari Hadith Collection – Noor App",
     description:
-      "Read the complete Sahih al-Bukhari — the most authentic hadith collection — in Bangla, English, or Urdu with Arabic text. 97 chapters, 7,563 hadiths.",
+      "Read Sahih al-Bukhari in Bangla, English, or Urdu with Arabic text, chapter navigation and collection references on Noor App.",
   },
   "/hadith/sahih-bukhari/bangla": {
     title: "Sahih Bukhari Bangla – সহীহ বুখারী বাংলা হাদিস | Noor App",
@@ -62,7 +62,7 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/hadith/sahih-bukhari/english": {
     title: "Sahih Bukhari English – Authentic Hadith Collection | Noor App",
     description:
-      "Read the complete Sahih Bukhari English hadith collection with Arabic text and authentic English translation. 97 chapters, 7,563 hadiths on Noor App.",
+      "Read Sahih Bukhari in English with Arabic text, translation, chapter navigation and collection references on Noor App.",
   },
   "/hadith/sahih-bukhari/urdu": {
     title: "Sahih Bukhari Urdu – صحیح بخاری اردو حدیث | Noor App",
@@ -72,17 +72,17 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/hadith/muslim": {
     title: "Sahih Muslim — সহীহ মুসলিম হাদিস | Noor",
     description:
-      "Read Sahih Muslim Hadith with Bengali translation. Second most authentic hadith collection — 7,500+ verified narrations. সহীহ মুসলিম পড়ুন বাংলায়।",
+      "Read Sahih Muslim Hadith with Arabic text, Bengali translation, chapter navigation and collection references on Noor App.",
   },
   "/hadith/tirmidhi": {
     title: "Jami at-Tirmidhi — জামে তিরমিযী হাদিস | Noor",
     description:
-      "Explore Jami at-Tirmidhi with Bengali translation — 3,956 hadiths covering fiqh, seerah & virtues with unique hadith grading. জামে তিরমিযী পড়ুন।",
+      "Explore Jami at-Tirmidhi with Arabic text, Bengali translation, chapter navigation and available hadith grading on Noor App.",
   },
   "/hadith/abu-dawud": {
     title: "Sunan Abu Dawud — সুনানে আবু দাউদ হাদিস | Noor",
     description:
-      "Read Sunan Abu Dawud with Bengali translation — the definitive jurisprudence-focused hadith collection, selected from 500,000 hadiths. আবু দাউদ পড়ুন।",
+      "Read Sunan Abu Dawud with Arabic text, Bengali translation, chapter navigation and collection references on Noor App.",
   },
   "/prayer-guide": {
     title: "Prayer Guide — নামাজ শিক্ষা | NOOR",

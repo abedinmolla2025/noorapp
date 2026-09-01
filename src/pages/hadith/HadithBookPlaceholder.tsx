@@ -25,7 +25,7 @@ const bookMeta: Record<string, BookMeta> = {
     titleBn: "সহীহ মুসলিম",
     metaTitle: "Sahih Muslim — সহীহ মুসলিম হাদিস | Noor",
     metaDescription:
-      "Read Sahih Muslim Hadith collection with Bengali translation. Imam Muslim's authentic compilation of 7,500+ hadiths — the second most authentic hadith book in Islam. সহীহ মুসলিম পড়ুন।",
+      "Read Sahih Muslim Hadith collection with Arabic text and Bengali translation. Browse the collection by book and chapter on Noor App. সহীহ মুসলিম পড়ুন।",
     intro: (
       <div className="space-y-4 text-[13px] leading-relaxed text-muted-foreground">
         <h2 className="text-[15px] font-bold text-foreground">
@@ -42,11 +42,11 @@ const bookMeta: Record<string, BookMeta> = {
           of his era, including Imam Bukhari himself.
         </p>
         <p>
-          Imam Muslim spent approximately <strong>fifteen years</strong> in meticulous collection,
-          authentication, and compilation of this monumental work. He is reported to have examined
-          over <strong>300,000 hadiths</strong> before selecting approximately{" "}
-          <strong>7,500 unique narrations</strong> (around 12,000 including repetitions) that met his
-          exceptionally high standards of authenticity. Every single hadith in Sahih Muslim contains
+          Imam Muslim spent years in meticulous collection, authentication, and compilation of this
+          monumental work. Historical sources describe his careful method of evaluating reports and
+          narrator chains before including them. Edition-level totals and numbering can vary, so this
+          site presents the available text with its book and chapter references. Every hadith in Sahih
+          Muslim contains
           an unbroken, fully connected chain of narrators (<em>isnad muttasil</em>), with each
           narrator rigorously verified for trustworthiness (<em>thiqah</em>) and accuracy of
           memory (<em>dabt</em>).
@@ -233,9 +233,10 @@ const bookMeta: Record<string, BookMeta> = {
           <strong>Imam Ahmad ibn Hanbal</strong>, <strong>Imam Yahya ibn Ma'in</strong>, and{" "}
           <strong>Imam Ali ibn al-Madini</strong> — the towering figures of hadith criticism in the
           third Islamic century. After decades of study and travel across Iraq, Khorasan, Syria,
-          Egypt, and the Hejaz, Imam Abu Dawud is said to have examined over{" "}
-          <strong>500,000 hadiths</strong>, ultimately selecting only <strong>4,800 narrations</strong>{" "}
-          for inclusion in his Sunan based on their legal relevance and level of authenticity. He
+          Egypt, and the Hejaz, Imam Abu Dawud is said to have examined{" "}
+          a very large body of narrations, ultimately selecting reports for inclusion in his Sunan
+          based on their legal relevance and level of authenticity. The exact totals can vary by
+          historical source and counting method. He
           personally presented his completed manuscript to Imam Ahmad ibn Hanbal, who reviewed it and
           praised it highly. ইমাম আহমদ ইবন হাম্বল (রহ.) এই গ্রন্থকে অত্যন্ত প্রশংসা করেছিলেন।
         </p>

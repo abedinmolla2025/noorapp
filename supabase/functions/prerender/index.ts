@@ -8,7 +8,28 @@ const corsHeaders = {
 };
 
 const escapeHtml = (s: string) =>
-  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+  s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#39;")
+
+const storyFillerPatterns = [
+  /এটি একটি বিস্তারিত ইসলামিক গল্প।[\s\S]*?আল্লাহর প্রতি বিশ্বাস, ধৈর্য এবং ন্যায়বিচারের গুরুত্ব এখানে আরও স্পষ্ট করা হয়েছে।/g,
+  /This is a detailed Islamic story\.[\s\S]*?The importance of faith in Allah, patience, and justice has been made clearer here\./gi,
+  /یہ ایک تفصیلی اسلامی کہانی ہے۔[\s\S]*?اللہ پر ایمان، صبر اور انصاف کی اہمیت کو یہاں مزید واضح کیا گیا ہے۔/g,
+];
+
+function cleanStoryText(value: unknown): string {
+  let text = typeof value === "string" ? value : "";
+  for (const pattern of storyFillerPatterns) text = text.replace(pattern, "");
+  return text.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function storyMetaDescription(story: any, title: string): string {
+  const existing = typeof story.seo?.meta_description === "string" ? story.seo.meta_description.trim() : "";
+  if (existing && !/^Can .+ change your heart today\?/i.test(existing) && !/detailed Islamic story|এটি একটি বিস্তারিত ইসলামিক গল্প|یہ ایک تفصیلی اسلامی کہانی/i.test(existing)) return existing;
+  const content = cleanStoryText(story.content_en || story.content || "");
+  const opening = content.split(/\n{2,}/).map((part: string) => part.trim()).find((part: string) => part.length >= 45 && !/^(beginning|the test|the lesson)$/i.test(part));
+  const description = opening || title;
+  return description.length > 160 ? `${description.slice(0, 159).replace(/[\s,;:—-]+$/, "")}…` : description;
+}
 
 // ─── SEO defaults (mirrors src/lib/seoDefaults.ts) ───
 const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
@@ -37,8 +58,8 @@ const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
     description: "Browse authentic Hadith collections — Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi & Sunan Abu Dawud with Arabic text and translations.",
   },
   "/hadith/sahih-bukhari": {
-    title: "Sahih al-Bukhari Hadith Collection (7563 Hadiths) – Noor App",
-    description: "Read the complete Sahih al-Bukhari — the most authentic hadith collection — in Bangla, English, or Urdu with Arabic text. 97 chapters, 7,563 hadiths.",
+    title: "Sahih al-Bukhari Hadith Collection – Noor App",
+    description: "Read Sahih al-Bukhari in Bangla, English, or Urdu with Arabic text, chapter navigation and collection references.",
   },
   "/hadith/sahih-bukhari/bangla": {
     title: "Sahih Bukhari Bangla – সহীহ বুখারী বাংলা হাদিস | Noor App",
@@ -46,7 +67,7 @@ const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
   },
   "/hadith/sahih-bukhari/english": {
     title: "Sahih Bukhari English – Authentic Hadith Collection | Noor App",
-    description: "Read the complete Sahih Bukhari English hadith collection with Arabic text and authentic English translation. 97 chapters, 7,563 hadiths on Noor App.",
+    description: "Read Sahih Bukhari in English with Arabic text, translation, chapter navigation and collection references on Noor App.",
   },
   "/hadith/sahih-bukhari/urdu": {
     title: "Sahih Bukhari Urdu – صحیح بخاری اردو حدیث | Noor App",
@@ -54,7 +75,7 @@ const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
   },
   "/hadith/muslim": {
     title: "Sahih Muslim — সহীহ মুসলিম হাদিস | Noor",
-    description: "Read Sahih Muslim Hadith with Bengali translation. Second most authentic hadith collection — 7,500+ verified narrations. সহীহ মুসলিম পড়ুন বাংলায়।",
+    description: "Read Sahih Muslim Hadith with Arabic text, Bengali translation, chapter navigation and collection references on Noor App.",
   },
   "/hadith/tirmidhi": {
     title: "Jami at-Tirmidhi — জামে তিরমিযী হাদিস | Noor",
@@ -109,8 +130,8 @@ const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
     description: "NOOR app terms & conditions — অ্যাপ ব্যবহারের শর্তাবলী ও ব্যবহারকারীর অধিকার সম্পর্কে বিস্তারিত পড়ুন।",
   },
   "/islamic-app": {
-    title: "Best Islamic App – Quran, Hadith, Dua & Prayer Times",
-    description: "Noor is the best free Islamic app for Bengali Muslims. Download for Quran, Hadith, Dua, Prayer Times, Qibla & daily quiz.",
+    title: "Islamic App – Quran, Hadith, Dua & Prayer Times",
+    description: "Noor brings Quran reading, Hadith, Duas, Prayer Times, Qibla, Islamic calendar and a daily quiz together for Bengali-speaking Muslims.",
   },
   "/download": {
     title: "Download Noor App — Android APK | NOOR",
@@ -402,7 +423,7 @@ Deno.serve(async (req) => {
           const title = story.title_bn || story.title;
           const description = isTrailerMode 
             ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" 
-            : (story.seo?.meta_description || `${title} — পড়ুন নূর ইসলামিক অ্যাপে।`);
+            : storyMetaDescription(story, title);
           
           seo = {
             title: isTrailerMode ? `🎬 Trailer: ${title}` : title,
@@ -594,7 +615,7 @@ Deno.serve(async (req) => {
       bodyContent = `
         <section>
             <h2>Sahih al-Bukhari — The Most Authentic Hadith Collection</h2>
-            <p>Sahih al-Bukhari is the most authentic collection of Hadith in Sunni Islam, compiled by Imam Muhammad ibn Ismail al-Bukhari (810–870 CE). It contains 7,563 hadiths organized in 97 chapters.</p>
+            <p>Sahih al-Bukhari is the most authentic collection of Hadith in Sunni Islam, compiled by Imam Muhammad ibn Ismail al-Bukhari (810–870 CE). It is organized by books and chapters; numbering can vary by edition.</p>
             <h3>Read in Your Language</h3>
             <ul>
                 <li><a href="${SITE_ORIGIN}/hadith/sahih-bukhari/bangla">Sahih Bukhari Bangla – সহীহ বুখারী বাংলা</a></li>
@@ -608,7 +629,7 @@ Deno.serve(async (req) => {
             <h2>Authentic Hadith Collections</h2>
             <p>Browse major Hadith collections with Arabic text and translations.</p>
             <ul>
-                <li><a href="${SITE_ORIGIN}/hadith/sahih-bukhari">Sahih al-Bukhari (7,563 Hadiths)</a></li>
+                <li><a href="${SITE_ORIGIN}/hadith/sahih-bukhari">Sahih al-Bukhari</a></li>
                 <li><a href="${SITE_ORIGIN}/hadith/muslim">Sahih Muslim</a></li>
                 <li><a href="${SITE_ORIGIN}/hadith/tirmidhi">Jami at-Tirmidhi</a></li>
                 <li><a href="${SITE_ORIGIN}/hadith/abu-dawud">Sunan Abu Dawud</a></li>
@@ -792,9 +813,9 @@ Deno.serve(async (req) => {
     } else if (path === "/islamic-app") {
       bodyContent = `
         <section>
-            <h2>Best Islamic App — Quran, Hadith, Dua & Prayer Times</h2>
+            <h2>Islamic App — Quran, Hadith, Dua & Prayer Times</h2>
             <p>${escapeHtml(seo?.description || "")}</p>
-            <p>Noor is the best free Islamic app for Bengali-speaking Muslims. Read the Quran with Bengali translation, browse Sahih Bukhari and other Hadith collections, find prayer times for your city, learn authentic Duas, and take daily Islamic quizzes.</p>
+            <p>Noor is a free Islamic learning app for Bengali-speaking Muslims. Read the Quran with Bengali translation, browse Hadith collections, find prayer times for your city, learn Duas, and take daily Islamic quizzes.</p>
         </section>`;
     } else if (path === "/privacy-policy") {
       bodyContent = `

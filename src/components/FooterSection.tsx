@@ -142,7 +142,7 @@ export default function FooterSection({
 
         {/* Trust paragraph */}
         <p className="mt-6 text-[11px] leading-relaxed text-muted-foreground/50 text-center">
-          Noor is a trusted Islamic app serving Muslims in India and Bangladesh — offering free Quran reading, authentic Hadith collections, accurate prayer times, daily duas, and more in one beautiful, ad-friendly app.
+          Noor is an independent Islamic learning app for Quran reading, Hadith study, daily duas, prayer times and practical worship tools.
         </p>
 
         {/* CTA Button */}

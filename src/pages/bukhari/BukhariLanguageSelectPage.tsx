@@ -43,10 +43,10 @@ export default function BukhariLanguageSelectPage() {
       }}
     >
       <Helmet>
-        <title>Sahih al-Bukhari Hadith Collection (7563 Hadiths) – Noor App</title>
+        <title>Sahih al-Bukhari Hadith Collection – Noor App</title>
         <meta
           name="description"
-          content="Read Sahih al-Bukhari — the most authentic hadith collection — in Bangla, English, or Urdu with Arabic text. 97 chapters, 7,563 hadiths."
+          content="Read Sahih al-Bukhari in Bangla, English, or Urdu with Arabic text, chapter navigation and collection references."
         />
         <link rel="canonical" href="https://noorapp.in/hadith/sahih-bukhari" />
         <meta name="robots" content="index,follow" />
@@ -205,8 +205,8 @@ export default function BukhariLanguageSelectPage() {
             border: "1px solid rgba(255,255,255,0.08)",
           }}
         >
-          <p className="text-2xl font-bold text-emerald-300">7,563</p>
-          <p className="text-[11px] text-white/50 mt-1">Hadiths</p>
+          <p className="text-2xl font-bold text-emerald-300">Edition-based</p>
+          <p className="text-[11px] text-white/50 mt-1">Numbering</p>
         </div>
       </motion.div>
 

@@ -22,7 +22,7 @@ import {
   categoryLabel,
   estimateReadingMinutes,
   nextStory,
-  plainExcerpt,
+  storyMetaDescription,
   relatedStories,
   splitStoryContent,
   useStories,
@@ -154,6 +154,7 @@ export default function StoryDetailPage() {
 
   // Define variables here to avoid hoisting issues in Trailer Mode
   const storyTitle = story.title_bn || story.title_en;
+  const metaDescription = storyMetaDescription(story, 160);
   const url = `${SITE}/stories/${story.slug}`;
   const ogImagePath = story.og_image_url || STORY_OG_IMAGES[story.slug] || ogStoriesDefault;
   const ogImageBase = absoluteUrl(ogImagePath);
@@ -284,7 +285,7 @@ export default function StoryDetailPage() {
     "@context": "https://schema.org",
     "@type": "Article",
     headline: story.title_en,
-    description: story.seo.meta_description,
+    description: metaDescription,
     inLanguage: ["en", "bn"],
     author: { "@type": "Organization", name: "NoorApp Editorial Team" },
     publisher: {
@@ -318,7 +319,7 @@ export default function StoryDetailPage() {
     <div className="min-h-screen bg-background pb-24">
       <Helmet>
         <title>{isTrailerMode ? `🎬 Trailer: ${storyTitle}` : story.seo.title}</title>
-        <meta name="description" content={story.seo.meta_description} />
+        <meta name="description" content={metaDescription} />
         {story.seo.keywords && (
           <meta
             name="keywords"
@@ -331,7 +332,7 @@ export default function StoryDetailPage() {
         <meta property="og:locale" content="bn_BD" />
         <meta property="og:locale:alternate" content="en_US" />
         <meta property="og:title" content={isTrailerMode ? `🎬 ${storyTitle} (Audio Trailer)` : (story.seo.open_graph?.title || story.seo.title)} />
-        <meta property="og:description" content={isTrailerMode ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" : (story.seo.open_graph?.description || story.seo.meta_description)} />
+        <meta property="og:description" content={isTrailerMode ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" : (story.seo.open_graph?.description || metaDescription)} />
         <meta property="og:url" content={isTrailerMode ? trailerUrl : (story?.seo?.canonical_url || url)} />
         <meta property="og:image" content={ogImage} />
         <meta property="og:image:secure_url" content={ogImage} />
@@ -351,15 +352,15 @@ export default function StoryDetailPage() {
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@noorapp" />
         <meta name="twitter:title" content={isTrailerMode ? `🎬 ${storyTitle} (Trailer)` : (story.seo.open_graph?.title || story.seo.title)} />
-        <meta name="twitter:description" content={isTrailerMode ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" : (story.seo.open_graph?.description || story.seo.meta_description)} />
+        <meta name="twitter:description" content={isTrailerMode ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" : (story.seo.open_graph?.description || metaDescription)} />
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:image:alt" content={story.title_en} />
-        <meta name="pinterest:description" content={story.seo.open_graph?.description || story.seo.meta_description} />
+        <meta name="pinterest:description" content={story.seo.open_graph?.description || metaDescription} />
         <meta name="pinterest:media" content={ogImage} />
         <meta name="thumbnail" content={ogImage} />
         <meta itemProp="image" content={ogImage} />
         <meta itemProp="name" content={story.seo.open_graph?.title || story.seo.title} />
-        <meta itemProp="description" content={story.seo.open_graph?.description || story.seo.meta_description} />
+        <meta itemProp="description" content={story.seo.open_graph?.description || metaDescription} />
         <link rel="alternate" hrefLang="en" href={url} />
         <link rel="alternate" hrefLang="bn" href={url} />
         <link rel="alternate" hrefLang="x-default" href={url} />

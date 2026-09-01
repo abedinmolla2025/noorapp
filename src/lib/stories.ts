@@ -85,6 +85,43 @@ export function categorySlug(raw: string): string {
   return raw;
 }
 
+const STORY_FILLER_PATTERNS = [
+  /এটি একটি বিস্তারিত ইসলামিক গল্প।[\s\S]*?আল্লাহর প্রতি বিশ্বাস, ধৈর্য এবং ন্যায়বিচারের গুরুত্ব এখানে আরও স্পষ্ট করা হয়েছে।/g,
+  /This is a detailed Islamic story\.[\s\S]*?The importance of faith in Allah, patience, and justice has been made clearer here\./gi,
+  /یہ ایک تفصیلی اسلامی کہانی ہے۔[\s\S]*?اللہ پر ایمان، صبر اور انصاف کی اہمیت کو یہاں مزید واضح کیا گیا ہے۔/g,
+];
+
+/** Remove known placeholder/filler blocks from older imported story records. */
+export function cleanStoryContent(text: string | null | undefined): string {
+  let clean = text || "";
+  for (const pattern of STORY_FILLER_PATTERNS) clean = clean.replace(pattern, "");
+  return clean.replace(/\n{3,}/g, "\n\n").trim();
+}
+
+function isGenericStoryDescription(text: string): boolean {
+  const normalized = (text || "").trim().toLowerCase();
+  return (
+    !normalized ||
+    /^can .+ change your heart today\?/i.test(normalized) ||
+    normalized.includes("this is a detailed islamic story") ||
+    normalized.includes("এটি একটি বিস্তারিত ইসলামিক গল্প") ||
+    normalized.includes("یہ ایک تفصیلی اسلامی کہانی")
+  );
+}
+
+/** Prefer a story-specific opening paragraph when imported SEO copy is templated. */
+export function storyMetaDescription(story: Story, max = 160): string {
+  const existing = story.seo?.meta_description || "";
+  if (!isGenericStoryDescription(existing)) return plainExcerpt(existing, max);
+
+  const paragraphs = cleanStoryContent(story.content_bn || story.content_en || "")
+    .split(/\n{2,}/)
+    .map((part) => part.trim())
+    .filter((part) => part.length >= 45 && !/^(beginning|the test|the lesson)$/i.test(part));
+  const opening = paragraphs[0] || story.title_bn || story.title_en;
+  return plainExcerpt(opening, max);
+}
+
 function rowToStory(row: any, index: number): Story {
   const meta = row.metadata || {};
   return {
@@ -94,9 +131,9 @@ function rowToStory(row: any, index: number): Story {
     title_bn: row.title ?? "",
     title_en: row.title_en ?? "",
     title_ur: row.title_ur ?? undefined,
-    content_bn: row.content ?? "",
-    content_en: row.content_en ?? "",
-    content_ur: row.content_ur ?? undefined,
+    content_bn: cleanStoryContent(row.content ?? ""),
+    content_en: cleanStoryContent(row.content_en ?? ""),
+    content_ur: cleanStoryContent(row.content_ur ?? undefined),
     moral_bn: row.moral_bn ?? meta.moral_bn ?? undefined,
     moral_en: row.moral_en ?? meta.moral_en ?? undefined,
     moral_ur: row.moral_ur ?? meta.moral_ur ?? undefined,
@@ -162,6 +199,9 @@ export async function loadStories(): Promise<Story[]> {
       if (Array.isArray(data) && data.length) {
         const normalized = data.map((story) => ({
           ...story,
+          content_bn: cleanStoryContent(story.content_bn),
+          content_en: cleanStoryContent(story.content_en),
+          content_ur: cleanStoryContent(story.content_ur),
           og_image_url:
             story.og_image_url ??
             story.og_image_data?.url ??
@@ -178,6 +218,9 @@ export async function loadStories(): Promise<Story[]> {
       const mod = await import("@/data/stories.json");
       const normalized = (mod.default as unknown as Story[]).map((story) => ({
         ...story,
+        content_bn: cleanStoryContent(story.content_bn),
+        content_en: cleanStoryContent(story.content_en),
+        content_ur: cleanStoryContent(story.content_ur),
         og_image_url:
           story.og_image_url ??
           story.og_image_data?.url ??

@@ -118,7 +118,7 @@ export default function SeoIntroSection() {
           📚 Hadith App — Authentic Collections Free
         </h2>
         <p className="mb-3">
-          Noor is one of the most comprehensive free{" "}
+          Noor offers a curated selection of free{" "}
           <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Hadith apps
           </Link>{" "}
