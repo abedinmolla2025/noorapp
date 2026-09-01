@@ -619,7 +619,7 @@ function inject(html, { title, description, canonical, ogImage, body }) {
   // We use a very broad match to ensure nothing is missed
   let cleanHtml = html
     .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, "")
-    .replace(/<meta\s+(name|property)=["'](description|og:title|og:description|og:url|og:image|og:image:secure_url|og:image:type|og:image:width|og:image:height|og:image:alt|twitter:title|twitter:description|twitter:image|twitter:card)["'][^>]*>/gi, "")
+    .replace(/<meta\s+(name|property)=["'](description|og:type|og:title|og:description|og:url|og:image|og:image:secure_url|og:image:type|og:image:width|og:image:height|og:image:alt|twitter:title|twitter:description|twitter:image|twitter:card)["'][^>]*>/gi, "")
     .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, "");
 
   // 2. Define new tags with explicit values
