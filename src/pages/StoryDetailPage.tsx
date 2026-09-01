@@ -12,12 +12,6 @@ import {
   Sparkles,
   RotateCcw,
   RotateCw,
-  Facebook,
-  Twitter,
-  MessageCircle,
-  Send,
-  Link2,
-  Instagram,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -161,37 +155,55 @@ export default function StoryDetailPage() {
   // Define variables here to avoid hoisting issues in Trailer Mode
   const storyTitle = story.title_bn || story.title_en;
   const url = `${SITE}/stories/${story.slug}`;
-  const trailerUrl = `${url}/trailer`;
   const ogImagePath = story.og_image_url || STORY_OG_IMAGES[story.slug] || ogStoriesDefault;
   const ogImageBase = absoluteUrl(ogImagePath);
   const ogImage = story.updated_at ? cacheBustUrl(ogImageBase, story.updated_at) : ogImageBase;
 
-  // Trailer Mode UI (Simplified for social sharing landing page)
+  const handleAudioShare = async () => {
+    if (!story.audio_url) {
+      toast({ title: "অডিও এখনো নেই", description: "এই গল্পের সম্পূর্ণ অডিও শিগগিরই যোগ করা হবে।" });
+      return;
+    }
+    const shareText = `🎧 ${storyTitle}\n\nএই সম্পূর্ণ ইসলামিক গল্পের অডিও শুনুন ও শেয়ার করুন।\nগল্পের পেজ: ${url}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: `🎧 ${storyTitle}`, text: shareText, url: story.audio_url });
+      } else {
+        await navigator.clipboard.writeText(story.audio_url);
+        toast({ title: "পূর্ণ অডিও লিংক কপি হয়েছে", description: "এখন সরাসরি অডিওটি শেয়ার করতে পারবেন।" });
+      }
+    } catch (err) {
+      if ((err as DOMException)?.name !== "AbortError") {
+        await navigator.clipboard.writeText(story.audio_url);
+        toast({ title: "পূর্ণ অডিও লিংক কপি হয়েছে", description: "এখন সরাসরি অডিওটি শেয়ার করতে পারবেন।" });
+      }
+    }
+  };
+
+  // Full Audio landing route (legacy /trailer URLs now share the complete Story audio)
   if (isTrailerMode) {
     return (
       <div className="min-h-screen bg-[#0a1a1a] flex flex-col items-center justify-center p-4">
         <Helmet>
-          <title>🎬 Trailer: {storyTitle}</title>
-          <meta name="description" content="এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" />
-          <meta property="og:title" content={`🎬 ${storyTitle} (Audio Trailer)`} />
-          <meta property="og:description" content="এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" />
+          <title>🎧 {storyTitle} — Full Audio | Noor</title>
+          <meta name="description" content="এই ইসলামিক গল্পটির সম্পূর্ণ অডিও শুনুন ও শেয়ার করুন।" />
+          <meta property="og:title" content={`🎧 ${storyTitle} (Full Audio)`} />
+          <meta property="og:description" content="এই ইসলামিক গল্পটির সম্পূর্ণ অডিও শুনুন ও শেয়ার করুন।" />
           <meta property="og:image" content={ogImage} />
           <meta property="og:image:secure_url" content={ogImage} />
           <meta property="og:image:width" content="1200" />
           <meta property="og:image:height" content="630" />
-          <meta property="og:type" content="video.other" />
-          <meta property="og:url" content={trailerUrl} />
-          {story.audio_trailer_url && (
+          <meta property="og:type" content="article" />
+          <meta property="og:url" content={url} />
+          {story.audio_url && (
             <>
-              <meta property="og:audio" content={story.audio_trailer_url} />
+              <meta property="og:audio" content={story.audio_url} />
               <meta property="og:audio:type" content="audio/mpeg" />
-              <meta property="og:video" content={story.audio_trailer_url} />
-              <meta property="og:video:type" content="video/mp4" />
             </>
           )}
           <meta name="twitter:card" content="summary_large_image" />
-          <meta name="twitter:title" content={`🎬 ${storyTitle} (Trailer)`} />
-          <meta name="twitter:description" content="এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" />
+          <meta name="twitter:title" content={`🎧 ${storyTitle} (Full Audio)`} />
+          <meta name="twitter:description" content="এই ইসলামিক গল্পটির সম্পূর্ণ অডিও শুনুন ও শেয়ার করুন।" />
           <meta name="twitter:image" content={ogImage} />
         </Helmet>
         
@@ -202,7 +214,7 @@ export default function StoryDetailPage() {
             </Link>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/20 border border-emerald-500/30 text-emerald-300">
               <span className="flex h-2.5 w-2.5 rounded-full bg-emerald-500 animate-ping"></span>
-              <span className="text-[11px] uppercase tracking-[0.25em] font-black">Playing Audio Trailer</span>
+              <span className="text-[11px] uppercase tracking-[0.25em] font-black">Playing Full Story Audio</span>
             </div>
           </div>
 
@@ -220,24 +232,24 @@ export default function StoryDetailPage() {
               {storyTitle}
             </h1>
 
-            {story.audio_trailer_url ? (
+            {story.audio_url ? (
               <div className="space-y-6">
-                <div className="relative group/trailer-player p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <audio 
-                    controls 
-                    autoPlay 
+                <div className="relative group/full-audio-player p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
+                  <audio
+                    controls
+                    autoPlay
                     className="w-full h-12 rounded-full accent-emerald-500"
-                    src={story.audio_trailer_url}
+                    src={story.audio_url}
                   >
                     Your browser does not support the audio element.
                   </audio>
                 </div>
-                <p className="text-emerald-100/60 text-sm italic">
-                  গল্পটির পূর্ণাঙ্গ অংশ শুনতে নিচের বাটনে ক্লিক করুন
-                </p>
+                <Button size="lg" onClick={handleAudioShare} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-6 text-lg font-bold gap-2">
+                  <Share2 className="h-5 w-5" /> সম্পূর্ণ অডিও শেয়ার করুন
+                </Button>
               </div>
             ) : (
-              <p className="text-red-400">Trailer audio not available.</p>
+              <p className="text-red-400">Full audio not available.</p>
             )}
 
             <Button asChild size="lg" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-8 text-xl font-bold">
@@ -259,98 +271,7 @@ export default function StoryDetailPage() {
   const next = nextStory(stories, story);
   const quranRefs = parseQuranReferences(story.reference);
   const morals = parseMorals(lang === "bn" ? story.moral_bn : story.moral_en);
-  
-  // Construct Viral Bengali Share Text (URL removed to avoid repetition in native share)
-  const viralShareText = `🌟 ${storyTitle}\n\nএই হৃদয়স্পর্শী ইসলামিক গল্পটি পড়ে আমার খুব ভালো লেগেছে। আপনিও পড়ুন এবং অন্যদের সাথে শেয়ার করে সদকা-এ-জারিয়ার সওয়াব হাসিল করুন। 🤲✨`;
-  
-  const trailerShareText = `🎬 ${storyTitle} (Audio Trailer)\n\nএই ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন। ভালো লাগলে সবার সাথে শেয়ার করুন। ✨`;
 
-  const shareLinks = {
-    facebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`,
-    whatsapp: `https://api.whatsapp.com/send?text=${encodeURIComponent(viralShareText + "\n\nপড়ুন এখানে: " + url)}`,
-    x: `https://x.com/intent/tweet?text=${encodeURIComponent(viralShareText)}&url=${encodeURIComponent(url)}`,
-    instagram: url,
-    telegram: `https://t.me/share/url?url=${encodeURIComponent(url)}&text=${encodeURIComponent(viralShareText)}`,
-    trailerFacebook: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(trailerUrl)}`,
-  };
-
-  const handleSocialShare = (platform: string) => {
-    const shareData = {
-      title: storyTitle,
-      text: viralShareText,
-      url: url,
-    };
-
-    if (navigator.share && ['instagram', 'facebook', 'whatsapp'].includes(platform)) {
-      navigator.share(shareData).catch(() => {
-        openSocialLink(platform);
-      });
-    } else {
-      openSocialLink(platform);
-    }
-  };
-
-  const openSocialLink = (platform: string) => {
-    let link = '';
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-    switch (platform) {
-      case 'facebook':
-        link = shareLinks.facebook;
-        break;
-      case 'whatsapp':
-        if (isMobile) {
-          link = `https://wa.me/?text=${encodeURIComponent(viralShareText + "\n\nপড়ুন এখানে: " + url)}`;
-        } else {
-          link = shareLinks.whatsapp;
-        }
-        break;
-      case 'x':
-        link = shareLinks.x;
-        break;
-      case 'instagram':
-        if (navigator.share) {
-          navigator.share({
-            title: storyTitle,
-            text: viralShareText,
-            url: url,
-          }).catch(() => copyToClipboard());
-        } else {
-          copyToClipboard();
-        }
-        return;
-      case 'telegram':
-        link = shareLinks.telegram;
-        break;
-      default:
-        return;
-    }
-    
-    if (link) {
-      window.open(link, '_blank', 'width=600,height=400');
-    }
-  };
-
-  const copyToClipboard = () => {
-    navigator.clipboard.writeText(url);
-    toast({ title: "লিংক কপি হয়েছে", description: "গল্পের লিংকটি কপি করা হয়েছে।" });
-  };
-
-  const handleNativeShare = async () => {
-    try {
-      if (navigator.share) {
-        await navigator.share({
-          title: storyTitle,
-          text: viralShareText,
-          url: url,
-        });
-      } else {
-        copyToClipboard();
-      }
-    } catch (err) {
-      console.log("Share failed", err);
-    }
-  };
 
   const breadcrumbs = [
     { name: "Home", url: `${SITE}/` },
@@ -485,9 +406,7 @@ export default function StoryDetailPage() {
                 <Languages className="h-4 w-4 mr-1" /> {lang === "en" ? "বাংলায় পড়ুন" : "Read in English"}
               </Button>
             )}
-            <Button variant="secondary" size="sm" onClick={handleNativeShare}>
-              <Share2 className="h-4 w-4 mr-1" /> Share
-            </Button>
+
           </div>
         </div>
       </header>
@@ -647,36 +566,6 @@ export default function StoryDetailPage() {
                 </div>
               </div>
 
-              {/* Share Trailer Button - Universal Share */}
-              {story.audio_trailer_url && (
-                <div className="mt-8 flex justify-center">
-                  <button 
-                    onClick={async () => {
-                      try {
-                        if (navigator.share) {
-                          await navigator.share({
-                            title: `🎬 ${storyTitle} (Audio Trailer)`,
-                            text: trailerShareText,
-                            url: trailerUrl,
-                          });
-                        } else {
-                          window.open(shareLinks.trailerFacebook, '_blank');
-                        }
-                      } catch (err) {
-                        console.log("Trailer share failed", err);
-                      }
-                    }}
-                    className="group/share relative inline-flex items-center gap-3 px-8 py-4 rounded-full bg-emerald-600 text-white font-bold shadow-xl transition-all hover:bg-emerald-500 hover:scale-105 active:scale-95"
-                  >
-                    <Share2 className="h-5 w-5" />
-                    <span>Share Audio</span>
-                    <div className="absolute -top-2 -right-2 bg-red-500 text-[10px] px-2 py-0.5 rounded-full animate-bounce shadow-lg">
-                      30s Clip
-                    </div>
-                  </button>
-                </div>
-              )}
-
               {/* Metadata Badges from Mockup - Interactive Version */}
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link 
@@ -711,39 +600,17 @@ export default function StoryDetailPage() {
             </div>
           )}
 
-          {/* Social Share Buttons - Top */}
-          <div className="space-y-3">
-            <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <Share2 className="h-4 w-4" /> এই গল্পটি শেয়ার করুন:
-            </p>
-            <div className="flex flex-wrap gap-2">
-              <button onClick={() => handleSocialShare('facebook')} className="inline-flex">
-                <Button size="sm" className="bg-[#1877F2] hover:bg-[#1877F2]/90 text-white gap-2">
-                  <Facebook className="h-4 w-4" /> Facebook
-                </Button>
-              </button>
-              <button onClick={() => handleSocialShare('whatsapp')} className="inline-flex">
-                <Button size="sm" className="bg-[#25D366] hover:bg-[#25D366]/90 text-white gap-2">
-                  <MessageCircle className="h-4 w-4" /> WhatsApp
-                </Button>
-              </button>
-              <button onClick={() => handleSocialShare('x')} className="inline-flex">
-                <Button size="sm" className="bg-[#000000] hover:bg-[#000000]/90 text-white gap-2">
-                  <Twitter className="h-4 w-4" /> X
-                </Button>
-              </button>
-              <button onClick={() => handleSocialShare('instagram')} className="inline-flex">
-                <Button size="sm" className="bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#dc2743] hover:opacity-90 text-white gap-2">
-                  <Instagram className="h-4 w-4" /> Instagram
-                </Button>
-              </button>
-              <button onClick={() => handleSocialShare('telegram')} className="inline-flex">
-                <Button size="sm" className="bg-[#0088cc] hover:bg-[#0088cc]/90 text-white gap-2">
-                  <Send className="h-4 w-4" /> Telegram
-                </Button>
-              </button>
-              <Button size="sm" variant="outline" onClick={copyToClipboard} className="gap-2">
-                <Link2 className="h-4 w-4" /> Copy Link
+          {/* Full Story Audio Share */}
+          <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30 p-4">
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2">
+                  <Share2 className="h-4 w-4" /> সম্পূর্ণ গল্পের অডিও শেয়ার করুন
+                </p>
+                <p className="text-xs text-muted-foreground mt-1">বাটনে চাপলে সরাসরি পুরো audio link share বা copy হবে।</p>
+              </div>
+              <Button onClick={handleAudioShare} className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white shrink-0">
+                <Share2 className="h-4 w-4" /> Full Audio Share
               </Button>
             </div>
           </div>
@@ -788,30 +655,6 @@ export default function StoryDetailPage() {
               </CardContent>
             </Card>
           )}
-
-          {/* Social Share Buttons - Bottom */}
-          <Card className="border-emerald-100 bg-emerald-50/30 dark:bg-emerald-950/10">
-            <CardContent className="py-6 text-center">
-              <h3 className="text-lg font-semibold mb-4 flex items-center justify-center gap-2">
-                <Share2 className="h-5 w-5 text-emerald-600" /> ভালো কথা ছড়িয়ে দেওয়াও একটি সদকা!
-              </h3>
-              <div className="flex flex-wrap justify-center gap-3">
-                <a href={shareLinks.facebook} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="border-[#1877F2] text-[#1877F2] hover:bg-[#1877F2] hover:text-white rounded-full px-6">
-                    <Facebook className="h-4 w-4 mr-2" /> Facebook
-                  </Button>
-                </a>
-                <a href={shareLinks.whatsapp} target="_blank" rel="noopener noreferrer">
-                  <Button variant="outline" className="border-[#25D366] text-[#25D366] hover:bg-[#25D366] hover:text-white rounded-full px-6">
-                    <MessageCircle className="h-4 w-4 mr-2" /> WhatsApp
-                  </Button>
-                </a>
-                <Button variant="outline" onClick={copyToClipboard} className="rounded-full px-6">
-                  <Link2 className="h-4 w-4 mr-2" /> Copy Link
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
 
           {/* Quran References */}
           {quranRefs.length > 0 && (
