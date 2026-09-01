@@ -581,6 +581,28 @@ const getAppTemplate = () => {
   return `<!DOCTYPE html><html><head><title>{{TITLE}}</title></head><body><div id="root"></div></body></html>`;
 };
 
+function structuredData({ description }) {
+  const graph = [
+    {
+      "@type": "WebSite",
+      "@id": `${SITE_ORIGIN}/#website`,
+      "url": SITE_ORIGIN,
+      "name": "Noor Islamic App",
+      "description": description,
+      "inLanguage": ["en", "bn"],
+      "publisher": { "@id": `${SITE_ORIGIN}/#organization` }
+    },
+    {
+      "@type": "Organization",
+      "@id": `${SITE_ORIGIN}/#organization`,
+      "url": SITE_ORIGIN,
+      "name": "Noor Islamic App",
+      "description": "Free Quran, Hadith, Dua, prayer times and Islamic learning tools."
+    }
+  ];
+  return `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c")}</script>`;
+}
+
 function inject(html, { title, description, canonical, ogImage, body }) {
   // 1. Remove ALL existing meta/link/title tags that we want to override
   // We use a very broad match to ensure nothing is missed
@@ -591,6 +613,7 @@ function inject(html, { title, description, canonical, ogImage, body }) {
 
   // 2. Define new tags with explicit values
   const newTags = [
+    structuredData({ description }),
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
     `<link rel="canonical" href="${esc(canonical)}" />`,
