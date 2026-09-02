@@ -976,6 +976,23 @@ const DuaPage = () => {
                 ))}
               </div>
             )}
+
+            {!selectedCategory && (
+              <section className="mt-8 rounded-2xl border border-white/10 bg-[hsl(158,55%,18%)] p-5 text-white/80">
+                <h2 className="text-base font-bold text-white">দোয়া কীভাবে পড়বেন ও বুঝবেন</h2>
+                <p className="mt-3 text-sm leading-7">
+                  দোয়া পড়ার সময় আগে আরবি পাঠটি ধীরে পড়ুন, তারপর উচ্চারণ দেখে অনুশীলন করুন এবং অর্থটি বুঝে আল্লাহর কাছে মনোযোগসহকারে প্রার্থনা করুন। শুধু দ্রুত পড়ার বদলে দোয়াটি কোন পরিস্থিতিতে পড়া হয় তা জানা আমলকে আরও অর্থবহ করে।
+                </p>
+                <p className="mt-3 text-sm leading-7">
+                  প্রতিটি দোয়ার উৎস ও প্রেক্ষাপট যাচাই করে পড়ুন। কুরআনের দোয়া ও হাদিসে বর্ণিত দোয়ার ক্ষেত্রে সূরা/হাদিসের রেফারেন্স দেখুন; কোনো অনুবাদ বা উচ্চারণে ভুল মনে হলে আমাদের <a href="/sources" className="font-semibold text-[hsl(45,93%,58%)] underline-offset-2 hover:underline">উৎস ও সংশোধন পেজে</a> জানান।
+                </p>
+                <div className="mt-4 grid gap-2 text-xs text-white/60 sm:grid-cols-3">
+                  <span>১. আরবি পাঠ দেখুন</span>
+                  <span>২. উচ্চারণ অনুশীলন করুন</span>
+                  <span>৩. অর্থ বুঝে আমল করুন</span>
+                </div>
+              </section>
+            )}
           </motion.div>
         )}
       </AnimatePresence>

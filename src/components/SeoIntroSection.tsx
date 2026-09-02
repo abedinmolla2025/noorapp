@@ -122,18 +122,17 @@ export default function SeoIntroSection() {
           <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Hadith apps
           </Link>{" "}
-          available for Bengali Muslims. Browse authenticated narrations from the six major hadith
-          collections, including{" "}
+          available for Bengali Muslims. Browse narrations from well-known Hadith collections, including{" "}
           <Link to="/hadith/sahih-bukhari" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Bukhari
           </Link>{" "}
-          — the most authenticated hadith collection in Islam — and{" "}
+          — one of the major Sunni Hadith collections — and{" "}
           <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Muslim
           </Link>
-          , compiled by Imam Muslim after examining over 300,000 narrations. Every hadith is
-          presented with its original Arabic text, full narrator chain, and accurate Bengali meaning.
-          ইসলামের সবচেয়ে বিশ্বস্ত হাদিস গ্রন্থ থেকে হাদিস পড়ুন — সম্পূর্ণ বিনামূল্যে।
+          . Where available, entries include Arabic text, translation and reference details so readers
+          can check the context instead of relying on an isolated quotation.
+          হাদিসের আরবি পাঠ, অনুবাদ ও reference দেখে বুঝে পড়ুন — সম্পূর্ণ বিনামূল্যে।
         </p>
 
         {/* Prayer Times */}

@@ -366,6 +366,21 @@ const QuranPage = () => {
                   <p className="text-white/60">কোন সূরা পাওয়া যায়নি</p>
                 </div>
               )}
+
+              <section className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-5 text-white/80">
+                <h2 className="text-base font-bold text-white">কুরআন পড়া ও বোঝার সহজ পদ্ধতি</h2>
+                <p className="mt-3 text-sm leading-7">
+                  একটি সূরা বেছে নিয়ে প্রথমে আরবি তিলাওয়াত শুনুন, তারপর আয়াতের বাংলা অনুবাদ ধীরে পড়ুন। অনুবাদ মূল আরবি পাঠের বিকল্প নয়; বরং অর্থ বোঝার সহায়ক। গুরুত্বপূর্ণ শব্দ বা আয়াত bookmark করে পরে আবার পড়লে ধারাবাহিক শেখা সহজ হয়।
+                </p>
+                <p className="mt-3 text-sm leading-7">
+                  সূরার মক্কী বা মাদানী পরিচয় এবং আয়াতের সংখ্যা এখানে navigation-এর সহায়ক তথ্য। কোনো আয়াতের তাফসির বা বিধান বুঝতে নির্ভরযোগ্য তাফসির এবং যোগ্য আলেমের ব্যাখ্যা অনুসরণ করুন।
+                </p>
+                <div className="mt-4 grid gap-2 text-xs text-white/60 sm:grid-cols-3">
+                  <span>আরবি পাঠ শুনুন</span>
+                  <span>বাংলা অর্থ পড়ুন</span>
+                  <span>প্রেক্ষাপট বুঝে আমল করুন</span>
+                </div>
+              </section>
             </div>
           </motion.div>
         )}

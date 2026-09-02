@@ -240,6 +240,23 @@ export default function HadithPage() {
         </section>
       )}
 
+      <section className="mx-auto mt-10 max-w-lg px-4 pb-24">
+        <div className="rounded-2xl border border-white/10 bg-white/10 p-5 text-white/85">
+          <h2 className="text-base font-bold text-white">হাদিস পড়ার একটি নির্ভরযোগ্য পদ্ধতি</h2>
+          <p className="mt-3 text-sm leading-7">
+            কোনো হাদিস উদ্ধৃত করার আগে গ্রন্থের নাম, অধ্যায় এবং হাদিস নম্বর মিলিয়ে নিন। একই বর্ণনার অনুবাদ বা numbering সংস্করণভেদে কিছুটা আলাদা হতে পারে, তাই আরবি মূল পাঠ ও দেওয়া reference পাশাপাশি দেখা গুরুত্বপূর্ণ।
+          </p>
+          <p className="mt-3 text-sm leading-7">
+            হাদিসের অর্থ বোঝার সময় সম্পূর্ণ বর্ণনা ও আশপাশের অধ্যায়ের বিষয় পড়ুন। জটিল আকিদা, ফিকহ বা ব্যক্তিগত আমলের সিদ্ধান্তের ক্ষেত্রে যোগ্য আলেমের পরামর্শ নিন। Noor-এর <a href="/sources" className="font-semibold text-emerald-200 underline-offset-2 hover:underline">source notes</a>-এ কোনো ভুল বা অনুবাদ-সংক্রান্ত সংশোধন জানানো যায়।
+          </p>
+          <div className="mt-4 grid gap-2 text-xs text-white/60 sm:grid-cols-3">
+            <span>গ্রন্থ ও অধ্যায় মিলান</span>
+            <span>সম্পূর্ণ বর্ণনা পড়ুন</span>
+            <span>প্রয়োজনে আলেমকে জিজ্ঞেস করুন</span>
+          </div>
+        </div>
+      </section>
+
       <BottomNavigation />
     </div>
   );

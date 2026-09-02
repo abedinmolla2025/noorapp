@@ -308,6 +308,16 @@ export default function StoriesPage() {
             </Pagination>
           )}
         </section>
+
+        <section aria-labelledby="story-reading-guide" className="rounded-2xl border border-emerald-100 bg-emerald-50/60 p-5">
+          <h2 id="story-reading-guide" className="text-xl font-semibold text-emerald-950">ইসলামিক গল্প পড়ার সময় কী লক্ষ্য করবেন</h2>
+          <p className="mt-3 text-sm leading-7 text-emerald-900/80">
+            Noor-এর গল্পগুলো কুরআন, হাদিস ও ইসলামী ইতিহাসভিত্তিক শিক্ষামূলক পাঠ হিসেবে সাজানো। প্রতিটি গল্প পড়ার সময় ঘটনাটির মূল চরিত্র, নির্ভরযোগ্য উৎস এবং শিক্ষা আলাদা করে লক্ষ্য করুন—যেমন ধৈর্য, সত্যবাদিতা, তাওয়াক্কুল, ক্ষমা বা ন্যায়বিচার। গল্পের সংক্ষিপ্ত card-এর বদলে সম্পূর্ণ story page খুললে প্রেক্ষাপট, source note এবং audio narration একসঙ্গে পাওয়া যায়।
+          </p>
+          <p className="mt-3 text-sm leading-7 text-emerald-900/80">
+            কোনো ঘটনা বা বর্ণনার ঐতিহাসিক বিশদ নিয়ে মতভেদ থাকলে সেটিকে চূড়ান্ত ধর্মীয় ফতোয়া হিসেবে ব্যবহার করবেন না। source note পরীক্ষা করুন এবং প্রয়োজন হলে যোগ্য আলেম বা নির্ভরযোগ্য তাফসির/সীরাত গ্রন্থের সঙ্গে মিলিয়ে নিন। ভুল তথ্য চোখে পড়লে <a href="/sources" className="font-semibold text-emerald-800 underline-offset-2 hover:underline">উৎস ও সংশোধন পেজে</a> জানান।
+          </p>
+        </section>
       </div>
 
       <FooterSection platform="web" onNavigate={(path) => navigate(path)} />
