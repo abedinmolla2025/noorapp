@@ -139,7 +139,7 @@ const AboutPage = () => {
             </p>
             <ul className="list-disc list-inside space-y-2 text-muted-foreground pl-2">
               <li><strong className="text-foreground">100% Free, No Premium Walls:</strong> Every single feature in {appName} is completely free. We never lock Quran Surahs, Hadith chapters, or Duas behind a paywall. Islamic knowledge should be free for everyone.</li>
-              <li><strong className="text-foreground">Authentic Content:</strong> All content is sourced from established, scholarly-accepted Islamic references. The Quran text follows the Uthmani script, and Hadith collections include only the most authentic compilations.</li>
+              <li><strong className="text-foreground">Source-aware Content:</strong> Quran, Hadith, dua and story records include available source and reference details. Please check the collection, chapter and edition where provided, and consult a qualified scholar for complex religious questions.</li>
               <li><strong className="text-foreground">Multilingual Support:</strong> {appName} serves a diverse community with support for Arabic, English, Urdu, Bengali, and Hindi — ensuring that language is never a barrier to learning.</li>
               <li><strong className="text-foreground">Beautiful, Modern Design:</strong> Unlike many religious apps that feel outdated, {appName} features a clean, elegant interface with dark mode support, smooth animations, and a design language that feels premium.</li>
               <li><strong className="text-foreground">Offline-First & Fast:</strong> {appName} is built with performance as a priority. Pages load instantly, and core features work even with limited connectivity.</li>
@@ -162,7 +162,7 @@ const AboutPage = () => {
           <section className="space-y-3">
             <h2 className="text-lg font-bold">Content Authenticity</h2>
             <p className="text-muted-foreground">
-              All Islamic content in {appName} — including Quran text, Hadith narrations, Duas, and prayer instructions — is sourced from authentic, widely-accepted Islamic scholarly works. Prayer times are calculated using established astronomical algorithms with multiple calculation method options. We encourage users to verify critical religious matters with qualified local scholars and Imams.
+              Islamic content in {appName} is presented with available source and reference details, including collection or chapter information where provided. Prayer times use configurable calculation methods and location data; users should verify local timings with their mosque when precision is important. We encourage users to verify critical religious matters with qualified local scholars and Imams.
             </p>
           </section>
 

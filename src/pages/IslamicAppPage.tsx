@@ -36,10 +36,10 @@ export default function IslamicAppPage() {
       {/* Hero */}
       <div className="bg-gradient-to-br from-primary to-primary/80 px-5 pt-14 pb-10 text-center text-primary-foreground">
         <h1 className="text-2xl font-bold leading-snug mb-3">
-          Noor – The Best Free Islamic App
+          Noor – A Free Islamic Learning App
         </h1>
         <p className="text-sm opacity-90 max-w-md mx-auto leading-relaxed">
-          Your complete Muslim companion for Quran, Hadith, Prayer Times, Dua, Qibla, Islamic Calendar and more — 100% free.
+          A practical digital companion for Quran, Hadith, prayer times, Dua, Qibla and the Islamic calendar, available without a subscription.
         </p>
       </div>
 
@@ -57,9 +57,7 @@ export default function IslamicAppPage() {
             into your daily life through a beautiful, easy-to-use mobile application.
           </p>
           <p className="mt-3">
-            Whether you are a student of Islamic knowledge, a practising Muslim looking for quick
-            duas, or a parent searching for a meaningful <Link to="/baby-names" className="text-primary font-medium hover:underline">Islamic baby name</Link> — Noor has everything you need in a single,
-            completely free app. No subscriptions. No paywalls. Pure Islamic content, always free.
+            Whether you are learning Islamic basics, looking for a quick dua, or a parent searching for a meaningful <Link to="/baby-names" className="text-primary font-medium hover:underline">Islamic baby name</Link> — Noor has everything you need in a single app. Core reading and learning features are available without a subscription; please check the relevant page for source and reference details.
           </p>
         </section>
 
@@ -80,20 +78,20 @@ export default function IslamicAppPage() {
             📚 Hadith App – Authentic Collections Free
           </h2>
           <p>
-            Noor provides a free <Link to="/hadith" className="text-primary font-medium hover:underline">Hadith library</Link> for browsing and study. Browse authenticated narrations from the six major hadith collections:
+            Noor provides a free <Link to="/hadith" className="text-primary font-medium hover:underline">Hadith library</Link> for browsing and study. Browse selected narrations from major collections and check the available collection, chapter and reference details:
           </p>
           <ul className="mt-3 ml-4 list-disc space-y-2">
             <li>
-              <Link to="/hadith/sahih-bukhari" className="text-primary font-medium hover:underline">Sahih Bukhari</Link> — The most authentic hadith collection, compiled by Imam Bukhari (রহ.)
+              <Link to="/hadith/sahih-bukhari" className="text-primary font-medium hover:underline">Sahih Bukhari</Link> — A major Sunni Hadith collection compiled by Imam al-Bukhari (রহ.)
             </li>
             <li>
-              <Link to="/hadith" className="text-primary font-medium hover:underline">Sahih Muslim</Link> — Second most authoritative collection, meticulously authenticated
+              <Link to="/hadith" className="text-primary font-medium hover:underline">Sahih Muslim</Link> — A major Hadith collection compiled by Imam Muslim
             </li>
             <li>
               <Link to="/hadith/tirmidhi" className="text-primary font-medium hover:underline">Jami at-Tirmidhi</Link> — Covers fiqh, seerah and virtues with unique hadith grading
             </li>
             <li>
-              <Link to="/hadith/abu-dawud" className="text-primary font-medium hover:underline">Sunan Abu Dawud</Link> — The definitive jurisprudence-focused hadith collection
+              <Link to="/hadith/abu-dawud" className="text-primary font-medium hover:underline">Sunan Abu Dawud</Link> — A well-known collection with many jurisprudence-related chapters
             </li>
           </ul>
           <p className="mt-3">

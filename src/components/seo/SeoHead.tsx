@@ -128,14 +128,14 @@ const PAGE_FAQS: Record<string, { q: string; a: string }[]> = {
   "/hadith": [
     { q: "Which Hadith collections are available on Noor?", a: "Noor features major Hadith collections including Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi, and Sunan Abu Dawud." },
     { q: "Can I read Sahih Bukhari online for free?", a: "Yes, the complete Sahih Bukhari collection is available on Noor with English translations, organized by book and chapter." },
-    { q: "Are the Hadith on Noor authentic?", a: "Noor sources Hadith from the most authentic and widely accepted collections in Islamic scholarship." },
+    { q: "How should I check a Hadith on Noor?", a: "Read the Arabic text, translation, collection, chapter and available reference together. Edition and numbering can vary, so use the full context rather than an isolated quotation." },
     { q: "Can I browse Hadith by chapter?", a: "Yes, each Hadith book is organized by chapters so you can easily find Hadith on specific topics." },
   ],
   "/dua": [
     { q: "Where can I find daily Islamic Duas?", a: "Noor provides a curated collection of authentic Duas for daily life, including morning and evening Adhkar, travel Duas, and more." },
     { q: "Are the Duas on Noor in Arabic with translation?", a: "Yes, every Dua includes Arabic text, transliteration for easy pronunciation, and English translation." },
     { q: "Can I listen to Dua audio on Noor?", a: "Yes, Noor offers audio playback for Duas so you can learn the correct pronunciation." },
-    { q: "Are the Duas on Noor from authentic sources?", a: "Yes, all Duas are sourced from the Quran and authentic Hadith collections." },
+    { q: "How can I check a Dua on Noor?", a: "Check the Arabic text, translation and the Quran or Hadith reference shown on the Dua page. When a reference is not displayed, treat the entry as a learning aid and verify it with a trusted scholarly source." },
   ],
   "/quiz": [
     { q: "What is the Islamic Quiz on Noor?", a: "Noor features a daily Islamic quiz that tests your knowledge on Quran, Hadith, Islamic history, and general Islamic teachings." },
@@ -151,7 +151,7 @@ const PAGE_FAQS: Record<string, { q: string; a: string }[]> = {
   ],
   "/hadith/sahih-bukhari/english": [
     { q: "Can I read Sahih Bukhari in English on Noor?", a: "Yes, Sahih al-Bukhari is available in English with Arabic text and collection references on Noor App, completely free." },
-    { q: "Is Sahih Bukhari the most authentic hadith collection?", a: "Yes, Sahih al-Bukhari by Imam Bukhari is widely regarded as the most authentic hadith collection in Sunni Islam." },
+    { q: "How is Sahih Bukhari organized on Noor?", a: "Noor organizes Sahih al-Bukhari by language, book and chapter. Hadith numbering can vary by edition, so the collection and chapter reference should be checked with the text." },
     { q: "How many hadiths are in Sahih Bukhari?", a: "Sahih al-Bukhari is organized by books and chapters covering topics from faith to daily life; counts can vary by edition and numbering system." },
     { q: "Can I browse Sahih Bukhari by chapter in English?", a: "Yes, Noor App organizes Sahih Bukhari by books and chapters so you can find hadiths on specific topics." },
   ],

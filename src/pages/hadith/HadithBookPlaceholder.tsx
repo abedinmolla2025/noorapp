@@ -144,9 +144,8 @@ const bookMeta: Record<string, BookMeta> = {
           <em>fiqh</em>), virtuous conduct (<em>adab</em>), character (<em>akhlaq</em>), the
           Prophet's biography (<em>seerah</em>), the merits of companions (<em>manaqib</em>),
           Quranic commentary (<em>tafsir</em>), and eschatology (<em>fitan wa ashrat al-saa</em>).
-          The breadth and balance of topics makes Jami at-Tirmidhi one of the most comprehensive
-          single-volume hadith collections ever compiled. ইমাম তিরমিযীর সংকলন ইসলামের সকল দিককে
-          স্পর্শ করে।
+          The collection covers a broad range of topics and is presented here as a study aid; chapter
+          and hadith counts can vary by edition. ইমাম তিরমিযীর সংকলন ইসলামের বিভিন্ন বিষয়কে স্পর্শ করে।
         </p>
 
         <h2 className="text-[14px] font-semibold text-foreground">

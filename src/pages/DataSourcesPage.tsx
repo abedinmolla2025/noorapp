@@ -124,7 +124,7 @@ const DataSourcesPage = () => {
             <li>
               <span className="font-semibold text-foreground">Sahih al-Bukhari</span> —
               compiled by Imam Muhammad ibn Ismaʿil al-Bukhari (d. 256 AH / 870 CE).
-              Considered the most authentic book after the Qur'an.
+              widely regarded in Sunni scholarship as one of the most rigorously authenticated Hadith collections; exact rankings and numbering should be understood within their scholarly and edition context.
             </li>
             <li>
               <span className="font-semibold text-foreground">Sahih Muslim</span> —

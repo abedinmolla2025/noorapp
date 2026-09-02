@@ -79,11 +79,11 @@ const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
   },
   "/hadith/tirmidhi": {
     title: "Jami at-Tirmidhi — জামে তিরমিযী হাদিস | Noor",
-    description: "Explore Jami at-Tirmidhi with Bengali translation — 3,956 hadiths covering fiqh, seerah & virtues with unique hadith grading. জামে তিরমিযী পড়ুন।",
+    description: "Explore selected Jami at-Tirmidhi entries with Bengali translation, topic navigation and available collection references. জামে তিরমিযী পড়ুন।",
   },
   "/hadith/abu-dawud": {
     title: "Sunan Abu Dawud — সুনানে আবু দাউদ হাদিস | Noor",
-    description: "Read Sunan Abu Dawud with Bengali translation — the definitive jurisprudence-focused hadith collection. আবু দাউদ পড়ুন।",
+    description: "Read selected Sunan Abu Dawud entries with Bengali translation and available collection references. আবু দাউদ পড়ুন।",
   },
   "/prayer-guide": {
     title: "Prayer Guide — নামাজ শিক্ষা | NOOR",
@@ -617,8 +617,8 @@ Deno.serve(async (req) => {
     } else if (path === "/hadith/sahih-bukhari") {
       bodyContent = `
         <section>
-            <h2>Sahih al-Bukhari — The Most Authentic Hadith Collection</h2>
-            <p>Sahih al-Bukhari is the most authentic collection of Hadith in Sunni Islam, compiled by Imam Muhammad ibn Ismail al-Bukhari (810–870 CE). It is organized by books and chapters; numbering can vary by edition.</p>
+            <h2>Sahih al-Bukhari — A Major Hadith Collection</h2>
+            <p>Sahih al-Bukhari is a major Hadith collection in Sunni scholarship, compiled by Imam Muhammad ibn Ismail al-Bukhari (810–870 CE). It is organized by books and chapters; numbering can vary by edition.</p>
             <h3>Read in Your Language</h3>
             <ul>
                 <li><a href="${SITE_ORIGIN}/hadith/sahih-bukhari/bangla">Sahih Bukhari Bangla – সহীহ বুখারী বাংলা</a></li>

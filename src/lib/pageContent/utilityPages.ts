@@ -321,7 +321,7 @@ export const quizContent: IslamicEducationalSectionProps = {
   ],
   sources: [
     { label: "Qur'an", detail: "Primary source for all creed and worship questions" },
-    { label: "Sahih Bukhari & Sahih Muslim", detail: "The two most authentic hadith compilations" },
+    { label: "Sahih Bukhari & Sahih Muslim", detail: "Two major Hadith compilations; numbering and scholarly descriptions can vary by edition and tradition" },
     { label: "Sunan Abu Dawud, Tirmidhi, Nasa'i, Ibn Majah", detail: "The four Sunan of the six major collections" },
     { label: "Seerah works", detail: "Ibn Hisham, Ibn Kathir's Al-Bidayah wa an-Nihayah, Ar-Raheeq al-Makhtum" },
   ],
