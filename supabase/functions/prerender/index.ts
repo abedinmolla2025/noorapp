@@ -411,6 +411,9 @@ Deno.serve(async (req) => {
 
     if (storyMatch) {
       const slug = storyMatch[1];
+      if (slug === "test-story-manus") {
+        return new Response("Not Found", { status: 404, headers: { ...corsHeaders, "Content-Type": "text/plain" } });
+      }
       try {
         const { data: story } = await supabase
           .from("admin_content")

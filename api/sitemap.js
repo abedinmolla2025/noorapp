@@ -55,8 +55,8 @@ const STORY_SLUGS = [
   "prophet-yusuf-story-islam", "prophet-zakariyya-story-islam",
   "radiance-innocence-incident-ifk-islam", "sacrifice-youth-ali-ibn-islam",
   "salman-farsi-story-islam", "scholar-ummah-life-adab-islam",
-  "second-two-abu-bakr-islam", "shab-e-barat-night-of-forgiveness",
-  "test-story-manus", "transformation-direction-divine-sovereignty-islam",
+  "second-two-abu-bakr-islam",   "shab-e-barat-night-of-forgiveness",
+  "transformation-direction-divine-sovereignty-islam",
   "triumph-truth-repentance-ka-islam", "umar-accepting-islam-story",
   "umar-ibn-khattab-story-islam", "umm-sulaym-wisdom-faith-islam",
   "well-rumah-eternal-charity-islam", "yawm-al-arafah-day-of-forgiveness"

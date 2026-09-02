@@ -197,7 +197,7 @@ export async function loadStories(): Promise<Story[]> {
       const res = await fetch("/stories.json", { cache: "force-cache" });
       const data = (await res.json()) as Story[];
       if (Array.isArray(data) && data.length) {
-        const normalized = data.map((story) => ({
+        const normalized = data.filter((story) => story.slug !== "test-story-manus").map((story) => ({
           ...story,
           content_bn: cleanStoryContent(story.content_bn),
           content_en: cleanStoryContent(story.content_en),
@@ -216,7 +216,7 @@ export async function loadStories(): Promise<Story[]> {
       throw new Error("empty stories.json");
     } catch {
       const mod = await import("@/data/stories.json");
-      const normalized = (mod.default as unknown as Story[]).map((story) => ({
+      const normalized = (mod.default as unknown as Story[]).filter((story) => story.slug !== "test-story-manus").map((story) => ({
         ...story,
         content_bn: cleanStoryContent(story.content_bn),
         content_en: cleanStoryContent(story.content_en),
