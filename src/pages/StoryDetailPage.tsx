@@ -318,7 +318,7 @@ export default function StoryDetailPage() {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Helmet>
-        <title>{isTrailerMode ? `🎬 Trailer: ${storyTitle}` : story.seo.title}</title>
+        <title>{story.seo.title}</title>
         <meta name="description" content={metaDescription} />
         {story.seo.keywords && (
           <meta
@@ -327,22 +327,19 @@ export default function StoryDetailPage() {
           />
         )}
         <link rel="canonical" href={story.seo.canonical_url || url} />
-        <meta property="og:type" content={isTrailerMode ? "video.other" : "article"} />
+        <meta property="og:type" content="article" />
         <meta property="og:site_name" content="NoorApp" />
         <meta property="og:locale" content="bn_BD" />
         <meta property="og:locale:alternate" content="en_US" />
-        <meta property="og:title" content={isTrailerMode ? `🎬 ${storyTitle} (Audio Trailer)` : (story.seo.open_graph?.title || story.seo.title)} />
-        <meta property="og:description" content={isTrailerMode ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" : (story.seo.open_graph?.description || metaDescription)} />
-        <meta property="og:url" content={isTrailerMode ? trailerUrl : (story?.seo?.canonical_url || url)} />
+        <meta property="og:title" content={story.seo.open_graph?.title || story.seo.title} />
+        <meta property="og:description" content={story.seo.open_graph?.description || metaDescription} />
+        <meta property="og:url" content={story?.seo?.canonical_url || url} />
         <meta property="og:image" content={ogImage} />
         <meta property="og:image:secure_url" content={ogImage} />
         <meta property="og:image:type" content={/\.png(?:\?|$)/i.test(ogImage) ? "image/png" : /\.webp(?:\?|$)/i.test(ogImage) ? "image/webp" : "image/jpeg"} />
         <meta property="og:image:width" content="1200" />
         <meta property="og:image:height" content="630" />
         <meta property="og:image:alt" content={story.title_en} />
-        {isTrailerMode && story.audio_trailer_url && (
-          <meta property="og:video" content={story.audio_trailer_url} />
-        )}
         <meta property="article:section" content={categoryLabel(story.category)} />
         <meta property="article:author" content="NoorApp Editorial Team" />
         {Array.isArray(story.seo.keywords) &&
@@ -351,8 +348,8 @@ export default function StoryDetailPage() {
           ))}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@noorapp" />
-        <meta name="twitter:title" content={isTrailerMode ? `🎬 ${storyTitle} (Trailer)` : (story.seo.open_graph?.title || story.seo.title)} />
-        <meta name="twitter:description" content={isTrailerMode ? "এই হৃদয়স্পর্শী ইসলামিক গল্পটির একটি চমৎকার অডিও ট্রেলার শুনুন।" : (story.seo.open_graph?.description || metaDescription)} />
+        <meta name="twitter:title" content={story.seo.open_graph?.title || story.seo.title} />
+        <meta name="twitter:description" content={story.seo.open_graph?.description || metaDescription} />
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:image:alt" content={story.title_en} />
         <meta name="pinterest:description" content={story.seo.open_graph?.description || metaDescription} />
