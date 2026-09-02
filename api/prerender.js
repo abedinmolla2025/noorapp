@@ -158,6 +158,17 @@ const normalizeDuaDisplayText = (value) => {
   }
   return deduped.join("\n");
 };
+const formatBanglaPronunciation = (value) => {
+  const normalized = normalizeDuaDisplayText(value);
+  if (!normalized) return "";
+  return normalized.split("\n").map((line) => {
+    let formatted = line.trim();
+    if (formatted.length >= 60) formatted = formatted.replace(/\s+(ও|এবং)\s+/g, ", $1 ");
+    if (!/[।!?]$/u.test(formatted)) formatted += "।";
+    return formatted;
+  }).join("\n");
+};
+
 const shortenMetaText = (value, limit) => {
   const text = String(value || "").trim().replace(/\s+/g, " ");
   if (text.length <= limit) return text;
@@ -1060,7 +1071,7 @@ export default async function handler(req, res) {
               <div class="bg-white/5 border border-white/10 rounded-2xl p-6 relative overflow-hidden shadow-sm" style="background-image: ${ISLAMIC_PATTERN}">
                 <div class="absolute inset-0 border border-white/5 rounded-2xl pointer-events-none"></div>
                 <h2 class="text-[10px] font-bold text-amber-400 uppercase tracking-[0.2em] mb-3 opacity-80">উচ্চারণ</h2>
-                <p class="text-xl md:text-2xl leading-[1.8] tracking-wide font-bangla" style="color: #FFFFFF !important; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${esc(normalizeDuaDisplayText(dua.content_pronunciation))}</p>
+                <p class="whitespace-pre-line text-xl md:text-2xl leading-[1.8] tracking-wide font-bangla" style="color: #FFFFFF !important; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${esc(formatBanglaPronunciation(dua.content_pronunciation))}</p>
               </div>
 
               <!-- Meaning Card -->

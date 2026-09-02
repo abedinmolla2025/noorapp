@@ -164,6 +164,23 @@ const normalizeDuaDisplayText = (value: string | null | undefined) => {
 };
 
 // Language-aware text resolver — falls back to Bengali when missing
+const formatBanglaPronunciation = (value: string | null | undefined) => {
+  const normalized = normalizeDuaDisplayText(value);
+  if (!normalized) return "";
+  return normalized
+    .split("\n")
+    .map((line) => {
+      let formatted = line.trim();
+      // Add a readable pause before independent clauses without changing the Arabic source.
+      if (formatted.length >= 60) {
+        formatted = formatted.replace(/\s+(ও|এবং)\s+/g, ", $1 ");
+      }
+      if (!/[।!?]$/u.test(formatted)) formatted += "।";
+      return formatted;
+    })
+    .join("\n");
+};
+
 const getDuaText = (dua: DuaRow, language: DuaLang) => {
   const suf = LANG_SUFFIX[language];
   const titleKey = (suf ? `title${suf}` : "title") as keyof DuaRow;
@@ -176,9 +193,12 @@ const getDuaText = (dua: DuaRow, language: DuaLang) => {
     meaning: normalizeDuaDisplayText(
       (dua[contentKey] as string | null) || dua.content || "",
     ),
-    pronunciation: normalizeDuaDisplayText(
-      (dua[pronKey] as string | null) || dua.content_pronunciation || "",
-    ),
+    pronunciation:
+      language === "bengali"
+        ? formatBanglaPronunciation((dua[pronKey] as string | null) || dua.content_pronunciation || "")
+        : normalizeDuaDisplayText(
+            (dua[pronKey] as string | null) || dua.content_pronunciation || "",
+          ),
   };
 };
 
@@ -706,7 +726,7 @@ const DuaDetailPage = () => {
             <h2 className="flex items-center gap-2 text-xs font-medium text-[hsl(45,93%,58%)] uppercase tracking-wide mb-3">
               <Sparkles className="w-4 h-4" /> {SECTION_LABELS.pronunciation[language]}
             </h2>
-            <p className="text-[#FFFFFF] font-bangla font-medium text-xl md:text-2xl leading-[1.8] tracking-wide drop-shadow-md antialiased">
+            <p className="whitespace-pre-line text-[#FFFFFF] font-bangla font-medium text-xl md:text-2xl leading-[1.8] tracking-wide drop-shadow-md antialiased">
               {text.pronunciation}
             </p>
           </section>
