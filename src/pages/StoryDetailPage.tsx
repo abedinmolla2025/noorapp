@@ -165,18 +165,19 @@ export default function StoryDetailPage() {
       toast({ title: "অডিও এখনো নেই", description: "এই গল্পের সম্পূর্ণ অডিও শিগগিরই যোগ করা হবে।" });
       return;
     }
+    const audioShareUrl = `${url}?trailer=true`;
     const shareText = `🎧 ${storyTitle}\n\nএই সম্পূর্ণ ইসলামিক গল্পের অডিও শুনুন ও শেয়ার করুন।\nগল্পের পেজ: ${url}`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `🎧 ${storyTitle}`, text: shareText, url: story.audio_url });
+        await navigator.share({ title: `🎧 ${storyTitle}`, text: shareText, url: audioShareUrl });
       } else {
-        await navigator.clipboard.writeText(story.audio_url);
-        toast({ title: "পূর্ণ অডিও লিংক কপি হয়েছে", description: "এখন সরাসরি অডিওটি শেয়ার করতে পারবেন।" });
+        await navigator.clipboard.writeText(audioShareUrl);
+        toast({ title: "পূর্ণ অডিও player-এর লিংক কপি হয়েছে", description: "লিংক খুললে সুন্দর full-story audio player দেখা যাবে।" });
       }
     } catch (err) {
       if ((err as DOMException)?.name !== "AbortError") {
-        await navigator.clipboard.writeText(story.audio_url);
-        toast({ title: "পূর্ণ অডিও লিংক কপি হয়েছে", description: "এখন সরাসরি অডিওটি শেয়ার করতে পারবেন।" });
+        await navigator.clipboard.writeText(audioShareUrl);
+        toast({ title: "পূর্ণ অডিও player-এর লিংক কপি হয়েছে", description: "লিংক খুললে সুন্দর full-story audio player দেখা যাবে।" });
       }
     }
   };
