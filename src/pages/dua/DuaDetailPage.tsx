@@ -361,31 +361,34 @@ const DuaDetailPage = () => {
         return;
       }
       setDua(data as unknown as DuaRow);
+      // Render the main Dua immediately; secondary navigation is non-blocking.
+      setLoading(false);
 
-      // Related: same category, exclude self
       const cat = (data as any).category;
-      if (cat) {
-        const { data: rel } = await supabase
-          .from("admin_content")
-          .select("id, slug, title, title_en, title_hi, title_ur, category, subtitle, content_arabic, content_pronunciation, content_pronunciation_en, content_pronunciation_hi, content_pronunciation_ur, content, content_en, content_hi, content_ur, explanation_bn, explanation_en, explanation_hi, explanation_ur, benefits_bn, benefits_en, benefits_hi, benefits_ur, when_to_recite_bn, when_to_recite_en, when_to_recite_hi, when_to_recite_ur, hadith_reference, source_type, reference, authenticity, virtue, virtue_reference, quran_meta, faq, related_duas, recommendation_tags, recommended_moments, og_image_data, seo")
-          .eq("category", cat)
-          .eq("status", "published")
-          .in("content_type", ["dua", "Dua"])
-          .neq("id", (data as any).id)
-          .not("slug", "is", null)
-          .limit(5);
-        if (!cancelled && rel) setRelated(rel as unknown as DuaRow[]);
-      }
+      const relatedPromise = cat
+        ? supabase
+            .from("admin_content")
+            .select("id, slug, title, title_en, title_hi, title_ur, category")
+            .eq("category", cat)
+            .eq("status", "published")
+            .in("content_type", ["dua", "Dua"])
+            .neq("id", (data as any).id)
+            .not("slug", "is", null)
+            .limit(5)
+        : Promise.resolve({ data: null });
 
-      // Prev/Next siblings ordered by created_at across all duas with slug
-      const { data: siblings } = await supabase
+      const siblingsPromise = supabase
         .from("admin_content")
         .select("id, slug, title")
         .eq("status", "published")
         .in("content_type", ["dua", "Dua"])
         .not("slug", "is", null)
         .order("created_at", { ascending: true });
-      if (!cancelled && siblings) {
+
+      const [{ data: rel }, { data: siblings }] = await Promise.all([relatedPromise, siblingsPromise]);
+      if (cancelled) return;
+      if (rel) setRelated(rel as unknown as DuaRow[]);
+      if (siblings) {
         const list = siblings as Array<{ id: string; slug: string | null; title: string | null }>;
         const idx = list.findIndex((s) => s.id === (data as any).id);
         if (idx >= 0) {
@@ -395,8 +398,6 @@ const DuaDetailPage = () => {
           setNextDua(n?.slug ? { slug: n.slug, title: n.title || "পরবর্তী দোয়া" } : null);
         }
       }
-
-      setLoading(false);
     })();
     return () => {
       cancelled = true;
