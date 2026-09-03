@@ -37,6 +37,7 @@ import heroMusa from "@/assets/stories/hero-musa.jpg";
 import heroYusuf from "@/assets/stories/hero-yusuf.jpg";
 
 const SITE = "https://noorapp.in";
+const WAVEFORM_BARS = [35, 58, 44, 72, 50, 82, 62, 40, 76, 54, 68, 46, 88, 56, 70, 42, 64, 78, 48, 60];
 
 const STORY_OG_IMAGES: Record<string, string> = {
   "prophet-adam-story-islam": heroAdam,
@@ -72,6 +73,7 @@ export default function StoryDetailPage() {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [audioError, setAudioError] = useState(false);
+  const [audioLoading, setAudioLoading] = useState(Boolean(story?.audio_url));
   const audioRef = useRef<HTMLAudioElement>(null);
   const location = useLocation();
   const isTrailerMode = new URLSearchParams(location.search).get("trailer") === "true" || location.pathname.endsWith("/trailer");
@@ -85,8 +87,8 @@ export default function StoryDetailPage() {
     setIsPlaying(false);
     setCurrentTime(0);
     setDuration(0);
-    setAudioError(false);
-
+        setAudioError(false);
+    setAudioLoading(Boolean(story?.audio_url));
     if (story?.audio_url) {
       audio.src = story.audio_url;
       audio.load();
@@ -102,7 +104,7 @@ export default function StoryDetailPage() {
 
   const togglePlay = () => {
     const audio = audioRef.current;
-    if (!audio || !story?.audio_url) return;
+    if (!audio || !story?.audio_url || audioLoading) return;
     if (audio.paused) {
       audio.play().catch(() => setAudioError(true));
     } else {
@@ -466,15 +468,16 @@ export default function StoryDetailPage() {
                         
                         {/* Waveform Visualization (More compact) */}
                         <div className="flex items-end justify-center sm:justify-start gap-1 h-8 w-full max-w-xs mx-auto sm:mx-0 opacity-60">
-                          {[...Array(20)].map((_, i) => (
-                            <div 
-                              key={i} 
-                              className={`flex-1 bg-emerald-400 rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`} 
-                              style={{ 
-                                height: isPlaying ? `${30 + Math.random() * 70}%` : '30%',
-                                animationDelay: `${i * 0.05}s`
+                          {WAVEFORM_BARS.map((height, i) => (
+                            <div
+                              key={i}
+                              aria-hidden="true"
+                              className={`flex-1 bg-emerald-400 rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
+                              style={{
+                                height: `${isPlaying ? Math.min(height + 12, 100) : height}%`,
+                                animationDelay: `${i * 0.05}s`,
                               }}
-                            ></div>
+                            />
                           ))}
                         </div>
 
@@ -503,17 +506,22 @@ export default function StoryDetailPage() {
 
                       {/* Right: Controls (Rewind, Play, Forward) - Increased Gaps */}
                       <div className="flex-shrink-0 flex items-center gap-6 sm:gap-10">
-                        <button 
+                        <button
+                          type="button"
                           onClick={() => seekOffset(-10)}
-                          className="p-2 text-emerald-100/60 hover:text-emerald-400 transition-colors"
-                          title="Rewind 10s"
+                          className="p-3 text-emerald-100/60 hover:text-emerald-400 transition-colors rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                          title="১০ সেকেন্ড পিছনে"
+                          aria-label="১০ সেকেন্ড পিছনে"
                         >
                           <RotateCcw className="h-6 w-6 sm:h-8 sm:w-8" />
                         </button>
 
-                        <button 
+                        <button
+                          type="button"
                           onClick={togglePlay}
-                          className="group/btn relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-emerald-500 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-emerald-400 active:scale-95"
+                          disabled={audioLoading}
+                          className="group/btn relative w-16 h-16 sm:w-20 sm:h-20 flex items-center justify-center rounded-full bg-emerald-500 shadow-lg transition-all duration-300 hover:scale-105 hover:bg-emerald-400 active:scale-95 disabled:cursor-wait disabled:opacity-70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                          aria-label={audioLoading ? "অডিও প্রস্তুত হচ্ছে" : isPlaying ? "অডিও pause করুন" : "অডিও চালু করুন"}
                         >
                           <div className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-10"></div>
                           {isPlaying ? (
@@ -526,10 +534,12 @@ export default function StoryDetailPage() {
                           )}
                         </button>
 
-                        <button 
+                        <button
+                          type="button"
                           onClick={() => seekOffset(10)}
-                          className="p-2 text-emerald-100/60 hover:text-emerald-400 transition-colors"
-                          title="Forward 10s"
+                          className="p-3 text-emerald-100/60 hover:text-emerald-400 transition-colors rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400"
+                          title="১০ সেকেন্ড সামনে"
+                          aria-label="১০ সেকেন্ড সামনে"
                         >
                           <RotateCw className="h-6 w-6 sm:h-8 sm:w-8" />
                         </button>
@@ -541,8 +551,13 @@ export default function StoryDetailPage() {
                     ref={audioRef}
                     preload="metadata"
                     className="hidden"
+                    onLoadStart={() => {
+                      setAudioLoading(true);
+                      setAudioError(false);
+                    }}
                     onLoadedMetadata={(event) => {
                       setDuration(event.currentTarget.duration);
+                      setAudioLoading(false);
                       setAudioError(false);
                     }}
                     onTimeUpdate={(event) => setCurrentTime(event.currentTarget.currentTime)}
@@ -554,12 +569,18 @@ export default function StoryDetailPage() {
                     }}
                     onError={() => {
                       setIsPlaying(false);
+                      setAudioLoading(false);
                       setAudioError(true);
                     }}
                   />
+                  {audioLoading && !audioError && (
+                    <p className="mt-4 text-center text-xs text-emerald-200/70" role="status">
+                      অডিও প্রস্তুত হচ্ছে…
+                    </p>
+                  )}
                   {audioError && (
-                    <p className="mt-4 text-center text-xs text-red-300">
-                      অডিওটি চালানো যাচ্ছে না। URL, public access এবং CORS সেটিংস পরীক্ষা করুন।
+                    <p className="mt-4 text-center text-xs text-red-300" role="alert">
+                      অডিওটি এখন চালানো যাচ্ছে না। কিছুক্ষণ পরে আবার চেষ্টা করুন।
                     </p>
                   )}
                 </div>
@@ -606,7 +627,7 @@ export default function StoryDetailPage() {
                 <p className="font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2">
                   <Share2 className="h-4 w-4" /> সম্পূর্ণ গল্পের অডিও শেয়ার করুন
                 </p>
-                <p className="text-xs text-muted-foreground mt-1">বাটনে চাপলে সরাসরি পুরো audio link share বা copy হবে।</p>
+                <p className="text-xs text-muted-foreground mt-1">বাটনে চাপলে cover, গল্প ও full-story audio player-সহ একটি share link তৈরি হবে।</p>
               </div>
               <Button onClick={handleAudioShare} className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white shrink-0">
                 <Share2 className="h-4 w-4" /> Full Audio Share
