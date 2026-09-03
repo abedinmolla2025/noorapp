@@ -828,7 +828,7 @@ const DuaDetailPage = () => {
         {(dua.authenticity || dua.virtue || dua.virtue_reference || dua.subtitle) && (
           <section className="bg-[hsl(158,55%,25%)]/70 rounded-2xl p-5 border border-[hsl(45,93%,58%)]/20 space-y-4">
             {dua.subtitle && <p className="text-white/90 text-base leading-relaxed">{dua.subtitle}</p>}
-            {dua.authenticity && (
+            {dua.authenticity && dua.source_type !== "Quran" && (
               <div>
                 <h2 className="text-xs font-semibold text-[hsl(45,93%,58%)] uppercase tracking-wide mb-2">বিশুদ্ধতা ও সম্পাদনা নোট</h2>
                 <p className="text-white/85 leading-relaxed">{dua.authenticity}</p>
@@ -838,7 +838,9 @@ const DuaDetailPage = () => {
               <div>
                 <h2 className="text-xs font-semibold text-[hsl(45,93%,58%)] uppercase tracking-wide mb-2">ফজিলত ও প্রাসঙ্গিকতা</h2>
                 <p className="text-white/85 leading-relaxed">{dua.virtue}</p>
-                {dua.virtue_reference && <p className="text-white/60 text-sm mt-2">রেফারেন্স: {dua.virtue_reference}</p>}
+                {dua.virtue_reference && dua.virtue_reference !== "Quran 40:60" && (
+                  <p className="text-white/60 text-sm mt-2">রেফারেন্স: {dua.virtue_reference}</p>
+                )}
               </div>
             )}
           </section>
