@@ -92,7 +92,7 @@ export async function exportAllDuasFromDbToJson(opts?: {
   const filename = opts?.filename ?? "duas-all.json";
   const pageSize = Math.max(100, Math.min(opts?.pageSize ?? 1000, 1000));
 
-  const out: ExportedDuaRow[] = [];
+  const out: Record<string, unknown>[] = [];
   let from = 0;
 
   // eslint-disable-next-line no-constant-condition
@@ -110,72 +110,9 @@ export async function exportAllDuasFromDbToJson(opts?: {
     const rows = (data ?? []) as any[];
 
     for (const r of rows) {
-      out.push({
-        title: (r.title ?? "").trim(),
-        title_arabic: r.title_arabic ?? undefined,
-        title_en: r.title_en ?? undefined,
-        title_hi: r.title_hi ?? undefined,
-        title_ur: r.title_ur ?? undefined,
-
-        content_arabic: r.content_arabic ?? undefined,
-        content_bn: r.content ?? undefined,
-        content_en: r.content_en ?? undefined,
-        content_hi: r.content_hi ?? undefined,
-        content_ur: r.content_ur ?? undefined,
-
-        pronunciation: r.content_pronunciation ?? undefined,
-        pronunciation_en: r.content_pronunciation_en ?? undefined,
-        pronunciation_hi: r.content_pronunciation_hi ?? undefined,
-        pronunciation_ur: r.content_pronunciation_ur ?? undefined,
-
-        category: r.category ?? undefined,
-        slug: r.slug ?? undefined,
-        
-        source_type: r.source_type ?? undefined,
-        reference: r.reference ?? undefined,
-        hadith_reference: r.hadith_reference ?? undefined,
-        explanation_bn: r.explanation_bn ?? undefined,
-        explanation_en: r.explanation_en ?? undefined,
-        explanation_hi: r.explanation_hi ?? undefined,
-        explanation_ur: r.explanation_ur ?? undefined,
-        benefits_bn: r.benefits_bn ?? undefined,
-        benefits_en: r.benefits_en ?? undefined,
-        benefits_hi: r.benefits_hi ?? undefined,
-        benefits_ur: r.benefits_ur ?? undefined,
-        when_to_recite_bn: r.when_to_recite_bn ?? undefined,
-        when_to_recite_en: r.when_to_recite_en ?? undefined,
-        when_to_recite_hi: r.when_to_recite_hi ?? undefined,
-        when_to_recite_ur: r.when_to_recite_ur ?? undefined,
-        subtitle: r.subtitle ?? undefined,
-        authenticity: r.authenticity ?? undefined,
-        difficulty: r.difficulty ?? undefined,
-        time_required: r.time_required ?? undefined,
-        hook: r.hook ?? undefined,
-        share_text: r.share_text ?? undefined,
-        virtue: r.virtue ?? undefined,
-        virtue_reference: r.virtue_reference ?? undefined,
-        viral_score: r.viral_score ?? undefined,
-        audio_url: r.audio_url ?? undefined,
-        emotion: r.emotion ?? undefined,
-        user_intents: r.user_intents ?? undefined,
-        recommendation_tags: r.recommendation_tags ?? undefined,
-        recommended_moments: r.recommended_moments ?? undefined,
-        semantic_entities: r.semantic_entities ?? undefined,
-        normalized_surah_names: r.normalized_surah_names ?? undefined,
-        related_duas: r.related_duas ?? undefined,
-        hook_variants: r.hook_variants ?? undefined,
-        social: r.social ?? undefined,
-        og_image_data: r.og_image_data ?? undefined,
-        seo: r.seo ?? undefined,
-        quran_meta: r.quran_meta ?? undefined,
-        category_hierarchy: r.category_hierarchy ?? undefined,
-        faq: r.faq ?? undefined,
-        search_aliases: r.search_aliases ?? undefined,
-        image_url: r.image_url ?? undefined,
-        
-        source: r.metadata?.source,
-        extras: r.metadata,
-      });
+      // Keep every column exactly as returned by Supabase, including nulls,
+      // nested JSON, metadata, timestamps, IDs and any future schema fields.
+      out.push(r as Record<string, unknown>);
     }
 
     if (rows.length < pageSize) break;
