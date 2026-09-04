@@ -34,7 +34,7 @@ export function StoryAudioUrlInput({ value, onChange }: StoryAudioUrlInputProps)
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between gap-3">
-        <Label htmlFor="story-audio-url">Story Audio URL (direct MP3)</Label>
+        <Label htmlFor="story-audio-url">Story Audio URL (direct MP3/WAV)</Label>
         {trimmedValue && (
           <div className="flex items-center gap-2">
             {valid && (
@@ -73,7 +73,7 @@ export function StoryAudioUrlInput({ value, onChange }: StoryAudioUrlInputProps)
         type="url"
         value={value}
         onChange={(event) => onChange(event.target.value)}
-        placeholder="https://cdn.example.com/noorapp/story-01.mp3"
+        placeholder="https://cdn.example.com/noorapp/story-01.mp3 বা .wav"
         className="font-mono text-xs"
         inputMode="url"
         autoComplete="off"
@@ -85,7 +85,7 @@ export function StoryAudioUrlInput({ value, onChange }: StoryAudioUrlInputProps)
           <div className="space-y-1 text-blue-900 dark:text-blue-200">
             <p className="font-medium">Use a public direct audio URL</p>
             <p className="text-xs leading-relaxed">
-              Cloudflare R2 বা অন্য hosting থেকে পাওয়া সরাসরি <code>.mp3</code> URL দিন। SoundCloud embed code বা iframe এখানে আর প্রয়োজন নেই। URL-টি public হতে হবে এবং browser-এর জন্য audio streaming ও CORS অনুমোদিত থাকা উচিত।
+              Cloudflare R2 বা অন্য hosting থেকে পাওয়া সরাসরি <code>.mp3</code> বা <code>.wav</code> URL দিন। SoundCloud embed code বা iframe এখানে আর প্রয়োজন নেই। URL-টি public হতে হবে এবং byte-range streaming ও CORS অনুমোদিত থাকা উচিত, যাতে seek ও voice waveform দুটিই নির্ভরযোগ্যভাবে কাজ করে।
             </p>
           </div>
         </div>

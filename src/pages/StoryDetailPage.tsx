@@ -18,6 +18,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import BottomNavigation from "@/components/BottomNavigation";
 import FooterSection from "@/components/FooterSection";
+import StoryWaveform from "@/components/story/StoryWaveform";
+import { useVoiceWaveform } from "@/hooks/useVoiceWaveform";
 import {
   categoryLabel,
   estimateReadingMinutes,
@@ -37,7 +39,10 @@ import heroMusa from "@/assets/stories/hero-musa.jpg";
 import heroYusuf from "@/assets/stories/hero-yusuf.jpg";
 
 const SITE = "https://noorapp.in";
-const WAVEFORM_BARS = [35, 58, 44, 72, 50, 82, 62, 40, 76, 54, 68, 46, 88, 56, 70, 42, 64, 78, 48, 60];
+function getAudioPlaybackUrl(audioUrl?: string): string {
+  if (!audioUrl) return "";
+  return `/api/audio-proxy?url=${encodeURIComponent(audioUrl)}`;
+}
 
 const STORY_OG_IMAGES: Record<string, string> = {
   "prophet-adam-story-islam": heroAdam,
@@ -75,6 +80,7 @@ export default function StoryDetailPage() {
   const [audioError, setAudioError] = useState(false);
   const [audioLoading, setAudioLoading] = useState(Boolean(story?.audio_url));
   const audioRef = useRef<HTMLAudioElement>(null);
+  const { levels, prepare: prepareWaveform } = useVoiceWaveform(audioRef, isPlaying);
   const location = useLocation();
   const isTrailerMode = new URLSearchParams(location.search).get("trailer") === "true" || location.pathname.endsWith("/trailer");
 
@@ -90,7 +96,7 @@ export default function StoryDetailPage() {
         setAudioError(false);
     setAudioLoading(Boolean(story?.audio_url));
     if (story?.audio_url) {
-      audio.src = story.audio_url;
+      audio.src = getAudioPlaybackUrl(story.audio_url);
       audio.load();
     } else {
       audio.removeAttribute("src");
@@ -106,25 +112,41 @@ export default function StoryDetailPage() {
     const audio = audioRef.current;
     if (!audio || !story?.audio_url || audioLoading) return;
     if (audio.paused) {
+      prepareWaveform();
       audio.play().catch(() => setAudioError(true));
     } else {
       audio.pause();
     }
   };
 
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = Number(e.target.value);
+  const seekToTime = (time: number) => {
     const audio = audioRef.current;
     if (!audio || !Number.isFinite(time)) return;
-    audio.currentTime = time;
-    setCurrentTime(time);
+    audio.currentTime = Math.max(0, Math.min(audio.duration || 0, time));
+    setCurrentTime(audio.currentTime);
+  };
+
+  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
+    seekToTime(Number(e.target.value));
+  };
+
+  const handleWaveformSeek = (progress: number) => {
+    seekToTime(progress * (duration || 0));
   };
 
   const seekOffset = (seconds: number) => {
     const audio = audioRef.current;
     if (!audio) return;
-    audio.currentTime = Math.max(0, Math.min(audio.duration || 0, audio.currentTime + seconds));
-    setCurrentTime(audio.currentTime);
+    seekToTime(audio.currentTime + seconds);
+  };
+
+  const retryAudio = () => {
+    const audio = audioRef.current;
+    if (!audio || !story.audio_url) return;
+    setAudioError(false);
+    setAudioLoading(true);
+    audio.src = getAudioPlaybackUrl(story.audio_url);
+    audio.load();
   };
 
   const formatTime = (seconds: number) => {
@@ -239,11 +261,11 @@ export default function StoryDetailPage() {
             {story.audio_url ? (
               <div className="space-y-6">
                 <div className="relative group/full-audio-player p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <audio
+                    <audio
                     controls
                     autoPlay
                     className="w-full h-12 rounded-full accent-emerald-500"
-                    src={story.audio_url}
+                    src={getAudioPlaybackUrl(story.audio_url)}
                   >
                     Your browser does not support the audio element.
                   </audio>
@@ -466,19 +488,18 @@ export default function StoryDetailPage() {
                           {lang === "bn" ? story.title_bn : story.title_en}
                         </h4>
                         
-                        {/* Waveform Visualization (More compact) */}
-                        <div className="flex items-end justify-center sm:justify-start gap-1 h-8 w-full max-w-xs mx-auto sm:mx-0 opacity-60">
-                          {WAVEFORM_BARS.map((height, i) => (
-                            <div
-                              key={i}
-                              aria-hidden="true"
-                              className={`flex-1 bg-emerald-400 rounded-full transition-all duration-300 ${isPlaying ? 'animate-pulse' : ''}`}
-                              style={{
-                                height: `${isPlaying ? Math.min(height + 12, 100) : height}%`,
-                                animationDelay: `${i * 0.05}s`,
-                              }}
-                            />
-                          ))}
+                        {/* Voice-reactive waveform: bars are driven by the live audio analyser. */}
+                        <div className="w-full max-w-lg mx-auto sm:mx-0 space-y-2">
+                          <div className="flex items-center justify-between px-1 text-[9px] font-semibold uppercase tracking-[0.22em] text-emerald-200/55">
+                            <span>{isPlaying ? "Voice visualizer" : "Audio waveform"}</span>
+                            <span>{isPlaying ? "Live" : "Ready"}</span>
+                          </div>
+                          <StoryWaveform
+                            levels={levels}
+                            progress={duration > 0 ? currentTime / duration : 0}
+                            isPlaying={isPlaying}
+                            onSeek={duration > 0 ? handleWaveformSeek : undefined}
+                          />
                         </div>
 
                         {/* Progress Bar */}
@@ -579,9 +600,16 @@ export default function StoryDetailPage() {
                     </p>
                   )}
                   {audioError && (
-                    <p className="mt-4 text-center text-xs text-red-300" role="alert">
-                      অডিওটি এখন চালানো যাচ্ছে না। কিছুক্ষণ পরে আবার চেষ্টা করুন।
-                    </p>
+                    <div className="mt-4 flex flex-wrap items-center justify-center gap-3 text-center" role="alert">
+                      <p className="text-xs text-red-300">অডিওটি এখন চালানো যাচ্ছে না। কিছুক্ষণ পরে আবার চেষ্টা করুন।</p>
+                      <button
+                        type="button"
+                        onClick={retryAudio}
+                        className="rounded-full border border-red-300/30 px-3 py-1 text-xs font-semibold text-red-100 transition-colors hover:bg-red-300/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-200"
+                      >
+                        আবার চেষ্টা করুন
+                      </button>
+                    </div>
                   )}
                 </div>
               </div>
