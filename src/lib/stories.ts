@@ -155,27 +155,24 @@ function rowToStory(row: any, index: number): Story {
   };
 }
 
-async function loadStoriesFromDb(): Promise<Story[] | null> {
-  try {
-    const { supabase } = await import("@/integrations/supabase/client");
-    const request = supabase
-      .from("admin_content")
-      .select("*")
-      .eq("content_type", "story")
-      .eq("status", "published")
-      .order("created_at", { ascending: true });
-    const timeout = new Promise<never>((_, reject) =>
-      window.setTimeout(() => reject(new Error("stories database timeout")), 4500),
-    );
-    const { data, error } = await Promise.race([request, timeout]);
-    if (error || !data?.length) return null;
-    // Do not expose the known internal placeholder record as public editorial content.
-    return (data as any[])
-      .filter((r) => r.slug && r.slug !== "test-story-manus")
-      .map(rowToStory);
-  } catch {
-    return null;
-  }
+async function loadStoriesFromDb(): Promise<Story[]> {
+  const { supabase } = await import("@/integrations/supabase/client");
+  const request = supabase
+    .from("admin_content")
+    .select("*")
+    .eq("content_type", "story")
+    .eq("status", "published")
+    .order("created_at", { ascending: true });
+  const timeout = new Promise<never>((_, reject) =>
+    window.setTimeout(() => reject(new Error("stories database timeout")), 10000),
+  );
+  const { data, error } = await Promise.race([request, timeout]);
+  if (error) throw error;
+  if (!data?.length) throw new Error("No published Stories returned from Supabase");
+  // Production Stories, including audio_url, must always come from the database.
+  return (data as any[])
+    .filter((r) => r.slug && r.slug !== "test-story-manus")
+    .map(rowToStory);
 }
 
 let cache: Story[] | null = null;
@@ -184,55 +181,16 @@ let pending: Promise<Story[]> | null = null;
 export async function loadStories(): Promise<Story[]> {
   if (cache) return cache;
   if (pending) return pending;
-  pending = (async () => {
-    // 1) Admin-managed stories (database) win when present
-    const fromDb = await loadStoriesFromDb();
-    if (fromDb?.length) {
-      cache = fromDb;
+  pending = loadStoriesFromDb()
+    .then((stories) => {
+      cache = stories;
       pending = null;
-      return fromDb;
-    }
-    // 2) Static JSON, 3) bundled copy
-    try {
-      const res = await fetch("/stories.json", { cache: "force-cache" });
-      const data = (await res.json()) as Story[];
-      if (Array.isArray(data) && data.length) {
-        const normalized = data.filter((story) => story.slug !== "test-story-manus").map((story) => ({
-          ...story,
-          content_bn: cleanStoryContent(story.content_bn),
-          content_en: cleanStoryContent(story.content_en),
-          content_ur: cleanStoryContent(story.content_ur),
-          og_image_url:
-            story.og_image_url ??
-            story.og_image_data?.url ??
-            story.og_image_data?.image_url ??
-            story.image_url ??
-            story.seo?.open_graph?.["og:image"],
-        }));
-        cache = normalized;
-        pending = null;
-        return normalized;
-      }
-      throw new Error("empty stories.json");
-    } catch {
-      const mod = await import("@/data/stories.json");
-      const normalized = (mod.default as unknown as Story[]).filter((story) => story.slug !== "test-story-manus").map((story) => ({
-        ...story,
-        content_bn: cleanStoryContent(story.content_bn),
-        content_en: cleanStoryContent(story.content_en),
-        content_ur: cleanStoryContent(story.content_ur),
-        og_image_url:
-          story.og_image_url ??
-          story.og_image_data?.url ??
-          story.og_image_data?.image_url ??
-          story.image_url ??
-          story.seo?.open_graph?.["og:image"],
-      }));
-      cache = normalized;
+      return stories;
+    })
+    .catch((error) => {
       pending = null;
-      return normalized;
-    }
-  })();
+      throw error;
+    });
   return pending;
 }
 
