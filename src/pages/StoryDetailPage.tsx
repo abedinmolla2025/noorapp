@@ -92,6 +92,20 @@ export default function StoryDetailPage() {
   const { levels, prepare: prepareWaveform } = useVoiceWaveform(audioRef, isPlaying);
   const location = useLocation();
   const isTrailerMode = new URLSearchParams(location.search).get("trailer") === "true" || location.pathname.endsWith("/trailer");
+  const audioRecommendations = story
+    ? stories
+        .filter((candidate) => candidate.slug !== story.slug && Boolean(candidate.audio_url?.trim()))
+        .sort((a, b) => Number(b.category === story.category) - Number(a.category === story.category))
+        .slice(0, 3)
+    : [];
+  const featureRecommendations = [
+    { href: "/dua", label: "দোয়া ও যিকির", description: "প্রতিদিনের গুরুত্বপূর্ণ দোয়া", icon: "🤲" },
+    { href: "/quran", label: "আল-কুরআন", description: "পড়ুন, শুনুন ও শিখুন", icon: "📖" },
+    { href: "/hadith", label: "হাদিস", description: "বিশুদ্ধ হাদিসের সংগ্রহ", icon: "✨" },
+    { href: "/quiz", label: "ইসলামিক কুইজ", description: "জ্ঞান যাচাই করুন", icon: "🧠" },
+    { href: "/prayer-guide", label: "নামাজ গাইড", description: "সঠিকভাবে নামাজ শিখুন", icon: "🕌" },
+    { href: "/tasbih", label: "ডিজিটাল তাসবিহ", description: "যিকিরের হিসাব রাখুন", icon: "📿" },
+  ];
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -291,7 +305,7 @@ export default function StoryDetailPage() {
             </div>
           </div>
 
-          <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-3xl p-6 sm:p-10 text-center space-y-8">
+          <div className="relative rounded-[1.75rem] overflow-hidden shadow-[0_24px_48px_-18px_rgba(0,0,0,0.8)] border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-3xl p-4 sm:p-6 text-center space-y-5">
             <div className="relative mx-auto w-36 h-36 sm:w-52 sm:h-52 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl">
               <img src={ogImage} alt="Thumbnail" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
@@ -370,11 +384,42 @@ export default function StoryDetailPage() {
               <p className="text-red-400">এই গল্পের playable full audio বর্তমানে উপলভ্য নয়।</p>
             )}
 
-            <Button asChild size="lg" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-8 text-xl font-bold">
+                        <Button asChild size="lg" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-4 text-base font-bold">
               <Link to={url}>সম্পূর্ণ গল্পটি পড়ুন ও শুনুন</Link>
             </Button>
           </div>
-          
+
+          {audioRecommendations.length > 0 && (
+            <section className="space-y-3" aria-labelledby="recommended-audio-heading">
+              <div className="flex items-end justify-between gap-3 px-1">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">আরও শুনুন</p>
+                  <h2 id="recommended-audio-heading" className="text-lg font-black text-white">Recommended Story Audio</h2>
+                </div>
+                <Link to="/stories" className="text-xs font-bold text-emerald-300 hover:text-emerald-200">সব গল্প</Link>
+              </div>
+              <div className="grid gap-2.5">
+                {audioRecommendations.map((recommended) => (
+                  <Link key={recommended.slug} to={`/stories/${recommended.slug}?trailer=true`} className="group flex items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.06] p-2.5 transition hover:border-emerald-400/40 hover:bg-emerald-400/10">
+                    <img src={recommended.og_image_url || recommended.image_url || "/og-default.png"} alt="" className="h-14 w-14 shrink-0 rounded-xl object-cover" />
+                    <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-white group-hover:text-emerald-200">{recommended.title_bn}</span><span className="mt-1 block text-[11px] text-white/45">🎧 সম্পূর্ণ অডিও শুনুন</span></span>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-emerald-300" />
+                  </Link>
+                ))}
+              </div>
+            </section>
+          )}
+
+          <section className="space-y-3" aria-labelledby="noor-features-heading">
+            <div className="px-1"><p className="text-[10px] font-black uppercase tracking-[0.2em] text-emerald-300">NoorApp-এ আরও</p><h2 id="noor-features-heading" className="text-lg font-black text-white">আপনার ইসলামিক সঙ্গী</h2></div>
+            <div className="grid grid-cols-2 gap-2">
+              {featureRecommendations.map((feature) => (
+                <Link key={feature.href} to={feature.href} className="rounded-2xl border border-white/10 bg-white/[0.05] p-3 transition hover:border-emerald-400/40 hover:bg-emerald-400/10">
+                  <span className="text-xl" aria-hidden="true">{feature.icon}</span><span className="mt-1 block text-xs font-black text-white">{feature.label}</span><span className="mt-0.5 block text-[10px] leading-4 text-white/45">{feature.description}</span>
+                </Link>
+              ))}
+            </div>
+          </section>
           <p className="text-center text-white/20 text-xs tracking-widest uppercase">
             © 2026 NoorApp Islamic Companion
           </p>
