@@ -70,6 +70,7 @@ export default function StoryDetailPage() {
   const [lang, setLang] = useState<"en" | "bn">("bn");
 
   const story = stories.find((s) => s.slug === slug);
+  const hasAudioSource = Boolean(story?.audio_url?.trim());
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior });
@@ -106,7 +107,7 @@ export default function StoryDetailPage() {
     return () => {
       audio.pause();
     };
-  }, [story?.audio_url]);
+  }, [story?.slug, story?.audio_url]);
 
   const togglePlay = () => {
     const audio = audioRef.current;
@@ -185,8 +186,8 @@ export default function StoryDetailPage() {
   const ogImage = story.updated_at ? cacheBustUrl(ogImageBase, story.updated_at) : ogImageBase;
 
   const handleAudioShare = async () => {
-    if (!story.audio_url) {
-      toast({ title: "অডিও এখনো নেই", description: "এই গল্পের সম্পূর্ণ অডিও শিগগিরই যোগ করা হবে।" });
+    if (!hasAudioSource || audioError) {
+      toast({ title: "অডিও শেয়ার করা যাচ্ছে না", description: "এই গল্পের playable audio source এখনো প্রস্তুত নয়।" });
       return;
     }
     const audioShareUrl = `${url}?trailer=true`;
@@ -258,14 +259,23 @@ export default function StoryDetailPage() {
               {storyTitle}
             </h1>
 
-            {story.audio_url ? (
+            {hasAudioSource && !audioError ? (
               <div className="space-y-6">
                 <div className="relative group/full-audio-player p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                    <audio
+                  <audio
+                    ref={audioRef}
                     controls
                     autoPlay
                     className="w-full h-12 rounded-full accent-emerald-500"
                     src={getAudioPlaybackUrl(story.audio_url)}
+                    onLoadedMetadata={() => {
+                      setAudioLoading(false);
+                      setDuration(audioRef.current?.duration || 0);
+                    }}
+                    onError={() => {
+                      setAudioLoading(false);
+                      setAudioError(true);
+                    }}
                   >
                     Your browser does not support the audio element.
                   </audio>
@@ -275,7 +285,7 @@ export default function StoryDetailPage() {
                 </Button>
               </div>
             ) : (
-              <p className="text-red-400">Full audio not available.</p>
+              <p className="text-red-400">এই গল্পের playable full audio বর্তমানে উপলভ্য নয়।</p>
             )}
 
             <Button asChild size="lg" className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-8 text-xl font-bold">
@@ -649,19 +659,21 @@ export default function StoryDetailPage() {
           )}
 
           {/* Full Story Audio Share */}
-          <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30 p-4">
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <p className="font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2">
-                  <Share2 className="h-4 w-4" /> সম্পূর্ণ গল্পের অডিও শেয়ার করুন
-                </p>
-                <p className="text-xs text-muted-foreground mt-1">বাটনে চাপলে cover, গল্প ও full-story audio player-সহ একটি share link তৈরি হবে।</p>
+          {hasAudioSource && !audioError && (
+            <div className="rounded-2xl border border-emerald-200/70 bg-emerald-50/70 dark:border-emerald-900/60 dark:bg-emerald-950/30 p-4">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold text-emerald-900 dark:text-emerald-100 flex items-center gap-2">
+                    <Share2 className="h-4 w-4" /> সম্পূর্ণ গল্পের অডিও শেয়ার করুন
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">বাটনে চাপলে cover, গল্প ও full-story audio player-সহ একটি share link তৈরি হবে।</p>
+                </div>
+                <Button onClick={handleAudioShare} className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white shrink-0">
+                  <Share2 className="h-4 w-4" /> Full Audio Share
+                </Button>
               </div>
-              <Button onClick={handleAudioShare} className="gap-2 bg-emerald-700 hover:bg-emerald-800 text-white shrink-0">
-                <Share2 className="h-4 w-4" /> Full Audio Share
-              </Button>
             </div>
-          </div>
+          )}
 
           {/* Body */}
           <div className={`space-y-4 leading-relaxed ${lang === "bn" ? "font-[Noto_Sans_Bengali]" : "prose prose-emerald max-w-none dark:prose-invert"}`}>
