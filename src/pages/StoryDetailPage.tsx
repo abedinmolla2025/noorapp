@@ -190,19 +190,20 @@ export default function StoryDetailPage() {
       toast({ title: "অডিও শেয়ার করা যাচ্ছে না", description: "এই গল্পের playable audio source এখনো প্রস্তুত নয়।" });
       return;
     }
-    const audioShareUrl = `${url}?trailer=true`;
-    const shareText = `🎧 ${storyTitle}\n\nএই সম্পূর্ণ ইসলামিক গল্পের অডিও শুনুন ও শেয়ার করুন।\nগল্পের পেজ: ${url}`;
+    // Send one canonical Story URL. The Story page itself contains the full player,
+    // while its server-rendered OG metadata provides the social preview card.
+    const shareText = `🎧 ${storyTitle}\n\nএই সম্পূর্ণ ইসলামিক গল্পের অডিও শুনুন ও শেয়ার করুন।`;
     try {
       if (navigator.share) {
-        await navigator.share({ title: `🎧 ${storyTitle}`, text: shareText, url: audioShareUrl });
+        await navigator.share({ title: `🎧 ${storyTitle}`, text: shareText, url });
       } else {
-        await navigator.clipboard.writeText(audioShareUrl);
-        toast({ title: "পূর্ণ অডিও player-এর লিংক কপি হয়েছে", description: "লিংক খুললে সুন্দর full-story audio player দেখা যাবে।" });
+        await navigator.clipboard.writeText(`${shareText}\n${url}`);
+        toast({ title: "পূর্ণ অডিও player-এর লিংক কপি হয়েছে", description: "একটি canonical Story link কপি হয়েছে।" });
       }
     } catch (err) {
       if ((err as DOMException)?.name !== "AbortError") {
-        await navigator.clipboard.writeText(audioShareUrl);
-        toast({ title: "পূর্ণ অডিও player-এর লিংক কপি হয়েছে", description: "লিংক খুললে সুন্দর full-story audio player দেখা যাবে।" });
+        await navigator.clipboard.writeText(`${shareText}\n${url}`);
+        toast({ title: "পূর্ণ অডিও player-এর লিংক কপি হয়েছে", description: "একটি canonical Story link কপি হয়েছে।" });
       }
     }
   };
