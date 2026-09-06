@@ -9,6 +9,11 @@ import {
   Languages,
   Quote,
   Share2,
+  Play,
+  Pause,
+  Volume2,
+  Gauge,
+  Moon,
   Sparkles,
   RotateCcw,
   RotateCw,
@@ -80,6 +85,9 @@ export default function StoryDetailPage() {
   const [duration, setDuration] = useState(0);
   const [audioError, setAudioError] = useState(false);
   const [audioLoading, setAudioLoading] = useState(Boolean(story?.audio_url));
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [sleepTimerMinutes, setSleepTimerMinutes] = useState<number | null>(null);
+  const sleepTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const { levels, prepare: prepareWaveform } = useVoiceWaveform(audioRef, isPlaying);
   const location = useLocation();
@@ -148,6 +156,42 @@ export default function StoryDetailPage() {
     setAudioLoading(true);
     audio.src = getAudioPlaybackUrl(story.audio_url);
     audio.load();
+  };
+
+  const toggleFullAudioPlay = () => {
+    const audio = audioRef.current;
+    if (!audio || !story?.audio_url || audioLoading) return;
+    prepareWaveform();
+    if (audio.paused) {
+      audio.play().catch(() => setAudioError(true));
+    } else {
+      audio.pause();
+    }
+  };
+
+  const handleFullAudioSeek = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const audio = audioRef.current;
+    if (!audio) return;
+    const nextTime = Number(event.target.value);
+    audio.currentTime = nextTime;
+    setCurrentTime(nextTime);
+  };
+
+  const changePlaybackRate = () => {
+    const nextRate = playbackRate >= 2 ? 1 : playbackRate + 0.25;
+    setPlaybackRate(nextRate);
+    if (audioRef.current) audioRef.current.playbackRate = nextRate;
+  };
+
+  const setFullAudioSleepTimer = (minutes: number | null) => {
+    if (sleepTimerRef.current) clearTimeout(sleepTimerRef.current);
+    setSleepTimerMinutes(minutes);
+    if (minutes && audioRef.current) {
+      sleepTimerRef.current = setTimeout(() => {
+        audioRef.current?.pause();
+        setSleepTimerMinutes(null);
+      }, minutes * 60 * 1000);
+    }
   };
 
   const formatTime = (seconds: number) => {
@@ -262,25 +306,59 @@ export default function StoryDetailPage() {
             </h1>
 
             {hasAudioSource && !audioError ? (
-              <div className="space-y-6">
-                <div className="relative group/full-audio-player p-4 rounded-3xl bg-white/5 border border-white/10 backdrop-blur-sm">
-                  <audio
-                    ref={audioRef}
-                    controls
-                    autoPlay
-                    className="w-full h-12 rounded-full accent-emerald-500"
-                    src={getAudioPlaybackUrl(story.audio_url)}
-                    onLoadedMetadata={() => {
-                      setAudioLoading(false);
-                      setDuration(audioRef.current?.duration || 0);
-                    }}
-                    onError={() => {
-                      setAudioLoading(false);
-                      setAudioError(true);
-                    }}
-                  >
-                    Your browser does not support the audio element.
-                  </audio>
+              <div className="space-y-6 text-left">
+                <audio
+                  ref={audioRef}
+                  autoPlay
+                  className="sr-only"
+                  src={getAudioPlaybackUrl(story.audio_url)}
+                  onLoadedMetadata={() => {
+                    setAudioLoading(false);
+                    setDuration(audioRef.current?.duration || 0);
+                    if (audioRef.current) audioRef.current.playbackRate = playbackRate;
+                  }}
+                  onTimeUpdate={() => setCurrentTime(audioRef.current?.currentTime || 0)}
+                  onPlay={() => setIsPlaying(true)}
+                  onPause={() => setIsPlaying(false)}
+                  onEnded={() => setIsPlaying(false)}
+                  onError={() => {
+                    setAudioLoading(false);
+                    setAudioError(true);
+                  }}
+                >
+                  Your browser does not support the audio element.
+                </audio>
+                <div className="rounded-[2rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-950/80 via-slate-950/80 to-black/80 p-5 sm:p-7 shadow-2xl">
+                  <div className="flex items-center gap-3 mb-5">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300"><Volume2 className="h-4 w-4" /></span>
+                    <div>
+                      <p className="text-[10px] font-black uppercase tracking-[0.22em] text-emerald-300">Noor Audio Experience</p>
+                      <p className="text-xs text-white/50">মনোযোগ দিয়ে শুনুন, শিখুন ও ভাবুন</p>
+                    </div>
+                    <span className="ml-auto rounded-full border border-emerald-400/20 px-3 py-1 text-[11px] font-bold text-emerald-200">{audioLoading ? "লোড হচ্ছে…" : "Ready"}</span>
+                  </div>
+                  <div className="relative h-20 overflow-hidden rounded-2xl bg-black/20 px-3 py-4">
+                    <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-80" aria-label="অডিও waveform">
+                      {levels.slice(0, 64).map((level, index) => (
+                        <span key={index} className="w-1 rounded-full bg-gradient-to-t from-emerald-500 to-teal-200 transition-all duration-150" style={{ height: `${Math.max(12, Math.min(48, level * 3 + 12))}px` }} />
+                      ))}
+                    </div>
+                  </div>
+                  <div className="mt-4 flex items-center justify-between text-xs font-medium text-white/55">
+                    <span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span>
+                  </div>
+                  <input aria-label="অডিও অগ্রগতি" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} onChange={handleFullAudioSeek} className="mt-1 w-full accent-emerald-400" />
+                  <div className="mt-5 flex items-center justify-center gap-3 sm:gap-5">
+                    <button type="button" onClick={() => seekOffset(-10)} aria-label="১০ সেকেন্ড পিছনে" className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10">−10s</button>
+                    <button type="button" onClick={toggleFullAudioPlay} aria-label={isPlaying ? "অডিও থামান" : "অডিও চালু করুন"} className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400 text-emerald-950 shadow-[0_0_35px_rgba(52,211,153,.35)] transition hover:scale-105">
+                      {isPlaying ? <Pause className="h-7 w-7 fill-current" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
+                    </button>
+                    <button type="button" onClick={() => seekOffset(10)} aria-label="১০ সেকেন্ড সামনে" className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10">+10s</button>
+                  </div>
+                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                    <button type="button" onClick={changePlaybackRate} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10"><Gauge className="h-3.5 w-3.5" /> {playbackRate}x</button>
+                    {[15, 30, 60].map((minutes) => <button key={minutes} type="button" onClick={() => setFullAudioSleepTimer(sleepTimerMinutes === minutes ? null : minutes)} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition ${sleepTimerMinutes === minutes ? "border-emerald-300 bg-emerald-400/20 text-emerald-200" : "border-white/10 text-white/70 hover:bg-white/10"}`}><Moon className="h-3.5 w-3.5" /> {minutes}m</button>)}
+                  </div>
                 </div>
                 <Button size="lg" onClick={handleAudioShare} className="w-full bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl py-6 text-lg font-bold gap-2">
                   <Share2 className="h-5 w-5" /> সম্পূর্ণ অডিও শেয়ার করুন
