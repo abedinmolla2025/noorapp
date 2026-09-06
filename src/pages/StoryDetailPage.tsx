@@ -280,7 +280,7 @@ export default function StoryDetailPage() {
           <meta name="twitter:image" content={ogImage} />
         </Helmet>
         
-        <div className="w-full max-w-2xl space-y-8">
+        <div className="w-full max-w-2xl space-y-5 sm:space-y-6">
           <div className="text-center space-y-4">
             <Link to="/" className="inline-block mb-8">
               <h2 className="text-3xl font-black text-emerald-500 tracking-tighter italic">NOOR</h2>
@@ -292,21 +292,21 @@ export default function StoryDetailPage() {
           </div>
 
           <div className="relative rounded-[2.5rem] overflow-hidden shadow-[0_30px_60px_-15px_rgba(0,0,0,0.8)] border border-emerald-500/30 bg-emerald-950/20 backdrop-blur-3xl p-6 sm:p-10 text-center space-y-8">
-            <div className="relative mx-auto w-48 h-48 sm:w-64 sm:h-64 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl">
+            <div className="relative mx-auto w-36 h-36 sm:w-52 sm:h-52 rounded-3xl overflow-hidden border-2 border-white/10 shadow-2xl">
               <img src={ogImage} alt="Thumbnail" className="w-full h-full object-cover" />
               <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                <div className="w-20 h-20 rounded-full bg-emerald-500/80 flex items-center justify-center animate-pulse">
-                  <BookOpen className="h-10 w-10 text-white" />
+                <div className="w-16 h-16 rounded-full bg-emerald-500/80 flex items-center justify-center animate-pulse">
+                  <BookOpen className="h-8 w-8 text-white" />
                 </div>
               </div>
             </div>
 
-            <h1 className="text-2xl sm:text-4xl font-black text-white leading-tight">
+            <h1 className="text-xl sm:text-3xl font-black text-white leading-tight">
               {storyTitle}
             </h1>
 
             {hasAudioSource && !audioError ? (
-              <div className="space-y-6 text-left">
+              <div className="space-y-4 text-left">
                 <audio
                   ref={audioRef}
                   autoPlay
@@ -328,7 +328,7 @@ export default function StoryDetailPage() {
                 >
                   Your browser does not support the audio element.
                 </audio>
-                <div className="rounded-[2rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-950/80 via-slate-950/80 to-black/80 p-5 sm:p-7 shadow-2xl">
+                <div className="rounded-[1.5rem] border border-emerald-400/20 bg-gradient-to-br from-emerald-950/80 via-slate-950/80 to-black/80 p-4 sm:p-5 shadow-2xl">
                   <div className="flex items-center gap-3 mb-5">
                     <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-emerald-400/15 text-emerald-300"><Volume2 className="h-4 w-4" /></span>
                     <div>
@@ -337,25 +337,27 @@ export default function StoryDetailPage() {
                     </div>
                     <span className="ml-auto rounded-full border border-emerald-400/20 px-3 py-1 text-[11px] font-bold text-emerald-200">{audioLoading ? "লোড হচ্ছে…" : "Ready"}</span>
                   </div>
-                  <div className="relative h-20 overflow-hidden rounded-2xl bg-black/20 px-3 py-4">
+                  <div className="relative h-14 sm:h-16 overflow-hidden rounded-2xl bg-black/20 px-2 py-2">
                     <div className="absolute inset-0 flex items-center justify-center gap-1 opacity-80" aria-label="অডিও waveform">
-                      {levels.slice(0, 64).map((level, index) => (
-                        <span key={index} className="w-1 rounded-full bg-gradient-to-t from-emerald-500 to-teal-200 transition-all duration-150" style={{ height: `${Math.max(12, Math.min(48, level * 3 + 12))}px` }} />
-                      ))}
+                      {levels.map((level, index) => {
+                        const height = Math.max(8, Math.min(46, 8 + level * 0.38));
+                        const intensity = Math.max(0.45, Math.min(1, level / 100));
+                        return <span key={index} className="w-[2px] sm:w-[3px] rounded-full bg-gradient-to-t from-emerald-500 via-teal-300 to-white transition-[height,opacity,box-shadow] duration-75" style={{ height: `${height}px`, opacity: intensity, boxShadow: `0 0 ${Math.round(intensity * 8)}px rgba(52, 211, 153, ${intensity * 0.55})` }} />;
+                      })}
                     </div>
                   </div>
                   <div className="mt-4 flex items-center justify-between text-xs font-medium text-white/55">
                     <span>{formatTime(currentTime)}</span><span>{formatTime(duration)}</span>
                   </div>
                   <input aria-label="অডিও অগ্রগতি" type="range" min="0" max={duration || 0} step="0.1" value={Math.min(currentTime, duration || 0)} onChange={handleFullAudioSeek} className="mt-1 w-full accent-emerald-400" />
-                  <div className="mt-5 flex items-center justify-center gap-3 sm:gap-5">
+                  <div className="mt-3 flex items-center justify-center gap-2 sm:gap-4">
                     <button type="button" onClick={() => seekOffset(-10)} aria-label="১০ সেকেন্ড পিছনে" className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10">−10s</button>
                     <button type="button" onClick={toggleFullAudioPlay} aria-label={isPlaying ? "অডিও থামান" : "অডিও চালু করুন"} className="flex h-16 w-16 items-center justify-center rounded-full bg-emerald-400 text-emerald-950 shadow-[0_0_35px_rgba(52,211,153,.35)] transition hover:scale-105">
                       {isPlaying ? <Pause className="h-7 w-7 fill-current" /> : <Play className="ml-1 h-7 w-7 fill-current" />}
                     </button>
                     <button type="button" onClick={() => seekOffset(10)} aria-label="১০ সেকেন্ড সামনে" className="rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70 transition hover:bg-white/10">+10s</button>
                   </div>
-                  <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+                  <div className="mt-4 flex flex-wrap items-center justify-center gap-1.5">
                     <button type="button" onClick={changePlaybackRate} className="inline-flex items-center gap-2 rounded-full border border-white/10 px-3 py-2 text-xs font-bold text-white/70 hover:bg-white/10"><Gauge className="h-3.5 w-3.5" /> {playbackRate}x</button>
                     {[15, 30, 60].map((minutes) => <button key={minutes} type="button" onClick={() => setFullAudioSleepTimer(sleepTimerMinutes === minutes ? null : minutes)} className={`inline-flex items-center gap-2 rounded-full border px-3 py-2 text-xs font-bold transition ${sleepTimerMinutes === minutes ? "border-emerald-300 bg-emerald-400/20 text-emerald-200" : "border-white/10 text-white/70 hover:bg-white/10"}`}><Moon className="h-3.5 w-3.5" /> {minutes}m</button>)}
                   </div>
