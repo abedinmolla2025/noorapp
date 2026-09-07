@@ -285,7 +285,11 @@ async function fetchChapterList(
 
   const links = chapters
     .map((ch: any) => {
-      const displayTitle = lang === "bangla" ? (ch.title_bn || ch.title) : ch.title;
+      const overrides: Record<number, Record<string, string>> = {
+        38: { bangla: "হাওয়ালা (ঋণ হস্তান্তর)", english: "Transfer of a Debt (Al-Hawaala)", urdu: "حوالہ (قرض کی منتقلی)" },
+        82: { bangla: "তাকদির (আল-কদর)", english: "Divine Will (Al-Qadar)", urdu: "تقدیر (القدر)" },
+      };
+      const displayTitle = overrides[Number(ch.chapter_number)]?.[lang] || (lang === "bangla" ? (ch.title_bn || ch.title) : ch.title);
       return `<li><a href="${SITE_ORIGIN}/hadith/sahih-bukhari/${lang}/chapter-${ch.chapter_number}">Chapter ${ch.chapter_number}: ${escapeHtml(displayTitle)}</a></li>`;
     })
     .join("\n");

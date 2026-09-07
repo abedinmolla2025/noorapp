@@ -591,6 +591,7 @@ async function loadHadithRowsSsr(lang, chapterId) {
 }
 
 const HADITH_CHAPTER_OVERRIDES = {
+  38: { bangla: "হাওয়ালা (ঋণ হস্তান্তর)", english: "Transfer of a Debt (Al-Hawaala)", urdu: "حوالہ (قرض کی منتقلی)" },
   82: { bangla: "তাকদির (আল-কদর)", english: "Divine Will (Al-Qadar)", urdu: "تقدیر (القدر)" },
 };
 const getHadithChapterName = (chapter, lang) => {
