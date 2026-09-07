@@ -715,7 +715,7 @@ Deno.serve(async (req) => {
         <section>
             <h2>Quran Reader — পবিত্র কুরআন</h2>
             <p>${escapeHtml(seo?.description || "")}</p>
-            <p>Read the Holy Quran online with Arabic text, Bengali translation, and audio recitation. Browse all 114 Surahs with Tafseer.</p>
+            <p>Read the Holy Quran online with Arabic text, Bengali and English translations, and available audio recitation. Noor presents the Quran for reading and study; translation is not a substitute for qualified tafsir.</p>
             <h3>Browse Surahs</h3>
             <ul>
                 <li><strong>সূরা আল-ফাতিহা</strong> — The Opening (7 আয়াত)</li>
@@ -731,13 +731,13 @@ Deno.serve(async (req) => {
         <section>
             <h2>Daily Islamic Quiz — ইসলামিক কুইজ</h2>
             <p>${escapeHtml(seo?.description || "")}</p>
-            <p>Test your Islamic knowledge daily with multiple-choice questions on Quran, Hadith, Islamic history, and general Islamic teachings.</p>
-            <h3>Quiz Features</h3>
+            <p>Test your Islamic knowledge with five multiple-choice questions on Quran, Hadith, Islamic history, worship, and general Islamic teachings. Select an answer, read the result, and use the explanation and source note for revision.</p>
+            <h3>How to play</h3>
             <ul>
-                <li>প্রতিদিন ৫টি নতুন প্রশ্ন</li>
-                <li>স্কোর ও streak ট্র্যাকিং</li>
-                <li>ব্যাজ ও সার্টিফিকেট অর্জন করুন</li>
-                <li>কুরআন, হাদিস ও ইসলামিক ইতিহাস থেকে প্রশ্ন</li>
+                <li>Start the daily set and answer five questions.</li>
+                <li>Review your score and the explanation after each answer.</li>
+                <li>Questions are for learning and revision, not a substitute for a qualified teacher.</li>
+                <li>If interactive data is unavailable, this purpose and guide remain readable and the app should offer retry instead of an endless loader.</li>
             </ul>
         </section>`;
     } else if (path === "/download") {
@@ -760,8 +760,11 @@ Deno.serve(async (req) => {
         <section>
             <h2>About NOOR — আমাদের সম্পর্কে</h2>
             <p>${escapeHtml(seo?.description || "")}</p>
-            <p>Noor is a free Islamic app designed for Muslims in India, Bangladesh, and around the world. Our mission is to make authentic Islamic knowledge accessible to everyone through modern technology.</p>
-            <p>Noor provides Quran reading with translations, authentic Hadith collections, daily Duas, accurate Prayer Times, Qibla direction, Islamic calendar, and educational quizzes — all completely free.</p>
+            <p>Noor is a free Islamic app designed for Muslims in India, Bangladesh, and around the world. Our mission is to make Quran reading, Hadith study, prayer practice, Dua, and Islamic learning accessible through clear and respectful technology.</p>
+            <h3>What Noor provides</h3>
+            <ul><li>Quran reading with Arabic text and translations</li><li>Hadith collections with book, chapter, language, and available source details</li><li>Daily Duas, prayer times, Qibla, Islamic calendar, stories, and learning quizzes</li></ul>
+            <h3>Editorial responsibility</h3>
+            <p>We aim to identify collections and references, distinguish source text from our own explanation, and correct errors when readers report them. Noor is an educational tool, not a replacement for a qualified scholar.</p>
         </section>`;
     } else if (path === "/contact") {
       bodyContent = `
@@ -825,7 +828,11 @@ Deno.serve(async (req) => {
         <section>
             <h2>Privacy Policy — গোপনীয়তা নীতি</h2>
             <p>${escapeHtml(seo?.description || "")}</p>
-            <p>Noor respects your privacy. This policy describes how we collect, use, and protect your personal information when you use our Islamic app.</p>
+            <p>Noor respects your privacy. Preferences such as language, theme, prayer settings, and progress may be stored locally on your device. Public reading pages do not require sensitive religious, financial, or authentication information.</p>
+            <h3>Advertising, cookies, and Google AdSense</h3>
+            <p>Noor may use Google AdSense and other advertising providers. They may use cookies, device identifiers, or similar technologies to deliver, measure, and limit ads, including personalized advertising where permitted by law and your consent choices.</p>
+            <h3>Your choices</h3>
+            <p>Use the site's privacy controls, restrict or clear cookies in your browser, and manage personalized advertising through <a href="https://adssettings.google.com">Google Ads Settings</a>. Some non-personalized ads may still appear. For privacy questions, contact support@noorapp.in.</p>
         </section>`;
     } else if (path === "/terms") {
       bodyContent = `
