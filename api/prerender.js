@@ -303,6 +303,28 @@ const STATIC_PAGE_COPY = {
       ["Editorial review", "Our editorial approach prioritizes clarity, respectful presentation and source notes. Corrections and feedback can be sent through the Contact page."],
     ],
   },
+  "/support": {
+    title: "Support & Feedback | Noor",
+    description: "Get help with Noor, report content issues and send feedback about Quran, Hadith, Dua and prayer tools.",
+    heading: "Support & Feedback",
+    intro: "Noor is built to be useful and easy to correct. If a page is missing content, a translation needs review or a feature is not working, please tell us what happened.",
+    sections: [
+      ["How to contact us", "Email support@noorapp.in with the page URL, device or browser, and a short description of the problem. Please do not include passwords or other sensitive information."],
+      ["Content corrections", "For Quran, Hadith, Dua or story corrections, include the collection, chapter or reference so the editorial team can verify the issue against a reliable source."],
+      ["Before reporting a loading issue", "Refresh the page once, try the canonical HTTPS address and mention whether the problem remains with JavaScript disabled. Public pages are designed to show essential text without waiting for an app API."],
+    ],
+  },
+  "/quiz": {
+    title: "Islamic Quiz | Noor",
+    description: "Test your Islamic knowledge with Noor's short Quran, Hadith and general learning quiz.",
+    heading: "Islamic Quiz",
+    intro: "Use the Noor quiz for self-checking and revision. Questions cover basic Islamic knowledge, Quran, Hadith, worship and everyday learning.",
+    sections: [
+      ["How it works", "Choose an answer for each question, review the explanation when available and keep learning from the linked source. The quiz is educational and is not a substitute for a qualified teacher or scholar."],
+      ["Fair and respectful learning", "Questions are intended to encourage understanding rather than debate. When a question depends on a specific source or scholarly interpretation, Noor should identify that reference clearly."],
+      ["Start the quiz", "Open the interactive quiz to answer questions and see your result. If the interactive data cannot be reached, this introduction remains available and the page should show a retry option rather than an endless loading screen."],
+    ],
+  },
   "/data-sources": {
     title: "Data Sources and Methodology | Noor",
     description: "Learn how Noor uses Quran, Hadith, prayer-time and location data to provide its Islamic tools.",
@@ -321,8 +343,9 @@ const STATIC_PAGE_COPY = {
     intro: "Noor uses the minimum information needed to operate its tools and improve the experience. Many preferences, such as language, theme, prayer and notification settings, remain on your device.",
     sections: [
       ["Information and local storage", "Settings and progress may be stored locally in your browser or device. Anonymous usage information may be aggregated to understand feature usage."],
-      ["Advertising and third-party services", "Noor may use advertising and service providers such as Google AdSense, prayer-time APIs and location services. Cookies and similar technologies may be used according to the applicable provider policies."],
-      ["Your choices", "You can clear local app data from your browser or device settings and manage personalized advertising through the controls described in the full policy."],
+      ["Advertising, cookies and Google AdSense", "Noor may use Google AdSense and other advertising providers. These providers may use cookies, device identifiers or similar technologies to deliver, measure and limit ads, including personalized advertising where permitted by law and your consent choices. Google may use information about visits to this and other sites to provide and improve ads."],
+      ["Your advertising choices", "You can manage consent choices through the privacy controls shown on the site, reset or restrict cookies in your browser, and opt out of personalized advertising through Google's Ads Settings at https://adssettings.google.com. Some non-personalized ads may still be shown."],
+      ["Your choices and contact", "You can clear local app data from your browser or device settings, request help about privacy, or ask how information is used by emailing support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
     ],
   },
   "/privacy-policy": {
@@ -332,8 +355,9 @@ const STATIC_PAGE_COPY = {
     intro: "Noor uses the minimum information needed to operate its tools and improve the experience. Many preferences, such as language, theme, prayer and notification settings, remain on your device.",
     sections: [
       ["Information and local storage", "Settings and progress may be stored locally in your browser or device. Anonymous usage information may be aggregated to understand feature usage."],
-      ["Advertising and third-party services", "Noor may use advertising and service providers such as Google AdSense, prayer-time APIs and location services. Cookies and similar technologies may be used according to the applicable provider policies."],
-      ["Your choices", "You can clear local app data from your browser or device settings and manage personalized advertising through the controls described in the full policy."],
+      ["Advertising, cookies and Google AdSense", "Noor may use Google AdSense and other advertising providers. These providers may use cookies, device identifiers or similar technologies to deliver, measure and limit ads, including personalized advertising where permitted by law and your consent choices. Google may use information about visits to this and other sites to provide and improve ads."],
+      ["Your advertising choices", "You can manage consent choices through the privacy controls shown on the site, reset or restrict cookies in your browser, and opt out of personalized advertising through Google's Ads Settings at https://adssettings.google.com. Some non-personalized ads may still be shown."],
+      ["Your choices and contact", "You can clear local app data from your browser or device settings, request help about privacy, or ask how information is used by emailing support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
     ],
   },
   "/terms": {
@@ -508,6 +532,7 @@ async function loadHadithRowsSsr(lang, chapterId) {
   if (meta.file) {
     try {
       const candidates = [
+        path.join(process.cwd(), "public", meta.file),
         path.join(process.cwd(), "dist", meta.file),
         path.join("/var/task", "dist", meta.file),
       ];
@@ -921,7 +946,7 @@ export default async function handler(req, res) {
           </a>
         `).join("");
         const cardRows = detail ? [detail] : rows;
-        const listMarkup = cardRows.length ? cardRows.map((row) => hadithCardMarkup(row, lang, meta, chapterMap)).join("") : `<div class="rounded-3xl border border-dashed border-white/10 bg-white/5 p-12 text-center text-white/60">${lang === "bangla" ? "হাদিস লোড হচ্ছে..." : lang === "urdu" ? "احادیث لوڈ ہو رہی ہیں..." : "Loading hadiths..."}</div>`;
+        const listMarkup = cardRows.length ? cardRows.map((row) => hadithCardMarkup(row, lang, meta, chapterMap)).join("") : `<div class="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center text-white/75"><p class="font-semibold">${lang === "bangla" ? "এই অধ্যায়ের হাদিস এখন পাওয়া যাচ্ছে না" : lang === "urdu" ? "اس باب کی احادیث اس وقت دستیاب نہیں" : "The hadith text is temporarily unavailable"}</p><p class="mt-2 text-sm text-white/55">${lang === "bangla" ? "অনুগ্রহ করে আবার চেষ্টা করুন অথবা অন্য একটি কিতাব নির্বাচন করুন।" : lang === "urdu" ? "براہ کرم دوبارہ کوشش کریں یا دوسرا باب منتخب کریں۔" : "Please try again or choose another book."}</p></div>`;
 
         bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white pb-20" style="background-image: ${ISLAMIC_PATTERN_HTML}">
