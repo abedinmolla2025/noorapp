@@ -590,8 +590,12 @@ async function loadHadithRowsSsr(lang, chapterId) {
   return rows;
 }
 
+const HADITH_CHAPTER_OVERRIDES = {
+  82: { bangla: "তাকদির (আল-কদর)", english: "Divine Will (Al-Qadar)", urdu: "تقدیر (القدر)" },
+};
 const getHadithChapterName = (chapter, lang) => {
   if (!chapter) return `${lang === "bangla" ? "কিতাব" : lang === "urdu" ? "کتاب" : "Book"}`;
+  if (HADITH_CHAPTER_OVERRIDES[Number(chapter.chapter_number)]?.[lang]) return HADITH_CHAPTER_OVERRIDES[Number(chapter.chapter_number)][lang];
   if (lang === "bangla") return chapter.title_bn || chapter.title;
   if (lang === "urdu") return chapter.title_ar || chapter.title;
   return chapter.title;

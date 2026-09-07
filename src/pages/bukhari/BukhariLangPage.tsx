@@ -139,6 +139,10 @@ interface KitabInfo {
 
 function getChapterName(chapterId: number, lang: LangSlug, kitabMap: Map<number, KitabInfo>): string {
   const kitab = kitabMap.get(chapterId);
+  if (chapterId === 82) {
+    const verifiedNames = { bangla: "তাকদির (আল-কদর)", english: "Divine Will (Al-Qadar)", urdu: "تقدیر (القدر)" };
+    return verifiedNames[lang];
+  }
   if (kitab) {
     if (lang === "bangla") return kitab.title_bn || kitab.title;
     if (lang === "urdu") return kitab.title_ar || kitab.title;
