@@ -708,6 +708,7 @@ export default async function handler(req, res) {
   let title = "Noor – Prayer Times, Quran & More";
   let description = "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.";
   let bodyContent = "";
+  let statusCode = 200;
   let canonicalUrl = `${SITE_ORIGIN}${routePath === "/" ? "" : routePath}`;
 
   try {
@@ -1235,9 +1236,15 @@ export default async function handler(req, res) {
           </div>
         `;
       } else {
-        const fallbackTitle = storyFallbackLabel(slug);
-        title = uniqueStoryTitle(`${fallbackTitle} | Islamic Story`);
-        description = enrichStoryDescription("", fallbackTitle);
+        statusCode = 404;
+        title = uniqueStoryTitle(`Story not found | Noor`);
+        description = "The requested Islamic story could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-background px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Story not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-muted-foreground">This story is no longer published or the link is incorrect.</p>
+            <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/stories">Browse published stories</a>
+          </main>`;
       }
     }
 
@@ -1371,7 +1378,7 @@ export default async function handler(req, res) {
     res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=300");
     res.setHeader("X-Noor-Prerender", "v101");
     res.setHeader("X-Noor-OG-Image", req.storyOgImage || "default");
-    res.status(200).send(finalHtml);
+    res.status(statusCode).send(finalHtml);
   } catch (error) {
     console.error("Prerender error:", error);
     res.setHeader("X-Noor-Prerender-Error", "true");
