@@ -43,7 +43,7 @@ const STORY_SLUGS = [
   "prophet-muhammad-farewell-sermon", "prophet-muhammad-first-revelation",
   "prophet-muhammad-journey-taif",
   "prophet-muhammad-miracle-food-trench",
-  "prophet-muhammad-night-hijrah-ali", "prophet-muhammad-patience",
+  "prophet-muhammad-night-hijrah-ali",
   "prophet-muhammad-spider-web-hijrah", "prophet-muhammad-splitting-moon",
   "prophet-muhammad-treaty-hudaybiyyah", "prophet-musa-khidr-story-islam",
   "prophet-musa-pharaoh-story", "prophet-musa-story-islam",
