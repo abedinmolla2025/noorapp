@@ -668,7 +668,7 @@ function inject(html, { title, description, canonical, ogImage, body }) {
     structuredData({ description }),
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
-    `<link rel="canonical" href="${esc(canonical)}" />`,
+    `<link rel="canonical" href="${esc(canonical)}" data-rh="true" />`,
     `<meta property="og:type" content="${getOgType(canonical)}" />`,
     `<meta property="og:title" content="${esc(title)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
