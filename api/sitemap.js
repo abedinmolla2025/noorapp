@@ -20,7 +20,7 @@ const BASE_ROUTES = [
 // All story slugs extracted from the database/assets
 const STORY_SLUGS = [
   "abdullah-ibn-abbas-knowledge-islam", "abu-bakr-siddiq-companion-cave-islam",
-  "abu-dharr-al-ghifari-truth-islam", "abu-hurairah-father-of-kittens",
+  "abu-hurairah-father-of-kittens",
   "abu-ubaidah-ibn-al-islam", "ali-ibn-abi-talib-bravery-islam",
   "ashura-muharram-musa-victory", "battle-badr-preparation-supplication-islam",
   "bilal-ibn-rabah-ra-islam", "bilal-ibn-rabah-steadfast-islam",
@@ -37,12 +37,12 @@ const STORY_SLUGS = [
   "prophet-hud-story-islam", "prophet-ibrahim-fire-story-islam",
   "prophet-ibrahim-story-islam", "prophet-isa-birth-story",
   "prophet-isa-miraculous-birth", "prophet-isa-story-islam",
-  "prophet-ismail-story-islam", "prophet-lut-story",
-  "prophet-lut-story-islam", "prophet-muhammad-conquest-makkah-mercy",
-  "prophet-muhammad-crying-palm-tree", "prophet-muhammad-early-life",
+  "prophet-lut-story", "prophet-lut-story-islam",
+  "prophet-muhammad-conquest-makkah-mercy",
+  "prophet-muhammad-crying-palm-tree",
   "prophet-muhammad-farewell-sermon", "prophet-muhammad-first-revelation",
-  "prophet-muhammad-journey-taif", "prophet-muhammad-mercy",
-  "prophet-muhammad-miracle-food-trench", "prophet-muhammad-miracles",
+  "prophet-muhammad-journey-taif",
+  "prophet-muhammad-miracle-food-trench",
   "prophet-muhammad-night-hijrah-ali", "prophet-muhammad-patience",
   "prophet-muhammad-spider-web-hijrah", "prophet-muhammad-splitting-moon",
   "prophet-muhammad-treaty-hudaybiyyah", "prophet-musa-khidr-story-islam",
@@ -58,7 +58,7 @@ const STORY_SLUGS = [
   "second-two-abu-bakr-islam",   "shab-e-barat-night-of-forgiveness",
   "transformation-direction-divine-sovereignty-islam",
   "triumph-truth-repentance-ka-islam", "umar-accepting-islam-story",
-  "umar-ibn-khattab-story-islam", "umm-sulaym-wisdom-faith-islam",
+  "umar-ibn-khattab-story-islam",
   "well-rumah-eternal-charity-islam", "yawm-al-arafah-day-of-forgiveness"
 ];
 
