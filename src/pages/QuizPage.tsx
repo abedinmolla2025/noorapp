@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "@/components/BottomNavigation";
-import { ArrowLeft, Trophy, Star, Medal, Crown, Zap, CheckCircle2, XCircle, Sparkles, Target, TrendingUp, Clock, Eye, RotateCcw } from "lucide-react";
+import { ArrowLeft, Trophy, Star, Medal, Crown, Zap, CheckCircle2, XCircle, Sparkles, Target, TrendingUp, Clock, Eye, RotateCcw, BookOpen, ExternalLink } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { playSfx } from "@/utils/quizSfx";
 import { StarBadge, TrophyBadge, MedalBadge, CrownBadge, SparklesBadge } from "@/components/BadgeIcons";
@@ -31,6 +31,10 @@ interface Question {
   correctAnswer: number;
   category: string;
   difficulty?: string | null;
+  explanation_bn?: string | null;
+  explanation_en?: string | null;
+  source_reference?: string | null;
+  related_url?: string | null;
 }
 
 interface LeaderboardEntry {
@@ -74,6 +78,17 @@ type HapticType = "success" | "error";
 const triggerHaptic = (type: HapticType) => {
   void (type === "success" ? hapticNotification("success") : hapticNotification("error"));
   void (type === "success" ? hapticImpact("light") : hapticImpact("medium"));
+};
+
+const relatedQuizPath = (category: string) => {
+  const normalized = category.toLowerCase();
+  if (normalized.includes("quran")) return "/quran";
+  if (normalized.includes("hadith")) return "/hadith";
+  if (normalized.includes("dua")) return "/dua";
+  if (normalized.includes("prayer") || normalized.includes("fast")) return "/prayer-guide";
+  if (normalized.includes("prophet") || normalized.includes("history")) return "/stories";
+  if (normalized.includes("name")) return "/99-names";
+  return "/sources";
 };
 
 const QuizPage = () => {
@@ -122,29 +137,45 @@ const QuizPage = () => {
   const { data: allQuestions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ["quiz-questions", "supabase"],
     queryFn: async (): Promise<Question[]> => {
+      const mapQuestion = (q: any): Question => ({
+        question: q.question_bn ?? q.question_en ?? q.question ?? "",
+        question_bn: q.question_bn ?? q.question ?? null,
+        question_en: q.question_en ?? null,
+        options: (q.options_bn ?? q.options_en ?? q.options ?? []) as string[],
+        options_bn: (q.options_bn ?? q.options ?? null) as string[] | null,
+        options_en: (q.options_en ?? null) as string[] | null,
+        correctAnswer: q.correct_answer,
+        category: q.category ?? "General",
+        difficulty: q.difficulty ?? "medium",
+        explanation_bn: q.explanation_bn ?? null,
+        explanation_en: q.explanation_en ?? null,
+        source_reference: q.source_reference ?? null,
+        related_url: q.related_url ?? null,
+      });
       const { data, error } = await supabase
         .from("quiz_questions")
-        .select("question, question_bn, question_en, options, options_bn, options_en, correct_answer, category, difficulty")
+        .select("question, question_bn, question_en, options, options_bn, options_en, correct_answer, category, difficulty, explanation_bn, explanation_en, source_reference, related_url")
         .eq("is_active", true)
         .order("order_index", { ascending: true })
         .order("created_at", { ascending: true })
         .limit(500);
 
       if (!error && data && data.length > 0) {
-        return data.map((q: any) => ({
-          question: q.question_bn ?? q.question_en ?? q.question ?? "",
-          question_bn: q.question_bn ?? q.question ?? null,
-          question_en: q.question_en ?? null,
-          options: (q.options_bn ?? q.options_en ?? q.options ?? []) as string[],
-          options_bn: (q.options_bn ?? q.options ?? null) as string[] | null,
-          options_en: (q.options_en ?? null) as string[] | null,
-          correctAnswer: q.correct_answer,
-          category: q.category ?? "General",
-          difficulty: q.difficulty ?? "medium",
-        }));
+        return data.map(mapQuestion);
       }
 
-      if (error) console.error("Failed to load quiz questions from Supabase:", error);
+      if (error) {
+        console.error("Failed to load quiz learning metadata; retrying the legacy production projection:", error);
+        const legacy = await supabase
+          .from("quiz_questions")
+          .select("question, question_bn, question_en, options, options_bn, options_en, correct_answer, category, difficulty")
+          .eq("is_active", true)
+          .order("order_index", { ascending: true })
+          .order("created_at", { ascending: true })
+          .limit(500);
+        if (!legacy.error && legacy.data?.length) return legacy.data.map(mapQuestion);
+      }
+
       const response = await fetch("/quiz-questions-90.json");
       if (!response.ok) throw new Error("Failed to load quiz questions");
       const localData = await response.json();
@@ -158,6 +189,10 @@ const QuizPage = () => {
         correctAnswer: q.correct_answer,
         category: q.category,
         difficulty: q.difficulty ?? "medium",
+        explanation_bn: q.explanation_bn ?? null,
+        explanation_en: q.explanation_en ?? null,
+        source_reference: q.source_reference ?? null,
+        related_url: q.related_url ?? null,
       }));
     },
     staleTime: 5 * 60 * 1000,
@@ -1329,6 +1364,38 @@ const QuizPage = () => {
                               <span className="text-base text-white/70">Keep going! 💪</span>
                             </div>
                           )}
+                        </motion.div>
+
+                        {/* Educational explanation, source, and related learning link */}
+                        <motion.div
+                          className="w-full max-w-lg mb-6 rounded-2xl border border-white/15 bg-white/8 p-4 text-left backdrop-blur-sm"
+                          initial={{ y: 15, opacity: 0 }}
+                          animate={{ y: 0, opacity: 1 }}
+                          transition={{ delay: 0.48 }}
+                        >
+                          <div className="flex items-center gap-2 mb-2 text-emerald-200">
+                            <BookOpen className="h-4 w-4" />
+                            <h3 className="font-semibold">কেন এই উত্তরটি সঠিক?</h3>
+                          </div>
+                          <p className="text-sm leading-6 text-white/85">
+                            {languageMode === "en"
+                              ? currentQuestion.explanation_en || currentQuestion.explanation_bn || "এই প্রশ্নের ব্যাখ্যা শিগগিরই যোগ করা হবে।"
+                              : currentQuestion.explanation_bn || currentQuestion.explanation_en || "এই প্রশ্নের ব্যাখ্যা শিগগিরই যোগ করা হবে।"}
+                          </p>
+                          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/65">
+                            <span className="rounded-full border border-white/15 px-2.5 py-1">
+                              {currentQuestion.source_reference || `বিষয়: ${currentQuestion.category}`}
+                            </span>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              className="h-7 gap-1 px-2 text-emerald-200 hover:bg-white/10 hover:text-emerald-100"
+                              onClick={() => navigate(currentQuestion.related_url || relatedQuizPath(currentQuestion.category))}
+                            >
+                              সংশ্লিষ্ট বিষয় <ExternalLink className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
                         </motion.div>
 
                         {/* Next button */}
