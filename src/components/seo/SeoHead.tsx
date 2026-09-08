@@ -303,12 +303,13 @@ export function SeoHead() {
 
   // Bilingual defaults for the current route (fallback when no admin/db value)
   const bilingualDefaults = getPageSeoDefaults(pathname, branding.appName);
+  const approvedDownloadDefaults = pathname === "/download" ? bilingualDefaults : null;
 
   const title = normalizeTitle(
-    pageSeo?.title ?? bilingualDefaults?.title ?? globalSeo.title ?? branding.appName,
+    approvedDownloadDefaults?.title ?? pageSeo?.title ?? bilingualDefaults?.title ?? globalSeo.title ?? branding.appName,
   );
   const description = normalizeDescription(
-    pageSeo?.description ?? bilingualDefaults?.description ?? globalSeo.description,
+    approvedDownloadDefaults?.description ?? pageSeo?.description ?? bilingualDefaults?.description ?? globalSeo.description,
   );
 
   const SITE_ORIGIN = "https://noorapp.in";

@@ -372,8 +372,8 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/download": {
-    title: "Download Noor Islamic App | Noor",
-    description: "Use Noor on Android or install the Noor Progressive Web App for Quran, Hadith, prayer times, Dua and more.",
+    title: "Download Noor App — Install the Web App | Noor",
+    description: "Learn how to install Noor as a Progressive Web App on supported devices, with access to Quran, Hadith, prayer times, Dua and Islamic learning tools.",
     heading: "Download Noor",
     intro: "Noor is available as a fast web experience and can be installed as a Progressive Web App on supported devices.",
     sections: [
@@ -669,6 +669,7 @@ function inject(html, { title, description, canonical, ogImage, body }) {
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" />`,
     `<link rel="canonical" href="${esc(canonical)}" data-rh="true" />`,
+    `<meta name="robots" content="index,follow" data-rh="true" />`,
     `<meta property="og:type" content="${getOgType(canonical)}" />`,
     `<meta property="og:title" content="${esc(title)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
@@ -709,7 +710,7 @@ export default async function handler(req, res) {
   let description = "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.";
   let bodyContent = "";
   let statusCode = 200;
-  let canonicalUrl = `${SITE_ORIGIN}${routePath === "/" ? "" : routePath}`;
+  let canonicalUrl = `${SITE_ORIGIN}${routePath === "/" ? "/" : routePath}`;
 
   try {
     // --- Homepage ---

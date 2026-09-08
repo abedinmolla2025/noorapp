@@ -19,7 +19,6 @@ const DownloadPage = () => {
     <>
       <Helmet>
         <title>Download Noor App — Install the Web App | Noor</title>
-        <meta name="description" content="Learn how to install Noor as a Progressive Web App on supported devices, with access to Quran, Hadith, prayer times, Dua and Islamic learning tools." />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24">
