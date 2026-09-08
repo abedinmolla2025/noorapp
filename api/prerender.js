@@ -667,7 +667,7 @@ function inject(html, { title, description, canonical, ogImage, body }) {
   const newTags = [
     structuredData({ description }),
     `<title>${esc(title)}</title>`,
-    `<meta name="description" content="${esc(description)}" />`,
+    `<meta name="description" content="${esc(description)}" data-rh="true" />`,
     `<link rel="canonical" href="${esc(canonical)}" data-rh="true" />`,
     `<meta name="robots" content="index,follow" data-rh="true" />`,
     `<meta property="og:type" content="${getOgType(canonical)}" />`,
