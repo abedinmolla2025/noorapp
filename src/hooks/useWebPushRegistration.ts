@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase, supabasePublic } from "@/integrations/supabase/client";
+import { getCachedLocation } from "@/lib/location";
 
 const DEVICE_ID_KEY = "noor_device_id";
 const WEB_PUSH_REGISTERED_KEY = "noor_web_push_registered";
@@ -47,18 +48,11 @@ function isDuplicateTokenError(error: unknown): boolean {
  * even when the app/tab is closed.
  */
 async function syncLocationToPreferences(deviceId: string) {
-  if (!("geolocation" in navigator)) return;
+  const cached = getCachedLocation();
+  if (!cached) return;
 
   try {
-    const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-      navigator.geolocation.getCurrentPosition(resolve, reject, {
-        enableHighAccuracy: false,
-        timeout: 10000,
-        maximumAge: 300000,
-      });
-    });
-
-    const { latitude, longitude } = position.coords;
+    const { latitude, longitude } = cached;
     const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
     // First try to find existing record by device_id
@@ -117,8 +111,8 @@ export function useWebPushRegistration() {
 
     const run = async () => {
       try {
-        // Request notification permission
-        const permission = await Notification.requestPermission();
+        // Permission is requested only by the explicit opt-in prompt.
+        const permission = Notification.permission;
         if (permission !== "granted") return;
 
         // Register service worker

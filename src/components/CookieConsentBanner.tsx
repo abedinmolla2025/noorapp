@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { claimCustomPrompt, releaseCustomPrompt } from "@/lib/permissionCoordinator";
 
 const CONSENT_KEY = "noor_cookie_consent";
 
@@ -38,20 +39,35 @@ export default function CookieConsentBanner() {
   useEffect(() => {
     const consent = localStorage.getItem(CONSENT_KEY);
     if (!consent) {
-      const timer = setTimeout(() => setVisible(true), 2000);
-      return () => clearTimeout(timer);
+      const showWhenAvailable = () => {
+        if (claimCustomPrompt("cookie")) setVisible(true);
+      };
+      const timer = window.setTimeout(showWhenAvailable, 2000);
+      const retry = window.setInterval(() => {
+        if (visible) return;
+        showWhenAvailable();
+        if (sessionStorage.getItem("noor_active_custom_prompt") === "cookie") {
+          window.clearInterval(retry);
+        }
+      }, 1000);
+      return () => {
+        window.clearTimeout(timer);
+        window.clearInterval(retry);
+      };
     }
-  }, []);
+  }, [visible]);
 
   const accept = () => {
     persist("accepted");
     pushConsent({ ad: "granted", an: "granted" });
+    releaseCustomPrompt("cookie");
     setVisible(false);
   };
 
   const reject = () => {
     persist("rejected");
     pushConsent({ ad: "denied", an: "denied" });
+    releaseCustomPrompt("cookie");
     setVisible(false);
   };
 
@@ -62,6 +78,7 @@ export default function CookieConsentBanner() {
     };
     persist(state);
     pushConsent(state);
+    releaseCustomPrompt("cookie");
     setVisible(false);
     setShowPrefs(false);
   };

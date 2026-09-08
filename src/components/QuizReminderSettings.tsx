@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Bell, BellOff, Clock } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { requestNotificationPermission } from "@/lib/permissionCoordinator";
 
 interface QuizReminderSettings {
   enabled: boolean;
@@ -47,7 +48,7 @@ export const QuizReminderSettings = () => {
     if (enabled) {
       // Request notification permission
       if ("Notification" in window) {
-        const permission = await Notification.requestPermission();
+        const permission = await requestNotificationPermission();
         
         if (permission === "granted") {
           saveSettings({ ...settings, enabled: true });

@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { claimCustomPrompt, releaseCustomPrompt, requestNotificationPermission } from "@/lib/permissionCoordinator";
 
 const PUSH_OPT_IN_KEY = "noor_push_opt_in";
 const PUSH_OPT_IN_DISMISSED_UNTIL_KEY = "noor_push_opt_in_dismissed_until";
@@ -48,13 +49,16 @@ export function NotificationOptInPrompt() {
     if (dismissedUntil && dismissedUntil > Date.now()) return;
 
     // Small delay so it feels like onboarding, not a pop-up.
-    const t = window.setTimeout(() => setOpen(true), 1200);
+    const t = window.setTimeout(() => {
+      if (claimCustomPrompt("notification")) setOpen(true);
+    }, 1200);
     return () => window.clearTimeout(t);
   }, [isSupported]);
 
   const enable = async () => {
     // Mark opt-in first so the existing registration hooks can proceed.
     localStorage.setItem(PUSH_OPT_IN_KEY, "true");
+    releaseCustomPrompt("notification");
     setOpen(false);
 
     // Trigger registration immediately.
@@ -62,7 +66,7 @@ export function NotificationOptInPrompt() {
     // - On Native: permission prompt will appear via the existing hook.
     if (!Capacitor.isNativePlatform() && "Notification" in window) {
       try {
-        await Notification.requestPermission();
+        await requestNotificationPermission();
       } catch {
         // ignore
       }
@@ -74,6 +78,7 @@ export function NotificationOptInPrompt() {
 
   const notNow = () => {
     setDismissedForDays(7);
+    releaseCustomPrompt("notification");
     setOpen(false);
   };
 

@@ -34,7 +34,8 @@ import { Helmet } from "react-helmet-async";
 const Index = () => {
   const [athanModalOpen, setAthanModalOpen] = useState(false);
   const [layoutPlatform, setLayoutPlatform] = useState<LayoutPlatform>("web");
-  const { prayerTimes } = usePrayerTimes();
+  const prayerData = usePrayerTimes();
+  const { prayerTimes } = prayerData;
   const navigate = useNavigate();
   const { system, branding } = useGlobalConfig();
   const isMobile = useIsMobile();
@@ -103,6 +104,7 @@ const Index = () => {
           section_key: "prayer_hero",
           el: (
             <PrayerHeroCard
+              prayerData={prayerData}
               athanSettings={{
                 enabled: settings.enabled,
                 isPlaying,
@@ -148,7 +150,7 @@ const Index = () => {
           el: <FooterSection platform={layoutPlatform} onNavigate={(path) => navigate(path)} />,
         },
       ] as const,
-    [getDefaultPlacementForSection, isPlaying, navigate, settings.enabled],
+    [getDefaultPlacementForSection, isPlaying, layoutPlatform, navigate, prayerData, settings.enabled],
   );
 
   const sectionMap = useMemo(() => {
@@ -362,15 +364,6 @@ const Index = () => {
       {/* Main Content */}
       <main className="w-full px-3 py-4" style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}>
         <div className="space-y-4">
-          <section className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
-            <p className="text-xl font-bold text-foreground">Noor Islamic App for Quran, Hadith, Dua &amp; Prayer Times</p>
-            <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.
-            </p>
-            <a href="/download" className="mt-3 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110">
-              Download / Install Noor
-            </a>
-          </section>
           {orderedSections.map((s) => (
             <section
               key={s.key}

@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Bell, MapPin, Clock, Loader2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabasePublic } from "@/integrations/supabase/client";
+import { cacheLocation, requestBrowserLocation } from "@/lib/location";
 
 const PREFERENCES_STORAGE_KEY = "noor_prayer_notification_preferences";
 const DEVICE_ID_KEY = "noor_device_id";
@@ -89,10 +90,16 @@ export function PrayerNotificationSettings() {
     }
   };
 
-  const getCurrentLocation = () => {
+  const getCurrentLocation = async () => {
     setLocationLoading(true);
-    navigator.geolocation.getCurrentPosition(
-      (position) => {
+    try {
+      const position = await requestBrowserLocation();
+      cacheLocation({
+        city: "Unknown",
+        country: "",
+        latitude: position.coords.latitude,
+        longitude: position.coords.longitude,
+      });
         setPreferences({
           ...preferences,
           latitude: position.coords.latitude,
@@ -100,16 +107,14 @@ export function PrayerNotificationSettings() {
         });
         setLocationLoading(false);
         toast({ title: "Location updated" });
-      },
-      (error) => {
-        setLocationLoading(false);
-        toast({
-          title: "Location access denied",
-          description: "Please enter your location manually",
-          variant: "destructive",
-        });
-      }
-    );
+    } catch {
+      setLocationLoading(false);
+      toast({
+        title: "Location access denied",
+        description: "Please enter your location manually",
+        variant: "destructive",
+      });
+    }
   };
 
   const savePreferences = async () => {

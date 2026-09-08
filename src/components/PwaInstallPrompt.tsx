@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { X, Download, Share, EllipsisVertical, Menu } from "lucide-react";
 import { useGlobalConfig } from "@/context/GlobalConfigContext";
 import noorLogo from "@/assets/noor-logo.png";
+import { claimCustomPrompt, releaseCustomPrompt } from "@/lib/permissionCoordinator";
 
 const COOLDOWN_KEY = "pwa-install-dismissed-at";
 const COOLDOWN_MS = 3 * 24 * 60 * 60 * 1000; // 3 days
@@ -71,7 +72,7 @@ export default function PwaInstallPrompt() {
     // For browsers that don't fire beforeinstallprompt, show fallback after a short delay
     const fallbackTimer = setTimeout(() => {
       if (!supportsPrompt.current && !isStandalone() && !isCooldownActive()) {
-        setVisible(true);
+        if (claimCustomPrompt("pwa")) setVisible(true);
       }
     }, 3000);
 
@@ -87,7 +88,7 @@ export default function PwaInstallPrompt() {
 
     const show = () => {
       if (!promptReady.current) return;
-      setVisible(true);
+      if (claimCustomPrompt("pwa")) setVisible(true);
       cleanup();
     };
 
@@ -109,11 +110,13 @@ export default function PwaInstallPrompt() {
     if (outcome === "accepted") {
       setVisible(false);
       setDeferredPrompt(null);
+      releaseCustomPrompt("pwa");
     }
   }, [deferredPrompt]);
 
   const handleDismiss = useCallback(() => {
     setVisible(false);
+    releaseCustomPrompt("pwa");
     localStorage.setItem(COOLDOWN_KEY, String(Date.now()));
   }, []);
 

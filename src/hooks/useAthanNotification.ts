@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { requestNotificationPermission as requestNotificationPermissionShared } from "@/lib/permissionCoordinator";
 
 interface PrayerTimings {
   Fajr: string;
@@ -102,9 +103,7 @@ export const useAthanNotification = (prayerTimes: PrayerTimings | null) => {
 
     try {
       // Request notification permission
-      if ("Notification" in window && Notification.permission === "default") {
-        await Notification.requestPermission();
-      }
+      await requestNotificationPermissionShared();
 
       // Show notification for real prayers only
       if (
@@ -191,11 +190,8 @@ export const useAthanNotification = (prayerTimes: PrayerTimings | null) => {
   }, []);
 
   const requestNotificationPermission = useCallback(async () => {
-    if ("Notification" in window) {
-      const permission = await Notification.requestPermission();
-      return permission === "granted";
-    }
-    return false;
+    const permission = await requestNotificationPermissionShared();
+    return permission === "granted";
   }, []);
 
   return {

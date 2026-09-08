@@ -24,9 +24,15 @@ const PrayerHeroCard = ({ prayerData, athanSettings }: PrayerHeroCardProps) => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [logoTapCount, setLogoTapCount] = useState(0);
   const [unlockOpen, setUnlockOpen] = useState(false);
-  const localPrayerData = usePrayerTimes();
   const { branding, loading: configLoading } = useGlobalConfig();
-  const { prayerTimes, location, hijriDate, isLoading } = prayerData || localPrayerData;
+  const { prayerTimes, location, hijriDate, isLoading, requestLocation } = prayerData || {
+    prayerTimes: null,
+    location: null,
+    hijriDate: null,
+    isLoading: true,
+    error: null,
+    requestLocation: async () => false,
+  };
   
   // Render the hero branding even when app_settings is unavailable. The bundled
   // logo is the safe fallback; hiding the whole branding row made the hero look
@@ -237,14 +243,22 @@ const PrayerHeroCard = ({ prayerData, athanSettings }: PrayerHeroCardProps) => {
 
                 {/* Location & Bell */}
                 <div className="flex items-center gap-1.5">
-                  <div className="flex items-center gap-1.5 bg-white/10 rounded-full px-2 py-1 border border-white/15">
+                  <button
+                    type="button"
+                    aria-label={location ? `Refresh location: ${location.city}` : "Use my location"}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      void requestLocation();
+                    }}
+                    className="flex items-center gap-1.5 bg-white/10 rounded-full px-2 py-1 border border-white/15"
+                  >
                     {isLoading ? (
                       <Loader2 size={10} className="animate-spin text-amber-400" />
                     ) : (
                       <MapPin size={10} className="text-amber-400" />
                     )}
-                    <span className="text-[10px] text-white font-medium">{locationStr}</span>
-                  </div>
+                    <span className="text-[10px] text-white font-medium">{location ? locationStr : "Use my location"}</span>
+                  </button>
                   
                   {/* Athan Bell Button */}
                   {athanSettings && (
