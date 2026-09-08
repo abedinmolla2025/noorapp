@@ -71,7 +71,7 @@ export default function SeoIntroSection() {
       >
         {/* H1 */}
         <h1 className="mb-3 text-[17px] font-bold text-foreground">
-          Noor – Free Islamic App for Quran, Hadith, Prayer Times &amp; Dua
+          Noor Islamic App for Quran, Hadith, Dua &amp; Prayer Times
         </h1>
         <p className="mb-4">
           <strong>Noor</strong> is a free Islamic app built for Muslims in India, Bangladesh, and

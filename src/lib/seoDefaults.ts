@@ -15,9 +15,9 @@ export type PageSeoDefaults = {
 
 const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/": {
-    title: "Noor – Quran, Hadith, Dua & Prayer Times",
+    title: "Noor Islamic App — Quran, Hadith, Dua & Prayer Times",
     description:
-      "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.",
+      "Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.",
   },
   "/islamic-app": {
     title: "Islamic App – Quran, Hadith, Dua & Prayer Times",
@@ -150,9 +150,9 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
       "Manage your notification preferences — নামাজের আযান, কুইজ রিমাইন্ডার ও গুরুত্বপূর্ণ আপডেট নোটিফিকেশন পরিচালনা করুন।",
   },
   "/download": {
-    title: "Download Noor App — Android APK | NOOR",
+    title: "Download Noor App — Install the Web App | Noor",
     description:
-      "Download Noor Islamic App for Android — কুরআন, হাদিস, নামাজের সময়, দোয়া ও ইসলামিক কুইজ সহ সম্পূর্ণ ইসলামিক অ্যাপ ডাউনলোড করুন।",
+      "Learn how to install Noor as a Progressive Web App on supported devices, with access to Quran, Hadith, prayer times, Dua and Islamic learning tools.",
   },
   "/sitemap": {
     title: "Sitemap — সাইটম্যাপ | NOOR",

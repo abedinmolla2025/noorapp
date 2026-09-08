@@ -18,10 +18,9 @@ const DownloadPage = () => {
   return (
     <>
       <Helmet>
-        <title>Download Noor App (APK) — Free Islamic App</title>
-        <meta name="description" content="Download the Noor Islamic App APK directly. Read Quran, Hadith, Dua, get Prayer Times and more — all free." />
+        <title>Download Noor App — Install the Web App | Noor</title>
+        <meta name="description" content="Learn how to install Noor as a Progressive Web App on supported devices, with access to Quran, Hadith, prayer times, Dua and Islamic learning tools." />
         <link rel="canonical" href="https://noorapp.in/download" />
-        <meta name="robots" content="noindex,nofollow" />
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24">
@@ -33,7 +32,7 @@ const DownloadPage = () => {
             >
               <ArrowLeft size={22} />
             </button>
-            <h1 className="text-xl font-bold tracking-wide">Download {appName}</h1>
+            <h1 className="text-xl font-bold tracking-wide">Download and Install {appName}</h1>
           </div>
         </header>
 
@@ -45,9 +44,9 @@ const DownloadPage = () => {
               alt={`${appName} Logo`}
               className="w-24 h-24 rounded-2xl shadow-lg mx-auto"
             />
-            <h2 className="text-2xl font-bold text-foreground">{appName} Islamic App</h2>
+            <h2 className="text-2xl font-bold text-foreground">Download and Install {appName}</h2>
             <p className="text-muted-foreground text-sm max-w-sm mx-auto">
-              Your complete Islamic companion — Quran, Hadith, Dua, Prayer Times, Quiz & more. All free, all in one app.
+              Noor works as a web experience and can be installed as a Progressive Web App on supported devices. Open Noor in a supported mobile browser and choose Install or Add to Home Screen when available.
             </p>
           </div>
 
@@ -99,7 +98,12 @@ const DownloadPage = () => {
                 { label: "Home", href: "/", icon: Home },
                 { label: "Quran", href: "/quran", icon: BookOpen },
                 { label: "Hadith", href: "/hadith", icon: ScrollText },
+                { label: "Duas", href: "/dua", icon: BookOpen },
+                { label: "Prayer Times", href: "/prayer-times", icon: Clock },
+                { label: "Quiz", href: "/quiz", icon: BookOpen },
                 { label: "About", href: "/about", icon: Info },
+                { label: "Privacy", href: "/privacy-policy", icon: Info },
+                { label: "Support", href: "/contact", icon: ExternalLink },
               ].map((l) => (
                 <a
                   key={l.href}

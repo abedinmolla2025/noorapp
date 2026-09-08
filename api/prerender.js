@@ -717,15 +717,16 @@ export default async function handler(req, res) {
     // deliberately a compact, layout-matched skeleton rather than a branded
     // splash screen, so slow WebViews never show a misleading intermediate page.
     if (routePath === "/") {
-      title = "Noor – Quran, Hadith, Dua & Prayer Times";
-      description = "Explore Noor's free Islamic learning tools: Quran reading, Hadith collections, daily Duas, prayer times, Islamic stories and more.";
+      title = "Noor Islamic App — Quran, Hadith, Dua & Prayer Times";
+      description = "Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.";
       bodyContent = `
         <div class="min-h-screen bg-background pb-24 text-foreground">
           <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-12 text-white">
             <div class="mx-auto max-w-3xl">
               <p class="mb-3 text-xs font-bold uppercase tracking-[0.18em] text-emerald-100">NOOR ISLAMIC APP</p>
-              <h1 class="text-3xl font-bold leading-tight md:text-4xl">Quran, Hadith, Dua &amp; Prayer Times</h1>
-              <p class="mt-4 max-w-2xl text-base leading-7 text-white/85">Noor is a free Islamic learning platform for Bengali and English readers. Read, listen and study Islamic resources with clear navigation, source notes and practical daily tools.</p>
+              <h1 class="text-3xl font-bold leading-tight md:text-4xl">Noor Islamic App for Quran, Hadith, Dua &amp; Prayer Times</h1>
+              <p class="mt-4 max-w-2xl text-base leading-7 text-white/85">Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.</p>
+              <a href="/download" class="mt-5 inline-flex rounded-xl bg-white px-4 py-3 font-semibold text-emerald-800 hover:bg-emerald-50">Download / Install Noor</a>
             </div>
           </header>
           <main class="mx-auto max-w-3xl space-y-6 px-4 py-7">

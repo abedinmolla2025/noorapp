@@ -34,8 +34,8 @@ function storyMetaDescription(story: any, title: string): string {
 // ─── SEO defaults (mirrors src/lib/seoDefaults.ts) ───
 const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
   "/": {
-    title: "Noor — Islamic App for Quran, Hadith, Prayer Times & Dua",
-    description: "Noor is a free Islamic app for Muslims in India & Bangladesh. Read Quran with Bengali translation, Hadith, daily duas, prayer times, Qibla & Islamic quiz.",
+    title: "Noor Islamic App — Quran, Hadith, Dua & Prayer Times",
+    description: "Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.",
   },
   "/quran": {
     title: "Quran Reader — পবিত্র কুরআন | NOOR",
@@ -134,8 +134,8 @@ const SEO_DEFAULTS: Record<string, { title: string; description: string }> = {
     description: "Noor brings Quran reading, Hadith, Duas, Prayer Times, Qibla, Islamic calendar and a daily quiz together for Bengali-speaking Muslims.",
   },
   "/download": {
-    title: "Download Noor App — Android APK | NOOR",
-    description: "Download Noor Islamic App for Android — কুরআন, হাদিস, নামাজের সময়, দোয়া ও ইসলামিক কুইজ সহ সম্পূর্ণ ইসলামিক অ্যাপ ডাউনলোড করুন।",
+    title: "Download Noor App — Install the Web App | Noor",
+    description: "Learn how to install Noor as a Progressive Web App on supported devices, with access to Quran, Hadith, prayer times, Dua and Islamic learning tools.",
   },
   "/sitemap": {
     title: "Sitemap — সাইটম্যাপ | NOOR",
@@ -747,9 +747,11 @@ Deno.serve(async (req) => {
     } else if (path === "/download") {
       bodyContent = `
         <section>
-            <h2>Download Noor App — নূর অ্যাপ ডাউনলোড করুন</h2>
+            <h2>Download and Install Noor</h2>
             <p>${escapeHtml(seo?.description || "")}</p>
-            <p>Download the Noor Islamic App for Android. Get instant access to Quran, Hadith, Prayer Times, Duas, Qibla, Tasbih, Islamic Quiz and more — all in one beautiful app.</p>
+            <p>Noor works as a web experience and can be installed as a Progressive Web App on supported devices. Open Noor in a supported mobile browser and choose Install or Add to Home Screen when available.</p>
+            <h3>Explore Noor</h3>
+            <p><a href="/">Home</a> · <a href="/quran">Read the Quran</a> · <a href="/hadith">Browse Hadith</a> · <a href="/dua">Daily Duas</a> · <a href="/prayer-times">Prayer Times</a> · <a href="/quiz">Islamic Quiz</a> · <a href="/about">About Noor</a> · <a href="/privacy-policy">Privacy</a> · <a href="/contact">Support</a></p>
             <h3>App Features</h3>
             <ul>
                 <li>পবিত্র কুরআন — আরবি, বাংলা অনুবাদ ও অডিও তিলাওয়াত</li>

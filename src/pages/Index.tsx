@@ -305,8 +305,8 @@ const Index = () => {
     : defaultSections.map((s, idx) => ({ key: String(idx), el: s.el, pad: "space-y-4" }));
 
   const SITE_ORIGIN = "https://noorapp.in";
-  const pageTitle = "Noor – Quran, Hadith, Dua & Prayer Times";
-  const pageDescription = "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.";
+  const pageTitle = "Noor Islamic App — Quran, Hadith, Dua & Prayer Times";
+  const pageDescription = "Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.";
 
   return (
     <PullToRefresh
@@ -362,6 +362,15 @@ const Index = () => {
       {/* Main Content */}
       <main className="w-full px-3 py-4" style={{ transform: 'translateZ(0)', WebkitTransform: 'translateZ(0)' }}>
         <div className="space-y-4">
+          <section className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+            <p className="text-xl font-bold text-foreground">Noor Islamic App for Quran, Hadith, Dua &amp; Prayer Times</p>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.
+            </p>
+            <a href="/download" className="mt-3 inline-flex rounded-xl bg-primary px-4 py-2.5 text-sm font-semibold text-primary-foreground hover:brightness-110">
+              Download / Install Noor
+            </a>
+          </section>
           {orderedSections.map((s) => (
             <section
               key={s.key}
