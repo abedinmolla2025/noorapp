@@ -39,6 +39,7 @@ const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const BackendStatusPage = lazy(() => import("./pages/BackendStatusPage"));
 const QuizPage = lazy(() => import("./pages/QuizPage"));
+const QuizDetailPage = lazy(() => import("./pages/QuizDetailPage"));
 const PrayerGuidePage = lazy(() => import("./pages/PrayerGuidePage"));
 const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
 const TermsPage = lazy(() => import("./pages/TermsPage"));
@@ -119,6 +120,7 @@ const AppRoutes = () => {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/quiz" element={<QuizPage />} />
+          <Route path="/quiz/:id" element={<QuizDetailPage />} />
           <Route path="/prayer-guide" element={<PrayerGuidePage />} />
           <Route path="/privacy-policy" element={<PrivacyPolicyPage />} />
           <Route path="/terms" element={<TermsPage />} />

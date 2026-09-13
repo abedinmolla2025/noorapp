@@ -655,7 +655,35 @@ function structuredData({ description }) {
   return `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c")}</script>`;
 }
 
-function inject(html, { title, description, canonical, ogImage, body }) {
+function quizStructuredData(record, canonical) {
+  const questionText = [record.question_bn, record.question_en].filter(Boolean).join(" / ");
+  const answerBn = Array.isArray(record.options_bn) ? record.options_bn[record.correct_answer] : null;
+  const answerEn = Array.isArray(record.options_en) ? record.options_en[record.correct_answer] : null;
+  const answerText = [answerBn, answerEn].filter(Boolean).join(" / ");
+  if (!questionText || !answerText) return "";
+  const data = {
+    "@context": "https://schema.org",
+    "@type": "Quiz",
+    "@id": `${canonical}#quiz`,
+    "url": canonical,
+    "name": questionText,
+    "about": { "@type": "Thing", "name": record.category || "Islamic studies" },
+    "educationalAlignment": [{
+      "@type": "AlignmentObject",
+      "alignmentType": "educationalSubject",
+      "targetName": `Islamic studies — ${record.category || "General"}`,
+    }],
+    "hasPart": [{
+      "@type": "Question",
+      "eduQuestionType": "Flashcard",
+      "text": questionText,
+      "acceptedAnswer": { "@type": "Answer", "text": answerText },
+    }],
+  };
+  return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
+}
+
+function inject(html, { title, description, canonical, ogImage, body, extraStructuredData = "", robots = "index,follow" }) {
   // 1. Remove ALL existing meta/link/title tags that we want to override
   // We use a very broad match to ensure nothing is missed
   let cleanHtml = html
@@ -666,10 +694,11 @@ function inject(html, { title, description, canonical, ogImage, body }) {
   // 2. Define new tags with explicit values
   const newTags = [
     structuredData({ description }),
+    extraStructuredData,
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" data-rh="true" />`,
     `<link rel="canonical" href="${esc(canonical)}" data-rh="true" />`,
-    `<meta name="robots" content="index,follow" data-rh="true" />`,
+    `<meta name="robots" content="${esc(robots)}" data-rh="true" />`,
     `<meta property="og:type" content="${getOgType(canonical)}" />`,
     `<meta property="og:title" content="${esc(title)}" />`,
     `<meta property="og:description" content="${esc(description)}" />`,
@@ -709,6 +738,8 @@ export default async function handler(req, res) {
   let title = "Noor – Prayer Times, Quran & More";
   let description = "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.";
   let bodyContent = "";
+  let extraStructuredData = "";
+  let robotsDirective = "index,follow";
   let statusCode = 200;
   let canonicalUrl = `${SITE_ORIGIN}${routePath === "/" ? "/" : routePath}`;
 
@@ -1289,6 +1320,36 @@ export default async function handler(req, res) {
         </div>
       `;
     }
+    // --- Verified Quiz Detail Page ---
+    else if (routePath.startsWith("/quiz/") && routePath.split("/")[2]) {
+      const quizId = decodeURIComponent(routePath.split("/")[2]);
+      const { data: record } = await supabase
+        .from("quiz_questions")
+        .select("id, category, question_bn, question_en, options_bn, options_en, correct_answer, explanation_bn, explanation_en, source_reference, related_url, verification_status")
+        .eq("id", quizId)
+        .eq("is_active", true)
+        .maybeSingle();
+      const eligible = ["verified", "verified_primary", "verified_secondary"].includes(record?.verification_status);
+      if (!record || !eligible) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Quiz question unavailable | Noor";
+        description = "This Noor quiz question is not published or is awaiting editorial review.";
+        bodyContent = `<main class="min-h-screen bg-background p-8"><div class="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8"><h1 class="text-2xl font-bold">Quiz question unavailable</h1><p class="mt-3 text-muted-foreground">This question is not published or is awaiting editorial review.</p><a class="mt-6 inline-block text-primary hover:underline" href="/quiz">Browse the daily quiz</a></div></main>`;
+      } else {
+        const answerBn = Array.isArray(record.options_bn) ? record.options_bn[record.correct_answer] : null;
+        const answerEn = Array.isArray(record.options_en) ? record.options_en[record.correct_answer] : null;
+        const questionBn = record.question_bn || record.question_en || "Islamic quiz question";
+        const questionEn = record.question_en && record.question_bn ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.question_en)}</p>` : "";
+        const options = Array.isArray(record.options_bn) && record.options_bn.length ? record.options_bn : (record.options_en || []);
+        const optionHtml = options.map((option, index) => `<li class="rounded-xl border border-border p-4 ${index === record.correct_answer ? "border-primary bg-primary/10" : ""}"><strong>${String.fromCharCode(65 + index)}.</strong> ${esc(option)}${record.options_en?.[index] && record.options_en[index] !== option ? `<span lang="en" class="mt-1 block text-sm text-muted-foreground">${esc(record.options_en[index])}</span>` : ""}</li>`).join("");
+        const canonical = `${SITE_ORIGIN}/quiz/${encodeURIComponent(record.id)}`;
+        title = shortenMetaText(`${questionBn} | Noor Quiz`, 70);
+        description = shortenMetaText(record.explanation_bn || record.explanation_en || "Verified Islamic quiz question from Noor.", 160);
+        bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm"><a class="text-sm text-primary hover:underline" href="/quiz">← Back to Daily Quiz</a><p class="mt-6 text-sm font-semibold text-primary">${esc(record.category || "Islamic studies")}</p><h1 class="mt-2 text-2xl font-bold leading-relaxed">${esc(questionBn)}</h1>${questionEn}<ol class="mt-6 grid gap-3">${optionHtml}</ol><section aria-labelledby="answer-heading" class="mt-6 rounded-xl bg-primary/10 p-4"><h2 id="answer-heading" class="font-semibold">সঠিক উত্তর / Correct answer</h2><p class="mt-2">${esc(answerBn || answerEn || "")}</p>${answerBn && answerEn ? `<p lang="en" class="text-sm text-muted-foreground">${esc(answerEn)}</p>` : ""}</section>${record.explanation_bn || record.explanation_en ? `<section class="mt-6"><h2 class="font-semibold">ব্যাখ্যা / Explanation</h2><p class="mt-2 leading-7">${esc(record.explanation_bn || record.explanation_en)}</p>${record.explanation_bn && record.explanation_en ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.explanation_en)}</p>` : ""}</section>` : ""}${record.source_reference ? `<section class="mt-6"><h2 class="font-semibold">Source</h2><p class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">${esc(record.source_reference)}</p></section>` : ""}<p class="mt-6 border-t border-border pt-4 text-sm"><a class="text-primary hover:underline" href="/sources">Editorial sources and methodology</a></p></article></main>`;
+        extraStructuredData = quizStructuredData(record, canonical);
+      }
+    }
     // --- Public Trust, Legal and Feature Pages ---
     else if (STATIC_PAGE_COPY[routePath]) {
       const page = STATIC_PAGE_COPY[routePath];
@@ -1372,7 +1433,9 @@ export default async function handler(req, res) {
       description,
       canonical: canonicalUrl,
       ogImage: req.storyOgImage || `${SITE_ORIGIN}/og-image.png`,
-      body: bodyContent
+      body: bodyContent,
+      extraStructuredData,
+      robots: robotsDirective,
     });
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
