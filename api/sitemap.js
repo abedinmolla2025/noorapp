@@ -62,7 +62,30 @@ const STORY_SLUGS = [
   "well-rumah-eternal-charity-islam", "yawm-al-arafah-day-of-forgiveness"
 ];
 
-export default function handler(req, res) {
+async function getVerifiedQuizRoutes() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  if (!supabaseUrl || !supabaseKey) return [];
+  const query = new URLSearchParams({
+    select: "id",
+    is_active: "eq.true",
+    verification_status: "in.(verified,verified_primary,verified_secondary)",
+    order: "created_at.asc",
+    limit: "500",
+  });
+  try {
+    const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/quiz_questions?${query}`, {
+      headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+    });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    return rows.filter((row) => row.id).map((row) => `/quiz/${encodeURIComponent(row.id)}`);
+  } catch {
+    return [];
+  }
+}
+
+export default async function handler(req, res) {
   const routes = [...BASE_ROUTES];
   
   // Add stories
@@ -75,6 +98,9 @@ export default function handler(req, res) {
   for (const lang of ["bangla", "english", "urdu"]) {
     for (let i = 1; i <= 97; i++) routes.push(`/hadith/sahih-bukhari/${lang}/chapter-${i}`);
   }
+
+  // Only verified active quiz records are included in the indexable sitemap.
+  routes.push(...await getVerifiedQuizRoutes());
 
   const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${routes.map((route) => `  <url><loc>${xmlEscape(`${ORIGIN}${route}`)}</loc><changefreq>weekly</changefreq><priority>${route === "/" ? "1.0" : "0.8"}</priority></url>`).join("\n")}\n</urlset>`;
   res.setHeader("Content-Type", "application/xml; charset=utf-8");
