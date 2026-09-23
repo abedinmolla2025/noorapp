@@ -326,6 +326,7 @@ const DuaDetailPage = () => {
   const [nextDua, setNextDua] = useState<NavSibling | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [loadError, setLoadError] = useState(false);
   const [language, setLanguage] = useState<DuaLang>(() => {
     if (typeof window === "undefined") return "bengali";
     const saved = window.localStorage.getItem("dua_language");
@@ -344,18 +345,25 @@ const DuaDetailPage = () => {
     (async () => {
       setLoading(true);
       setNotFound(false);
+      setLoadError(false);
       const { data, error } = await supabase
         .from("admin_content")
         .select(
           "id, slug, title, title_en, title_hi, title_ur, category, subtitle, content_arabic, content_pronunciation, content_pronunciation_en, content_pronunciation_hi, content_pronunciation_ur, content, content_en, content_hi, content_ur, explanation_bn, explanation_en, explanation_hi, explanation_ur, benefits_bn, benefits_en, benefits_hi, benefits_ur, when_to_recite_bn, when_to_recite_en, when_to_recite_hi, when_to_recite_ur, hadith_reference, source_type, reference, authenticity, virtue, virtue_reference, quran_meta, faq, related_duas, recommendation_tags, recommended_moments, image_url, audio_url, og_image_data, seo"
         )
         .eq("slug", slug)
+        .eq("is_published", true)
         .eq("status", "published")
         .in("content_type", ["dua", "Dua"])
         .maybeSingle();
 
       if (cancelled) return;
-      if (error || !data) {
+      if (error) {
+        setLoadError(true);
+        setLoading(false);
+        return;
+      }
+      if (!data) {
         setNotFound(true);
         setLoading(false);
         return;
@@ -540,6 +548,18 @@ const DuaDetailPage = () => {
             ))}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen bg-[hsl(158,64%,18%)] flex flex-col items-center justify-center p-6 text-center">
+        <Helmet><meta name="robots" content="noindex" /></Helmet>
+        <p className="text-white text-lg mb-4">দোয়াটি লোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।</p>
+        <Link to="/dua" className="px-4 py-2 rounded-full bg-[hsl(45,93%,58%)] text-[hsl(158,64%,15%)] font-medium">
+          সব দোয়া দেখুন
+        </Link>
       </div>
     );
   }

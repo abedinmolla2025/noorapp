@@ -8,6 +8,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+type SlugRow = { slug: string | null; updated_at: string | null };
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -47,7 +49,8 @@ Deno.serve(async (req) => {
     const { data: duaSlugRows } = await supabase
       .from("admin_content")
       .select("slug, updated_at")
-      .eq("content_type", "dua")
+      .in("content_type", ["dua", "Dua"])
+      .eq("is_published", true)
       .eq("status", "published")
       .not("slug", "is", null);
 
@@ -67,8 +70,7 @@ Deno.serve(async (req) => {
     // Use noorapp.in as the primary domain
     const SITE_ORIGIN = "https://noorapp.in";
     const url = new URL(req.url);
-    const hostParam = url.searchParams.get("host");
-    const origin = hostParam ? `https://${hostParam}` : SITE_ORIGIN;
+    const origin = SITE_ORIGIN;
 
     // Build URLs from seo_pages
     const seoUrls = indexablePages.map((p) => {
@@ -88,7 +90,7 @@ Deno.serve(async (req) => {
     const contentUrls = (contentPages || [])
       .filter((c) => {
         const contentPath = `/${c.content_type}/${c.id}`;
-        return !existingPaths.has(contentPath);
+        return c.content_type?.toLowerCase() !== "dua" && !existingPaths.has(contentPath);
       })
       .map((c) => {
         const lastmod = c.updated_at
@@ -103,26 +105,8 @@ Deno.serve(async (req) => {
       });
 
     const today0 = new Date().toISOString().split("T")[0];
-    // Add Duas from /data/duas.json
-    const duaUrls: string[] = [];
-    try {
-      const duasRes = await fetch(`${origin}/data/duas.json`);
-      if (duasRes.ok) {
-        const duas = await duasRes.json();
-        for (const d of duas) {
-          duaUrls.push(`  <url>
-    <loc>${origin}/dua/${escapeXml(d.slug)}</loc>
-    <lastmod>${today}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>`);
-        }
-      }
-    } catch (e) {
-      console.error("Duas sitemap fetch failed:", e);
-    }
 
-    const duaSlugUrls = (duaSlugRows || []).map((r: any) => {
+    const duaSlugUrls = (duaSlugRows || []).map((r: SlugRow) => {
       const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split("T")[0] : today0;
       return `  <url>
     <loc>${escapeXml(`${origin}/dua/${r.slug}`)}</loc>
@@ -131,7 +115,7 @@ Deno.serve(async (req) => {
     <priority>0.75</priority>
   </url>`;
     });
-    const hadithSlugUrls = (hadithSlugRows || []).map((r: any) => {
+    const hadithSlugUrls = (hadithSlugRows || []).map((r: SlugRow) => {
       const lastmod = r.updated_at ? new Date(r.updated_at).toISOString().split("T")[0] : today0;
       return `  <url>
     <loc>${escapeXml(`${origin}/hadith/h/${r.slug}`)}</loc>
@@ -192,15 +176,23 @@ Deno.serve(async (req) => {
       console.error("Stories sitemap fetch failed:", e);
     }
 
-    const allUrls = [
+    const allUrlEntries = [
       ...seoUrls,
       ...hadithLangUrls,
       ...storyUrls,
-      ...duaUrls,
       ...duaSlugUrls,
       ...hadithSlugUrls,
       ...contentUrls,
-    ].join("\n");
+    ];
+    const seenLocs = new Set<string>();
+    const allUrls = allUrlEntries
+      .filter((entry) => {
+        const loc = entry.match(/<loc>([^<]+)<\/loc>/)?.[1];
+        if (!loc || seenLocs.has(loc)) return false;
+        seenLocs.add(loc);
+        return true;
+      })
+      .join("\n");
 
     const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">

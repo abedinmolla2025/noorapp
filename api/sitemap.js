@@ -87,8 +87,45 @@ async function getVerifiedQuizRoutes() {
   }
 }
 
+async function getPublishedDuaRoutes() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
+  if (!supabaseUrl || !supabaseKey) return [];
+
+  const query = new URLSearchParams({
+    select: "slug",
+    content_type: "in.(dua,Dua)",
+    is_published: "eq.true",
+    status: "eq.published",
+    slug: "not.is.null",
+    order: "created_at.asc",
+    limit: "5000",
+  });
+  try {
+    const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/admin_content?${query}`, {
+      headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+    });
+    if (!response.ok) return [];
+    const rows = await response.json();
+    const uuidOnly = /^[0-9a-f]{8}-[0-9a-f-]{27,36}$/iu;
+    const validSlug = (value) => {
+      const slug = typeof value === "string" ? value.trim() : "";
+      return slug && !uuidOnly.test(slug) && /^[\p{L}\p{M}\p{N}][\p{L}\p{M}\p{N}_-]*$/u.test(slug) ? slug : null;
+    };
+    return rows.flatMap((row) => {
+      const slug = validSlug(row?.slug);
+      return slug ? [`/dua/${encodeURIComponent(slug)}`] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
 export default async function handler(req, res) {
   const routes = [...BASE_ROUTES];
+
+  // Include only published Du'a rows with valid canonical slugs.
+  routes.push(...await getPublishedDuaRoutes());
   
   // Add stories
   STORY_SLUGS.forEach(slug => routes.push(`/stories/${slug}`));
@@ -104,7 +141,14 @@ export default async function handler(req, res) {
   // Only verified active quiz records are included in the indexable sitemap.
   routes.push(...await getVerifiedQuizRoutes());
 
-  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${routes.map((route) => `  <url><loc>${xmlEscape(`${ORIGIN}${route}`)}</loc><changefreq>weekly</changefreq><priority>${route === "/" ? "1.0" : "0.8"}</priority></url>`).join("\n")}\n</urlset>`;
+  const seenLocs = new Set();
+  const uniqueRoutes = routes.filter((route) => {
+    const loc = `${ORIGIN}${route}`;
+    if (seenLocs.has(loc)) return false;
+    seenLocs.add(loc);
+    return true;
+  });
+  const body = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${uniqueRoutes.map((route) => `  <url><loc>${xmlEscape(`${ORIGIN}${route}`)}</loc><changefreq>weekly</changefreq><priority>${route === "/" ? "1.0" : "0.8"}</priority></url>`).join("\n")}\n</urlset>`;
   res.setHeader("Content-Type", "application/xml; charset=utf-8");
   // Keep sitemap responses fresh after URL, canonical, or route updates.
   res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=300");

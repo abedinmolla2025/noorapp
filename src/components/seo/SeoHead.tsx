@@ -291,6 +291,9 @@ export function SeoHead() {
   const isAdmin = isAdminRoutePath(pathname);
   const pageSeoQuery = usePageSeo(pathname, !isAdmin);
   const pageSeo = pageSeoQuery.data;
+  // Du'a category and detail pages own their route-specific Helmet output.
+  // Do not emit a second generic head block from the global SEO component.
+  const isDuaChildRoute = pathname.startsWith("/dua/");
 
   // Avoid indexing admin panel
   if (isAdmin) {
@@ -300,6 +303,8 @@ export function SeoHead() {
       </Helmet>
     );
   }
+
+  if (isDuaChildRoute) return null;
 
   // Bilingual defaults for the current route (fallback when no admin/db value)
   const bilingualDefaults = getPageSeoDefaults(pathname, branding.appName);

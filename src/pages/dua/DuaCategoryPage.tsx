@@ -131,6 +131,7 @@ const DuaCategoryPage = () => {
   const navigate = useNavigate();
   const [duas, setDuas] = useState<DuaRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [categoryName, setCategoryName] = useState<string>("");
   const [language, setLanguage] = useState<DuaLang>("bengali");
 
@@ -152,16 +153,25 @@ const DuaCategoryPage = () => {
     let cancelled = false;
     (async () => {
       setLoading(true);
-      const { data } = await supabase
+      setLoadError(false);
+      const { data, error } = await supabase
         .from("admin_content")
         .select(
           "id, slug, title, title_en, title_hi, title_ur, category, content_arabic, content, content_en, content_hi, content_ur, content_pronunciation, content_pronunciation_en, content_pronunciation_hi, content_pronunciation_ur"
         )
+        .eq("is_published", true)
         .eq("status", "published")
         .in("content_type", ["dua", "Dua"])
         .order("order_index", { ascending: true });
 
       if (cancelled) return;
+      if (error) {
+        setDuas([]);
+        setCategoryName(slug);
+        setLoadError(true);
+        setLoading(false);
+        return;
+      }
       const all = (data ?? []) as unknown as DuaRow[];
       const filtered = all.filter(
         (d) => d.category && slugify(d.category) === slug
@@ -302,6 +312,10 @@ const DuaCategoryPage = () => {
               <p className="text-white/60 animate-pulse font-medium tracking-widest text-[10px] uppercase">Preparing Duas...</p>
             </div>
             <DuaSkeleton />
+          </div>
+        ) : loadError ? (
+          <div className="text-white/70 text-sm py-8 text-center" role="alert">
+            দোয়াগুলো লোড করা যায়নি। অনুগ্রহ করে আবার চেষ্টা করুন।
           </div>
         ) : duas.length === 0 ? (
           <p className="text-white/70 text-sm py-8 text-center">

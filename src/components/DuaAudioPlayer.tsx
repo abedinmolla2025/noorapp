@@ -12,9 +12,16 @@ const DuaAudioPlayer = ({ arabicText, duaId, audioUrl }: DuaAudioPlayerProps) =>
   const [isPlaying, setIsPlaying] = useState(false);
   const [isMuted, setIsMuted] = useState(false);
   const [progress, setProgress] = useState(0);
+  const [audioState, setAudioState] = useState<"loading" | "ready" | "error">(
+    audioUrl ? "loading" : "error",
+  );
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+
+  useEffect(() => {
+    setAudioState(audioUrl ? "loading" : "error");
+  }, [audioUrl]);
 
   useEffect(() => {
     return () => {
@@ -123,6 +130,13 @@ const DuaAudioPlayer = ({ arabicText, duaId, audioUrl }: DuaAudioPlayerProps) =>
   };
 
   if (audioUrl) {
+    if (audioState === "error") {
+      return (
+        <p className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center text-sm text-white/60">
+          অডিও বর্তমানে উপলভ্য নয়।
+        </p>
+      );
+    }
     return (
       <motion.div
         initial={{ opacity: 0, y: 10 }}
@@ -134,8 +148,18 @@ const DuaAudioPlayer = ({ arabicText, duaId, audioUrl }: DuaAudioPlayerProps) =>
           <Volume2 className="w-4 h-4" />
           <p className="text-xs font-medium">উচ্চারণ শুনুন</p>
         </div>
-        <audio className="w-full" controls preload="metadata" src={audioUrl} aria-label="Dua pronunciation audio" />
-        <p className="text-xs text-white/40 text-center mt-3">স্টুডিও অডিও শুনতে প্লে বাটনে ক্লিক করুন</p>
+        <audio
+          className={audioState === "ready" ? "w-full" : "sr-only"}
+          controls
+          preload="metadata"
+          src={audioUrl}
+          aria-label="Dua pronunciation audio"
+          onLoadedMetadata={() => setAudioState("ready")}
+          onError={() => setAudioState("error")}
+        />
+        <p className="text-xs text-white/40 text-center mt-3">
+          {audioState === "ready" ? "স্টুডিও অডিও শুনতে প্লে বাটনে ক্লিক করুন" : "অডিও লোড হচ্ছে..."}
+        </p>
       </motion.div>
     );
   }
