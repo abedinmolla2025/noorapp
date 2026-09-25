@@ -345,23 +345,13 @@ const STATIC_PAGE_COPY = {
   "/sources": {
     title: "Islamic Sources | Noor",
     description: "Understand the Quran, Hadith and editorial sources used across Noor's Islamic content.",
-    heading: "Our Islamic Sources",
-    intro: "Noor is committed to showing where its Islamic content comes from and how readers can evaluate it.",
+    heading: "Authentic Islamic Sources",
+    intro: "Because trustworthiness is central to Islamic knowledge, you deserve to know exactly where Noor's content comes from and how it is verified. This page lists every classical source Noor draws from, the scholars behind them, and our editorial process.",
     sections: [
-      ["Quran", "Quran text and translations are presented for reading and study. Readers should consult qualified scholars for detailed tafsir and matters requiring formal religious guidance."],
-      ["Hadith", "Hadith pages identify the collection and language where available. Sahih Al-Bukhari and other collections are presented as educational references, with care taken not to remove important context."],
-      ["Editorial review", "Our editorial approach prioritizes clarity, respectful presentation and source notes. Corrections and feedback can be sent through the Contact page."],
-    ],
-  },
-  "/support": {
-    title: "Support & Feedback | Noor",
-    description: "Get help with Noor, report content issues and send feedback about Quran, Hadith, Dua and prayer tools.",
-    heading: "Support & Feedback",
-    intro: "Noor is built to be useful and easy to correct. If a page is missing content, a translation needs review or a feature is not working, please tell us what happened.",
-    sections: [
-      ["How to contact us", "Email support@noorapp.in with the page URL, device or browser, and a short description of the problem. Please do not include passwords or other sensitive information."],
-      ["Content corrections", "For Quran, Hadith, Dua or story corrections, include the collection, chapter or reference so the editorial team can verify the issue against a reliable source."],
-      ["Before reporting a loading issue", "Refresh the page once, try the canonical HTTPS address and mention whether the problem remains with JavaScript disabled. Public pages are designed to show essential text without waiting for an app API."],
+      ["The Qur'an", "The Qur'an is the literal word of Allah, revealed to the Prophet Muhammad ﷺ over 23 years and preserved unchanged for over 1,400 years. Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus. English translation: Sahih International and Yusuf Ali (public domain); the displayed edition is identified in the relevant content record. Verse numbering follows the standard Kufan system."],
+      ["Hadith collections", "Hadith are the sayings, actions and tacit approvals of the Prophet Muhammad ﷺ, transmitted through rigorously verified chains of narrators. Noor uses the six major Sunni collections (Kutub as-Sittah): Sahih al-Bukhari (Imam Muhammad ibn Isma'il al-Bukhari, d. 256 AH / 870 CE), Sahih Muslim (Imam Muslim ibn al-Hajjaj, d. 261 AH / 875 CE), Sunan Abu Dawud (Imam Abu Dawud as-Sijistani, d. 275 AH), Jami' at-Tirmidhi (Imam Muhammad at-Tirmidhi, d. 279 AH, known for grading each hadith), Sunan an-Nasa'i (Imam Ahmad an-Nasa'i, d. 303 AH), and Sunan Ibn Majah (Imam Ibn Majah, d. 273 AH)."],
+      ["Grading and methodology", "Where a hadith is graded (Sahih, Hasan, Da'if) we follow the classical rulings of Imam al-Bukhari, Imam Muslim, Imam at-Tirmidhi and later authorities such as Ibn Hajar al-'Asqalani and Shaykh Muhammad Nasir ad-Din al-Albani."],
+      ["Editorial review", "Individual hadith, dua and story entries should identify the collection or Qur'an reference, book/chapter or verse where available, translation/edition information, and the date of the latest editorial review. If a source or translation edition is not yet available in the record, it is marked for editorial follow-up rather than presented as independently verified. Found an inaccurate reference or a translation issue? Please report it through the Contact page."],
     ],
   },
   "/quiz": {
@@ -375,50 +365,31 @@ const STATIC_PAGE_COPY = {
       ["Start the quiz", "Open the interactive quiz to answer questions and see your result. If the interactive data cannot be reached, this introduction remains available and the page should show a retry option rather than an endless loading screen."],
     ],
   },
-  "/data-sources": {
-    title: "Data Sources and Methodology | Noor",
-    description: "Learn how Noor uses Quran, Hadith, prayer-time and location data to provide its Islamic tools.",
-    heading: "Data Sources and Methodology",
-    intro: "Noor combines structured Islamic content with public service data to make its tools useful while keeping the source of key information visible.",
-    sections: [
-      ["Prayer times and location", "Prayer times are calculated using location-aware prayer-time services. Location is used to show relevant city information and is not intended to identify a person."],
-      ["Islamic content", "Quran, Hadith, Dua and story content is organized for reading, search and learning. Where available, the app displays collection, book or reference details."],
-      ["Corrections and feedback", "Data can change as services and content are improved. If you find a missing reference, translation issue or factual error, please report it through Noor Support."],
-    ],
-  },
-  "/privacy": {
-    title: "Privacy Policy | Noor",
-    description: "Read Noor's privacy policy covering local preferences, analytics, advertising cookies, third-party services and user rights.",
-    heading: "Privacy Policy",
-    intro: "Noor uses the minimum information needed to operate its tools and improve the experience. Many preferences, such as language, theme, prayer and notification settings, remain on your device.",
-    sections: [
-      ["Information and local storage", "Settings and progress may be stored locally in your browser or device. Anonymous usage information may be aggregated to understand feature usage."],
-      ["Advertising, cookies and Google AdSense", "Noor may use Google AdSense and other advertising providers. These providers may use cookies, device identifiers or similar technologies to deliver, measure and limit ads, including personalized advertising where permitted by law and your consent choices. Google may use information about visits to this and other sites to provide and improve ads."],
-      ["Your advertising choices", "You can manage consent choices through the privacy controls shown on the site, reset or restrict cookies in your browser, and opt out of personalized advertising through Google's Ads Settings at https://adssettings.google.com. Some non-personalized ads may still be shown."],
-      ["Your choices and contact", "You can clear local app data from your browser or device settings, request help about privacy, or ask how information is used by emailing support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
-    ],
-  },
   "/privacy-policy": {
     title: "Privacy Policy | Noor",
     description: "Read Noor's privacy policy covering local preferences, analytics, advertising cookies, third-party services and user rights.",
     heading: "Privacy Policy",
-    intro: "Noor uses the minimum information needed to operate its tools and improve the experience. Many preferences, such as language, theme, prayer and notification settings, remain on your device.",
+    intro: "How Noor handles your data. Noor is designed to help you with prayer times, Quran, duas and other Islamic content, collecting only the minimum information needed to keep the app working smoothly and improve your experience. This policy explains local storage, analytics, advertising cookies, third-party processors, data retention, children's privacy, and how to request deletion or contact us about privacy.",
     sections: [
-      ["Information and local storage", "Settings and progress may be stored locally in your browser or device. Anonymous usage information may be aggregated to understand feature usage."],
-      ["Advertising, cookies and Google AdSense", "Noor may use Google AdSense and other advertising providers. These providers may use cookies, device identifiers or similar technologies to deliver, measure and limit ads, including personalized advertising where permitted by law and your consent choices. Google may use information about visits to this and other sites to provide and improve ads."],
-      ["Your advertising choices", "You can manage consent choices through the privacy controls shown on the site, reset or restrict cookies in your browser, and opt out of personalized advertising through Google's Ads Settings at https://adssettings.google.com. Some non-personalized ads may still be shown."],
-      ["Your choices and contact", "You can clear local app data from your browser or device settings, request help about privacy, or ask how information is used by emailing support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
+      ["What we store on your device", "Preferences such as theme mode, language selection, quiz progress, notification and prayer settings are stored locally on your device using localStorage. This data never leaves your device unless your platform (for example, backup services) syncs it."],
+      ["Usage information", "The app may collect anonymous usage information (such as which screens are visited most) to understand how features are used. This information is aggregated and does not identify you personally."],
+      ["Your rights", "You can clear app data (such as local preferences or quiz history) from your device at any time through your browser or device settings. If you stop using the app, we do not keep any additional personal information about you inside the app."],
+      ["Advertising & cookies", "Noor may display advertisements provided by third-party advertising networks, including Google AdSense. These services may use cookies and similar tracking technologies to serve ads based on your prior visits to this app or other websites. You can opt out of personalized advertising at any time by visiting Google Ads Settings, and you can withdraw or change consent any time from the cookie banner in this app."],
+      ["Third-party services", "Noor uses third-party services that may collect data: Aladhan API for accurate prayer time calculations based on your location, OpenStreetMap / Nominatim for reverse geocoding your location to display city names, and Google AdSense for displaying relevant advertisements."],
+      ["Changes & contact", "This privacy policy may be updated as the app evolves. If you have questions or concerns, you may reach out to the Noor team through the app or via the store page where the app is published, or email support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
     ],
   },
   "/terms": {
     title: "Terms & Conditions | Noor",
     description: "Read Noor's terms, acceptable-use guidelines and content limitations for using the free Islamic app.",
     heading: "Terms & Conditions",
-    intro: "By using Noor, you agree to use its tools respectfully and understand that the app provides general educational and devotional information.",
+    intro: "Guidelines for using Noor. These terms describe acceptable use, service availability limits, content disclaimers, intellectual-property expectations, updates, and how to contact the developer about a dispute or correction. Noor is developed and maintained by ABEDIN MOLLA from India — a humble effort to bring daily Islamic reminders, prayer times, Quran and duas together in one beautiful place.",
     sections: [
-      ["Educational use", "Noor is not a replacement for a qualified scholar, imam, medical professional or other specialist. Please seek appropriate guidance for personal religious, legal, medical or financial decisions."],
-      ["Acceptable use", "Do not misuse the service, attempt unauthorized access, disrupt availability or copy and redistribute protected material without permission."],
-      ["Content and availability", "We work to keep information accurate and available, but third-party services, translations and calculations may change. Report problems through Support so they can be reviewed."],
+      ["Purpose of the app", "Noor is provided for educational and spiritual benefit only. It should not be used for any harmful, offensive or unlawful activity."],
+      ["Personal responsibility", "You remain responsible for verifying important information such as prayer times or religious rulings with trusted local scholars or sources. The app is a helpful tool, not a replacement for qualified scholarship."],
+      ["Acceptable use", "You agree not to misuse the app, attempt to break security, or disturb other users' experience in any way. Any abusive or harmful use is strictly prohibited. Do not misuse the service, attempt unauthorized access, disrupt availability or copy and redistribute protected material without permission."],
+      ["Developer information", "This app has been developed and maintained by ABEDIN MOLLA from India, with the intention of serving the Muslim community with a clean and focused Islamic experience."],
+      ["Changes to these terms", "These terms may be updated over time as the app improves. Continued use of the app after changes means you accept the updated terms."],
     ],
   },
   "/download": {
@@ -689,7 +660,7 @@ const getAppTemplate = () => {
 
 const getOgType = (canonical) => {
   const pathname = new URL(canonical || SITE_ORIGIN).pathname.replace(/\/$/, "") || "/";
-  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources", "/data-sources"]);
+  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources"]);
   return websiteRoutes.has(pathname) ? "website" : "article";
 };
 
@@ -804,6 +775,30 @@ export default async function handler(req, res) {
   let canonicalUrl = `${SITE_ORIGIN}${routePath === "/" ? "/" : routePath}`;
 
   try {
+    // --- Canonical redirects for legacy / duplicate routes ---
+    // These mirror the vercel.json edge redirects so that direct access to the
+    // prerender function (which bypasses edge redirects) returns the same
+    // consistent 301 instead of serving a duplicate indexable page.
+    //   /support       -> /contact        (crawler-only artifact; /contact is the canonical support page)
+    //   /data-sources  -> /sources        (vercel.json 301s this at the edge)
+    //   /privacy       -> /privacy-policy (vercel.json 301s this at the edge)
+    //   /hadith/bukhari -> /hadith/sahih-bukhari (vercel.json 301s this at the edge;
+    //                      /hadith/sahih-bukhari is the real collection route)
+    const CANONICAL_REDIRECTS = {
+      "/support": "/contact",
+      "/data-sources": "/sources",
+      "/privacy": "/privacy-policy",
+      "/hadith/bukhari": "/hadith/sahih-bukhari",
+    };
+    if (CANONICAL_REDIRECTS[routePath]) {
+      const target = `${SITE_ORIGIN}${CANONICAL_REDIRECTS[routePath]}`;
+      res.setHeader("Location", target);
+      res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=300");
+      res.setHeader("X-Noor-Prerender", "v101");
+      res.status(301).send("");
+      return;
+    }
+
     // --- Homepage ---
     // Keep the first byte visually consistent with the React fallback. This is
     // deliberately a compact, layout-matched skeleton rather than a branded
@@ -1939,7 +1934,7 @@ export default async function handler(req, res) {
       </style>
     `;
     
-    const finalHtml = inject(appTemplate.replace('</head>', `${customStyles}</head>`), {
+    let finalHtml = inject(appTemplate.replace('</head>', `${customStyles}</head>`), {
       title,
       description,
       canonical: canonicalUrl,
@@ -1948,6 +1943,16 @@ export default async function handler(req, res) {
       extraStructuredData,
       robots: robotsDirective,
     });
+
+    // P1-1: error (404/410) and noindex pages must never carry ad-loading code.
+    // The base template (dist/app.html, built from index.html) may include the
+    // AdSense script; strip it (and the account verification meta) from any
+    // error/noindex response so those pages are never ad-bearing.
+    if (statusCode >= 400 || robotsDirective.startsWith("noindex")) {
+      finalHtml = finalHtml
+        .replace(/<script[^>]*pagead2\.googlesyndication\.com[^>]*>[\s\S]*?<\/script>/gi, "")
+        .replace(/<meta[^>]*name=["']google-adsense-account["'][^>]*>/gi, "");
+    }
 
     res.setHeader("Content-Type", "text/html; charset=utf-8");
     // Metadata changes must reach Googlebot and visitors promptly after each release.

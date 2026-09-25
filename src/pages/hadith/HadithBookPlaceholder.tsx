@@ -13,7 +13,7 @@ type BookMeta = {
 };
 
 const otherBooks = [
-  { id: "bukhari", label: "Sahih Bukhari", path: "/hadith/bukhari" },
+  { id: "bukhari", label: "Sahih Bukhari", path: "/hadith/sahih-bukhari" },
   { id: "muslim", label: "Sahih Muslim", path: "/hadith/muslim" },
   { id: "tirmidhi", label: "Jami at-Tirmidhi", path: "/hadith/tirmidhi" },
   { id: "abu-dawud", label: "Sunan Abu Dawud", path: "/hadith/abu-dawud" },

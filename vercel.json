@@ -3,6 +3,7 @@
   "redirects": [
     { "source": "/privacy", "destination": "/privacy-policy", "statusCode": 301 },
     { "source": "/data-sources", "destination": "/sources", "statusCode": 301 },
+    { "source": "/support", "destination": "/contact", "statusCode": 301 },
     { "source": "/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
     { "source": "/hadith/bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
     { "source": "/sahih-al-bukhari", "destination": "/hadith/sahih-bukhari", "statusCode": 301 },
