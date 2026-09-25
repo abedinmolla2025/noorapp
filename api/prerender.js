@@ -1204,6 +1204,37 @@ export default async function handler(req, res) {
     else if (routePath === "/hadith") {
       title = "Hadith Collections — হাদিস সংকলন | Noor";
       description = "Browse authentic Hadith collections on Noor, including Sahih Al-Bukhari with Arabic text and Bengali, English and Urdu translations.";
+      // Book metadata mirrors the client HadithPage (hadith_books table with
+      // the same fallback values). Total hadith counts are deliberately NOT
+      // exposed: the app carries an editorial caution that counts vary by
+      // edition and must not be shown until verified.
+      const { data: bookRows } = await supabase
+        .from("hadith_books")
+        .select("id, title, title_bn, total_chapters")
+        .eq("is_active", true)
+        .order("display_order");
+      const fallbackBooks = [
+        { id: "bukhari", title: "Sahih Bukhari", title_bn: "সহীহ বুখারী", total_chapters: 97 },
+        { id: "muslim", title: "Sahih Muslim", title_bn: "সহীহ মুসলিম", total_chapters: 56 },
+        { id: "tirmidhi", title: "Jami at-Tirmidhi", title_bn: "জামে তিরমিযী", total_chapters: 49 },
+        { id: "abu-dawud", title: "Sunan Abu Dawud", title_bn: "সুনানে আবু দাউদ", total_chapters: 43 },
+      ];
+      const hadithBooks = (bookRows && bookRows.length ? bookRows : fallbackBooks);
+      const bookCards = hadithBooks.map((b) => {
+        const available = b.id === "bukhari";
+        const chapters = b.total_chapters ? `${esc(String(b.total_chapters))} chapters` : "Hadith collection";
+        const inner = `
+          <div>
+            <h2 class="text-xl font-bold group-hover:text-primary transition-colors">${esc(b.title || "")}</h2>
+            <p class="text-sm text-muted-foreground">${esc(b.title_bn || "")} · ${chapters}</p>
+            ${available ? "" : '<p class="mt-1 text-xs font-semibold text-amber-500">Coming soon</p>'}
+          </div>
+          ${available ? '<span class="text-2xl">→</span>' : ""}`;
+        const cls = "bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group";
+        return available
+          ? `<a href="/hadith/sahih-bukhari" class="${cls}">${inner}</a>`
+          : `<div class="${cls} opacity-90">${inner}</div>`;
+      }).join("");
       bodyContent = `
         <div class="min-h-screen bg-background">
           <header class="bg-gradient-to-br from-amber-500 to-orange-600 p-8 text-white text-center">
@@ -1213,23 +1244,27 @@ export default async function handler(req, res) {
           <div class="p-4 max-w-2xl mx-auto -mt-6">
             <p class="text-muted-foreground text-center mb-6">Read authentic Hadith with Arabic text and trusted translations. Start with Sahih Al-Bukhari in your language.</p>
             <div class="grid grid-cols-1 gap-4">
+              ${bookCards}
+            </div>
+            <h2 class="mt-8 mb-4 text-lg font-bold text-center">Read Sahih Al-Bukhari in your language</h2>
+            <div class="grid grid-cols-1 gap-4">
               <a href="/hadith/sahih-bukhari/bangla" class="bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group">
                 <div>
-                  <h2 class="text-xl font-bold group-hover:text-primary transition-colors">সহীহ বুখারী (বাংলা)</h2>
+                  <h3 class="text-xl font-bold group-hover:text-primary transition-colors">সহীহ বুখারী (বাংলা)</h3>
                   <p class="text-sm text-muted-foreground">সম্পূর্ণ বাংলা অনুবাদসহ</p>
                 </div>
                 <span class="text-2xl">→</span>
               </a>
               <a href="/hadith/sahih-bukhari/english" class="bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group">
                 <div>
-                  <h2 class="text-xl font-bold group-hover:text-primary transition-colors">Sahih Al-Bukhari (English)</h2>
+                  <h3 class="text-xl font-bold group-hover:text-primary transition-colors">Sahih Al-Bukhari (English)</h3>
                   <p class="text-sm text-muted-foreground">Complete English translation</p>
                 </div>
                 <span class="text-2xl">→</span>
               </a>
               <a href="/hadith/sahih-bukhari/urdu" class="bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group">
                 <div>
-                  <h2 class="text-xl font-bold group-hover:text-primary transition-colors">صحیح البخاری (Urdu)</h2>
+                  <h3 class="text-xl font-bold group-hover:text-primary transition-colors">صحیح البخاری (Urdu)</h3>
                   <p class="text-sm text-muted-foreground">Urdu translation</p>
                 </div>
                 <span class="text-2xl">→</span>
@@ -1782,6 +1817,25 @@ export default async function handler(req, res) {
     else if (routePath === "/contact") {
       title = "Contact Us | Noor";
       description = "Contact Noor support for help with Quran, Hadith, Dua, prayer times, account questions and feedback about the Islamic app.";
+      // Contact channels come from the same app_settings legal config the
+      // React ContactPage reads via GlobalConfig. Email is configured;
+      // Facebook/WhatsApp render only when actually configured (no placeholders).
+      const { data: legalRows } = await supabase
+        .from("app_settings")
+        .select("setting_value")
+        .eq("setting_key", "legal")
+        .limit(1);
+      const legalCfg = (legalRows && legalRows[0] && legalRows[0].setting_value) || {};
+      const contactEmail = legalCfg.contactEmail || "support@noorapp.in";
+      const facebookUrl = legalCfg.facebookUrl || "";
+      const whatsappUrl = legalCfg.whatsappUrl || "";
+      const channelCard = (label, sub, href, external) => `
+        <a href="${href}"${external ? ' target="_blank" rel="noreferrer"' : ""} class="flex items-center gap-3 rounded-xl border border-border bg-card p-3.5 hover:border-primary/35 transition-all">
+          <div class="min-w-0">
+            <p class="text-sm font-semibold">${label}</p>
+            <p class="truncate text-xs text-muted-foreground">${sub}</p>
+          </div>
+        </a>`;
       bodyContent = `
         <div class="min-h-screen bg-background p-4">
           <header class="mb-8">
@@ -1790,10 +1844,27 @@ export default async function handler(req, res) {
           </header>
           <div class="max-w-2xl mx-auto space-y-6">
             <section class="bg-card p-6 rounded-2xl border border-border">
-              <h2 class="text-lg font-bold mb-4">Get in Touch</h2>
-              <p class="mb-4">Email: <a href="mailto:support@noorapp.in" class="text-primary">support@noorapp.in</a></p>
-              <p class="text-sm text-muted-foreground">We typically respond within 24-48 hours.</p>
+              <h2 class="text-lg font-bold mb-2">We&apos;re here to help!</h2>
+              <p class="text-muted-foreground">Report a bug, request a feature, or share your feedback. Our team will get back to you as soon as possible.</p>
             </section>
+            <section class="bg-card p-6 rounded-2xl border border-border">
+              <h2 class="text-lg font-bold mb-4">Other Contact Methods</h2>
+              <div class="space-y-3">
+                ${channelCard("Email", esc(contactEmail), `mailto:${esc(contactEmail)}`, false)}
+                ${facebookUrl ? channelCard("Facebook", "Visit our Facebook page", esc(facebookUrl), true) : ""}
+                ${whatsappUrl ? channelCard("WhatsApp", "Message us on WhatsApp", esc(whatsappUrl), true) : ""}
+              </div>
+              <p class="mt-4 text-sm text-muted-foreground">We typically respond within 24-48 hours.</p>
+            </section>
+            <section class="bg-card p-6 rounded-2xl border border-border">
+              <h2 class="text-lg font-bold mb-2">Report Content Issues</h2>
+              <p class="text-sm leading-6 text-muted-foreground">If you notice any inaccuracy in Quran text, hadith references, prayer time calculations, or any other Islamic content, please report it immediately via email. We take content accuracy seriously and will address the issue promptly.</p>
+            </section>
+            <nav class="flex flex-wrap gap-2 text-sm" aria-label="Related pages">
+              <a href="/about" class="rounded-full border border-border px-4 py-2 hover:border-primary/40">About Noor</a>
+              <a href="/privacy-policy" class="rounded-full border border-border px-4 py-2 hover:border-primary/40">Privacy Policy</a>
+              <a href="/sources" class="rounded-full border border-border px-4 py-2 hover:border-primary/40">Our Islamic Sources</a>
+            </nav>
           </div>
         </div>
       `;
