@@ -1800,8 +1800,27 @@ export default async function handler(req, res) {
     }
 
     // --- Fallback for other routes ---
+    // Legitimate client-side routes without a dedicated prerender branch keep
+    // the app-shell fallback so React can hydrate them. These are the only
+    // React-router routes with no prerender coverage (see src/App.tsx):
+    // /names (redirects to /baby-names), /settings, /notifications.
+    // Anything else reaching this fallback is genuinely unknown and must
+    // return 404 + noindex instead of an indexable 200 app shell.
+    const CLIENT_ONLY_ROUTES = new Set(["/names", "/settings", "/notifications"]);
     if (!bodyContent) {
-      bodyContent = `
+      if (!CLIENT_ONLY_ROUTES.has(routePath)) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Page not found | Noor";
+        description = "The page you are looking for could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-background px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Page not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-muted-foreground">The page you are looking for does not exist or the link is incorrect.</p>
+            <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/">Go to homepage</a>
+          </main>`;
+      } else {
+        bodyContent = `
         <div class="min-h-screen flex items-center justify-center p-4 bg-background">
           <div class="text-center">
             <h1 class="text-2xl font-bold mb-2">${esc(title)}</h1>
@@ -1824,6 +1843,7 @@ export default async function handler(req, res) {
           </div>
         </div>
       `;
+      }
     }
 
     // Use actual app.html as base
