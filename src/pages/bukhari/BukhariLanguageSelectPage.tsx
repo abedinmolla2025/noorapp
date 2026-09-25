@@ -43,7 +43,7 @@ export default function BukhariLanguageSelectPage() {
       }}
     >
       <Helmet>
-        <title>Sahih al-Bukhari Hadith Collection – Noor App</title>
+        <title>Sahih al-Bukhari Hadith Collection | Noor</title>
         <meta
           name="description"
           content="Read Sahih al-Bukhari in Bangla, English, or Urdu with Arabic text, chapter navigation and collection references."

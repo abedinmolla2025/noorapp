@@ -435,6 +435,15 @@ export default function StoryDetailPage() {
   const quranRefs = parseQuranReferences(story.reference);
   const morals = parseMorals(lang === "bn" ? story.moral_bn : story.moral_en);
 
+  // Normalize the DB-provided SEO title suffix to "| Noor" without rewriting
+  // the subject. Structured data (Article + BreadcrumbList) is served via the
+  // prerender layer; the React JSON-LD copies were removed to avoid duplicates
+  // and to drop the fabricated datePublished/dateModified values.
+  const normalizedSeoTitle = String(story.seo.title || "Islamic Story")
+    .trim()
+    .replace(/(?:\s*[|–—-]\s*Noor(?:\s*App)?)+$/iu, "")
+    .trim();
+  const seoTitle = `${normalizedSeoTitle} | Noor`;
 
   const breadcrumbs = [
     { name: "Home", url: `${SITE}/` },
@@ -443,44 +452,10 @@ export default function StoryDetailPage() {
     { name: lang === "bn" ? story.title_bn : story.title_en, url },
   ];
 
-  const articleSchema = {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    headline: story.title_en,
-    description: metaDescription,
-    inLanguage: ["en", "bn"],
-    author: { "@type": "Organization", name: "NoorApp Editorial Team" },
-    publisher: {
-      "@type": "Organization",
-      name: "NoorApp",
-      url: SITE,
-      logo: { "@type": "ImageObject", url: `${SITE}/logo.png` },
-    },
-    mainEntityOfPage: { "@type": "WebPage", "@id": url },
-    articleSection: categoryLabel(story.category),
-    keywords: Array.isArray(story.seo.keywords) ? story.seo.keywords.join(", ") : story.seo.keywords,
-    isBasedOn: story.source_name,
-    citation: story.reference,
-    image: { "@type": "ImageObject", url: ogImage, width: 1200, height: 630 },
-    datePublished: "2024-01-01",
-    dateModified: new Date().toISOString().slice(0, 10),
-  };
-
-  const breadcrumbSchema = {
-    "@context": "https://schema.org",
-    "@type": "BreadcrumbList",
-    itemListElement: breadcrumbs.map((b, i) => ({
-      "@type": "ListItem",
-      position: i + 1,
-      name: b.name,
-      item: b.url,
-    })),
-  };
-
   return (
     <div className="min-h-screen bg-background pb-24">
       <Helmet>
-        <title>{story.seo.title}</title>
+        <title>{seoTitle}</title>
         <meta name="description" content={metaDescription} />
         {story.seo.keywords && (
           <meta
@@ -518,13 +493,11 @@ export default function StoryDetailPage() {
         <meta name="pinterest:media" content={ogImage} />
         <meta name="thumbnail" content={ogImage} />
         <meta itemProp="image" content={ogImage} />
-        <meta itemProp="name" content={story.seo.open_graph?.title || story.seo.title} />
+        <meta itemProp="name" content={story.seo.open_graph?.title || seoTitle} />
         <meta itemProp="description" content={story.seo.open_graph?.description || metaDescription} />
         <link rel="alternate" hrefLang="en" href={url} />
         <link rel="alternate" hrefLang="bn" href={url} />
         <link rel="alternate" hrefLang="x-default" href={url} />
-        <script type="application/ld+json">{JSON.stringify(articleSchema)}</script>
-        <script type="application/ld+json">{JSON.stringify(breadcrumbSchema)}</script>
       </Helmet>
 
       {/* Header */}

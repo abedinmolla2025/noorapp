@@ -493,24 +493,8 @@ const DuaDetailPage = () => {
     }
   };
 
-  const jsonLd = useMemo(() => {
-    if (!dua) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: dua.title || "দোয়া",
-      inLanguage: "bn",
-      mainEntityOfPage: { "@type": "WebPage", "@id": `${SITE_ORIGIN}/dua/${dua.slug}` },
-      description: seo?.description,
-      image: ogImageUrl,
-      author: { "@type": "Organization", name: "Noor" },
-      publisher: {
-        "@type": "Organization",
-        name: "Noor",
-        logo: { "@type": "ImageObject", url: `${SITE_ORIGIN}/logo.png` },
-      },
-    };
-  }, [dua, seo]);
+  // Structured data (Article + BreadcrumbList) is served via the prerender
+  // layer; the React JSON-LD copy was removed to avoid duplicates.
 
   if (loading) {
     return (
@@ -609,7 +593,6 @@ const DuaDetailPage = () => {
           <meta name="twitter:title" content={seo.title} />
           <meta name="twitter:description" content={seo.description} />
           <meta name="twitter:image" content={ogImageUrl} />
-          {jsonLd && <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>}
         </Helmet>
       )}
 

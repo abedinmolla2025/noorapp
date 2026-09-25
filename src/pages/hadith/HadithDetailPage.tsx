@@ -146,7 +146,7 @@ const HadithDetailPage = () => {
 
   const seo = useMemo(() => {
     if (!hadith) return null;
-    const title = truncate(`${heading} | অর্থ ও ব্যাখ্যা — Noor`, 60);
+    const title = truncate(`${heading} | অর্থ ও ব্যাখ্যা | Noor`, 60);
     const baseDesc =
       hadith.explanation_bn?.replace(/\s+/g, " ").trim() ||
       hadith.bengali?.replace(/\s+/g, " ").trim() ||
@@ -156,25 +156,8 @@ const HadithDetailPage = () => {
     return { title, description, url };
   }, [hadith, heading, bookLabel]);
 
-  const jsonLd = useMemo(() => {
-    if (!hadith || !seo) return null;
-    return {
-      "@context": "https://schema.org",
-      "@type": "Article",
-      headline: heading,
-      inLanguage: "bn",
-      mainEntityOfPage: { "@type": "WebPage", "@id": seo.url },
-      description: seo.description,
-      image: FALLBACK_OG,
-      author: { "@type": "Organization", name: "Noor" },
-      publisher: {
-        "@type": "Organization",
-        name: "Noor",
-        logo: { "@type": "ImageObject", url: `${SITE_ORIGIN}/logo.png` },
-      },
-      isPartOf: { "@type": "Book", name: bookLabel },
-    };
-  }, [hadith, seo, heading, bookLabel]);
+  // Structured data (Article + BreadcrumbList) is served via the prerender
+  // layer; the React JSON-LD copy was removed to avoid duplicates.
 
   if (loading) {
     return (
@@ -224,9 +207,6 @@ const HadithDetailPage = () => {
           <link rel="alternate" hrefLang="bn" href={seo.url} />
           <link rel="alternate" hrefLang="en" href={seo.url} />
           <link rel="alternate" hrefLang="x-default" href={seo.url} />
-          {jsonLd && (
-            <script type="application/ld+json">{JSON.stringify(jsonLd)}</script>
-          )}
         </Helmet>
       )}
 

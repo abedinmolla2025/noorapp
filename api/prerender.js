@@ -198,6 +198,56 @@ const enrichStoryDescription = (value, title) => {
   return shortenMetaText(expanded, 160);
 };
 
+// Visible breadcrumb trail with real crawlable links (bot-facing).
+// items: [{ label, href }] — the last item is the current page (no link).
+const breadcrumbMarkup = (items) => {
+  const links = items.map((item, i) => {
+    const isLast = i === items.length - 1;
+    const sep = i > 0 ? `<span class="mx-2 text-muted-foreground/60">/</span>` : "";
+    return `${sep}${isLast
+      ? `<span class="text-foreground font-medium" aria-current="page">${esc(item.label)}</span>`
+      : `<a class="text-muted-foreground hover:text-primary hover:underline" href="${esc(item.href)}">${esc(item.label)}</a>`}`;
+  }).join("");
+  return `<nav aria-label="Breadcrumb" class="mb-4 text-sm"><div class="flex flex-wrap items-center">${links}</div></nav>`;
+};
+
+// BreadcrumbList JSON-LD for a trail of { label, href } (last item = current page).
+const breadcrumbJsonLd = (items) => {
+  const list = items.map((item, i) => ({
+    "@type": "ListItem",
+    position: i + 1,
+    name: item.label,
+    ...(i < items.length - 1 ? { item: `${SITE_ORIGIN}${item.href}` } : {}),
+  }));
+  return `<script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: list,
+  })}</script>`;
+};
+
+// Article JSON-LD. Only include fields we can populate truthfully — no dates,
+// ratings, or invented authorship.
+const articleJsonLd = ({ headline, description, image, url, inLanguage = "bn" }) => {
+  const article = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: String(headline || "").slice(0, 200),
+    description: String(description || "").slice(0, 500),
+    inLanguage,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    author: { "@type": "Organization", name: "Noor", url: SITE_ORIGIN },
+    publisher: {
+      "@type": "Organization",
+      name: "Noor",
+      url: SITE_ORIGIN,
+      logo: { "@type": "ImageObject", url: `${SITE_ORIGIN}/logo.png` },
+    },
+  };
+  if (image) article.image = image;
+  return `<script type="application/ld+json">${JSON.stringify(article)}</script>`;
+};
+
 const storyFallbackLabel = (slug) => String(slug || "islamic-story")
   .split("-")
   .filter(Boolean)
@@ -602,7 +652,16 @@ const getHadithChapterName = (chapter, lang) => {
   return chapter.title;
 };
 
-const hadithCardMarkup = (row, lang, meta, chapterMap) => `
+const hadithCardMarkup = (row, lang, meta, chapterMap, isDetail = false) => {
+  // In detail mode the card shows the full hadith, so the CTA must not link
+  // to the current URL (self-link). Link back to the chapter listing instead.
+  const href = isDetail
+    ? `/hadith/sahih-bukhari/${lang}/chapter-${row.chapterId}`
+    : `/hadith/sahih-bukhari/${lang}/${row.chapterId}/${row.number}`;
+  const ctaLabel = isDetail
+    ? (lang === "bangla" ? "অধ্যায়ের সকল হাদিস" : lang === "urdu" ? "باب کی تمام احادیث" : "All hadiths in this chapter")
+    : meta.read;
+  return `
   <article class="relative bg-gradient-to-br from-[hsl(158,55%,25%)] to-[hsl(158,64%,20%)] rounded-2xl p-5 border border-white/10 hover:border-[hsl(45,93%,58%)]/50 shadow-lg transition-all overflow-hidden" style="${HADITH_CARD_STYLE}">
     <div class="relative z-10 flex items-center justify-between mb-4">
       <span class="text-xs font-bold text-[hsl(45,93%,58%)] px-2 py-1 bg-[hsl(45,93%,58%)]/15 rounded-lg border border-[hsl(45,93%,58%)]/20">${lang === "bangla" ? "হাদিস নং" : lang === "urdu" ? "حدیث نمبر" : "Hadith No"} ${row.number}</span>
@@ -610,9 +669,10 @@ const hadithCardMarkup = (row, lang, meta, chapterMap) => `
     </div>
     <p dir="rtl" class="relative z-10 text-xl leading-[1.8] text-right mb-4 font-arabic line-clamp-3 text-white">${esc(row.arabic)}</p>
     <p dir="${meta.rtl ? "rtl" : "ltr"}" class="relative z-10 text-xl md:text-2xl leading-[1.8] line-clamp-4 text-white font-bangla-serif mb-4">${esc(row.translation)}</p>
-    <a href="/hadith/sahih-bukhari/${lang}/${row.chapterId}/${row.number}" class="relative z-10 w-full py-2.5 bg-[hsl(45,93%,58%)]/15 hover:bg-[hsl(45,93%,58%)] text-[hsl(45,93%,58%)] hover:text-[hsl(158,64%,15%)] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border border-[hsl(45,93%,58%)]/20">📖 ${meta.read}</a>
+    <a href="${href}" class="relative z-10 w-full py-2.5 bg-[hsl(45,93%,58%)]/15 hover:bg-[hsl(45,93%,58%)] text-[hsl(45,93%,58%)] hover:text-[hsl(158,64%,15%)] rounded-xl text-xs font-bold transition-all flex items-center justify-center gap-2 border border-[hsl(45,93%,58%)]/20">📖 ${ctaLabel}</a>
   </article>
 `;
+};
 
 const getAppTemplate = () => {
   const candidates = [
@@ -793,7 +853,7 @@ export default async function handler(req, res) {
 
     // --- Quran Root Page ---
     else if (routePath === "/quran") {
-      title = "Quran Reader — পবিত্র কুরআন | NOOR";
+      title = "Quran Reader — পবিত্র কুরআন | Noor";
       description = "Read all 114 Surahs of the Holy Quran with Arabic text and Bengali translation.";
       
       let surahHtml = "";
@@ -848,6 +908,12 @@ export default async function handler(req, res) {
     // --- Quran Detail Page ---
     else if (routePath.startsWith("/quran/")) {
       const num = routePath.split("/")[2];
+      // /quran/:surahId/:ayahId renders the full surah; canonicalize to the
+      // surah URL to avoid duplicate content.
+      const ayahToken = routePath.split("/")[3];
+      if (num && !isNaN(num) && ayahToken) {
+        canonicalUrl = `${SITE_ORIGIN}/quran/${num}`;
+      }
       if (num && !isNaN(num)) {
         try {
           const response = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,bn.bengali`, { signal: AbortSignal.timeout(8000) });
@@ -894,6 +960,86 @@ export default async function handler(req, res) {
     }
 
     // --- Sahih Bukhari language and chapter pages ---
+    // --- Hadith Detail by Slug (canonical detail URL) ---
+    // React's HadithDetailPage uses /hadith/h/:slug as the canonical URL when a
+    // slug exists. Without this branch, bots receive the thin generic fallback.
+    else if (routePath.startsWith("/hadith/h/")) {
+      const slug = decodeURIComponent(routePath.split("/")[3] || "");
+      let hadith = null;
+      try {
+        const { data } = await supabase
+          .from("hadiths")
+          .select("id, slug, book_key, chapter_id, hadith_number, arabic, bengali, english, urdu, topic_bn, explanation_bn")
+          .eq("slug", slug)
+          .maybeSingle();
+        hadith = data;
+      } catch (e) {
+        hadith = null;
+      }
+
+      if (!hadith) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Hadith not found | Noor";
+        description = "The requested hadith could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-[hsl(158,64%,12%)] text-white px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Hadith not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-white/70">This hadith is not available or the link is incorrect.</p>
+            <a class="mt-6 inline-block rounded-lg bg-[hsl(45,93%,58%)] px-5 py-3 font-semibold text-[hsl(158,64%,15%)]" href="/hadith">Browse hadith collections</a>
+          </main>`;
+      } else {
+        const bookLabel = hadith.book_key === "bukhari" ? "Sahih Al-Bukhari" : String(hadith.book_key || "Hadith");
+        const heading = `${bookLabel} — Hadith ${hadith.hadith_number}`;
+        title = shortenMetaText(`${heading} | অর্থ ও ব্যাখ্যা | Noor`, 70);
+        description = shortenMetaText(
+          hadith.explanation_bn?.replace(/\s+/g, " ").trim() ||
+          hadith.bengali?.replace(/\s+/g, " ").trim() ||
+          `${heading} এর আরবি, বাংলা অনুবাদ ও ব্যাখ্যা পড়ুন।`,
+          160,
+        );
+        canonicalUrl = `${SITE_ORIGIN}/hadith/h/${slug}`;
+        const hadithCanonical = `${SITE_ORIGIN}/hadith/h/${slug}`;
+        const hadithCrumbs = [
+          { label: "Home", href: "/" },
+          { label: "Hadith", href: "/hadith" },
+          { label: bookLabel, href: "/hadith/sahih-bukhari" },
+          { label: `Hadith ${hadith.hadith_number}`, href: `/hadith/h/${slug}` },
+        ];
+        extraStructuredData =
+          breadcrumbJsonLd(hadithCrumbs) +
+          articleJsonLd({
+            headline: heading,
+            description: String(description).slice(0, 500),
+            image: `${SITE_ORIGIN}/og-bukhari.png`,
+            url: hadithCanonical,
+            inLanguage: ["ar", "bn"],
+          });
+        const translations = [
+          hadith.bengali ? `<div class="rounded-2xl bg-white/5 border border-white/10 p-5"><h2 class="text-amber-400 font-bold mb-2 text-sm uppercase tracking-widest">বাংলা অনুবাদ</h2><p class="text-lg leading-relaxed text-white/90">${esc(hadith.bengali)}</p></div>` : "",
+          hadith.english ? `<div class="rounded-2xl bg-white/5 border border-white/10 p-5"><h2 class="text-amber-400 font-bold mb-2 text-sm uppercase tracking-widest">English Translation</h2><p class="text-lg leading-relaxed text-white/90" dir="ltr">${esc(hadith.english)}</p></div>` : "",
+          hadith.urdu ? `<div class="rounded-2xl bg-white/5 border border-white/10 p-5"><h2 class="text-amber-400 font-bold mb-2 text-sm uppercase tracking-widest">اردو ترجمہ</h2><p class="text-lg leading-relaxed text-white/90" dir="rtl">${esc(hadith.urdu)}</p></div>` : "",
+        ].join("");
+        bodyContent = `
+          <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white pb-20">
+            <main class="max-w-3xl mx-auto p-4 space-y-5">
+              ${breadcrumbMarkup(hadithCrumbs)}
+              <p class="text-sm font-semibold uppercase tracking-widest text-amber-400">${esc(bookLabel)}</p>
+              <h1 class="text-2xl font-bold">${esc(heading)}</h1>
+              ${hadith.topic_bn ? `<p class="text-white/70">${esc(hadith.topic_bn)}</p>` : ""}
+              <div class="rounded-2xl bg-white/5 border border-white/10 p-6">
+                <h2 class="text-amber-400 font-bold mb-3 text-sm uppercase tracking-widest">আরবি</h2>
+                <p dir="rtl" class="text-2xl leading-[2] font-arabic text-right">${esc(hadith.arabic)}</p>
+              </div>
+              ${translations}
+              ${hadith.explanation_bn ? `<div class="rounded-2xl bg-amber-400/10 border border-amber-400/20 p-5"><h2 class="text-amber-400 font-bold mb-2">ব্যাখ্যা</h2><p class="leading-relaxed text-white/85 whitespace-pre-line">${esc(hadith.explanation_bn)}</p></div>` : ""}
+              <a href="/hadith/sahih-bukhari" class="inline-block rounded-xl bg-white/10 px-5 py-3 font-semibold hover:bg-white/15">← সকল হাদিস</a>
+            </main>
+          </div>
+        `;
+      }
+    }
+
     else if (routePath === "/hadith/sahih-bukhari" || routePath.startsWith("/hadith/sahih-bukhari/")) {
       const parts = routePath.split("/").filter(Boolean);
       const rawLang = parts[2] || "";
@@ -977,6 +1123,26 @@ export default async function handler(req, res) {
         canonicalUrl = `${SITE_ORIGIN}${routePath}`;
 
         const detail = hadithNumber ? rows.find((row) => row.number === hadithNumber) : null;
+        // Breadcrumb trail: Home → Hadith → Sahih Bukhari → [Language] → [Chapter] → [Hadith]
+        const hadithCrumbs = [
+          { label: "Home", href: "/" },
+          { label: "Hadith", href: "/hadith" },
+          { label: "Sahih Bukhari", href: "/hadith/sahih-bukhari" },
+          { label: meta.label, href: `/hadith/sahih-bukhari/${lang}` },
+        ];
+        if (chapterId) {
+          hadithCrumbs.push({
+            label: currentChapter ? getHadithChapterName(currentChapter, lang) : `${chapterOrdinal}`,
+            href: `/hadith/sahih-bukhari/${lang}/chapter-${chapterId}`,
+          });
+        }
+        if (detail) {
+          hadithCrumbs.push({
+            label: `${lang === "bangla" ? "হাদিস" : lang === "urdu" ? "حدیث" : "Hadith"} ${detail.number}`,
+            href: `${routePath}`,
+          });
+        }
+        extraStructuredData = breadcrumbJsonLd(hadithCrumbs);
         const chapterCards = chapterList.map((chapter) => `
           <a href="/hadith/sahih-bukhari/${lang}/chapter-${chapter.chapter_number}" class="relative flex items-center gap-4 p-4 bg-gradient-to-br from-[hsl(158,55%,25%)] to-[hsl(158,64%,20%)] rounded-2xl border border-white/10 hover:border-[hsl(45,93%,58%)]/50 shadow-lg transition-all overflow-hidden group" style="${HADITH_CARD_STYLE}">
             <span class="relative z-10 w-12 h-12 rounded-xl bg-[hsl(45,93%,58%)]/15 flex items-center justify-center text-[hsl(45,93%,58%)] font-bold border border-[hsl(45,93%,58%)]/25">${chapter.chapter_number}</span>
@@ -985,7 +1151,7 @@ export default async function handler(req, res) {
           </a>
         `).join("");
         const cardRows = detail ? [detail] : rows;
-        const listMarkup = cardRows.length ? cardRows.map((row) => hadithCardMarkup(row, lang, meta, chapterMap)).join("") : `<div class="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center text-white/75"><p class="font-semibold">${lang === "bangla" ? "এই অধ্যায়ের হাদিস এখন পাওয়া যাচ্ছে না" : lang === "urdu" ? "اس باب کی احادیث اس وقت دستیاب نہیں" : "The hadith text is temporarily unavailable"}</p><p class="mt-2 text-sm text-white/55">${lang === "bangla" ? "অনুগ্রহ করে আবার চেষ্টা করুন অথবা অন্য একটি কিতাব নির্বাচন করুন।" : lang === "urdu" ? "براہ کرم دوبارہ کوشش کریں یا دوسرا باب منتخب کریں۔" : "Please try again or choose another book."}</p></div>`;
+        const listMarkup = cardRows.length ? cardRows.map((row) => hadithCardMarkup(row, lang, meta, chapterMap, !!detail)).join("") : `<div class="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center text-white/75"><p class="font-semibold">${lang === "bangla" ? "এই অধ্যায়ের হাদিস এখন পাওয়া যাচ্ছে না" : lang === "urdu" ? "اس باب کی احادیث اس وقت دستیاب نہیں" : "The hadith text is temporarily unavailable"}</p><p class="mt-2 text-sm text-white/55">${lang === "bangla" ? "অনুগ্রহ করে আবার চেষ্টা করুন অথবা অন্য একটি কিতাব নির্বাচন করুন।" : lang === "urdu" ? "براہ کرم دوبارہ کوشش کریں یا دوسرا باب منتخب کریں۔" : "Please try again or choose another book."}</p></div>`;
 
         bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white pb-20" style="background-image: ${ISLAMIC_PATTERN_HTML}">
@@ -999,6 +1165,7 @@ export default async function handler(req, res) {
               </div>
             </header>
             <main class="max-w-4xl mx-auto p-4 space-y-6">
+              ${breadcrumbMarkup(hadithCrumbs)}
               <nav class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" aria-label="Hadith languages">
                 ${Object.entries(HADITH_LANG_META).map(([slug, item]) => `<a href="/hadith/sahih-bukhari/${slug}${chapterId ? `/chapter-${chapterId}` : ""}" class="shrink-0 px-4 py-2 rounded-full text-sm font-medium ${slug === lang ? "bg-gradient-to-r from-[hsl(45,93%,58%)] to-[hsl(45,93%,48%)] text-[hsl(158,64%,15%)]" : "bg-white/10 text-white/70"}">${item.label}</a>`).join("")}
               </nav>
@@ -1024,24 +1191,25 @@ export default async function handler(req, res) {
             <p class="text-white/80">সহীহ হাদিসের নির্ভরযোগ্য ভাণ্ডার</p>
           </header>
           <div class="p-4 max-w-2xl mx-auto -mt-6">
+            <p class="text-muted-foreground text-center mb-6">Read authentic Hadith with Arabic text and trusted translations. Start with Sahih Al-Bukhari in your language.</p>
             <div class="grid grid-cols-1 gap-4">
               <a href="/hadith/sahih-bukhari/bangla" class="bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group">
                 <div>
-                  <h3 class="text-xl font-bold group-hover:text-primary transition-colors">সহীহ বুখারী (বাংলা)</h3>
+                  <h2 class="text-xl font-bold group-hover:text-primary transition-colors">সহীহ বুখারী (বাংলা)</h2>
                   <p class="text-sm text-muted-foreground">সম্পূর্ণ বাংলা অনুবাদসহ</p>
                 </div>
                 <span class="text-2xl">→</span>
               </a>
               <a href="/hadith/sahih-bukhari/english" class="bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group">
                 <div>
-                  <h3 class="text-xl font-bold group-hover:text-primary transition-colors">Sahih Al-Bukhari (English)</h3>
+                  <h2 class="text-xl font-bold group-hover:text-primary transition-colors">Sahih Al-Bukhari (English)</h2>
                   <p class="text-sm text-muted-foreground">Complete English translation</p>
                 </div>
                 <span class="text-2xl">→</span>
               </a>
               <a href="/hadith/sahih-bukhari/urdu" class="bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group">
                 <div>
-                  <h3 class="text-xl font-bold group-hover:text-primary transition-colors">صحیح البخاری (Urdu)</h3>
+                  <h2 class="text-xl font-bold group-hover:text-primary transition-colors">صحیح البخاری (Urdu)</h2>
                   <p class="text-sm text-muted-foreground">Urdu translation</p>
                 </div>
                 <span class="text-2xl">→</span>
@@ -1050,6 +1218,24 @@ export default async function handler(req, res) {
           </div>
         </div>
       `;
+    }
+
+    // --- Hadith Book Placeholder (noindex) ---
+    // React's HadithBookPlaceholder marks these pages noindex (collections not
+    // yet published). Mirror that here so bots don't index thin placeholders.
+    else if (/^\/hadith\/[^/]+$/.test(routePath)) {
+      const bookId = decodeURIComponent(routePath.split("/")[2] || "");
+      statusCode = 200;
+      robotsDirective = "noindex,follow";
+      title = "Hadith collection coming soon | Noor";
+      description = "This Hadith collection is not yet available on Noor.";
+      bodyContent = `
+        <main class="min-h-screen bg-[hsl(158,64%,12%)] text-white px-4 py-16 text-center">
+          <p class="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Noor Hadith</p>
+          <h1 class="text-3xl font-bold">Collection coming soon</h1>
+          <p class="mx-auto mt-3 max-w-xl text-white/70">The ${esc(bookId)} collection is being prepared and will be available soon.</p>
+          <a class="mt-6 inline-block rounded-lg bg-[hsl(45,93%,58%)] px-5 py-3 font-semibold text-[hsl(158,64%,15%)]" href="/hadith/sahih-bukhari">Read Sahih Al-Bukhari</a>
+        </main>`;
     }
 
     // --- Dua Root Page ---
@@ -1092,6 +1278,67 @@ export default async function handler(req, res) {
       `;
     }
 
+    // --- Dua Category Page ---
+    // Must come before the /dua/ detail branch: otherwise "category" is
+    // looked up as a dua slug and valid category pages return 404.
+    else if (routePath.startsWith("/dua/category/")) {
+      const catSlug = decodeURIComponent(routePath.split("/")[3] || "").toLowerCase();
+      const { data: duas } = await supabase
+        .from("admin_content")
+        .select("slug, title, content_arabic, category")
+        .in("content_type", ["dua", "Dua"])
+        .eq("status", "published");
+
+      const slugifyCat = (c) => String(c || "").toLowerCase().trim().replace(/[^a-z0-9\u0980-\u09FF]+/g, "-").replace(/(^-+|-+$)/g, "");
+      const matched = (duas || []).filter((d) => slugifyCat(d.category) === catSlug);
+      const categoryName = matched.length ? matched[0].category : null;
+
+      if (!categoryName) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Dua category not found | Noor";
+        description = "The requested dua category could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-[hsl(158,64%,18%)] px-4 py-16 text-center text-white">
+            <h1 class="text-3xl font-bold">Category not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-white/70">This dua category is not available.</p>
+            <a class="mt-6 inline-block rounded-lg bg-amber-400 px-5 py-3 font-semibold text-[hsl(158,64%,15%)]" href="/dua">Browse all duas</a>
+          </main>`;
+      } else {
+        const catLabel = getCategoryLabel(categoryName);
+        title = `${catLabel} দোয়া সমূহ | Noor`;
+        description = `${catLabel} বিষয়ক দোয়াসমূহ আরবি, বাংলা উচ্চারণ ও অর্থসহ পড়ুন।`;
+        canonicalUrl = `${SITE_ORIGIN}/dua/category/${catSlug}`;
+        const duaCards = matched.slice(0, 60).map((d) => `
+          <a href="/dua/${esc(d.slug)}" class="block rounded-2xl bg-white/5 border border-white/10 p-5 hover:border-amber-400/40 transition-all">
+            <h2 class="text-lg font-bold text-white">${esc(d.title || "দোয়া")}</h2>
+            ${d.content_arabic ? `<p dir="rtl" class="mt-2 text-white/80 font-arabic line-clamp-2">${esc(String(d.content_arabic).slice(0, 120))}</p>` : ""}
+            <span class="mt-3 inline-block text-sm font-semibold text-amber-400">পড়ুন →</span>
+          </a>
+        `).join("");
+        const crumbs = [
+          { label: "Home", href: "/" },
+          { label: "Dua", href: "/dua" },
+          { label: catLabel, href: `/dua/category/${catSlug}` },
+        ];
+        extraStructuredData = breadcrumbJsonLd(crumbs);
+        bodyContent = `
+          <div class="min-h-screen bg-[hsl(158,64%,18%)] pb-20">
+            <header class="bg-gradient-to-br from-[hsl(158,55%,22%)] to-[hsl(158,64%,15%)] p-8 text-white text-center border-b border-white/10">
+              <div class="max-w-3xl mx-auto">
+                ${breadcrumbMarkup(crumbs)}
+                <h1 class="text-3xl font-bold">${esc(catLabel)} দোয়া</h1>
+                <p class="mt-2 text-white/70">${matched.length}টি দোয়া</p>
+              </div>
+            </header>
+            <main class="max-w-3xl mx-auto p-4 grid gap-4">
+              ${duaCards}
+            </main>
+          </div>
+        `;
+      }
+    }
+
     // --- Dua Detail Page ---
     else if (routePath.startsWith("/dua/")) {
       const slug = routePath.split("/")[2];
@@ -1107,7 +1354,23 @@ export default async function handler(req, res) {
         title = `${dua.title || "দোয়া"} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
         description = dua.explanation_bn || dua.content || `${dua.title || "এই দোয়া"} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`;
         req.storyOgImage = getDuaOgImage(dua);
-        
+
+        const duaCanonical = `${SITE_ORIGIN}/dua/${dua.slug}`;
+        const duaCrumbs = [
+          { label: "Home", href: "/" },
+          { label: "Dua", href: "/dua" },
+          { label: dua.title || "দোয়া", href: `/dua/${dua.slug}` },
+        ];
+        extraStructuredData =
+          breadcrumbJsonLd(duaCrumbs) +
+          articleJsonLd({
+            headline: dua.title || "দোয়া",
+            description: String(description).slice(0, 500),
+            image: req.storyOgImage,
+            url: duaCanonical,
+            inLanguage: "bn",
+          });
+
         bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,18%)] pb-20">
             <header class="bg-gradient-to-br from-[hsl(158,55%,22%)] to-[hsl(158,64%,15%)] p-6 text-white sticky top-0 z-30 relative overflow-hidden" style="background-image: ${ISLAMIC_PATTERN}">
@@ -1119,6 +1382,9 @@ export default async function handler(req, res) {
                 </div>
               </div>
             </header>
+            <div class="max-w-3xl mx-auto px-4 pt-4">
+              ${breadcrumbMarkup(duaCrumbs)}
+            </div>
             
             <main class="max-w-3xl mx-auto p-4 space-y-6">
               <img src="${esc(req.storyOgImage)}" alt="${esc(dua.title || "দোয়া")}" width="1200" height="630" class="sr-only" />
@@ -1213,23 +1479,120 @@ export default async function handler(req, res) {
       `;
     }
 
+    // --- Story Category Page ---
+    // Must come before the /stories/ detail branch: otherwise "category" is
+    // looked up as a story slug and valid category pages return 404.
+    else if (routePath.startsWith("/stories/category/")) {
+      const catSlug = decodeURIComponent(routePath.split("/")[3] || "");
+      const STORY_CATEGORY_LABELS = {
+        prophets: "Stories of the Prophets",
+        sahaba: "Companions of the Prophet",
+        islamic_historical_events: "Islamic Historical Events",
+        "islamic-history": "Islamic History",
+        inspirational: "Inspirational Stories",
+        kids_friendly: "Stories for Kids",
+      };
+      const catLabel = STORY_CATEGORY_LABELS[catSlug] || catSlug.replace(/[_-]/g, " ");
+
+      // Include both bundled stories and published DB stories in this category.
+      const bundledItems = BUNDLED_STORIES.filter((s) => s.category === catSlug)
+        .map((s) => ({ slug: s.slug, title: s.title_en, title_bn: s.title_bn, category: s.category }));
+      const { data: dbStories } = await supabase
+        .from("admin_content")
+        .select("slug, title, title_bn, category")
+        .eq("content_type", "story")
+        .eq("status", "published")
+        .eq("category", catSlug);
+      const seen = new Set();
+      const items = [...bundledItems, ...(dbStories || [])].filter((s) => {
+        if (!s.slug || seen.has(s.slug)) return false;
+        seen.add(s.slug);
+        return true;
+      });
+
+      if (!items.length) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Story category not found | Noor";
+        description = "The requested story category could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-background px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Category not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-muted-foreground">This story category is not available.</p>
+            <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/stories">Browse all stories</a>
+          </main>`;
+      } else {
+        title = uniqueStoryTitle(`${catLabel} — Islamic Stories | Noor`);
+        description = `Read authentic ${catLabel.toLowerCase()} on Noor.`;
+        canonicalUrl = `${SITE_ORIGIN}/stories/category/${catSlug}`;
+        const storyCards = items.slice(0, 60).map((s) => {
+          const t = s.title_bn || s.title || "Islamic Story";
+          return `
+          <a href="/stories/${esc(s.slug)}" class="block bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
+            <div class="p-5">
+              <h2 class="text-xl font-bold mb-2">${esc(t)}</h2>
+              <span class="text-primary font-bold">পড়ুন →</span>
+            </div>
+          </a>`;
+        }).join("");
+        const crumbs = [
+          { label: "Home", href: "/" },
+          { label: "Stories", href: "/stories" },
+          { label: catLabel, href: `/stories/category/${catSlug}` },
+        ];
+        extraStructuredData = breadcrumbJsonLd(crumbs);
+        bodyContent = `
+          <div class="min-h-screen bg-background pb-24">
+            <section class="bg-emerald-800 text-white p-10">
+              <div class="max-w-4xl mx-auto">
+                ${breadcrumbMarkup(crumbs)}
+                <h1 class="text-3xl font-bold">${esc(catLabel)}</h1>
+                <p class="mt-2">${items.length}টি গল্প</p>
+              </div>
+            </section>
+            <div class="p-4 max-w-4xl mx-auto grid gap-4">
+              ${storyCards}
+            </div>
+          </div>
+        `;
+      }
+    }
+
     // --- Story Detail Page ---
     else if (routePath.startsWith("/stories/")) {
       const slug = routePath.split("/")[2];
-      let story = findBundledStory(slug);
+      // Targeted 410 for known test/draft story slugs (defense in depth).
+      // Unknown slugs already 404 below; this ensures test URLs can never
+      // become indexable even if a matching record is published by mistake.
+      const isTestStorySlug = slug === "test-story-manus" || slug.startsWith("test-");
+      let story = null;
+      if (!isTestStorySlug) {
+        story = findBundledStory(slug);
 
-      if (!story) {
-        const { data } = await supabase
-          .from("admin_content")
-          .select("*")
-          .eq("slug", slug)
-          .eq("content_type", "story")
-          .eq("status", "published")
-          .maybeSingle();
-        story = data;
+        if (!story) {
+          const { data } = await supabase
+            .from("admin_content")
+            .select("*")
+            .eq("slug", slug)
+            .eq("content_type", "story")
+            .eq("status", "published")
+            .maybeSingle();
+          story = data;
+        }
       }
 
-      if (story) {
+      if (isTestStorySlug) {
+        statusCode = 410;
+        robotsDirective = "noindex,follow";
+        title = "Page removed | Noor";
+        description = "This page has been permanently removed.";
+        bodyContent = `
+          <main class="min-h-screen bg-background px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Page removed</h1>
+            <p class="mx-auto mt-3 max-w-xl text-muted-foreground">This page has been permanently removed.</p>
+            <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/stories">Browse published stories</a>
+          </main>`;
+      } else if (story) {
         const storyTitle = story.title_bn || story.title || story.title_en || "Islamic Story";
         const storyContent = story.content_bn || story.content || story.content_en || "Read this beautiful Islamic story on NoorApp.";
         const storedStoryDescription = story.seo?.meta_description || story.seo?.open_graph?.["og:description"] || "";
@@ -1246,9 +1609,32 @@ export default async function handler(req, res) {
         description = enrichStoryDescription(storyDescription, storyTitle);
         req.storyOgImage = ogImage;
 
+        // Trailer URLs render the story body; canonicalize to the story URL
+        // to avoid duplicate content.
+        const isTrailer = routePath.endsWith("/trailer");
+        if (isTrailer) {
+          canonicalUrl = `${SITE_ORIGIN}/stories/${slug}`;
+        }
+        const storyCanonical = `${SITE_ORIGIN}/stories/${slug}`;
+        const storyCrumbs = [
+          { label: "Home", href: "/" },
+          { label: "Stories", href: "/stories" },
+          { label: storyTitle, href: `/stories/${slug}` },
+        ];
+        extraStructuredData =
+          breadcrumbJsonLd(storyCrumbs) +
+          articleJsonLd({
+            headline: storyTitle,
+            description: storyDescription,
+            image: ogImage,
+            url: storyCanonical,
+            inLanguage: ["bn", "en"],
+          });
+
         bodyContent = `
           <div class="min-h-screen bg-background pb-24">
             <article class="mx-auto max-w-3xl space-y-6 p-4 md:p-6">
+              ${breadcrumbMarkup(storyCrumbs)}
               <header class="space-y-4">
                 <p class="text-sm font-semibold uppercase tracking-wide text-primary">Islamic Story</p>
                 <h1 class="text-3xl font-bold leading-tight md:text-4xl">${esc(storyTitle)}</h1>
@@ -1270,6 +1656,7 @@ export default async function handler(req, res) {
         `;
       } else {
         statusCode = 404;
+        robotsDirective = "noindex,follow";
         title = uniqueStoryTitle(`Story not found | Noor`);
         description = "The requested Islamic story could not be found.";
         bodyContent = `
