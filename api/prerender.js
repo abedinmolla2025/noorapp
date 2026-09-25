@@ -908,15 +908,31 @@ export default async function handler(req, res) {
     // --- Quran Detail Page ---
     else if (routePath.startsWith("/quran/")) {
       const num = routePath.split("/")[2];
-      // /quran/:surahId/:ayahId renders the full surah; canonicalize to the
-      // surah URL to avoid duplicate content.
-      const ayahToken = routePath.split("/")[3];
-      if (num && !isNaN(num) && ayahToken) {
-        canonicalUrl = `${SITE_ORIGIN}/quran/${num}`;
-      }
-      if (num && !isNaN(num)) {
+      // The Holy Quran has exactly 114 surahs. Any other surah ID is invalid
+      // and must return 404 + noindex instead of the generic 200 app shell.
+      const surahNum = /^\d+$/.test(num || "") ? Number(num) : NaN;
+      const isValidSurah = Number.isInteger(surahNum) && surahNum >= 1 && surahNum <= 114;
+
+      if (!isValidSurah) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Surah not found | Noor";
+        description = "The requested Quran chapter could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-background px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Surah not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-muted-foreground">This Quran chapter does not exist or the link is incorrect.</p>
+            <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/quran">Browse all surahs</a>
+          </main>`;
+      } else {
+        // /quran/:surahId/:ayahId renders the full surah; canonicalize to the
+        // surah URL to avoid duplicate content.
+        const ayahToken = routePath.split("/")[3];
+        if (ayahToken) {
+          canonicalUrl = `${SITE_ORIGIN}/quran/${surahNum}`;
+        }
         try {
-          const response = await fetch(`https://api.alquran.cloud/v1/surah/${num}/editions/quran-uthmani,bn.bengali`, { signal: AbortSignal.timeout(8000) });
+          const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/editions/quran-uthmani,bn.bengali`, { signal: AbortSignal.timeout(8000) });
           const json = await response.json();
           if (json.code === 200) {
             const ar = json.data[0];
@@ -1074,6 +1090,10 @@ export default async function handler(req, res) {
           </div>
         `;
       } else if (!lang) {
+        // Invalid hadith language slug: real 404 + noindex so it cannot be
+        // indexed as a thin page.
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
         title = "Hadith language not found | Noor";
         bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white p-8" style="background-image: ${ISLAMIC_PATTERN_HTML}">
@@ -1443,6 +1463,19 @@ export default async function handler(req, res) {
             </main>
           </div>
         `;
+      } else {
+        // Unknown dua slug: return a real 404 + noindex instead of the
+        // generic 200 app shell so invalid slugs cannot become indexable.
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Dua not found | Noor";
+        description = "The requested dua could not be found.";
+        bodyContent = `
+          <main class="min-h-screen bg-background px-4 py-16 text-center">
+            <h1 class="text-3xl font-bold">Dua not found</h1>
+            <p class="mx-auto mt-3 max-w-xl text-muted-foreground">This dua is not available or the link is incorrect.</p>
+            <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/dua">Browse all duas</a>
+          </main>`;
       }
     }
 
