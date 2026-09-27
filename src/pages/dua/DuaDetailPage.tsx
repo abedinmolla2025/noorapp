@@ -463,15 +463,16 @@ const DuaDetailPage = () => {
     let refBit = (dua.reference || "").trim();
     if (refBit.startsWith(baseTitle)) refBit = refBit.slice(baseTitle.length).trim();
     const distinctTitle = refBit ? `${baseTitle} (${refBit})` : baseTitle;
-    // Format: "{Dua Name} Bangla Meaning, Benefits, Arabic Text"
+    // Format: "{Dua Name} — Bangla Meaning & Arabic Text" (no virtue promise:
+    // unsupported virtue claims are suppressed — see the render section below).
     const title = truncate(
-      `${distinctTitle} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`,
+      `${distinctTitle} — বাংলা অর্থ ও আরবি টেক্সট | Noor`,
       60,
     );
     const description = truncate(
       dua.explanation_bn?.replace(/\s+/g, " ").trim() ||
         dua.content?.replace(/\s+/g, " ").trim() ||
-        `${dua.title} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`,
+        `${dua.title} এর আরবি, বাংলা উচ্চারণ ও অর্থ পড়ুন।`,
       150
     );
     const url = `${SITE_ORIGIN}/dua/${dua.slug}`;
@@ -832,23 +833,19 @@ const DuaDetailPage = () => {
 	          </section>
 	        )}
 
-        {/* Editorial trust and context: render only fields supplied with the record. */}
-        {(dua.authenticity || dua.virtue || dua.virtue_reference || dua.subtitle) && (
+        {/* Editorial trust and context: render only fields supplied with the record.
+            NOTE (P0 AdSense trust fix, 2026-09-27): dua.virtue / dua.virtue_reference
+            are intentionally never rendered. Forensic audit
+            (NOOR_DUA_VIRTUE_FORENSIC_AUDIT.md): 158/218 rows share 8 generic
+            templated virtue sentences, 0 backed by a specific virtue narration.
+            See api/prerender.js for the matching suppression. */}
+        {(dua.authenticity || dua.subtitle) && (
           <section className="bg-[hsl(158,55%,25%)]/70 rounded-2xl p-5 border border-[hsl(45,93%,58%)]/20 space-y-4">
             {dua.subtitle && <p className="text-white/90 text-base leading-relaxed">{dua.subtitle}</p>}
             {dua.authenticity && dua.source_type !== "Quran" && (
               <div>
                 <h2 className="text-xs font-semibold text-[hsl(45,93%,58%)] uppercase tracking-wide mb-2">বিশুদ্ধতা ও সম্পাদনা নোট</h2>
                 <p className="text-white/85 leading-relaxed">{dua.authenticity}</p>
-              </div>
-            )}
-            {dua.virtue && (
-              <div>
-                <h2 className="text-xs font-semibold text-[hsl(45,93%,58%)] uppercase tracking-wide mb-2">ফজিলত ও প্রাসঙ্গিকতা</h2>
-                <p className="text-white/85 leading-relaxed">{dua.virtue}</p>
-                {dua.virtue_reference && dua.virtue_reference !== "Quran 40:60" && (
-                  <p className="text-white/60 text-sm mt-2">রেফারেন্স: {dua.virtue_reference}</p>
-                )}
               </div>
             )}
           </section>

@@ -106,3 +106,19 @@ for (const job of jobs) {
   console.log(`[extract-tool-data] ${job.out}: ${value.length} items`);
 }
 console.log("[extract-tool-data] done");
+
+// Quran surah metadata (number, names, ayah counts, revelation type) is already
+// a JSON source of truth at src/data/quran_surahs.json; copy it verbatim so the
+// prerender function can render prev/next-surah navigation and Meccan/Medinan
+// badges without inventing data.
+{
+  const srcFile = path.join(root, "src", "data", "quran_surahs.json");
+  const surahs = JSON.parse(fs.readFileSync(srcFile, "utf8"));
+  if (!Array.isArray(surahs) || surahs.length !== 114) {
+    throw new Error(
+      `[extract-tool-data] quran surahs: expected 114 items, got ${Array.isArray(surahs) ? surahs.length : "non-array"} — refusing to write stale data`
+    );
+  }
+  fs.writeFileSync(path.join(outDir, "quran-surahs.json"), JSON.stringify(surahs) + "\n");
+  console.log("[extract-tool-data] quran-surahs.json: 114 items");
+}

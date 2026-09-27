@@ -1070,6 +1070,31 @@ export default async function handler(req, res) {
               </div>
             `).join("");
 
+            // P1 (2026-09-27): surah context from the repo's own verified metadata
+            // (src/data/quran_surahs.json → dist/data/quran-surahs.json via the
+            // build extractor). Adds prev/next navigation, Meccan/Medinan badge,
+            // and translator attribution so bot-visible HTML matches the SPA's
+            // transparency (SurahReader shows the same attribution to JS clients).
+            const surahMetaList = loadToolData("quran-surahs.json");
+            const surahMeta = Array.isArray(surahMetaList)
+              ? surahMetaList.find((s) => Number(s.number) === surahNum)
+              : null;
+            const prevMeta = Array.isArray(surahMetaList)
+              ? surahMetaList.find((s) => Number(s.number) === surahNum - 1)
+              : null;
+            const nextMeta = Array.isArray(surahMetaList)
+              ? surahMetaList.find((s) => Number(s.number) === surahNum + 1)
+              : null;
+            const revelationBadge = surahMeta && surahMeta.revelationType
+              ? `<span class="inline-block rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[10px] font-medium">${surahMeta.revelationType === "Meccan" ? "মক্কী" : "মাদানী"}</span>`
+              : "";
+            const surahNav = `
+              <nav aria-label="Surah navigation" class="mx-auto flex max-w-3xl items-stretch justify-between gap-3 border-t border-border bg-card px-4 py-5">
+                ${prevMeta ? `<a href="/quran/${prevMeta.number}" class="flex-1 rounded-xl border border-border px-4 py-3 text-left hover:bg-muted"><span class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">← Previous Surah</span><span class="mt-1 block font-semibold text-primary">${esc(prevMeta.englishName)}</span></a>` : `<span class="flex-1"></span>`}
+                <a href="/quran" class="rounded-xl border border-border px-4 py-3 text-center font-semibold text-primary hover:bg-muted">All Surahs</a>
+                ${nextMeta ? `<a href="/quran/${nextMeta.number}" class="flex-1 rounded-xl border border-border px-4 py-3 text-right hover:bg-muted"><span class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Next Surah →</span><span class="mt-1 block font-semibold text-primary">${esc(nextMeta.englishName)}</span></a>` : `<span class="flex-1"></span>`}
+              </nav>`;
+
             bodyContent = `
               <div class="min-h-screen bg-background">
                 <header class="bg-gradient-to-br from-emerald-600 to-teal-700 p-6 text-white sticky top-0 z-30">
@@ -1078,6 +1103,7 @@ export default async function handler(req, res) {
                     <div class="text-center">
                       <h1 class="text-xl font-bold">${esc(ar.englishName)}</h1>
                       <p class="text-xs opacity-80">${esc(ar.englishNameTranslation)} • ${ar.numberOfAyahs} Ayahs</p>
+                      <div class="mt-1.5 flex items-center justify-center gap-2">${revelationBadge}<span class="text-[10px] opacity-75">Bengali translation: Muhiuddin Khan · via AlQuran Cloud API</span></div>
                     </div>
                     <span class="text-2xl font-arabic">${esc(ar.name)}</span>
                   </div>
@@ -1085,6 +1111,7 @@ export default async function handler(req, res) {
                 <main class="max-w-3xl mx-auto bg-card shadow-sm border-x border-border min-h-screen">
                   ${ayahs}
                 </main>
+                ${surahNav}
               </div>
             `;
           }
@@ -1166,6 +1193,7 @@ export default async function handler(req, res) {
               </div>
               ${translations}
               ${hadith.explanation_bn ? `<div class="rounded-2xl bg-amber-400/10 border border-amber-400/20 p-5"><h2 class="text-amber-400 font-bold mb-2">ব্যাখ্যা</h2><p class="leading-relaxed text-white/85 whitespace-pre-line">${esc(hadith.explanation_bn)}</p></div>` : ""}
+              <p class="text-xs leading-relaxed text-white/50">বাংলা অনুবাদে বন্ধনীতে আধুনিক প্রকাশনী ও ইসলামিক ফাউন্ডেশন বাংলাদেশ সংস্করণের নম্বর দেওয়া আছে। English ও اردو অনুবাদের অনুবাদকের নাম উৎস-ডেটায় সংরক্ষিত নেই।</p>
               <a href="/hadith/sahih-bukhari" class="inline-block rounded-xl bg-white/10 px-5 py-3 font-semibold hover:bg-white/15">← সকল হাদিস</a>
             </main>
           </div>
@@ -1181,6 +1209,18 @@ export default async function handler(req, res) {
       if (!rawLang) {
         title = "Sahih Al-Bukhari — বাংলা, English ও اردو | Noor";
         description = "Read Sahih Al-Bukhari in Bengali, English and Urdu with Arabic text on Noor.";
+        // P1 (2026-09-27): the hub was a bare language chooser (~260 chars).
+        // Enrich with facts already established in this repo's trust copy
+        // (STATIC_PAGE_COPY "Hadith collections", api/prerender.js line 366)
+        // plus a live chapter count — no new claims.
+        let bukhariChapterCount = 0;
+        try {
+          const { count } = await supabase
+            .from("hadith_chapters")
+            .select("chapter_number", { count: "exact", head: true })
+            .eq("book_id", "bukhari");
+          bukhariChapterCount = Number(count) || 0;
+        } catch (e) { bukhariChapterCount = 0; }
         bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white pb-20" style="background-image: ${ISLAMIC_PATTERN_HTML}">
             <header class="bg-gradient-to-b from-[hsl(158,55%,22%)] to-[hsl(158,55%,22%)]/95 p-8 text-center border-b border-white/10 relative overflow-hidden" style="background-image: ${ISLAMIC_PATTERN_HTML}">
@@ -1190,6 +1230,14 @@ export default async function handler(req, res) {
               </div>
             </header>
             <main class="p-4 max-w-3xl mx-auto space-y-4">
+              <section class="rounded-2xl border border-white/10 bg-white/5 p-6">
+                <h2 class="text-lg font-bold mb-3">এই সংকলন সম্পর্কে</h2>
+                <div class="space-y-3 text-sm leading-relaxed text-white/75">
+                  <p>সহিহ আল-বুখারী — ইমাম মুহাম্মদ ইবনে ইসমাঈল আল-বুখারী (রহ.) সংকলিত হাদিস গ্রন্থ, সুন্নি পণ্ডিতদের দৃষ্টিতে সবচেয়ে কঠোরভাবে প্রামাণিক হাদিস সংকলনগুলোর একটি। প্রতিটি হাদিস আরবি মূলপাঠসহ বাংলা, ইংরেজি ও উর্দু অনুবাদে পড়া যাবে।</p>
+                  ${bukhariChapterCount ? `<p>এই সংস্করণে <strong class="text-white">${bukhariChapterCount}টি অধ্যায় (কিতাব)</strong> রয়েছে — নিচে আপনার ভাষা বেছে নিয়ে অধ্যায় তালিকা দেখুন।</p>` : ""}
+                  <p class="text-xs text-white/50">বাংলা অনুবাদে বন্ধনীতে আধুনিক প্রকাশনী ও ইসলামিক ফাউন্ডেশন বাংলাদেশ সংস্করণের নম্বর দেওয়া আছে। English ও اردو অনুবাদের অনুবাদকের নাম উৎস-ডেটায় সংরক্ষিত নেই। সূত্র ও পদ্ধতি সম্পর্কে বিস্তারিত জানতে <a href="/sources" class="font-semibold text-[hsl(45,93%,58%)]">উৎস পাতা</a> দেখুন।</p>
+                </div>
+              </section>
               ${[
                 ["bangla", "সহিহ বুখারী (বাংলা)", "আরবি + সম্পূর্ণ বাংলা অনুবাদ"],
                 ["english", "Sahih Al-Bukhari (English)", "Arabic + complete English translation"],
@@ -1241,7 +1289,6 @@ export default async function handler(req, res) {
           statusCode = 404;
           robotsDirective = "noindex,follow";
           title = "Hadith chapter not found | Noor";
-          canonicalUrl = `${SITE_ORIGIN}${routePath}`;
           bodyContent = `
           <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white p-8" style="background-image: ${ISLAMIC_PATTERN_HTML}">
             <main class="max-w-2xl mx-auto text-center py-20">
@@ -1273,7 +1320,15 @@ export default async function handler(req, res) {
             : `${meta.title} ${meta.subtitle}. Browse authentic Hadith chapters with Arabic text and translation on Noor.`,
           160,
         );
-        canonicalUrl = `${SITE_ORIGIN}${routePath}`;
+        // P0 duplicate-content fix (2026-09-27): numeric single-hadith URLs
+        // (/hadith/sahih-bukhari/:lang/chapter-N/M) render the same hadith that
+        // also lives on the chapter page and (for Bangla) at /hadith/h/:slug.
+        // Self-canonicalizing them created a second indexable URL for identical
+        // content. Consolidate into the chapter URL instead. Chapter pages
+        // (no hadith number) keep self-canonical.
+        canonicalUrl = hadithNumber
+          ? `${SITE_ORIGIN}/hadith/sahih-bukhari/${lang}/chapter-${chapterId}`
+          : `${SITE_ORIGIN}${routePath}`;
 
         const detail = hadithNumber ? rows.find((row) => row.number === hadithNumber) : null;
         // Breadcrumb trail: Home → Hadith → Sahih Bukhari → [Language] → [Chapter] → [Hadith]
@@ -1327,6 +1382,11 @@ export default async function handler(req, res) {
                 ${detail ? `<h2 class="text-lg font-bold">${lang === "bangla" ? "হাদিসের বিস্তারিত" : lang === "urdu" ? "حدیث کی تفصیل" : "Hadith details"}</h2>` : `<h2 class="text-lg font-bold">${currentChapter ? esc(getHadithChapterName(currentChapter, lang)) : (lang === "bangla" ? "সকল হাদিস" : lang === "urdu" ? "تمام احادیث" : "All Hadiths")}</h2>`}
                 ${listMarkup}
               </section>
+              ${chapterId && !detail ? `
+              <nav aria-label="Chapter navigation" class="flex items-stretch justify-between gap-3 pb-2">
+                ${chapterMap.has(chapterId - 1) ? `<a href="/hadith/sahih-bukhari/${lang}/chapter-${chapterId - 1}" class="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:border-[hsl(45,93%,58%)]/50"><span class="block text-[10px] font-bold uppercase tracking-wider text-white/50">← ${lang === "bangla" ? "পূর্ববর্তী অধ্যায়" : lang === "urdu" ? "پچھلا باب" : "Previous"}</span><span class="mt-1 block truncate font-semibold text-white/90">${esc(getHadithChapterName(chapterMap.get(chapterId - 1), lang))}</span></a>` : `<span class="flex-1"></span>`}
+                ${chapterMap.has(chapterId + 1) ? `<a href="/hadith/sahih-bukhari/${lang}/chapter-${chapterId + 1}" class="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-right hover:border-[hsl(45,93%,58%)]/50"><span class="block text-[10px] font-bold uppercase tracking-wider text-white/50">${lang === "bangla" ? "পরবর্তী অধ্যায়" : lang === "urdu" ? "اگلا باب" : "Next"} →</span><span class="mt-1 block truncate font-semibold text-white/90">${esc(getHadithChapterName(chapterMap.get(chapterId + 1), lang))}</span></a>` : `<span class="flex-1"></span>`}
+              </nav>` : ""}
             </main>
           </div>
         `;
@@ -1430,7 +1490,7 @@ export default async function handler(req, res) {
     // --- Dua Root Page ---
     else if (routePath === "/dua") {
       title = "Daily Duas & Supplications — দোয়া সমূহ | Noor";
-      description = "দৈনন্দিন জীবনের প্রয়োজনীয় দোয়া ও জিকিরসমূহ অর্থ ও ফজিলতসহ পড়ুন।";
+      description = "দৈনন্দিন জীবনের প্রয়োজনীয় দোয়া ও জিকিরসমূহ আরবি, বাংলা উচ্চারণ ও অর্থসহ পড়ুন।";
       extraStructuredData = collectionJsonLd({
         name: title,
         description,
@@ -1554,8 +1614,8 @@ export default async function handler(req, res) {
         let duaRefBit = (dua.reference || "").trim();
         if (duaRefBit.startsWith(duaBaseTitle)) duaRefBit = duaRefBit.slice(duaBaseTitle.length).trim();
         const duaDistinctTitle = duaRefBit ? `${duaBaseTitle} (${duaRefBit})` : duaBaseTitle;
-        title = `${duaDistinctTitle} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
-        description = dua.explanation_bn || dua.content || `${dua.title || "এই দোয়া"} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`;
+        title = `${duaDistinctTitle} — বাংলা অর্থ ও আরবি টেক্সট | Noor`;
+        description = dua.explanation_bn || dua.content || `${dua.title || "এই দোয়া"} এর আরবি, বাংলা উচ্চারণ ও অর্থ পড়ুন।`;
         req.storyOgImage = getDuaOgImage(dua);
 
         // Related duas (same category) for internal linking depth.
@@ -1629,18 +1689,15 @@ export default async function handler(req, res) {
                 <p class="text-xl md:text-2xl leading-[1.8] tracking-wide font-bangla-serif" style="color: #FFFFFF !important; font-weight: 500; text-shadow: 0 1px 2px rgba(0,0,0,0.2);">${esc(normalizeDuaDisplayText(dua.content))}</p>
               </div>
               
-              <!-- Virtues & Explanation -->
-              ${dua.virtue ? `
-                <div class="bg-white/5 border border-white/10 rounded-3xl p-6">
-                  <h3 class="text-amber-400 font-bold mb-3 flex items-center gap-2">
-                    <span>✨</span> ফজিলত
-                  </h3>
-                  <p class="text-white/80 italic leading-relaxed">
-                    ${esc(dua.virtue)}
-                  </p>
-                  ${dua.virtue_reference ? `<p class="mt-4 text-xs text-white/40">[রেফারেন্স: ${esc(dua.virtue_reference)}]</p>` : ''}
-                </div>
-              ` : ''}
+              <!-- Virtues: intentionally not rendered.
+                   P0 AdSense trust fix (2026-09-27): the dua virtue/virtue_reference
+                   columns carry templated, unsupported claims (forensic audit:
+                   NOOR_DUA_VIRTUE_FORENSIC_AUDIT.md — 158/218 rows share 8 generic
+                   sentences, 0 backed by a specific virtue narration). Publishing
+                   them under a "ফজিলত" heading would assert religious merit without
+                   evidence. The section stays hidden until virtue texts are
+                   source-backed. Canonical cleanup = privileged SQL in the audit
+                   report; the database rows are untouched by this change. -->
               
               ${dua.explanation_bn ? `
                 <div class="bg-white/5 border border-white/10 rounded-3xl p-6">

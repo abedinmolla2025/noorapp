@@ -218,6 +218,10 @@ const QuizPage = () => {
         .from("quiz_questions")
         .select("question, question_bn, question_en, options, options_bn, options_en, correct_answer, category, difficulty, explanation_bn, explanation_en, source_reference, related_url")
         .eq("is_active", true)
+        // P2 (2026-09-27): match the indexed surface — disputed/needs_review
+        // questions are excluded from the sitemap, prerender and detail pages;
+        // the interactive quiz must not serve them either.
+        .in("verification_status", ["verified", "verified_primary", "verified_secondary"])
         .order("order_index", { ascending: true })
         .order("created_at", { ascending: true })
         .limit(500);
@@ -232,6 +236,7 @@ const QuizPage = () => {
           .from("quiz_questions")
           .select("question, question_bn, question_en, options, options_bn, options_en, correct_answer, category, difficulty")
           .eq("is_active", true)
+          .in("verification_status", ["verified", "verified_primary", "verified_secondary"])
           .order("order_index", { ascending: true })
           .order("created_at", { ascending: true })
           .limit(500);
