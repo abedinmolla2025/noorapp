@@ -36,7 +36,7 @@ const DataSourcesPage = () => {
         name: "How is content verified before publishing?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Every dua, hadith and story is checked against its original Arabic source and cross-referenced with classical commentaries. Weak (Da'if) and fabricated (Mawdu') narrations are excluded from primary content and flagged when discussed.",
+          text: "Published hadith entries identify their collection and chapter; dua and story entries carry source references where available. Records missing source or translation-edition information are marked for editorial follow-up rather than presented as independently verified. Users are encouraged to verify critical religious matters with qualified scholars.",
         },
       },
     ],
@@ -48,7 +48,7 @@ const DataSourcesPage = () => {
         <title>Authentic Islamic Sources | Noor</title>
         <meta
           name="description"
-          content="Every dua, hadith, dhikr and story in Noor is sourced from the Qur'an, Sahih al-Bukhari and classical Islamic scholarship."
+          content="Learn where Noor's Islamic content comes from — Qur'an translations, Sahih al-Bukhari, and our editorial process."
         />
         <link rel="canonical" href="https://noorapp.in/sources" />
         <meta property="og:title" content="Authentic Islamic Sources | Noor" />

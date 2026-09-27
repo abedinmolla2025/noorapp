@@ -459,9 +459,13 @@ const DuaDetailPage = () => {
   const seo = useMemo(() => {
     if (!dua) return null;
     const baseTitle = dua.title || "দোয়া";
+    // Disambiguate same-titled duas with the row's own reference (mirrors prerender).
+    let refBit = (dua.reference || "").trim();
+    if (refBit.startsWith(baseTitle)) refBit = refBit.slice(baseTitle.length).trim();
+    const distinctTitle = refBit ? `${baseTitle} (${refBit})` : baseTitle;
     // Format: "{Dua Name} Bangla Meaning, Benefits, Arabic Text"
     const title = truncate(
-      `${baseTitle} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`,
+      `${distinctTitle} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`,
       60,
     );
     const description = truncate(

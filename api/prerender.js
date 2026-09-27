@@ -226,6 +226,20 @@ const breadcrumbJsonLd = (items) => {
   })}</script>`;
 };
 
+// CollectionPage JSON-LD for hub/listing pages. Only include fields we can
+// populate truthfully — no invented dates, counts, or authorship.
+const collectionJsonLd = ({ name, description, url }) => {
+  return `<script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name,
+    description: String(description || "").slice(0, 500),
+    url,
+    inLanguage: ["en", "bn"],
+    publisher: { "@id": `${SITE_ORIGIN}/#organization` },
+  })}</script>`;
+};
+
 // Article JSON-LD. Only include fields we can populate truthfully — no dates,
 // ratings, or invented authorship.
 const articleJsonLd = ({ headline, description, image, url, inLanguage = "bn" }) => {
@@ -354,17 +368,6 @@ const STATIC_PAGE_COPY = {
       ["Editorial review", "Individual hadith, dua and story entries should identify the collection or Qur'an reference, book/chapter or verse where available, translation/edition information, and the date of the latest editorial review. If a source or translation edition is not yet available in the record, it is marked for editorial follow-up rather than presented as independently verified. Found an inaccurate reference or a translation issue? Please report it through the Contact page."],
     ],
   },
-  "/quiz": {
-    title: "Islamic Quiz | Noor",
-    description: "Test your Islamic knowledge with Noor's short Quran, Hadith and general learning quiz.",
-    heading: "Islamic Quiz",
-    intro: "Use the Noor quiz for self-checking and revision. Questions cover basic Islamic knowledge, Quran, Hadith, worship and everyday learning.",
-    sections: [
-      ["How it works", "Choose an answer for each question, review the explanation when available and keep learning from the linked source. The quiz is educational and is not a substitute for a qualified teacher or scholar."],
-      ["Fair and respectful learning", "Questions are intended to encourage understanding rather than debate. When a question depends on a specific source or scholarly interpretation, Noor should identify that reference clearly."],
-      ["Start the quiz", "Open the interactive quiz to answer questions and see your result. If the interactive data cannot be reached, this introduction remains available and the page should show a retry option rather than an endless loading screen."],
-    ],
-  },
   "/privacy-policy": {
     title: "Privacy Policy | Noor",
     description: "Read Noor's privacy policy covering local preferences, analytics, advertising cookies, third-party services and user rights.",
@@ -376,7 +379,7 @@ const STATIC_PAGE_COPY = {
       ["Your rights", "You can clear app data (such as local preferences or quiz history) from your device at any time through your browser or device settings. If you stop using the app, we do not keep any additional personal information about you inside the app."],
       ["Advertising & cookies", "Noor may display advertisements provided by third-party advertising networks, including Google AdSense. These services may use cookies and similar tracking technologies to serve ads based on your prior visits to this app or other websites. You can opt out of personalized advertising at any time by visiting Google Ads Settings, and you can withdraw or change consent any time from the cookie banner in this app."],
       ["Third-party services", "Noor uses third-party services that may collect data: Aladhan API for accurate prayer time calculations based on your location, OpenStreetMap / Nominatim for reverse geocoding your location to display city names, and Google AdSense for displaying relevant advertisements."],
-      ["Changes & contact", "This privacy policy may be updated as the app evolves. If you have questions or concerns, you may reach out to the Noor team through the app or via the store page where the app is published, or email support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
+      ["Changes & contact", "This privacy policy may be updated as the app evolves. If you have questions or concerns, you may reach out to the Noor team through the Contact page (/contact) or via the store page where the app is published, or email support@noorapp.in. Noor does not ask for sensitive religious, financial or authentication information to use its public reading pages."],
     ],
   },
   "/terms": {
@@ -390,6 +393,7 @@ const STATIC_PAGE_COPY = {
       ["Acceptable use", "You agree not to misuse the app, attempt to break security, or disturb other users' experience in any way. Any abusive or harmful use is strictly prohibited. Do not misuse the service, attempt unauthorized access, disrupt availability or copy and redistribute protected material without permission."],
       ["Developer information", "This app has been developed and maintained by ABEDIN MOLLA from India, with the intention of serving the Muslim community with a clean and focused Islamic experience."],
       ["Changes to these terms", "These terms may be updated over time as the app improves. Continued use of the app after changes means you accept the updated terms."],
+      ["Contact", "For questions, disputes or corrections regarding these terms, please contact the developer through the Contact page (/contact)."],
     ],
   },
   "/download": {
@@ -1231,6 +1235,22 @@ export default async function handler(req, res) {
           .order("chapter_number");
         const chapterList = chapterData || [];
         const chapterMap = new Map(chapterList.map((chapter) => [Number(chapter.chapter_number), chapter]));
+        // Nonexistent chapter: real 404 + noindex so invented chapter URLs
+        // cannot become indexable thin pages.
+        if (chapterId && !chapterMap.has(chapterId)) {
+          statusCode = 404;
+          robotsDirective = "noindex,follow";
+          title = "Hadith chapter not found | Noor";
+          canonicalUrl = `${SITE_ORIGIN}${routePath}`;
+          bodyContent = `
+          <div class="min-h-screen bg-[hsl(158,64%,12%)] text-white p-8" style="background-image: ${ISLAMIC_PATTERN_HTML}">
+            <main class="max-w-2xl mx-auto text-center py-20">
+              <h1 class="text-2xl font-bold mb-3">অধ্যায় পাওয়া যায়নি</h1>
+              <p class="text-white/70 mb-6">এই অধ্যায়টি সহিহ বুখারীতে নেই। সঠিক অধ্যায় নির্বাচন করুন।</p>
+              <a href="/hadith/sahih-bukhari/${lang}" class="inline-flex px-5 py-3 rounded-xl bg-[hsl(45,93%,58%)] text-[hsl(158,64%,15%)] font-bold">অধ্যায় তালিকা দেখুন</a>
+            </main>
+          </div>`;
+        } else {
         const rows = await loadHadithRowsSsr(lang, chapterId);
         const currentChapter = chapterId ? chapterMap.get(chapterId) : null;
         const chapterName = currentChapter
@@ -1312,6 +1332,7 @@ export default async function handler(req, res) {
         `;
       }
     }
+    } // close sahih-bukhari route block
 
     // --- Hadith Root Page ---
     else if (routePath === "/hadith") {
@@ -1410,6 +1431,11 @@ export default async function handler(req, res) {
     else if (routePath === "/dua") {
       title = "Daily Duas & Supplications — দোয়া সমূহ | Noor";
       description = "দৈনন্দিন জীবনের প্রয়োজনীয় দোয়া ও জিকিরসমূহ অর্থ ও ফজিলতসহ পড়ুন।";
+      extraStructuredData = collectionJsonLd({
+        name: title,
+        description,
+        url: `${SITE_ORIGIN}/dua`,
+      });
       
       const { data: duas } = await supabase
         .from("admin_content")
@@ -1511,7 +1537,7 @@ export default async function handler(req, res) {
 
     // --- Dua Detail Page ---
     else if (routePath.startsWith("/dua/")) {
-      const slug = routePath.split("/")[2];
+      const slug = decodeURIComponent(routePath.split("/")[2] || "");
       const { data: dua } = await supabase
         .from("admin_content")
         .select("*")
@@ -1521,7 +1547,14 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       if (dua) {
-        title = `${dua.title || "দোয়া"} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
+        // Disambiguate same-titled duas (several authentic duas can share a
+        // common name, e.g. for waking up) with the row's own reference.
+        // Redundant title prefixes inside the reference are stripped.
+        const duaBaseTitle = dua.title || "দোয়া";
+        let duaRefBit = (dua.reference || "").trim();
+        if (duaRefBit.startsWith(duaBaseTitle)) duaRefBit = duaRefBit.slice(duaBaseTitle.length).trim();
+        const duaDistinctTitle = duaRefBit ? `${duaBaseTitle} (${duaRefBit})` : duaBaseTitle;
+        title = `${duaDistinctTitle} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
         description = dua.explanation_bn || dua.content || `${dua.title || "এই দোয়া"} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`;
         req.storyOgImage = getDuaOgImage(dua);
 
@@ -1657,6 +1690,11 @@ export default async function handler(req, res) {
     else if (routePath === "/stories") {
       title = "Islamic Stories | Noor";
       description = "Read Islamic stories of the Prophets, Sahaba and inspiring lessons of faith, character and mercy on Noor.";
+      extraStructuredData = collectionJsonLd({
+        name: title,
+        description,
+        url: `${SITE_ORIGIN}/stories`,
+      });
       
       const { data: stories } = await supabase
         .from("admin_content")
@@ -1971,6 +2009,9 @@ export default async function handler(req, res) {
     else if (routePath === "/sitemap") {
       title = "Sitemap — Noor Islamic App";
       description = "Browse Noor's public Quran, Hadith, Dua, prayer, learning, support and policy pages.";
+      // Match the SPA SitemapPage (noindex,follow): the XML sitemap is the
+      // crawler authority; this HTML page is a navigation aid.
+      robotsDirective = "noindex,follow";
       bodyContent = `
         <div class="min-h-screen bg-background pb-24">
           <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-10 text-white">
@@ -2060,6 +2101,11 @@ export default async function handler(req, res) {
       const page = STATIC_PAGE_COPY["/quiz"];
       title = page.title;
       description = page.description;
+      extraStructuredData = collectionJsonLd({
+        name: title,
+        description,
+        url: `${SITE_ORIGIN}/quiz`,
+      });
       let indexHtml = "";
       try {
         const { data: questions } = await supabase
@@ -2258,6 +2304,9 @@ export default async function handler(req, res) {
   } catch (error) {
     console.error("Prerender error:", error);
     res.setHeader("X-Noor-Prerender-Error", "true");
-    res.status(200).send(getAppTemplate());
+    // Fail closed: an uncaught exception must never produce an indexable
+    // HTTP 200 app shell. A 500 + noindex tells crawlers to retry later
+    // without indexing an error page.
+    res.status(500).send(`<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><title>Service temporarily unavailable | Noor</title><meta name="robots" content="noindex,follow"><meta name="viewport" content="width=device-width, initial-scale=1"></head><body style="font-family:system-ui,sans-serif;text-align:center;padding:4rem 1rem"><h1>Service temporarily unavailable</h1><p>Please try again shortly.</p><p><a href="/">Noor Islamic App</a></p></body></html>`);
   }
 }

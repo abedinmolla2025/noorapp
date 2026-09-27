@@ -128,6 +128,18 @@ const TermsPage = () => {
             শর্তাবলি মেনে নিয়েছেন।
           </p>
         </section>
+
+        <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
+          <h2 className="text-lg font-semibold">6. Contact / যোগাযোগ</h2>
+          <p className="text-muted-foreground">
+            For questions, disputes or corrections regarding these terms, please contact the
+            developer through the <a href="/contact" className="text-primary hover:underline">Contact page</a>.
+          </p>
+          <p className="text-muted-foreground">
+            এই শর্তাবলি সম্পর্কে কোনো প্রশ্ন, আপত্তি বা সংশোধনের জন্য <a href="/contact" className="text-primary hover:underline">যোগাযোগ পাতার</a> মাধ্যমে
+            ডেভেলপারের সাথে যোগাযোগ করুন।
+          </p>
+        </section>
       </main>
     </div>
   );

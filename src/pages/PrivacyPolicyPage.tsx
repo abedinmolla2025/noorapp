@@ -187,12 +187,12 @@ const PrivacyPolicyPage = () => {
           <h2 className="text-lg font-semibold">7. Changes & contact / নীতি পরিবর্তন ও যোগাযোগ</h2>
           <p className="text-muted-foreground">
             This privacy policy may be updated as the app evolves. If you have questions or
-            concerns, you may reach out to the {appName} team through the app or via the store page
+            concerns, you may reach out to the {appName} team through the <a href="/contact" className="text-primary hover:underline">Contact page</a> or via the store page
             where the app is published.
           </p>
           <p className="text-muted-foreground">
             ভবিষ্যতে অ্যাপের উন্নয়নের সাথে সাথে এই প্রাইভেসি নীতিমালায় পরিবর্তন আসতে পারে। কোনো
-            প্রশ্ন বা উদ্বেগ থাকলে অ্যাপের ভেতর থেকে কিংবা যেখান থেকে অ্যাপটি ডাউনলোড করেছেন,
+            প্রশ্ন বা উদ্বেগ থাকলে <a href="/contact" className="text-primary hover:underline">যোগাযোগ পাতার</a> মাধ্যমে কিংবা যেখান থেকে অ্যাপটি ডাউনলোড করেছেন,
             সেখানকার মাধ্যমে ডেভেলপার টিমের সাথে যোগাযোগ করতে পারবেন।
           </p>
         </section>
