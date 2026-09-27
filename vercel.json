@@ -97,14 +97,7 @@
   ],
   "functions": {
     "api/prerender.js": {
-      "includeFiles": [
-        "dist/app.html",
-        "dist/data/names-of-allah.json",
-        "dist/data/prayer-guide-steps.json",
-        "dist/data/dhikr-list.json",
-        "dist/data/hijri-months.json",
-        "dist/data/islamic-important-dates.json"
-      ]
+      "includeFiles": "dist/{app.html,data/names-of-allah.json,data/prayer-guide-steps.json,data/dhikr-list.json,data/hijri-months.json,data/islamic-important-dates.json}"
     }
   },
   "rewrites": [
