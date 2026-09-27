@@ -47,7 +47,7 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/hadith": {
     title: "Authentic Hadith Collections | Noor",
     description:
-      "Browse authentic Hadith collections — Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi & Sunan Abu Dawud with Arabic text and translations in Bangla, English & Urdu.",
+      "Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned.",
   },
   "/hadith/sahih-bukhari": {
     title: "Sahih al-Bukhari Hadith Collection | Noor",

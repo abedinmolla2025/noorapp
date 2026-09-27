@@ -126,7 +126,7 @@ const PAGE_FAQS: Record<string, { q: string; a: string }[]> = {
     { q: "Is the Quran text on Noor authentic?", a: "Yes, the Arabic text follows the Uthmani script and translations are sourced from widely accepted scholarly works." },
   ],
   "/hadith": [
-    { q: "Which Hadith collections are available on Noor?", a: "Noor features major Hadith collections including Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi, and Sunan Abu Dawud." },
+    { q: "Which Hadith collections are available on Noor?", a: "Noor currently offers Sahih al-Bukhari with Arabic text and translations in Bangla, English and Urdu. Additional collections (Sahih Muslim, Jami at-Tirmidhi, Sunan Abu Dawud) are planned for a future release." },
     { q: "Can I read Sahih Bukhari online for free?", a: "Yes, the complete Sahih Bukhari collection is available on Noor with English translations, organized by book and chapter." },
     { q: "How should I check a Hadith on Noor?", a: "Read the Arabic text, translation, collection, chapter and available reference together. Edition and numbering can vary, so use the full context rather than an isolated quotation." },
     { q: "Can I browse Hadith by chapter?", a: "Yes, each Hadith book is organized by chapters so you can easily find Hadith on specific topics." },

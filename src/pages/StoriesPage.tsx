@@ -22,11 +22,13 @@ import {
   STORY_CATEGORIES,
   categoryLabel,
   estimateReadingMinutes,
+  findBundledStory,
   plainExcerpt,
   storyMetaDescription,
   useStories,
   type Story,
 } from "@/lib/stories";
+import bundledStoriesData from "@/data/stories.json";
 
 const PAGE_SIZE = 9;
 const SITE = "https://noorapp.in";
@@ -54,7 +56,24 @@ const StorySkeleton = () => (
 );
 
 export default function StoriesPage() {
-  const { stories, loading } = useStories();
+  const { stories: dbStories, loading } = useStories();
+  // Union with bundled-only sitemap stories so the SPA hub matches the
+  // prerendered hub (runtime/prerender parity). DB remains the authority
+  // for published stories; bundled records only fill gaps.
+  const stories = useMemo(() => {
+    const seen = new Set(dbStories.map((s) => s.slug));
+    const extra: Story[] = [];
+    for (const raw of bundledStoriesData as Array<{ slug?: string }>) {
+      if (raw?.slug && !seen.has(raw.slug)) {
+        const s = findBundledStory(raw.slug);
+        if (s) {
+          seen.add(s.slug);
+          extra.push(s);
+        }
+      }
+    }
+    return [...dbStories, ...extra];
+  }, [dbStories]);
   const [params, setParams] = useSearchParams();
   const navigate = useNavigate();
   const q = (params.get("q") || "").trim();

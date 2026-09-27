@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import bundledStoriesData from "@/data/stories.json";
 
 export type StoryNavRef = { title: string; slug: string };
 
@@ -15,6 +16,13 @@ export type Story = {
   moral_bn?: string;
   moral_en?: string;
   moral_ur?: string;
+  /** Pilot enrichment (high-value content upgrade): editorial applications,
+   *  takeaways, and source links. Rendered only when present; never
+   *  fabricated — applications/takeaways are labeled editorial, links are
+   *  derived from the record's existing reference field. */
+  applications_bn?: string[];
+  takeaways_bn?: string[];
+  related_source_links?: { label: string; href: string }[];
   source_name?: string;
   reference?: string;
   source_detail?: string;
@@ -137,6 +145,9 @@ function rowToStory(row: any, index: number): Story {
     moral_bn: row.moral_bn ?? meta.moral_bn ?? undefined,
     moral_en: row.moral_en ?? meta.moral_en ?? undefined,
     moral_ur: row.moral_ur ?? meta.moral_ur ?? undefined,
+    applications_bn: row.applications_bn ?? meta.applications_bn ?? undefined,
+    takeaways_bn: row.takeaways_bn ?? meta.takeaways_bn ?? undefined,
+    related_source_links: row.related_source_links ?? meta.related_source_links ?? undefined,
     source_name: row.source_name ?? meta.source_name ?? undefined,
     source_detail: row.source_detail ?? meta.source_detail ?? undefined,
     reference: row.reference ?? undefined,
@@ -152,6 +163,49 @@ function rowToStory(row: any, index: number): Story {
     audio_url: row.audio_url ?? undefined,
     audio_trailer_url: row.audio_trailer_url ?? undefined,
     updated_at: row.updated_at ?? undefined,
+  };
+}
+
+/**
+ * Bundled fallback for legitimate sitemap story URLs that are not (yet)
+ * published in the database (e.g. prophet-lut-story-islam,
+ * umar-ibn-khattab-story-islam). Mirrors the prerender's bundled-first
+ * resolution so runtime and prerender agree. Never invents content — it only
+ * surfaces the already-bundled record.
+ */
+export function findBundledStory(slug: string): Story | undefined {
+  const raw = (bundledStoriesData as unknown as Record<string, unknown>[]).find(
+    (s) => s && s["slug"] === slug,
+  ) as unknown as Partial<Story> & Record<string, unknown> | undefined;
+  if (!raw || typeof raw["slug"] !== "string") return undefined;
+  return {
+    id: typeof raw["id"] === "number" ? raw["id"] : 0,
+    slug: raw["slug"] as string,
+    category: (raw["category"] as string) ?? "",
+    title_bn: (raw["title_bn"] as string) ?? "",
+    title_en: (raw["title_en"] as string) ?? "",
+    title_ur: (raw["title_ur"] as string) ?? undefined,
+    content_bn: cleanStoryContent((raw["content_bn"] as string) ?? ""),
+    content_en: cleanStoryContent((raw["content_en"] as string) ?? ""),
+    content_ur: cleanStoryContent((raw["content_ur"] as string) ?? undefined),
+    moral_bn: (raw["moral_bn"] as string) ?? undefined,
+    moral_en: (raw["moral_en"] as string) ?? undefined,
+    moral_ur: (raw["moral_ur"] as string) ?? undefined,
+    source_name: (raw["source_name"] as string) ?? undefined,
+    source_detail: (raw["source_detail"] as string) ?? undefined,
+    reference: (raw["reference"] as string) ?? undefined,
+    seo: (raw["seo"] as Story["seo"]) ?? { title: (raw["title_bn"] as string) ?? "", meta_description: "" },
+    navigation: raw["navigation"] as Story["navigation"],
+    engagement: raw["engagement"] as Story["engagement"],
+    growth: raw["growth"] as Story["growth"],
+    tags: raw["tags"] as Story["tags"],
+    author: (raw["author"] as string) ?? undefined,
+    reading_time_minutes: (raw["reading_time_minutes"] as number) ?? undefined,
+    is_featured: (raw["is_featured"] as boolean) ?? undefined,
+    image_url: (raw["image_url"] as string) ?? undefined,
+    og_image_url: (raw["image_url"] as string) ?? undefined,
+    audio_url: undefined,
+    updated_at: (raw["updated_at"] as string) ?? undefined,
   };
 }
 
@@ -236,6 +290,28 @@ export function estimateReadingMinutes(text: string): number {
 export function plainExcerpt(text: string, max = 180): string {
   const clean = (text || "").replace(/\s+/g, " ").trim();
   return clean.length > max ? clean.slice(0, max - 1) + "…" : clean;
+}
+
+/**
+ * Pilot gate for the story high-value content upgrade. A story carries the
+ * enrichment layers only when its record includes the editorial value fields.
+ * Non-pilot stories return null and render exactly as before — no filler is
+ * ever generated. Applications/takeaways are editorial content derived from
+ * the story's own moral/narrative; source links are derived from the record's
+ * existing reference field.
+ */
+export function storyEnrichment(story: Story): {
+  applications: string[];
+  takeaways: string[];
+  sourceLinks: { label: string; href: string }[];
+} | null {
+  const applications = (story.applications_bn || []).filter(Boolean);
+  if (!applications.length) return null;
+  return {
+    applications,
+    takeaways: (story.takeaways_bn || []).filter(Boolean),
+    sourceLinks: (story.related_source_links || []).filter((l) => l && l.label && l.href),
+  };
 }
 
 /**

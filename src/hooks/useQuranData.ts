@@ -44,6 +44,23 @@ export const LANGUAGE_LABELS: Record<Language, string> = {
   indonesian: "Bahasa",
 };
 
+// Translator attribution, verified 2026-09-27 against the AlQuran Cloud
+// edition metadata (https://api.alquran.cloud/v1/edition/language/<lang>).
+// The app fetches these exact edition identifiers, so the attribution is
+// evidence-based, not guessed. The Indonesian edition's own metadata names
+// no translator, so none is claimed for it.
+export const TRANSLATION_ATTRIBUTION: Record<Language, { translator: string; note: string }> = {
+  arabic: { translator: "Mishary Rashid Alafasy", note: "Arabic text with Alafasy recitation audio" },
+  bengali: { translator: "Muhiuddin Khan", note: "Bengali translation" },
+  english: { translator: "Saheeh International", note: "English translation" },
+  urdu: { translator: "Ahmed Ali", note: "Urdu translation" },
+  hindi: { translator: "Suhel Farooq Khan and Saifur Rahman Nadwi", note: "Hindi translation" },
+  indonesian: { translator: "Translator not named by the source API", note: "Indonesian translation" },
+};
+
+export const QURAN_SOURCE_NOTE =
+  "Quran text and translations are served from the AlQuran Cloud API (api.alquran.cloud) using the edition identifiers above.";
+
 // Timeout helper with AbortController
 async function fetchWithTimeout(url: string, options: any = {}, timeoutMs: number = 10000, retries: number = 1) {
   let lastError: any;

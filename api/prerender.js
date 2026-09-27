@@ -174,7 +174,7 @@ const shortenMetaText = (value, limit) => {
   if (text.length <= limit) return text;
   const clipped = text.slice(0, limit + 1);
   const boundary = clipped.lastIndexOf(" ");
-  return (boundary > 25 ? clipped.slice(0, boundary) : clipped.slice(0, limit)).replace(/[\s,;:—–-]+$/u, "").trim();
+  return (boundary > 25 ? clipped.slice(0, boundary) : clipped.slice(0, limit)).replace(/[\s,;:—–\-|]+$/u, "").trim();
 };
 
 const uniqueStoryTitle = (value) => {
@@ -348,8 +348,8 @@ const STATIC_PAGE_COPY = {
     heading: "Authentic Islamic Sources",
     intro: "Because trustworthiness is central to Islamic knowledge, you deserve to know exactly where Noor's content comes from and how it is verified. This page lists every classical source Noor draws from, the scholars behind them, and our editorial process.",
     sections: [
-      ["The Qur'an", "The Qur'an is the literal word of Allah, revealed to the Prophet Muhammad ﷺ over 23 years and preserved unchanged for over 1,400 years. Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus. English translation: Sahih International and Yusuf Ali (public domain); the displayed edition is identified in the relevant content record. Verse numbering follows the standard Kufan system."],
-      ["Hadith collections", "Hadith are the sayings, actions and tacit approvals of the Prophet Muhammad ﷺ, transmitted through rigorously verified chains of narrators. Noor uses the six major Sunni collections (Kutub as-Sittah): Sahih al-Bukhari (Imam Muhammad ibn Isma'il al-Bukhari, d. 256 AH / 870 CE), Sahih Muslim (Imam Muslim ibn al-Hajjaj, d. 261 AH / 875 CE), Sunan Abu Dawud (Imam Abu Dawud as-Sijistani, d. 275 AH), Jami' at-Tirmidhi (Imam Muhammad at-Tirmidhi, d. 279 AH, known for grading each hadith), Sunan an-Nasa'i (Imam Ahmad an-Nasa'i, d. 303 AH), and Sunan Ibn Majah (Imam Ibn Majah, d. 273 AH)."],
+      ["The Qur'an", "The Qur'an is the literal word of Allah, revealed to the Prophet Muhammad ﷺ over 23 years and preserved unchanged for over 1,400 years. Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus. Translations are served from the AlQuran Cloud API — Bengali by Muhiuddin Khan, English by Saheeh International, Urdu by Ahmed Ali — and the active translator is shown in the Qur'an reader under the language selector. Verse numbering follows the standard Kufan system."],
+      ["Hadith collections", "Hadith are the sayings, actions and tacit approvals of the Prophet Muhammad ﷺ, transmitted through rigorously verified chains of narrators. Noor currently publishes Sahih al-Bukhari — compiled by Imam Muhammad ibn Isma'il al-Bukhari (d. 256 AH / 870 CE), widely regarded in Sunni scholarship as one of the most rigorously authenticated hadith collections. Further collections from the six major Sunni collections (Kutub as-Sittah) — Sahih Muslim (Imam Muslim ibn al-Hajjaj, d. 261 AH / 875 CE), Sunan Abu Dawud (Imam Abu Dawud as-Sijistani, d. 275 AH), Jami' at-Tirmidhi (Imam Muhammad at-Tirmidhi, d. 279 AH, known for grading each hadith), Sunan an-Nasa'i (Imam Ahmad an-Nasa'i, d. 303 AH), and Sunan Ibn Majah (Imam Ibn Majah, d. 273 AH) — are planned for future release and are not yet available on Noor."],
       ["Grading and methodology", "Where a hadith is graded (Sahih, Hasan, Da'if) we follow the classical rulings of Imam al-Bukhari, Imam Muslim, Imam at-Tirmidhi and later authorities such as Ibn Hajar al-'Asqalani and Shaykh Muhammad Nasir ad-Din al-Albani."],
       ["Editorial review", "Individual hadith, dua and story entries should identify the collection or Qur'an reference, book/chapter or verse where available, translation/edition information, and the date of the latest editorial review. If a source or translation edition is not yet available in the record, it is marked for editorial follow-up rather than presented as independently verified. Found an inaccurate reference or a translation issue? Please report it through the Contact page."],
     ],
@@ -504,7 +504,7 @@ const STATIC_PAGE_COPY = {
   },
 };
 
-const renderStaticPage = (page) => `
+const renderStaticPage = (page, extraHtml = "") => `
   <div class="min-h-screen bg-background pb-24">
     <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-12 text-white">
       <div class="mx-auto max-w-3xl">
@@ -520,10 +520,124 @@ const renderStaticPage = (page) => `
           <p class="mt-3 leading-7 text-muted-foreground">${esc(content)}</p>
         </section>
       `).join("")}
+      ${extraHtml}
       <p class="pt-3 text-center text-sm text-muted-foreground">For questions, corrections or source concerns, please visit <a href="/contact" class="font-semibold text-primary">Support &amp; Feedback</a>.</p>
     </main>
   </div>
 `;
+
+// --- Tool content for SEO: server-render the same data the React tool pages
+// use, so crawlers see real content instead of an empty app shell. Data comes
+// from public/data/*.json, generated at build time by
+// scripts/extract-tool-data.mjs from the TSX page sources (single source of
+// truth). File candidates mirror the hadith JSON loading pattern.
+const loadToolData = (filename) => {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", filename),
+    path.join(process.cwd(), "dist", "data", filename),
+    path.join("/var/task", "dist", "data", filename),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch (e) { /* try next candidate */ }
+  }
+  return null;
+};
+
+const renderNamesOfAllah = () => {
+  const names = loadToolData("names-of-allah.json");
+  if (!Array.isArray(names) || names.length === 0) return "";
+  const cards = names.map((n) => `
+    <li class="rounded-2xl border border-border bg-card p-4 text-center shadow-sm">
+      <p class="text-2xl font-bold text-foreground" lang="ar" dir="rtl">${esc(n.arabic || "")}</p>
+      <p class="mt-2 text-sm font-semibold text-primary">${esc(n.transliteration || "")}</p>
+      <p class="mt-1 text-sm text-muted-foreground">${esc(n.meaning || "")}</p>
+      ${n.bengaliMeaning ? `<p class="mt-1 text-sm text-muted-foreground">${esc(n.bengaliMeaning)}</p>` : ""}
+    </li>`).join("");
+  return `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">All 99 Names of Allah (আল্লাহর ৯৯টি নাম)</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">The complete list of the 99 Names of Allah with Arabic text, transliteration, and English and Bengali meanings.</p>
+      <ol class="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-3">${cards}</ol>
+    </section>`;
+};
+
+const renderPrayerGuideSteps = () => {
+  const steps = loadToolData("prayer-guide-steps.json");
+  if (!Array.isArray(steps) || steps.length === 0) return "";
+  const items = steps.map((s, i) => `
+    <li class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-foreground">${i + 1}. ${esc(s.name || "")}${s.nameBn ? ` <span class="font-normal text-muted-foreground">(${esc(s.nameBn)})</span>` : ""}</h3>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">${esc(s.action || "")}</p>
+      ${s.actionBn ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(s.actionBn)}</p>` : ""}
+      ${s.recitation ? `<p class="mt-3 text-xl font-semibold text-foreground" lang="ar" dir="rtl">${esc(s.recitation)}</p>` : ""}
+      ${s.recitationMeaning ? `<p class="mt-1 text-sm text-muted-foreground">${esc(s.recitationMeaning)}</p>` : ""}
+      ${s.explanation ? `<p class="mt-2 text-sm leading-7 text-muted-foreground">${esc(s.explanation)}</p>` : ""}
+    </li>`).join("");
+  return `
+    <section>
+      <h2 class="px-1 text-xl font-bold text-foreground">Step-by-step prayer guide</h2>
+      <ol class="mt-3 space-y-4">${items}</ol>
+    </section>`;
+};
+
+const renderDhikrList = () => {
+  const list = loadToolData("dhikr-list.json");
+  if (!Array.isArray(list) || list.length === 0) return "";
+  const items = list.map((d) => `
+    <li class="rounded-2xl border border-border bg-card p-5 text-center shadow-sm">
+      <p class="text-2xl font-bold text-foreground" lang="ar" dir="rtl">${esc(d.arabic || "")}</p>
+      <p class="mt-2 text-sm font-semibold text-primary">${esc(d.transliteration || "")}</p>
+      <p class="mt-1 text-sm text-muted-foreground">${esc(d.meaning || "")}${d.target ? ` · ${esc(String(d.target))}×` : ""}</p>
+      ${d.virtue ? `<p class="mt-1 text-xs text-muted-foreground">Virtue: ${esc(d.virtue)}</p>` : ""}
+    </li>`).join("");
+  return `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">Dhikr for your Tasbih</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">Authentic remembrances you can count with the Tasbih counter, with their recommended counts.</p>
+      <ul class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">${items}</ul>
+    </section>`;
+};
+
+const renderHijriCalendar = () => {
+  const months = loadToolData("hijri-months.json");
+  const dates = loadToolData("islamic-important-dates.json");
+  let html = "";
+  if (Array.isArray(months) && months.length > 0) {
+    html += `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">The 12 Hijri months (হিজরি মাসসমূহ)</h2>
+      <ol class="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">${months.map((m, i) =>
+        `<li class="rounded-xl bg-muted px-3 py-2 text-sm"><span class="font-semibold text-foreground">${i + 1}.</span> ${esc(String(m))}</li>`
+      ).join("")}</ol>
+    </section>`;
+  }
+  if (Array.isArray(dates) && dates.length > 0) {
+    html += `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">Important Islamic dates</h2>
+      <ul class="mt-3 space-y-3">${dates.map((d) => `
+        <li class="border-b border-border pb-3 last:border-0 last:pb-0">
+          <p class="text-sm font-semibold text-foreground">${esc(d.name || "")}${d.nameEn ? ` (${esc(d.nameEn)})` : ""}</p>
+          <p class="mt-0.5 text-xs text-muted-foreground">${esc(d.month || "")}${d.day ? ` ${esc(String(d.day))}` : ""}${d.description ? ` — ${esc(d.description)}` : ""}</p>
+        </li>`).join("")}</ul>
+      <p class="mt-3 text-xs text-muted-foreground">Exact Gregorian dates vary by moon sighting in your region.</p>
+    </section>`;
+  }
+  return html;
+};
+
+// Route → server-rendered tool content. Returns "" for routes without any.
+const buildToolContent = async (routePath) => {
+  switch (routePath) {
+    case "/99-names": return renderNamesOfAllah();
+    case "/prayer-guide": return renderPrayerGuideSteps();
+    case "/tasbih": return renderDhikrList();
+    case "/calendar": return renderHijriCalendar();
+    default: return "";
+  }
+};
 
 const findBundledStory = (slug) => BUNDLED_STORIES.find((story) => story.slug === slug);
 
@@ -827,6 +941,10 @@ export default async function handler(req, res) {
                 <a href="/prayer-times" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Prayer Times</a>
                 <a href="/prayer-guide" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Prayer Guide</a>
                 <a href="/stories" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Islamic Stories</a>
+                <a href="/quiz" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Islamic Quiz</a>
+                <a href="/99-names" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">99 Names of Allah</a>
+                <a href="/tasbih" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Digital Tasbih</a>
+                <a href="/calendar" class="rounded-xl border border-border px-4 py-3 font-semibold text-primary hover:bg-muted">Islamic Calendar</a>
               </nav>
             </section>
             <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -839,7 +957,7 @@ export default async function handler(req, res) {
             </section>
             <section class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
               <h2 class="text-xl font-bold text-foreground">About Noor</h2>
-              <p class="mt-3 leading-7 text-muted-foreground">Learn about the project, its editorial approach and how to contact the developer. Please visit <a href="/about" class="font-semibold text-primary">About Noor</a>, <a href="/contact" class="font-semibold text-primary">Support &amp; Feedback</a>, or the <a href="/privacy-policy" class="font-semibold text-primary">Privacy Policy</a>.</p>
+              <p class="mt-3 leading-7 text-muted-foreground">Learn about the project, its editorial approach and how to contact the developer. Please visit <a href="/about" class="font-semibold text-primary">About Noor</a>, <a href="/contact" class="font-semibold text-primary">Support &amp; Feedback</a>, the <a href="/privacy-policy" class="font-semibold text-primary">Privacy Policy</a> or <a href="/terms" class="font-semibold text-primary">Terms of Use</a>.</p>
             </section>
           </main>
         </div>
@@ -1198,7 +1316,7 @@ export default async function handler(req, res) {
     // --- Hadith Root Page ---
     else if (routePath === "/hadith") {
       title = "Hadith Collections — হাদিস সংকলন | Noor";
-      description = "Browse authentic Hadith collections on Noor, including Sahih Al-Bukhari with Arabic text and Bengali, English and Urdu translations.";
+      description = "Read Sahih Al-Bukhari with Arabic text and Bengali, English and Urdu translations on Noor. More Hadith collections are planned for a future release.";
       // Book metadata mirrors the client HadithPage (hadith_books table with
       // the same fallback values). Total hadith counts are deliberately NOT
       // exposed: the app carries an editorial caution that counts vary by
@@ -1222,7 +1340,7 @@ export default async function handler(req, res) {
           <div>
             <h2 class="text-xl font-bold group-hover:text-primary transition-colors">${esc(b.title || "")}</h2>
             <p class="text-sm text-muted-foreground">${esc(b.title_bn || "")} · ${chapters}</p>
-            ${available ? "" : '<p class="mt-1 text-xs font-semibold text-amber-500">Coming soon</p>'}
+            ${available ? "" : '<p class="mt-1 text-xs font-semibold text-amber-600">Planned — not yet available</p>'}
           </div>
           ${available ? '<span class="text-2xl">→</span>' : ""}`;
         const cls = "bg-card p-6 rounded-2xl border border-border hover:shadow-lg transition-all flex items-center justify-between group";
@@ -1277,13 +1395,13 @@ export default async function handler(req, res) {
       const bookId = decodeURIComponent(routePath.split("/")[2] || "");
       statusCode = 200;
       robotsDirective = "noindex,follow";
-      title = "Hadith collection coming soon | Noor";
+      title = "Hadith collection not yet available | Noor";
       description = "This Hadith collection is not yet available on Noor.";
       bodyContent = `
         <main class="min-h-screen bg-[hsl(158,64%,12%)] text-white px-4 py-16 text-center">
           <p class="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Noor Hadith</p>
-          <h1 class="text-3xl font-bold">Collection coming soon</h1>
-          <p class="mx-auto mt-3 max-w-xl text-white/70">The ${esc(bookId)} collection is being prepared and will be available soon.</p>
+          <h1 class="text-3xl font-bold">Collection not yet available</h1>
+          <p class="mx-auto mt-3 max-w-xl text-white/70">The ${esc(bookId)} collection is planned for a future release and is not yet available on Noor.</p>
           <a class="mt-6 inline-block rounded-lg bg-[hsl(45,93%,58%)] px-5 py-3 font-semibold text-[hsl(158,64%,15%)]" href="/hadith/sahih-bukhari">Read Sahih Al-Bukhari</a>
         </main>`;
     }
@@ -1359,7 +1477,9 @@ export default async function handler(req, res) {
         title = `${catLabel} দোয়া সমূহ | Noor`;
         description = `${catLabel} বিষয়ক দোয়াসমূহ আরবি, বাংলা উচ্চারণ ও অর্থসহ পড়ুন।`;
         canonicalUrl = `${SITE_ORIGIN}/dua/category/${catSlug}`;
-        const duaCards = matched.slice(0, 60).map((d) => `
+        // No slice cap: every published dua in the category must be linked
+        // (a cap previously orphaned 3 Guidance duas from crawlers).
+        const duaCards = matched.map((d) => `
           <a href="/dua/${esc(d.slug)}" class="block rounded-2xl bg-white/5 border border-white/10 p-5 hover:border-amber-400/40 transition-all">
             <h2 class="text-lg font-bold text-white">${esc(d.title || "দোয়া")}</h2>
             ${d.content_arabic ? `<p dir="rtl" class="mt-2 text-white/80 font-arabic line-clamp-2">${esc(String(d.content_arabic).slice(0, 120))}</p>` : ""}
@@ -1404,6 +1524,21 @@ export default async function handler(req, res) {
         title = `${dua.title || "দোয়া"} — বাংলা অর্থ, ফজিলত ও আরবি টেক্সট | Noor`;
         description = dua.explanation_bn || dua.content || `${dua.title || "এই দোয়া"} এর আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন।`;
         req.storyOgImage = getDuaOgImage(dua);
+
+        // Related duas (same category) for internal linking depth.
+        const { data: relatedDuas } = await supabase
+          .from("admin_content")
+          .select("slug, title")
+          .in("content_type", ["dua", "Dua"])
+          .eq("status", "published")
+          .eq("category", dua.category)
+          .neq("slug", dua.slug)
+          .limit(6);
+        const relatedDuaCards = (relatedDuas || []).map((r) => `
+          <a href="/dua/${esc(r.slug)}" class="block rounded-2xl bg-white/5 border border-white/10 p-4 hover:border-amber-400/40 transition-all">
+            <span class="text-white font-semibold">${esc(r.title || "দোয়া")}</span>
+            <span class="block mt-1 text-sm text-amber-400">পড়ুন →</span>
+          </a>`).join("");
 
         const duaCanonical = `${SITE_ORIGIN}/dua/${dua.slug}`;
         const duaCrumbs = [
@@ -1485,6 +1620,15 @@ export default async function handler(req, res) {
                 </div>
               ` : ''}
               
+              <!-- Related duas (same category) -->
+              ${relatedDuaCards ? `
+              <nav aria-label="Related duas" class="bg-white/5 border border-white/10 rounded-3xl p-6">
+                <h3 class="text-amber-400 font-bold mb-4">আরও দোয়া পড়ুন</h3>
+                <div class="grid gap-3">
+                  ${relatedDuaCards}
+                </div>
+              </nav>` : ''}
+
               <!-- Footer Reference -->
               <div class="text-center py-8 opacity-30 text-xs text-white">
                 <p>উৎস: ${esc(dua.reference || "হাদিস সংকলন")}</p>
@@ -1520,7 +1664,19 @@ export default async function handler(req, res) {
         .eq("content_type", "story")
         .eq("status", "published");
 
-      const storyList = (stories || []).map(s => `
+      // Union bundled + DB so bundled-only sitemap URLs (e.g.
+      // prophet-lut-story-islam, umar-ibn-khattab-story-islam) are
+      // discoverable from the hub. Mirrors the category page logic.
+      const seenHub = new Set((stories || []).map((s) => s.slug));
+      const hubItems = [...(stories || [])];
+      for (const b of BUNDLED_STORIES) {
+        if (b.slug && !seenHub.has(b.slug)) {
+          seenHub.add(b.slug);
+          hubItems.push({ slug: b.slug, title: b.title_bn || b.title_en || b.title || "Islamic Story", content: b.content_bn || "" });
+        }
+      }
+
+      const storyList = hubItems.map(s => `
         <div class="bg-card border border-border rounded-2xl overflow-hidden shadow-sm mb-4">
           <div class="p-5">
             <h3 class="text-xl font-bold mb-2">${esc(s.title)}</h3>
@@ -1588,7 +1744,7 @@ export default async function handler(req, res) {
         title = uniqueStoryTitle(`${catLabel} — Islamic Stories | Noor`);
         description = `Read authentic ${catLabel.toLowerCase()} on Noor.`;
         canonicalUrl = `${SITE_ORIGIN}/stories/category/${catSlug}`;
-        const storyCards = items.slice(0, 60).map((s) => {
+        const storyCards = items.map((s) => {
           const t = s.title_bn || s.title || "Islamic Story";
           return `
           <a href="/stories/${esc(s.slug)}" class="block bg-card border border-border rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-all">
@@ -1668,6 +1824,81 @@ export default async function handler(req, res) {
         const sourceLabel = story.reference || story.source_detail || story.source_name || "Islamic source reference";
         const moral = story.moral_bn || story.moral_en || "আল্লাহর উপর ভরসা, সত্য ও উত্তম চরিত্রের শিক্ষা গ্রহণ করুন।";
 
+        // Pilot: high-value enrichment layers. Rendered only for stories whose
+        // record carries the editorial value fields; all other stories render
+        // exactly as before. Applications/takeaways are editorial content
+        // derived from the story's own moral/narrative; source links are
+        // derived from the record's existing reference field. Nothing is
+        // fabricated: no new facts, citations, or claims are introduced.
+        const enrichmentApps = Array.isArray(story.applications_bn) ? story.applications_bn.filter(Boolean) : [];
+        const enrichment = enrichmentApps.length ? {
+          applications: enrichmentApps,
+          takeaways: Array.isArray(story.takeaways_bn) ? story.takeaways_bn.filter(Boolean) : [],
+          sourceLinks: Array.isArray(story.related_source_links)
+            ? story.related_source_links.filter((l) => l && l.label && l.href)
+            : [],
+        } : null;
+        const takeawaysHtml = enrichment && enrichment.takeaways.length ? `
+              <section class="rounded-2xl border border-border bg-card p-5">
+                <h2 class="text-lg font-bold">মূল শিক্ষা</h2>
+                <p class="mt-1 text-sm text-muted-foreground">গল্পের শিক্ষা থেকে নেওয়া সংক্ষিপ্ত সারসংক্ষেপ (সম্পাদকীয়)</p>
+                <ol class="mt-3 space-y-2 list-decimal list-inside">
+                  ${enrichment.takeaways.map((t) => `<li class="leading-7 text-foreground/85">${esc(t)}</li>`).join("")}
+                </ol>
+              </section>` : "";
+        const applicationsHtml = enrichment ? `
+              <section class="rounded-2xl border border-primary/20 bg-primary/5 p-5">
+                <h2 class="text-lg font-bold text-primary">বাস্তব জীবনে প্রয়োগ</h2>
+                <p class="mt-1 text-sm text-muted-foreground">এই গল্প থেকে নেওয়া ব্যবহারিক পরামর্শ (সম্পাদকীয় — কুরআন/হাদিসের সরাসরি বক্তব্য নয়)</p>
+                <ul class="mt-3 space-y-2 list-disc list-inside">
+                  ${enrichment.applications.map((a) => `<li class="leading-7 text-foreground/85">${esc(a)}</li>`).join("")}
+                </ul>
+              </section>` : "";
+        const sourceLinksHtml = enrichment && enrichment.sourceLinks.length ? `
+              <section class="rounded-2xl border border-border bg-card p-5">
+                <h2 class="text-lg font-bold">সম্পর্কিত প্রামাণ্য উৎস</h2>
+                <ul class="mt-3 space-y-2">
+                  ${enrichment.sourceLinks.map((l) => `<li><a href="${esc(l.href)}" class="font-semibold text-primary hover:underline">${esc(l.label)}</a><span class="text-sm text-muted-foreground"> — নূর-এ পড়ুন</span></li>`).join("")}
+                </ul>
+              </section>` : "";
+        const editorialNoteHtml = enrichment ? `
+                <p class="mt-2 border-t border-border pt-2"><strong class="text-foreground">উৎস বনাম সম্পাদকীয়:</strong> উপরের "উৎস" অংশে উল্লেখিত প্রামাণ্য উৎস থেকে প্রাপ্ত তথ্য; "গল্পের শিক্ষা" ও "মূল শিক্ষা" শিক্ষামূলক ব্যাখ্যা; "বাস্তব জীবনে প্রয়োগ" সম্পাদকীয় পরামর্শ — শেষোক্ত দুটি কুরআন/হাদিসের সরাসরি বক্তব্য নয়।</p>` : "";
+
+        // Related-story navigation (parity with the SPA's relatedStories /
+        // nextStory): resolved from the record's own navigation data against
+        // bundled stories, falling back to same-category stories. Every link
+        // targets an existing story URL — no new content is introduced.
+        const navRefs = (story.navigation && Array.isArray(story.navigation.related_stories))
+          ? story.navigation.related_stories : [];
+        const relatedLinks = [];
+        for (const r of navRefs) {
+          if (relatedLinks.length >= 3) break;
+          const target = r && r.slug ? findBundledStory(r.slug) : null;
+          if (target && target.slug !== story.slug) {
+            relatedLinks.push({ slug: target.slug, title: target.title_bn || target.title_en || target.slug });
+          }
+        }
+        if (relatedLinks.length < 3) {
+          for (const s of BUNDLED_STORIES) {
+            if (relatedLinks.length >= 3) break;
+            if (s.slug === story.slug) continue;
+            if (s.category === story.category && !relatedLinks.find((l) => l.slug === s.slug)) {
+              relatedLinks.push({ slug: s.slug, title: s.title_bn || s.title_en || s.slug });
+            }
+          }
+        }
+        const nextRef = story.navigation ? story.navigation.next_story : null;
+        const nextStoryTarget = (nextRef && nextRef.slug && nextRef.slug !== story.slug)
+          ? findBundledStory(nextRef.slug) : null;
+        const relatedHtml = (relatedLinks.length > 0 || nextStoryTarget) ? `
+              <nav class="rounded-2xl border border-border bg-card p-5" aria-label="Related stories">
+                <h2 class="text-lg font-bold">আরও গল্প পড়ুন</h2>
+                <ul class="mt-3 space-y-2">
+                  ${relatedLinks.map((l) => `<li><a href="/stories/${esc(l.slug)}" class="font-semibold text-primary hover:underline">${esc(l.title)}</a></li>`).join("")}
+                </ul>
+                ${nextStoryTarget ? `<a href="/stories/${esc(nextStoryTarget.slug)}" class="mt-4 inline-block rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">পরের গল্প: ${esc(nextStoryTarget.title_bn || nextStoryTarget.title_en || nextStoryTarget.slug)}</a>` : ""}
+              </nav>` : "";
+
         title = uniqueStoryTitle(story.seo?.title || storyTitle);
         description = enrichStoryDescription(storyDescription, storyTitle);
         req.storyOgImage = ogImage;
@@ -1708,11 +1939,16 @@ export default async function handler(req, res) {
                 <h2 class="text-lg font-bold text-primary">গল্পের শিক্ষা</h2>
                 <p class="mt-2 leading-7 text-foreground/85">${esc(moral)}</p>
               </div>
+              ${takeawaysHtml}
+              ${applicationsHtml}
               <div class="prose prose-emerald max-w-none dark:prose-invert">
                 ${esc(storyContent).replace(/\n/g, '<br/>')}
               </div>
+              ${sourceLinksHtml}
+              ${relatedHtml}
               <footer class="rounded-2xl border border-border bg-card p-5 text-sm text-muted-foreground">
                 <strong class="text-foreground">উৎস ও রেফারেন্স:</strong> ${esc(sourceLabel)}
+                ${editorialNoteHtml}
               </footer>
             </article>
           </div>
@@ -1796,16 +2032,75 @@ export default async function handler(req, res) {
         const canonical = `${SITE_ORIGIN}/quiz/${encodeURIComponent(record.id)}`;
         title = shortenMetaText(`${questionBn} | Noor Quiz`, 70);
         description = shortenMetaText(record.explanation_bn || record.explanation_en || "Verified Islamic quiz question from Noor.", 160);
-        bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl rounded-2xl border border-border bg-card p-6 shadow-sm"><a class="text-sm text-primary hover:underline" href="/quiz">← Back to Daily Quiz</a><p class="mt-6 text-sm font-semibold text-primary">${esc(record.category || "Islamic studies")}</p><h1 class="mt-2 text-2xl font-bold leading-relaxed">${esc(questionBn)}</h1>${questionEn}<ol class="mt-6 grid gap-3">${optionHtml}</ol><section aria-labelledby="answer-heading" class="mt-6 rounded-xl bg-primary/10 p-4"><h2 id="answer-heading" class="font-semibold">সঠিক উত্তর / Correct answer</h2><p class="mt-2">${esc(answerBn || answerEn || "")}</p>${answerBn && answerEn ? `<p lang="en" class="text-sm text-muted-foreground">${esc(answerEn)}</p>` : ""}</section>${record.explanation_bn || record.explanation_en ? `<section class="mt-6"><h2 class="font-semibold">ব্যাখ্যা / Explanation</h2><p class="mt-2 leading-7">${esc(record.explanation_bn || record.explanation_en)}</p>${record.explanation_bn && record.explanation_en ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.explanation_en)}</p>` : ""}</section>` : ""}${record.source_reference ? `<section class="mt-6"><h2 class="font-semibold">Source</h2><p class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">${esc(record.source_reference)}</p></section>` : ""}<p class="mt-6 border-t border-border pt-4 text-sm"><a class="text-primary hover:underline" href="/sources">Editorial sources and methodology</a></p></article></main>`;
+        // Related questions (same category) for internal linking depth.
+        let relatedQuizHtml = "";
+        try {
+          const { data: relatedQs } = await supabase
+            .from("quiz_questions")
+            .select("id, question_bn, question_en")
+            .eq("is_active", true)
+            .in("verification_status", ["verified", "verified_primary", "verified_secondary"])
+            .eq("category", record.category || "General")
+            .neq("id", record.id)
+            .limit(6);
+          const rel = (relatedQs || []).filter((q) => q && q.id && (q.question_bn || q.question_en));
+          if (rel.length > 0) {
+            relatedQuizHtml = `<nav aria-label="Related quiz questions" class="mt-6 rounded-2xl border border-border bg-card p-5"><h2 class="font-bold">আরও কুইজ প্রশ্ন</h2><ul class="mt-3 space-y-2">${rel.map((q) => `<li><a href="/quiz/${esc(String(q.id))}" class="text-sm text-primary hover:underline">${esc(q.question_bn || q.question_en)}</a></li>`).join("")}</ul></nav>`;
+          }
+        } catch (e) { console.error("[SSR] quiz detail related failed", e); }
+        bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl"><nav aria-label="Breadcrumb" class="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground"><a href="/" class="hover:underline">Home</a><span aria-hidden="true">›</span><a href="/quiz" class="hover:underline">Quiz</a><span aria-hidden="true">›</span><span>${esc(record.category || "Islamic studies")}</span></nav><div class="rounded-2xl border border-border bg-card p-6 shadow-sm"><a class="text-sm text-primary hover:underline" href="/quiz">← Back to Daily Quiz</a><p class="mt-6 text-sm font-semibold text-primary">${esc(record.category || "Islamic studies")}</p><h1 class="mt-2 text-2xl font-bold leading-relaxed">${esc(questionBn)}</h1>${questionEn}<ol class="mt-6 grid gap-3">${optionHtml}</ol><section aria-labelledby="answer-heading" class="mt-6 rounded-xl bg-primary/10 p-4"><h2 id="answer-heading" class="font-semibold">সঠিক উত্তর / Correct answer</h2><p class="mt-2">${esc(answerBn || answerEn || "")}</p>${answerBn && answerEn ? `<p lang="en" class="text-sm text-muted-foreground">${esc(answerEn)}</p>` : ""}</section>${record.explanation_bn || record.explanation_en ? `<section class="mt-6"><h2 class="font-semibold">ব্যাখ্যা / Explanation</h2><p class="mt-2 leading-7">${esc(record.explanation_bn || record.explanation_en)}</p>${record.explanation_bn && record.explanation_en ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.explanation_en)}</p>` : ""}</section>` : ""}${record.source_reference ? `<section class="mt-6"><h2 class="font-semibold">Source</h2><p class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">${esc(record.source_reference)}</p></section>` : ""}<p class="mt-6 border-t border-border pt-4 text-sm"><a class="text-primary hover:underline" href="/sources">Editorial sources and methodology</a></p></div>${relatedQuizHtml}</article></main>`;
         extraStructuredData = quizStructuredData(record, canonical);
       }
     }
+    // --- Quiz Hub Page: category-grouped index of verified questions ---
+    // The 281 indexed /quiz/<id> pages were previously unreachable from the
+    // hub. This renders the same eligibility filter as the quiz detail branch
+    // (is_active + verified statuses) so only published questions are linked.
+    else if (routePath === "/quiz") {
+      const page = STATIC_PAGE_COPY["/quiz"];
+      title = page.title;
+      description = page.description;
+      let indexHtml = "";
+      try {
+        const { data: questions } = await supabase
+          .from("quiz_questions")
+          .select("id, category, question_bn, question_en")
+          .eq("is_active", true)
+          .in("verification_status", ["verified", "verified_primary", "verified_secondary"])
+          .order("category", { ascending: true })
+          .limit(500);
+        const eligible = (questions || []).filter((q) => q && q.id && (q.question_bn || q.question_en));
+        if (eligible.length > 0) {
+          const byCat = new Map();
+          for (const q of eligible) {
+            const cat = String(q.category || "General").trim() || "General";
+            if (!byCat.has(cat)) byCat.set(cat, []);
+            byCat.get(cat).push(q);
+          }
+          const catSections = [...byCat.entries()].map(([cat, qs]) => `
+            <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+              <h2 class="text-lg font-bold text-foreground">${esc(cat)} <span class="text-sm font-normal text-muted-foreground">(${qs.length})</span></h2>
+              <ul class="mt-3 space-y-2">
+                ${qs.map((q) => `<li><a href="/quiz/${esc(String(q.id))}" class="text-sm text-primary hover:underline">${esc(q.question_bn || q.question_en)}</a></li>`).join("")}
+              </ul>
+            </section>`).join("");
+          indexHtml = `
+            <section>
+              <h2 class="px-1 text-xl font-bold text-foreground">Browse quiz questions by category</h2>
+              <p class="mt-1 px-1 text-sm text-muted-foreground">${eligible.length} verified questions across ${byCat.size} categories.</p>
+              <div class="mt-3 space-y-5">${catSections}</div>
+            </section>`;
+        }
+      } catch (e) { console.error("[SSR] quiz hub index failed", e); }
+      bodyContent = renderStaticPage(page, indexHtml);
+    }
+
     // --- Public Trust, Legal and Feature Pages ---
     else if (STATIC_PAGE_COPY[routePath]) {
       const page = STATIC_PAGE_COPY[routePath];
       title = page.title;
       description = page.description;
-      bodyContent = renderStaticPage(page);
+      bodyContent = renderStaticPage(page, await buildToolContent(routePath));
     }
 
     // --- Contact Page ---

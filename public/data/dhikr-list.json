@@ -1,0 +1,44 @@
+[
+  {
+    "arabic": "سُبْحَانَ اللَّهِ",
+    "transliteration": "SubhanAllah",
+    "meaning": "Glory be to Allah",
+    "target": 33,
+    "virtue": "Plants a tree in Paradise"
+  },
+  {
+    "arabic": "الْحَمْدُ لِلَّهِ",
+    "transliteration": "Alhamdulillah",
+    "meaning": "Praise be to Allah",
+    "target": 33,
+    "virtue": "Fills the scales of good deeds"
+  },
+  {
+    "arabic": "اللَّهُ أَكْبَرُ",
+    "transliteration": "Allahu Akbar",
+    "meaning": "Allah is the Greatest",
+    "target": 34,
+    "virtue": "Most beloved words to Allah"
+  },
+  {
+    "arabic": "لَا إِلَٰهَ إِلَّا اللَّهُ",
+    "transliteration": "La ilaha illallah",
+    "meaning": "There is no god but Allah",
+    "target": 100,
+    "virtue": "Best of remembrance"
+  },
+  {
+    "arabic": "أَسْتَغْفِرُ اللَّهَ",
+    "transliteration": "Astaghfirullah",
+    "meaning": "I seek forgiveness",
+    "target": 100,
+    "virtue": "Opens the door of mercy"
+  },
+  {
+    "arabic": "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ",
+    "transliteration": "SubhanAllahi wa bihamdihi",
+    "meaning": "Glory and praise to Allah",
+    "target": 100,
+    "virtue": "Sins forgiven even if like sea foam"
+  }
+]

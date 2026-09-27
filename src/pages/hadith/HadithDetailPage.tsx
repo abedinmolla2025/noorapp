@@ -59,6 +59,7 @@ const HadithDetailPage = () => {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const [hadith, setHadith] = useState<HadithRow | null>(null);
+  const [chapterTitle, setChapterTitle] = useState<string | null>(null);
   const [related, setRelated] = useState<HadithRow[]>([]);
   const [prevHadith, setPrevHadith] = useState<HadithRow | null>(null);
   const [nextHadith, setNextHadith] = useState<HadithRow | null>(null);
@@ -86,6 +87,19 @@ const HadithDetailPage = () => {
         return;
       }
       setHadith(data as unknown as HadithRow);
+
+      // Chapter title (evidence-based: hadith_chapters has verified titles)
+      supabase
+        .from("hadith_chapters")
+        .select("title, title_bn")
+        .eq("book_id", data.book_key)
+        .eq("chapter_number", data.chapter_id)
+        .maybeSingle()
+        .then(({ data: ch }: { data: { title: string | null; title_bn: string | null } | null }) => {
+          if (!cancelled && ch) {
+            setChapterTitle(ch.title_bn || ch.title || null);
+          }
+        });
 
       // Related: same book, neighboring numbers
       const { data: rel } = await supabase
@@ -256,6 +270,7 @@ const HadithDetailPage = () => {
         <header className="space-y-2">
           <p className="text-xs font-medium text-[hsl(45,93%,58%)] uppercase tracking-wide">
             {bookLabel} • অধ্যায় {hadith.chapter_id}
+            {chapterTitle ? ` · ${chapterTitle}` : ""}
           </p>
           <h1 className="text-3xl md:text-4xl font-bold text-white leading-tight">
             {heading}
@@ -303,6 +318,11 @@ const HadithDetailPage = () => {
               অনুবাদ
             </h2>
           </div>
+          <p className="mb-3 text-[11px] leading-relaxed text-white/50">
+            বাংলা অনুবাদে বন্ধনীতে আধুনিক প্রকাশনী ও ইসলামিক ফাউন্ডেশন
+            বাংলাদেশ সংস্করণের নম্বর দেওয়া আছে। English ও اردو অনুবাদের
+            অনুবাদকের নাম উৎস-ডেটায় সংরক্ষিত নেই।
+          </p>
           <Tabs defaultValue="bn" className="w-full">
             <TabsList className="w-full justify-start bg-white/10">
               <TabsTrigger value="bn">বাংলা</TabsTrigger>

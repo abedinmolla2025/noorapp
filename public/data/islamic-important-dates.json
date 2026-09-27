@@ -1,0 +1,92 @@
+[
+  {
+    "id": 1,
+    "month": "মুহাররম",
+    "day": 1,
+    "name": "হিজরি নববর্ষ",
+    "nameEn": "Islamic New Year",
+    "description": "ইসলামি বর্ষপঞ্জির প্রথম দিন",
+    "type": "celebration"
+  },
+  {
+    "id": 2,
+    "month": "মুহাররম",
+    "day": 10,
+    "name": "আশুরা",
+    "nameEn": "Ashura",
+    "description": "মুহাররম মাসের ১০ তারিখ, রোজা রাখা সুন্নত",
+    "type": "fasting"
+  },
+  {
+    "id": 3,
+    "month": "রবিউল আউয়াল",
+    "day": 12,
+    "name": "ঈদে মিলাদুন্নবী",
+    "nameEn": "Mawlid an-Nabi",
+    "description": "রাসূলুল্লাহ (সাঃ) এর জন্মদিন",
+    "type": "celebration"
+  },
+  {
+    "id": 4,
+    "month": "রজব",
+    "day": 27,
+    "name": "শবে মেরাজ",
+    "nameEn": "Isra and Mi'raj",
+    "description": "রাসূলুল্লাহ (সাঃ) এর মেরাজের রাত",
+    "type": "special"
+  },
+  {
+    "id": 5,
+    "month": "শাবান",
+    "day": 15,
+    "name": "শবে বরাত",
+    "nameEn": "Mid-Sha'ban",
+    "description": "ভাগ্য রজনী, ক্ষমা প্রার্থনার রাত",
+    "type": "special"
+  },
+  {
+    "id": 6,
+    "month": "রমজান",
+    "day": 1,
+    "name": "রমজান শুরু",
+    "nameEn": "Start of Ramadan",
+    "description": "পবিত্র রমজান মাসের প্রথম দিন",
+    "type": "fasting"
+  },
+  {
+    "id": 7,
+    "month": "রমজান",
+    "day": 27,
+    "name": "শবে কদর",
+    "nameEn": "Laylat al-Qadr",
+    "description": "হাজার মাসের চেয়ে উত্তম রাত",
+    "type": "special"
+  },
+  {
+    "id": 8,
+    "month": "শাওয়াল",
+    "day": 1,
+    "name": "ঈদুল ফিতর",
+    "nameEn": "Eid al-Fitr",
+    "description": "রমজান শেষে আনন্দের ঈদ",
+    "type": "eid"
+  },
+  {
+    "id": 9,
+    "month": "জিলহজ",
+    "day": 9,
+    "name": "আরাফাতের দিন",
+    "nameEn": "Day of Arafah",
+    "description": "হজের সবচেয়ে গুরুত্বপূর্ণ দিন, রোজা রাখা সুন্নত",
+    "type": "fasting"
+  },
+  {
+    "id": 10,
+    "month": "জিলহজ",
+    "day": 10,
+    "name": "ঈদুল আযহা",
+    "nameEn": "Eid al-Adha",
+    "description": "কুরবানির ঈদ",
+    "type": "eid"
+  }
+]

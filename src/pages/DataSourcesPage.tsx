@@ -20,7 +20,7 @@ const DataSourcesPage = () => {
         name: "Are the hadiths in Noor authentic?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Yes. Noor primarily uses Sahih al-Bukhari and Sahih Muslim — the two most rigorously authenticated hadith collections in Sunni Islam — along with the four Sunan (Abu Dawud, Tirmidhi, Nasa'i, Ibn Majah). Grades (Sahih/Hasan/Da'if) follow classical scholarship.",
+          text: "Noor currently publishes Sahih al-Bukhari — one of the two most rigorously authenticated hadith collections in Sunni Islam. Additional collections (Sahih Muslim and the four Sunan: Abu Dawud, Tirmidhi, Nasa'i, Ibn Majah) are planned for future release and are not yet available on Noor. Grades (Sahih/Hasan/Da'if) follow classical scholarship.",
         },
       },
       {
@@ -28,7 +28,7 @@ const DataSourcesPage = () => {
         name: "Where do the Qur'anic translations come from?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Bengali translations follow widely-accepted renditions used by mainstream Bangladeshi Islamic publishers. English text is drawn from public-domain translations such as Sahih International and Yusuf Ali.",
+          text: "Qur'an text and translations are served from the AlQuran Cloud API. The Bengali translation is by Muhiuddin Khan, the English translation is by Saheeh International, and the Urdu translation is by Ahmed Ali. The active translator is shown in the Qur'an reader under the language selector.",
         },
       },
       {
@@ -48,13 +48,13 @@ const DataSourcesPage = () => {
         <title>Authentic Islamic Sources | Noor</title>
         <meta
           name="description"
-          content="Every dua, hadith, dhikr and story in Noor is sourced from the Qur'an, Sahih Bukhari, Sahih Muslim, the four Sunan and classical Islamic scholarship."
+          content="Every dua, hadith, dhikr and story in Noor is sourced from the Qur'an, Sahih al-Bukhari and classical Islamic scholarship."
         />
         <link rel="canonical" href="https://noorapp.in/sources" />
         <meta property="og:title" content="Authentic Islamic Sources | Noor" />
         <meta
           property="og:description"
-          content="Learn where Noor's Islamic content comes from — Qur'an, Sahih Bukhari, Sahih Muslim, Tafsir Ibn Kathir and classical scholars."
+          content="Learn where Noor's Islamic content comes from — Qur'an translations, Sahih al-Bukhari and classical scholars."
         />
         <meta property="og:url" content="https://noorapp.in/sources" />
         <meta property="og:image" content="https://noorapp.in/og-image.png" />
@@ -104,9 +104,11 @@ const DataSourcesPage = () => {
           </p>
           <ul className="mt-3 list-disc list-inside space-y-1 text-muted-foreground">
             <li>Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus.</li>
-            <li>Bengali translation: the edition configured for Noor&apos;s public dataset; edition and licensing details are recorded in the editorial source record where available.</li>
-            <li>English translation: Sahih International and Yusuf Ali (public domain); the displayed edition is identified in the relevant content record.</li>
+            <li>Bengali translation: Muhiuddin Khan, served via the AlQuran Cloud API.</li>
+            <li>English translation: Saheeh International, served via the AlQuran Cloud API.</li>
+            <li>Urdu translation: Ahmed Ali, served via the AlQuran Cloud API.</li>
             <li>Verse numbering follows the standard Kufan system.</li>
+            <li>The active translator is also shown in the Qur&apos;an reader under the language selector.</li>
           </ul>
         </section>
 
@@ -118,33 +120,41 @@ const DataSourcesPage = () => {
           <p className="mt-2 text-muted-foreground">
             Hadith are the sayings, actions and tacit approvals of the Prophet
             Muhammad ﷺ, transmitted through rigorously verified chains of
-            narrators. Noor uses the six major Sunni collections (Kutub as-Sittah):
+            narrators. Noor currently publishes Sahih al-Bukhari. The six
+            major Sunni collections (Kutub as-Sittah) that Noor&apos;s
+            methodology is aligned with are:
           </p>
           <ul className="mt-3 list-disc list-inside space-y-2 text-muted-foreground">
             <li>
               <span className="font-semibold text-foreground">Sahih al-Bukhari</span> —
               compiled by Imam Muhammad ibn Ismaʿil al-Bukhari (d. 256 AH / 870 CE).
               widely regarded in Sunni scholarship as one of the most rigorously authenticated Hadith collections; exact rankings and numbering should be understood within their scholarly and edition context.
+              <span className="font-semibold text-emerald-600"> Available now on Noor.</span>
             </li>
             <li>
               <span className="font-semibold text-foreground">Sahih Muslim</span> —
               compiled by Imam Muslim ibn al-Hajjaj (d. 261 AH / 875 CE).
+              <span className="text-muted-foreground"> Planned for a future release — not yet available.</span>
             </li>
             <li>
               <span className="font-semibold text-foreground">Sunan Abu Dawud</span> —
               compiled by Imam Abu Dawud as-Sijistani (d. 275 AH).
+              <span className="text-muted-foreground"> Planned for a future release — not yet available.</span>
             </li>
             <li>
               <span className="font-semibold text-foreground">Jami' at-Tirmidhi</span> —
               compiled by Imam Muhammad at-Tirmidhi (d. 279 AH), known for grading each hadith.
+              <span className="text-muted-foreground"> Planned for a future release — not yet available.</span>
             </li>
             <li>
               <span className="font-semibold text-foreground">Sunan an-Nasa'i</span> —
               compiled by Imam Ahmad an-Nasa'i (d. 303 AH).
+              <span className="text-muted-foreground"> Planned for a future release — not yet available.</span>
             </li>
             <li>
               <span className="font-semibold text-foreground">Sunan Ibn Majah</span> —
               compiled by Imam Ibn Majah (d. 273 AH).
+              <span className="text-muted-foreground"> Planned for a future release — not yet available.</span>
             </li>
           </ul>
           <p className="mt-3 text-muted-foreground">
@@ -161,8 +171,10 @@ const DataSourcesPage = () => {
             Tafsir & Classical Scholarship
           </h2>
           <p className="mt-2 text-muted-foreground">
-            Explanations of Qur'anic verses and background context are drawn
-            from widely-accepted tafsir works:
+            Noor does not currently publish standalone tafsir articles. Where
+            background context appears — for example in story introductions —
+            it is checked against widely-accepted tafsir works consulted as
+            references:
           </p>
           <ul className="mt-3 list-disc list-inside space-y-1 text-muted-foreground">
             <li>Tafsir Ibn Kathir — Ismaʿil ibn Kathir (d. 774 AH)</li>

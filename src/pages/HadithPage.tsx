@@ -70,11 +70,11 @@ export default function HadithPage() {
     >
       <Helmet>
         <title>Authentic Hadith Collections | Noor</title>
-        <meta name="description" content="Browse authentic Hadith collections including Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi & Sunan Abu Dawud with Arabic text and translations." />
+        <meta name="description" content="Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned." />
         <link rel="canonical" href="https://noorapp.in/hadith" />
         <meta name="robots" content="index,follow" />
         <meta property="og:title" content="Authentic Hadith Collections | Noor" />
-        <meta property="og:description" content="Browse authentic Hadith collections including Sahih Bukhari, Sahih Muslim, Jami at-Tirmidhi & Sunan Abu Dawud with Arabic text and translations." />
+        <meta property="og:description" content="Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned." />
         <meta property="og:url" content="https://noorapp.in/hadith" />
         <meta property="og:image" content="https://noorapp.in/og-bukhari.png" />
       </Helmet>
@@ -147,49 +147,84 @@ export default function HadithPage() {
 
       {/* Book cards */}
       <div className="mx-auto max-w-lg px-4 flex flex-col gap-[14px]">
-        {hadithBooks.map((book, i) => (
-          <motion.button
-            key={book.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 + i * 0.08, duration: 0.4 }}
-            whileHover={{ y: -4, transition: { duration: 0.2 } }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => handleBookClick(book)}
-            className="flex items-center gap-4 bg-white p-4 text-left transition-shadow duration-200"
-            style={{
-              borderRadius: 20,
-              boxShadow: "0 6px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)",
-            }}
-          >
-            <div
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
-              style={{
-                background: "linear-gradient(180deg, #10B981 0%, #059669 100%)",
-                boxShadow: "inset 0 1px 2px rgba(255,255,255,0.2), inset 0 -1px 2px rgba(0,0,0,0.1)",
-              }}
-            >
-              <ScrollText className="h-5 w-5 text-white" />
-            </div>
-
-            <div className="flex-1 min-w-0">
-              <h2 className="text-[15px] font-bold text-gray-900 leading-snug">
-                {book.title}
-              </h2>
-              <p
-                className="text-[13px] text-gray-500 mt-0.5"
-                style={{ fontFamily: "'Noto Sans Bengali', sans-serif" }}
+        {hadithBooks.map((book, i) => {
+          const isLive = book.id === "bukhari";
+          const cardInner = (
+            <>
+              <div
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full"
+                style={{
+                  background: isLive
+                    ? "linear-gradient(180deg, #10B981 0%, #059669 100%)"
+                    : "linear-gradient(180deg, #9CA3AF 0%, #6B7280 100%)",
+                  boxShadow:
+                    "inset 0 1px 2px rgba(255,255,255,0.2), inset 0 -1px 2px rgba(0,0,0,0.1)",
+                }}
               >
-                {book.title_bn}
-              </p>
-              <p className="mt-0.5 text-[11px] text-gray-400">
-                {getBookSummary(book)}
-              </p>
-            </div>
+                <ScrollText className="h-5 w-5 text-white" />
+              </div>
 
-            <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" />
-          </motion.button>
-        ))}
+              <div className="flex-1 min-w-0">
+                <h2 className="text-[15px] font-bold text-gray-900 leading-snug">
+                  {book.title}
+                </h2>
+                <p
+                  className="text-[13px] text-gray-500 mt-0.5"
+                  style={{ fontFamily: "'Noto Sans Bengali', sans-serif" }}
+                >
+                  {book.title_bn}
+                </p>
+                <p className="mt-0.5 text-[11px] text-gray-400">
+                  {getBookSummary(book)}
+                </p>
+                {!isLive && (
+                  <p className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700">
+                    Planned — not yet available
+                  </p>
+                )}
+              </div>
+
+              {isLive ? (
+                <ChevronRight className="h-4 w-4 shrink-0 text-gray-300" />
+              ) : null}
+            </>
+          );
+          const cardClass =
+            "flex items-center gap-4 bg-white p-4 text-left transition-shadow duration-200";
+          const cardStyle = {
+            borderRadius: 20,
+            boxShadow:
+              "0 6px 24px rgba(0,0,0,0.12), 0 2px 6px rgba(0,0,0,0.06)",
+          } as const;
+          return isLive ? (
+            <motion.button
+              key={book.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.08, duration: 0.4 }}
+              whileHover={{ y: -4, transition: { duration: 0.2 } }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => handleBookClick(book)}
+              className={cardClass}
+              style={cardStyle}
+            >
+              {cardInner}
+            </motion.button>
+          ) : (
+            <motion.div
+              key={book.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 + i * 0.08, duration: 0.4 }}
+              className={cardClass}
+              style={{ ...cardStyle, opacity: 0.85 }}
+              aria-disabled="true"
+              title="Planned for a future release — not yet available"
+            >
+              {cardInner}
+            </motion.div>
+          );
+        })}
       </div>
 
       {/* Featured hadiths — SEO entry points */}

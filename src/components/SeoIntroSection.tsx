@@ -26,7 +26,7 @@ const faqJsonLd = {
       name: "Can I read Sahih Bukhari on Noor?",
       acceptedAnswer: {
         "@type": "Answer",
-        text: "Yes. Noor includes the complete Sahih Bukhari hadith collection with Arabic text and Bengali translation. You can also browse Sahih Muslim, Jami at-Tirmidhi, and Sunan Abu Dawud from the Hadith section.",
+        text: "Yes. Noor includes the complete Sahih Bukhari hadith collection with Arabic text and Bengali translation. More collections (Sahih Muslim, Jami at-Tirmidhi, Sunan Abu Dawud) are planned for a future release and are not yet available.",
       },
     },
     {

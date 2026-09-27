@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Play, Loader2 } from "lucide-react";
-import { useSurahDetail, Language, LANGUAGE_LABELS } from "@/hooks/useQuranData";
+import { useSurahDetail, Language, LANGUAGE_LABELS, TRANSLATION_ATTRIBUTION } from "@/hooks/useQuranData";
 import QuranAudioPlayer from "./QuranAudioPlayer";
 
 interface SurahReaderProps {
@@ -116,6 +116,9 @@ const SurahReader = ({ surahNumber, surahName, arabicName, initialAyah }: SurahR
             </button>
           ))}
         </div>
+        <p className="mt-2 text-[11px] text-white/50">
+          {TRANSLATION_ATTRIBUTION[language].note}: {TRANSLATION_ATTRIBUTION[language].translator} · via AlQuran Cloud API
+        </p>
       </div>
 
       {/* Ayahs */}

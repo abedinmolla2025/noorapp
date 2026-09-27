@@ -98,6 +98,17 @@ export default function QuizDetailPage() {
       {record && <QuizJsonLd record={record} url={url} />}
       <main className="min-h-screen bg-background px-4 pb-28 pt-8">
         <div className="mx-auto max-w-3xl">
+          <nav aria-label="Breadcrumb" className="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground">
+            <Link to="/" className="hover:text-foreground">Home</Link>
+            <span aria-hidden="true">›</span>
+            <Link to="/quiz" className="hover:text-foreground">Quiz</Link>
+            {record?.category && (
+              <>
+                <span aria-hidden="true">›</span>
+                <span className="text-foreground">{record.category}</span>
+              </>
+            )}
+          </nav>
           <Button asChild variant="ghost" className="mb-4 px-0">
             <Link to="/quiz"><ArrowLeft className="mr-2 h-4 w-4" />Back to Daily Quiz</Link>
           </Button>

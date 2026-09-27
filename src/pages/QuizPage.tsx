@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import BottomNavigation from "@/components/BottomNavigation";
 import { ArrowLeft, Trophy, Star, Medal, Crown, Zap, CheckCircle2, XCircle, Sparkles, Target, TrendingUp, Clock, Eye, RotateCcw, BookOpen, ExternalLink } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { playSfx } from "@/utils/quizSfx";
 import { StarBadge, TrophyBadge, MedalBadge, CrownBadge, SparklesBadge } from "@/components/BadgeIcons";
 import Confetti from "react-confetti";
@@ -89,6 +89,68 @@ const relatedQuizPath = (category: string) => {
   if (normalized.includes("prophet") || normalized.includes("history")) return "/stories";
   if (normalized.includes("name")) return "/99-names";
   return "/sources";
+};
+
+type QuizIndexItem = {
+  id: string;
+  category: string;
+  question_bn: string | null;
+  question_en: string | null;
+};
+
+const QuizBrowseIndex = ({ items }: { items: QuizIndexItem[] }) => {
+  const [openCat, setOpenCat] = useState<string | null>(null);
+  const byCat = useMemo(() => {
+    const m = new Map<string, QuizIndexItem[]>();
+    for (const q of items) {
+      const cat = (q.category || "General").trim() || "General";
+      if (!m.has(cat)) m.set(cat, []);
+      m.get(cat)!.push(q);
+    }
+    return [...m.entries()].sort((a, b) => a[0].localeCompare(b[0]));
+  }, [items]);
+  if (byCat.length === 0) return null;
+  const open = byCat.find(([c]) => c === openCat);
+  return (
+    <section className="max-w-2xl mx-auto px-4 py-6" aria-label="Browse quiz questions">
+      <h2 className="text-lg font-bold text-foreground">
+        সব প্রশ্ন ব্রাউজ করুন <span className="font-normal text-muted-foreground">— Browse all questions</span>
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {items.length} verified questions across {byCat.length} categories
+      </p>
+      <div className="mt-3 flex flex-wrap gap-2">
+        {byCat.map(([cat, qs]) => (
+          <button
+            key={cat}
+            onClick={() => setOpenCat(openCat === cat ? null : cat)}
+            aria-expanded={openCat === cat}
+            className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+              openCat === cat
+                ? "border-primary bg-primary text-primary-foreground"
+                : "border-border bg-card text-foreground hover:border-primary/40"
+            }`}
+          >
+            {cat} ({qs.length})
+          </button>
+        ))}
+      </div>
+      {open && (
+        <ul className="mt-4 space-y-2">
+          {open[1].map((q) => (
+            <li key={q.id}>
+              <Link
+                to={`/quiz/${q.id}`}
+                className="block rounded-xl border border-border bg-card p-3 text-sm leading-relaxed text-foreground hover:border-primary/40"
+              >
+                {q.question_bn || q.question_en}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
 };
 
 const QuizPage = () => {
@@ -196,6 +258,30 @@ const QuizPage = () => {
       }));
     },
     staleTime: 5 * 60 * 1000,
+  });
+
+  // Browse index: verified, active questions for the category browser.
+  // Same eligibility filter as the prerendered /quiz hub and /quiz/<id> pages.
+  const { data: quizIndex = [] } = useQuery({
+    queryKey: ["quiz-index"],
+    queryFn: async (): Promise<Array<{ id: string; category: string; question_bn: string | null; question_en: string | null }>> => {
+      const { data, error } = await supabase
+        .from("quiz_questions")
+        .select("id, category, question_bn, question_en")
+        .eq("is_active", true)
+        .in("verification_status", ["verified", "verified_primary", "verified_secondary"])
+        .order("category", { ascending: true })
+        .limit(500);
+      if (error) {
+        console.error("Failed to load quiz browse index:", error);
+        return [];
+      }
+      return ((data ?? []) as Array<Partial<QuizIndexItem>>).filter(
+        (q): q is QuizIndexItem =>
+          Boolean(q && q.id && (q.question_bn || q.question_en))
+      );
+    },
+    staleTime: 30 * 60 * 1000,
   });
 
   const getQuestionText = (q: Question, mode: LanguageMode) => {
@@ -1638,6 +1724,8 @@ const QuizPage = () => {
           )}
         </AnimatePresence>
       </div>
+
+      <QuizBrowseIndex items={quizIndex} />
 
       {/* SEO-friendly static content for Google indexing — hidden on small screens */}
       <section className="hidden md:block max-w-2xl mx-auto px-4 py-8 space-y-4 text-muted-foreground text-sm leading-relaxed">

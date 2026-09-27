@@ -25,7 +25,7 @@ const bookMeta: Record<string, BookMeta> = {
     titleBn: "সহীহ মুসলিম",
     metaTitle: "Sahih Muslim — সহীহ মুসলিম হাদিস | Noor",
     metaDescription:
-      "Read Sahih Muslim Hadith collection with Arabic text and Bengali translation. Browse the collection by book and chapter on Noor App. সহীহ মুসলিম পড়ুন।",
+      "Sahih Muslim is planned for a future release on Noor and is not yet available. Learn about the collection, or read Sahih al-Bukhari now.",
     intro: (
       <div className="space-y-4 text-[13px] leading-relaxed text-muted-foreground">
         <h2 className="text-[15px] font-bold text-foreground">
@@ -123,7 +123,7 @@ const bookMeta: Record<string, BookMeta> = {
     titleBn: "জামে তিরমিযী",
     metaTitle: "Jami at-Tirmidhi — জামে তিরমিযী হাদিস | Noor",
     metaDescription:
-      "Explore Jami at-Tirmidhi with Bengali translation. Imam Tirmidhi's essential hadith collection covering fiqh, seerah & virtues with unique hadith grading. তিরমিযী পড়ুন।",
+      "Jami at-Tirmidhi is planned for a future release on Noor and is not yet available. Learn about the collection, or read Sahih al-Bukhari now.",
     intro: (
       <div className="space-y-4 text-[13px] leading-relaxed text-muted-foreground">
         <h2 className="text-[15px] font-bold text-foreground">
@@ -211,7 +211,7 @@ const bookMeta: Record<string, BookMeta> = {
     titleBn: "সুনানে আবু দাউদ",
     metaTitle: "Sunan Abu Dawud — সুনানে আবু দাউদ হাদিস | Noor",
     metaDescription:
-      "Read Sunan Abu Dawud with Bengali translation. Imam Abu Dawud's comprehensive jurisprudence-focused hadith collection — selected from 500,000 hadiths. আবু দাউদ পড়ুন বাংলায়।",
+      "Sunan Abu Dawud is planned for a future release on Noor and is not yet available. Learn about the collection, or read Sahih al-Bukhari now.",
     intro: (
       <div className="space-y-4 text-[13px] leading-relaxed text-muted-foreground">
         <h2 className="text-[15px] font-bold text-foreground">
@@ -362,6 +362,11 @@ export default function HadithBookPlaceholder() {
         <ScrollText className="mx-auto mb-3 h-10 w-10 text-primary" />
         <h1 className="text-2xl font-bold text-foreground">{meta.title}</h1>
         <p className="mt-1 text-sm text-muted-foreground">{meta.titleBn}</p>
+        {bookId !== "bukhari" && (
+          <p className="mx-auto mt-3 inline-block rounded-full bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">
+            Planned for a future release — not yet available
+          </p>
+        )}
       </div>
 
       <motion.div
@@ -379,7 +384,7 @@ export default function HadithBookPlaceholder() {
         {/* Fallback for unknown books */}
         {!meta.intro && (
           <div className="text-center text-sm text-muted-foreground py-12">
-            <p>This collection is being prepared. Check back soon. ইনশাআল্লাহ।</p>
+            <p>This collection is planned for a future release and is not yet available on Noor. ইনশাআল্লাহ।</p>
             <Link to="/hadith" className="mt-4 inline-block text-primary font-medium hover:underline">
               ← Back to all Hadith collections
             </Link>

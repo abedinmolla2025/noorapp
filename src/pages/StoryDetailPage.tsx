@@ -4,6 +4,7 @@ import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
   BookOpen,
+  CheckCircle2,
   ChevronRight,
   Clock,
   Languages,
@@ -29,10 +30,12 @@ import {
   categoryLabel,
   estimateReadingMinutes,
   nextStory,
+  storyEnrichment,
   storyMetaDescription,
   relatedStories,
   splitStoryContent,
   useStories,
+  findBundledStory,
   type Story,
 } from "@/lib/stories";
 import { toast } from "@/hooks/use-toast";
@@ -74,7 +77,7 @@ export default function StoryDetailPage() {
   const navigate = useNavigate();
   const [lang, setLang] = useState<"en" | "bn">("bn");
 
-  const story = stories.find((s) => s.slug === slug);
+  const story = stories.find((s) => s.slug === slug) ?? (slug ? findBundledStory(slug) : undefined);
   const hasAudioSource = Boolean(story?.audio_url?.trim());
 
   useEffect(() => {
@@ -434,6 +437,9 @@ export default function StoryDetailPage() {
   const next = nextStory(stories, story);
   const quranRefs = parseQuranReferences(story.reference);
   const morals = parseMorals(lang === "bn" ? story.moral_bn : story.moral_en);
+  // Pilot: high-value enrichment layers render only for stories whose record
+  // carries the editorial value fields. All other stories are untouched.
+  const enrichment = lang === "bn" ? storyEnrichment(story) : null;
 
   // Normalize the DB-provided SEO title suffix to "| Noor" without rewriting
   // the subject. Structured data (Article + BreadcrumbList) is served via the
@@ -799,6 +805,40 @@ export default function StoryDetailPage() {
                 </p>
               </div>
             )}
+
+            {/* Pilot: key takeaways derived from the story's own moral/narrative.
+                Rendered only for enriched pilot stories; clearly editorial. */}
+            {enrichment && enrichment.takeaways.length > 0 && (
+              <div className="mt-8 p-6 bg-card rounded-xl border border-border shadow-sm">
+                <h3 className="text-xl font-bold mb-1">মূল শিক্ষা</h3>
+                <p className="text-sm text-muted-foreground mb-4">গল্পের শিক্ষা থেকে নেওয়া সংক্ষিপ্ত সারসংক্ষেপ <span className="font-semibold">(সম্পাদকীয়)</span></p>
+                <ul className="space-y-2">
+                  {enrichment.takeaways.map((t, i) => (
+                    <li key={i} className="flex gap-3 text-foreground/90">
+                      <span className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-xs font-bold text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">{i + 1}</span>
+                      <span>{t}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {/* Pilot: practical applications, clearly framed as editorial
+                application — never as source quotation. */}
+            {enrichment && enrichment.applications.length > 0 && (
+              <div className="mt-8 p-6 bg-emerald-50/60 dark:bg-emerald-950/20 rounded-xl border border-emerald-200 dark:border-emerald-900 shadow-sm">
+                <h3 className="text-xl font-bold mb-1">বাস্তব জীবনে প্রয়োগ</h3>
+                <p className="text-sm text-muted-foreground mb-4">এই গল্প থেকে নেওয়া ব্যবহারিক পরামর্শ <span className="font-semibold">(সম্পাদকীয় — কুরআন/হাদিসের সরাসরি বক্তব্য নয়)</span></p>
+                <ul className="space-y-3">
+                  {enrichment.applications.map((a, i) => (
+                    <li key={i} className="flex gap-3 text-foreground/90">
+                      <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-600 mt-0.5" />
+                      <span>{a}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </div>
 
           {/* Editorial source note: no claim is added beyond the record's supplied source fields. */}
@@ -812,24 +852,53 @@ export default function StoryDetailPage() {
                 {story.source_detail && <p><span className="font-semibold">উৎসের বিবরণ:</span> {story.source_detail}</p>}
                 {story.reference && <p><span className="font-semibold">রেফারেন্স:</span> {story.reference}</p>}
                 <p className="text-muted-foreground">পাঠকরা মূল উৎসের রেফারেন্সের সঙ্গে বর্ণনাটি মিলিয়ে পড়তে পারেন। গল্পের শিক্ষা অংশটি আলাদা করে চিহ্নিত করা হয়েছে, যাতে বর্ণনা ও সম্পাদকীয় প্রতিফলন গুলিয়ে না যায়।</p>
+                {enrichment && (
+                  <p className="text-muted-foreground border-t border-amber-200 pt-2 mt-2">
+                    <span className="font-semibold text-foreground">উৎস বনাম সম্পাদকীয়:</span> উপরের "উৎস" অংশে উল্লেখিত প্রামাণ্য উৎস থেকে প্রাপ্ত তথ্য; "গল্পের শিক্ষা" ও "মূল শিক্ষা" শিক্ষামূলক ব্যাখ্যা; "বাস্তব জীবনে প্রয়োগ" সম্পাদকীয় পরামর্শ — শেষোক্ত দুটি কুরআন/হাদিসের সরাসরি বক্তব্য নয়।
+                  </p>
+                )}
               </CardContent>
             </Card>
           )}
 
-          {/* Quran References */}
-          {quranRefs.length > 0 && (
+          {/* Pilot: linked related sources (derived from the record's existing
+              reference field). Falls back to the raw reference list. */}
+          {enrichment && enrichment.sourceLinks.length > 0 ? (
             <Card className="border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/10">
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
-                  <Quote className="h-4 w-4" /> Quran References
+                  <Quote className="h-4 w-4" /> সম্পর্কিত প্রামাণ্য উৎস
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <ul className="list-disc pl-5 space-y-1 text-sm">
-                  {quranRefs.map((r) => <li key={r}>{r}</li>)}
+                <ul className="space-y-2 text-sm">
+                  {enrichment.sourceLinks.map((l) => (
+                    <li key={l.href + l.label}>
+                      <Link to={l.href} className="text-primary font-medium hover:underline">{l.label}</Link>
+                      <span className="text-muted-foreground"> — নূর-এ পড়ুন</span>
+                    </li>
+                  ))}
                 </ul>
+                {story.reference && (
+                  <p className="mt-3 text-xs text-muted-foreground">পূর্ণ রেফারেন্স তালিকা: {story.reference}</p>
+                )}
               </CardContent>
             </Card>
+          ) : (
+            quranRefs.length > 0 && (
+              <Card className="border-emerald-200 bg-emerald-50/40 dark:bg-emerald-950/10">
+                <CardHeader>
+                  <CardTitle className="text-base flex items-center gap-2">
+                    <Quote className="h-4 w-4" /> Quran References
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <ul className="list-disc pl-5 space-y-1 text-sm">
+                    {quranRefs.map((r) => <li key={r}>{r}</li>)}
+                  </ul>
+                </CardContent>
+              </Card>
+            )
           )}
 
           {/* Cross-content navigation keeps story pages connected without inventing a story-specific claim. */}
