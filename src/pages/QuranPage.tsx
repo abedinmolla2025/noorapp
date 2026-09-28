@@ -10,8 +10,13 @@ import surahIntros from "@/data/surah-intros.json";
 interface SurahIntro {
   number: number;
   intro_en: string;
-  sources: { name: string; url: string }[];
+  sources: { name: string; url: string; type?: "primary" | "secondary" }[];
 }
+
+const sourceTypeLabel: Record<string, string> = {
+  primary: "Primary source",
+  secondary: "Secondary source",
+};
 
 const QuranPage = () => {
   const navigate = useNavigate();
@@ -151,7 +156,10 @@ const QuranPage = () => {
               return (
                 <div className="mx-4 mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
                   <p className="text-sm text-white/85">{intro.intro_en}</p>
-                  <p className="mt-1.5 text-[11px] text-white/50">
+                  {/* Source transparency (Phase 10): every source carries a
+                      primary/secondary label; the caption is honest about
+                      provenance — never "scholar verified". */}
+                  <p className="mt-2 text-[11px] text-white/50">
                     Sources:{" "}
                     {intro.sources.map((s, idx) => (
                       <span key={s.url}>
@@ -164,8 +172,16 @@ const QuranPage = () => {
                         >
                           {s.name}
                         </a>
+                        {s.type && (
+                          <span className="ml-1 rounded border border-white/15 px-1 text-[9px] uppercase tracking-wide text-white/40">
+                            {sourceTypeLabel[s.type] ?? s.type}
+                          </span>
+                        )}
                       </span>
                     ))}
+                  </p>
+                  <p className="mt-1 text-[10px] italic text-white/35">
+                    Source-verified research · Not reviewed by a scholar
                   </p>
                 </div>
               );

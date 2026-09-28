@@ -1111,9 +1111,16 @@ export default async function handler(req, res) {
             const surahIntro = Array.isArray(surahIntroList)
               ? surahIntroList.find((s) => Number(s.number) === surahNum)
               : null;
+            const typeBadge = (t) =>
+              t === "primary"
+                ? ` <span style="border:1px solid #ccc;border-radius:3px;padding:0 3px;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;">Primary source</span>`
+                : t === "secondary"
+                ? ` <span style="border:1px solid #ccc;border-radius:3px;padding:0 3px;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;">Secondary source</span>`
+                : "";
             const surahIntroHtml = surahIntro && surahIntro.intro_en
               ? `<div class="border-b border-border bg-card"><p class="mx-auto max-w-3xl px-4 pt-4 text-sm">${esc(surahIntro.intro_en)}</p>
-                 <p class="mx-auto max-w-3xl px-4 pb-4 pt-1 text-[11px] text-muted-foreground">Sources: ${surahIntro.sources.map((s) => `<a href="${esc(s.url)}" class="underline">${esc(s.name)}</a>`).join(" · ")}</p></div>`
+                 <p class="mx-auto max-w-3xl px-4 pt-2 text-[11px] text-muted-foreground">Sources: ${surahIntro.sources.map((s) => `<a href="${esc(s.url)}" class="underline">${esc(s.name)}</a>${typeBadge(s.type)}`).join(" · ")}</p>
+                 <p class="mx-auto max-w-3xl px-4 pb-4 pt-1 text-[10px] italic text-muted-foreground">Source-verified research · Not reviewed by a scholar</p></div>`
               : "";
             const surahNav = `
               <nav aria-label="Surah navigation" class="mx-auto flex max-w-3xl items-stretch justify-between gap-3 border-t border-border bg-card px-4 py-5">

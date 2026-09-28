@@ -1,0 +1,161 @@
+record_id,slug,bucket,classification,template,proposed_action
+ebd57353-3ec5-4c53-ace5-1d207293cbe9,dua-for-family-surah-ibrahim-14-41,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+4109ac73-3590-4c2c-9132-81aba35df20d,dua-for-guidance-surah-taa-haa-20-114,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+55d1f181-a0e9-453e-a565-91fccf53414a,dua-for-protection-surah-al-muminoon-23-97,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+4fda79ed-057c-4152-99ac-c6ad11c3873a,dua-for-protection-surah-ash-shuaraa-26-87,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+410d0063-13de-4541-bc2b-c0cb100ac7cf,dua-for-forgiveness-surah-al-baqara-2-128,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+7b8fce99-78df-4663-9400-ca36e5631dd5,dua-for-guidance-surah-al-baqara-2-262,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+7bcac719-4c9b-41ba-a4fe-dc5ba229e67f,dua-for-guidance-surah-al-baqara-2-274,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+d7bc554e-2cc0-4bc1-9b1b-5f025bcb36a7,dua-for-faith-surah-an-nahl-16-97,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+99cdd8a0-7ecb-4b44-8e48-402238c7ddaf,dua-for-balanced-life-surah-al-baqara-2-201,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+b7fbd01f-c2ac-42ae-80e9-367bfd71f73e,dua-for-guidance-surah-maryam-19-4,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+2955a09d-a417-4c8f-9f7d-257888c653e5,dua-for-protection-surah-aal-i-imraan-3-191,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+e7e6577f-f87d-4302-833a-2e423602627a,dua-for-forgiveness-surah-al-araaf-7-23,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+d36d6ba2-0496-4d20-ad35-e792693fccb6,dua-for-guidance-surah-al-furqaan-25-63,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+3806fa7d-743e-49aa-8817-d7f87df63727,dua-for-protection-surah-yunus-10-86,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+1d0ef958-9fd4-4d97-bd69-8cfc95e9bd29,dua-for-rizq-surah-ibrahim-14-37,REQUIRES_REVIEW,B,T4,no change proposed; needs scholar/source review
+31d139fe-6c83-4945-aa05-3ac9069ed471,dua-for-family-surah-al-israa-17-24,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+71a16d4e-a5b8-4248-ab0c-64f5d6b66541,dua-for-forgiveness-surah-quran-x-135,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+f8bc5728-114a-4266-a5f0-5a3804b8cfe8,dua-for-forgiveness-surah-quran-x-137,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+b24cc070-9335-44a4-8a15-04a14c5b1a38,dua-for-guidance-surah-al-anbiyaa-21-83,REQUIRES_REVIEW,B,T5,no change proposed; needs scholar/source review
+a3855a11-ee66-48a1-a5bb-631e190431b3,dua-for-protection-surah-al-muminoon-23-94,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+e667af42-e8ad-4c14-92d5-1e040c4ae264,dua-for-forgiveness-surah-al-muminoon-23-118,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+7cb2a425-4845-44d8-960a-a569fdc27228,dua-for-guidance-surah-ash-shuaraa-26-84,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+10204dc0-560f-4bbf-9297-5cac4d091c33,dua-for-family-surah-ash-shuaraa-26-88,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+ee586633-7253-428a-aa11-107864249ca6,dua-for-protection-surah-al-qasas-28-21,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+bbf8a9be-78a8-47d3-afd5-a49ce02dfeaf,dua-for-family-surah-ghafir-40-8,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+23470e43-9663-4b65-a768-bf6efdc7a91a,dua-for-protection-surah-quran-x-138,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+02c8999c-b8be-4752-a2c3-847c18d57969,dua-for-guidance-surah-al-faatiha-1-6,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+09962d9e-6efc-42a9-8fc1-62da289323cd,dua-for-protection-surah-yunus-10-85,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+5b883ca5-9b52-405e-b4c0-ee9b6748dfc7,dua-for-protection-surah-al-araaf-7-47,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+38965ca2-9dad-40e6-9b62-60d795abf079,dua-for-guidance-surah-al-ikhlaas-112-4,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+16f28494-6a1b-42d6-be10-5f0ff2018b18,dua-for-forgiveness-surah-quran-x-139,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+d6fa449a-a8ca-4019-b8e8-f37901242bbd,dua-for-protection-surah-quran-x-141,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+6e4cca19-abb3-4920-bd5e-c65ddaf25cf1,dua-for-protection-surah-an-naas-114-3,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+be5ae1c8-de55-4add-ad59-03f3beb8833f,dua-for-guidance-surah-quran-x-145,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+d4d7b119-2df3-41fc-8cca-60b4f1661e0b,dua-for-faith-surah-al-baqara-2-76,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+a9315090-3ccb-4f1d-9ea3-207277680b60,dua-for-protection-surah-quran-x-149,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+a0390e57-8592-40f5-873e-8cdbae21b0f2,dua-for-guidance-surah-quran-x-153,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+5dcab7ad-9d82-4076-a708-91c8def28eb5,dua-for-guidance-surah-taa-haa-20-26,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+b49d5c42-999a-4d89-806f-2e74f79b7519,dua-for-protection-surah-quran-x-154,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+dd24f2fa-2595-46e7-b1b2-0a7a818c6054,dua-for-protection-surah-quran-x-157,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+5b31df6f-e6ae-4bb6-9797-c46b3d9044af,dua-for-guidance-surah-quran-x-159,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+b925b706-f65a-4800-b82f-d01f61780481,dua-for-protection-surah-quran-x-160,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+5612a521-0dae-4c2c-b2b7-792553e5515a,dua-for-family-surah-nooh-71-28,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+83e06f2e-eed5-4f9d-a418-e21c07f8efdc,dua-for-faith-surah-al-baqara-2-131,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+ab3febc2-98ae-476c-bee1-0f7e2fcc2945,dua-for-family-surah-aal-i-imraan-3-36,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+a16ef8d3-4816-4e97-bd02-07ff7d534b5d,dua-for-protection-surah-at-tawbah-9-129,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+f9944461-9914-4dcc-ad9d-1a7bdab3cda0,dua-for-guidance-surah-ar-rad-13-11,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+352eef8b-5ed2-47d4-b055-df73559b641d,dua-for-forgiveness-surah-al-baqara-2-127,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+461c0df0-4adb-4a9d-bb98-41aaa424c955,dua-for-guidance-surah-al-muminoon-23-26,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+2264336c-0190-4800-95df-343a190eceb4,dua-for-family-surah-ibrahim-14-40,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+f9779769-83d0-4511-80c1-5576ccd3ee0a,dua-for-forgiveness-surah-ad-dukhaan-44-12,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+38db978c-7a11-4846-a836-5cf66ab041b0,dua-for-guidance-surah-al-israa-17-111,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+a20364a6-94e7-4c06-8020-28edc977de42,dua-for-guidance-surah-quran-x-136,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+28c321c5-44e0-45c4-8eeb-47fe6c6309dd,dua-for-guidance-surah-quran-x-151,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+4d71f2a9-db90-49e7-87a8-b1d2111a36bc,dua-for-protection-surah-quran-x-140,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+f75ce154-1270-40b9-994c-f915dece26e3,dua-for-faith-surah-yusuf-12-101,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+a235fce3-c370-4abd-8b8e-fa91c49a5c7f,dua-for-forgiveness-surah-quran-x-144,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+290ed716-ed78-4270-a0aa-f60d029dcb49,dua-for-faith-surah-aal-i-imraan-3-53,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+7622f845-6d58-4c1d-bb83-1d75e994dac1,dua-for-faith-surah-quran-x-148,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+1c56e147-becf-4075-b01a-1cf17cc3b06c,dua-for-guidance-surah-ash-shuaraa-26-89,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+846c9a55-ad65-4aaa-866d-46b6c73e395a,dua-for-guidance-surah-quran-x-152,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+22b6283f-ad36-4350-a996-2a648076ff83,dua-for-family-surah-al-baqara-2-200,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+095bc93f-a1be-4d56-a56c-5a95211fad62,dua-for-guidance-surah-quran-x-156,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+59497fba-5781-4deb-a505-47fde9487b3b,dua-for-protection-surah-yunus-10-107,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+66d498a0-0a35-411e-adca-9c6714e5ef22,dua-for-guidance-surah-al-hashr-59-22,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+871ac1fc-bbd6-4d86-be5c-7d081e548504,dua-for-family-surah-al-mumtahana-60-4,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+b7ea4fff-2fc5-4698-bb7e-d289a245a481,dua-for-guidance-surah-al-anbiyaa-21-112,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+078257aa-e2e2-41fd-bcb7-146bbe3867f9,dua-for-guidance-surah-quran-x-143,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+7b3794ec-ecb4-4181-a87a-f00156da36b8,dua-for-guidance-surah-taa-haa-20-28,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+261dcc6e-92bd-4c01-814c-0c8ec6ee7fee,dua-for-forgiveness-surah-al-baqara-2-285,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+a5d57cf3-c593-40e2-b3fa-9f419725f039,dua-for-protection-surah-aal-i-imraan-3-16,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+427e7a46-0d5f-4d80-a70c-30f903e7b750,dua-for-protection-surah-al-furqaan-25-65,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+8f3f1b3a-7ad6-4835-ad2d-132671a7b6b6,dua-for-forgiveness-surah-al-baqara-2-286,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+367b02b8-4779-4395-ae8f-d2bcec09b2dc,dua-for-family-surah-aal-i-imraan-3-38,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+d92c7c12-1c8c-43fe-ad91-9fedafe9878d,dua-for-patience-surah-aal-i-imraan-3-147,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+05c43c0b-64e7-4ac3-b627-2593d7fc45f4,dua-for-forgiveness-surah-aal-i-imraan-3-193,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+3dc30297-6c77-41dd-a037-a0964d4225b2,dua-for-faith-surah-aal-i-imraan-3-194,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+ea031f37-a4ee-4a90-9a95-8a20186711db,dua-for-forgiveness-surah-al-araaf-7-151,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+b9b2c912-1a87-4d1a-aaae-b40c06943cef,dua-for-forgiveness-surah-al-araaf-7-155,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+611de75e-0483-4d7f-a87d-caf4529d73c0,dua-for-protection-surah-al-kahf-18-10,REQUIRES_REVIEW,B,T6,no change proposed; needs scholar/source review
+115c5b7c-a3a5-4810-ac5f-943beb003968,dua-for-guidance-surah-taa-haa-20-27,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+8ea78a2b-c9ff-4d88-9beb-c5d4f7a04077,dua-for-family-surah-al-anbiyaa-21-89,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+aedd1ed6-0f42-4af2-a2e1-af7db9d34f71,dua-for-protection-surah-al-muminoon-23-98,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+f59b717f-9588-466e-80f8-f4f84033c009,dua-for-forgiveness-surah-al-muminoon-23-109,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+d2c4fdd5-0a4c-48ed-8882-82423ff93461,dua-for-guidance-surah-ash-shuaraa-26-83,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+11fb2895-1643-4d43-8a8f-5d989ac7430a,dua-for-guidance-surah-ash-shuaraa-26-85,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+1e132200-0347-4761-9816-5bd8e522f64d,dua-for-family-surah-ash-shuaraa-26-86,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+b6f8ec25-69a0-459d-97eb-785064522ef9,dua-for-rizq-surah-al-qasas-28-24,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+6223336e-c17b-43c4-9d41-9ee6f0ee5ef6,dua-for-guidance-surah-al-ankaboot-29-30,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+835edbb9-43db-4afe-8f22-641bc1af0c93,dua-for-forgiveness-surah-ghafir-40-7,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+ab2d11af-87ab-46c8-a8da-3273d22d5769,dua-for-forgiveness-surah-al-hashr-59-10,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+4ca60df9-9b5e-4e8e-ba31-0ac775f35e18,dua-for-protection-surah-al-mumtahana-60-5,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+85d51414-8acd-4e91-9579-f723f115e5fc,dua-for-forgiveness-surah-at-tahrim-66-8,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+6c378b71-fe04-4155-8eec-7eedfb47e87d,dua-for-protection-surah-at-tahrim-66-11,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+4909c6cc-4eaf-4aa7-ac45-0e21bdd8c253,dua-for-guidance-surah-al-ikhlaas-112-1,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+daad4c15-d860-45c6-bda8-d2ef44c45dcc,dua-for-protection-surah-al-falaq-113-1,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+58184290-66a6-4606-9164-957de8d79517,dua-for-protection-surah-al-falaq-113-2,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+ac22871d-e383-4ec6-a211-f6b214b43541,dua-for-protection-surah-al-falaq-113-3,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+fb62e767-b05b-4ac3-af3b-2a1116047c77,dua-for-protection-surah-al-falaq-113-4,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+b43e5df6-32f3-42eb-a8aa-0d89cfecf3c6,dua-for-protection-surah-al-falaq-113-5,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+8c1433e9-4463-453a-bdcf-1a212bbb5ab0,dua-for-protection-surah-an-naas-114-2,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+08edb819-5bcf-4698-b730-9af235f39660,dua-for-protection-surah-an-naas-114-4,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+b63296ee-e28c-4f31-ae4b-de38ee686459,dua-for-protection-surah-an-naas-114-5,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+c4bf10a7-8a22-452f-b779-e9eb43eb753a,dua-for-protection-surah-an-naas-114-6,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+19bac378-5e6d-4750-9d82-16f1a2112edb,dua-for-guidance-surah-al-faatiha-1-2,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+90b4e796-5b8c-433c-bf91-b715b75f98e7,dua-for-guidance-surah-al-baqara-2-46,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+19f30596-1cc6-479a-a92c-531091e61bb7,dua-for-faith-surah-al-baqara-2-126,REQUIRES_REVIEW,B,T4,no change proposed; needs scholar/source review
+f285bbad-cded-449d-a093-fd9ace86a53e,dua-for-guidance-surah-al-baqara-2-129,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+8f6a9035-2f62-4f91-b986-aec11dab5727,dua-for-faith-surah-al-baqara-2-260,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+5d26254b-0c51-4300-8ff0-52cd0620d84f,dua-for-faith-surah-al-baqara-2-277,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+66e57416-65db-4009-8074-dd99887975c3,dua-for-faith-surah-aal-i-imraan-3-7,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+02420ef2-dd39-458e-ab1f-8da91e7d8750,dua-for-guidance-surah-aal-i-imraan-3-9,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+87fc1435-3b73-4d40-8742-14f7bb6e577f,dua-for-guidance-surah-aal-i-imraan-3-40,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+0ce394d1-6414-4af1-beb7-a1c886aba58f,dua-for-guidance-surah-aal-i-imraan-3-41,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+9858ebeb-f565-4a42-a747-afdef6d7098c,dua-for-guidance-surah-aal-i-imraan-3-47,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+9e4c5fd8-63d5-4077-b178-33aac78ba605,dua-for-guidance-surah-aal-i-imraan-3-51,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+1fa4542a-d3bc-4998-8e6b-e027f1a6d459,dua-for-faith-surah-al-maaidah-5-83,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+b9a9b667-533d-41f1-9097-97862a277b83,dua-for-guidance-surah-al-maaidah-5-114,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+91b92ec4-0316-48fc-aa81-56eba00451d2,dua-for-faith-surah-maryam-19-5,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+722ac39b-46c6-4c92-a67d-97d48a53f5a5,dua-for-forgiveness-surah-quran-x-146,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+a74d5a8e-8151-4e53-a0f8-d394dad8174a,dua-for-patience-surah-quran-x-147,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+5231386a-0779-4ca4-bfac-b309c8a01182,dua-for-guidance-surah-taa-haa-20-25,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+b0dafe18-d2a6-42f0-9954-35d1a3a5f316,dua-for-faith-surah-al-baqara-2-112,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+621f660d-1084-446c-b2e6-1c64a5fcacf3,dua-for-guidance-surah-aal-i-imraan-3-43,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+598fb8eb-64dd-4b6c-b77d-a94793a6d5d2,dua-for-guidance-surah-al-baqara-2-32,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+5d7f98cc-de79-4ebe-b222-f5a47b2f31a1,dua-for-guidance-surah-aal-i-imraan-3-26,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+4abcdb0e-4ded-4993-bd2f-ed6e7662a577,dua-for-faith-surah-ibrahim-14-7,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+b826bc62-efaf-4cf8-bf25-623b809f9114,dua-for-guidance-surah-an-noor-24-55,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+cad4e970-1ef4-4f38-a913-7c79a126e519,dua-for-faith-surah-aal-i-imraan-3-8,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+04074bd0-354f-4ffa-aacd-81f241ec89ff,dua-for-protection-surah-ibrahim-14-35,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+f69dfbe8-631a-498a-b41a-68f26cfa3962,dua-for-guidance-surah-al-muminoon-23-29,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+d5a70775-1ee9-45ef-b6d2-4603dbee1819,dua-for-forgiveness-surah-al-qasas-28-16,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+45481feb-ca03-48ee-a6a4-625832cd5df6,dua-for-guidance-surah-al-ikhlaas-112-3,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+f829da49-e133-42f6-8fb7-16d1b79f48bf,dua-for-protection-surah-al-baqara-2-67,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+ee521871-3d0a-40b3-8072-59750cfe6e81,dua-for-family-surah-aal-i-imraan-3-35,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+ce7051c1-7202-497f-a61a-be3027bf3978,dua-for-protection-surah-yusuf-12-33,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+b2efa46c-76d6-4a08-a840-83f97dd3e9d0,dua-for-family-surah-as-saaffaat-37-100,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+f93ee306-2310-4f0e-a577-5054ffa582fe,dua-for-guidance-surah-quran-x-155,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+6bb6af15-5694-4624-b935-61077f61713e,dua-for-patience-surah-al-baqara-2-250,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+d856a85d-1be8-407d-a3da-8428bfe449a6,dua-for-forgiveness-surah-hud-11-47,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+7a60e312-daa2-4c61-ba5c-634571c95622,dua-for-guidance-surah-ibrahim-14-38,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+9ea82bc2-3eb3-4bbe-9352-20d1c6d55d19,dua-for-guidance-surah-al-israa-17-80,REQUIRES_REVIEW,B,T7,no change proposed; needs scholar/source review
+1ade9f60-d23b-436f-b6cc-9e5f6be04ab4,dua-for-forgiveness-surah-al-anbiyaa-21-87,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+78715637-cebc-4644-81b9-b2a52ae09658,dua-for-family-surah-al-furqaan-25-74,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+48f5e793-6ac4-40ca-a5fb-2c49ef171411,dua-for-faith-surah-an-naml-27-19,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+02f99328-c24d-47af-80b5-d055449314eb,dua-for-faith-surah-al-ahqaf-46-15,SUPPORTED,A,T3,fix virtue_reference Quran 40:60 -> Quran 2:222 (proposal only)
+6689ee03-f063-461e-a076-9c9736727744,dua-for-protection-surah-al-ikhlaas-112-2,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+f69bb737-88a0-460c-bf12-1107f9d577da,dua-for-protection-surah-an-naas-114-1,REQUIRES_REVIEW,B,T2,no change proposed; needs scholar/source review
+00c6d04d-73dd-4543-8140-38d44b606e0b,dua-for-faith-surah-al-baqara-2-62,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+beb0270f-a55e-4547-8eca-52dd110b1a41,dua-for-guidance-surah-al-baqara-2-258,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+d099c647-859a-4af0-ab4f-5ff9c5941655,dua-for-guidance-surah-aal-i-imraan-3-15,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+8794feb2-664c-4897-bffd-7f6accf2d234,dua-for-guidance-surah-aal-i-imraan-3-73,REQUIRES_REVIEW,B,T1,no change proposed; needs scholar/source review
+93269f0c-86c5-4bc6-a31a-1426fc41b33d,dua-for-guidance-surah-hud-11-88,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+7a2ee912-c901-4eb1-9b86-b4dc302d9338,dua-for-guidance-surah-maryam-19-6,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+9ae38347-f307-4722-b381-4c2a2928f735,dua-for-forgiveness-surah-quran-x-134,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+ebb65760-31c5-4639-95fb-55c92caed481,dua-for-guidance-surah-quran-x-142,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+48d5896b-991a-4c19-a3b6-4e8796092b23,dua-for-protection-surah-quran-x-150,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+637bd629-346e-4f05-8fe9-1d27cf6a2f21,dua-for-patience-surah-quran-x-158,TEMPLATE,D,T8,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+264e280c-1ef2-4b50-b564-4e8faab0b9a9,dua-for-protection-surah-ghafir-40-9,TEMPLATE,D,T9,"set virtue=NULL, virtue_reference=NULL (proposal only)"
+fd5f475a-92b6-4d9b-bbf6-708a6a4adc54,dua-for-protection-surah-aal-i-imraan-3-192,TEMPLATE,D,T9,"set virtue=NULL, virtue_reference=NULL (proposal only)"

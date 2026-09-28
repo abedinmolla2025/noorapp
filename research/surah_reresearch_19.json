@@ -1,0 +1,1749 @@
+[
+  {
+    "surah_number": 55,
+    "claims": [
+      {
+        "claim": "'Ar-Rahmaan' means 'The Beneficent'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com Chapters API",
+            "url": "https://api.quran.com/api/v4/chapters?language=en",
+            "type": "repository",
+            "excerpt": "translated_name: {\"language_name\": \"english\", \"name\": \"The Beneficent\"} (name_simple: Ar-Rahman)"
+          },
+          {
+            "name": "Tanzil Quran Metadata",
+            "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+            "type": "repository",
+            "excerpt": "// [start, ayas, order, rukus, name, tname, ename, type] :: [4901, 78, 97, 3, 'الرحمن', \"Ar-Rahmaan\", 'The Beneficent', 'Medinan']"
+          },
+          {
+            "name": "noorapp repo data",
+            "url": "src/data/quran_surahs.json",
+            "type": "repo-data",
+            "excerpt": "{\"number\": 55, \"name\": \"سُورَةُ الرَّحۡمَٰن\", \"englishName\": \"Ar-Rahmaan\", \"englishNameTranslation\": \"The Beneficent\", \"numberOfAyahs\": 78, \"revelationType\": \"Medinan\"}"
+          }
+        ]
+      },
+      {
+        "claim": "Revelation classification (Meccan vs Medinan) is genuinely disputed among classical and modern authorities.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/55/index.html",
+            "type": "scholarly",
+            "excerpt": "The commentators generally hold the view that this is a Makki Surah, though according to some traditions which have been cited on the authority of Hadrat Abdullah bin Abbas, Ikrimah and Qatadah, it was revealed at Madinah. But, firstly, there are also some other traditions from these very authorities, which contradict this view; secondly, its subject matter bears a closer resemblance with the Makki Surahs than with the Madani Surahs; rather it appears to belong to the very early Makkah period."
+          },
+          {
+            "name": "Muhammad Asad, The Message of the Qur'an (attributed full copy)",
+            "url": "https://www.pdfmanuals.org/wp-content/uploads/2021/11/The20Message20of20the20Qur27an20-20Muhammad20Asad20formerly20Leopold20Weiss-1.pdf",
+            "type": "scholarly",
+            "excerpt": "Ar-Raḥmān (The Most Gracious) — Period Uncertain. ALTHOUGH most of the commentators regard this sūrah as a Meccan revelation, Zamakhsharī and (among the later scholars) Suyūṭī ascribe it to the Medina period. Bayḍāwī leaves the question open, and adds that parts of it may have been revealed before and parts after the Prophet's hijrah to Medina."
+          },
+          {
+            "name": "Amin Ahsan Islahi, Tadabbur-i-Qur'an (scribd copy of his commentary)",
+            "url": "https://www.scribd.com/document/409651226/55-Surah-Rahman",
+            "type": "scholarly",
+            "excerpt": "Some people have regarded this sūrah to be Madīnan. However, in my opinion, not a single verse of it appears to be Madīnan much less the whole sūrah."
+          },
+          {
+            "name": "M. A. S. Abdel Haleem, The Qur'an (Oxford World's Classics, attributed full copy)",
+            "url": "https://alazharclasses.com/wp-content/uploads/2018/12/The-Quran-Oxford-Worlds-Clas-M.-A.-S.-Abdel-Haleem.pdf",
+            "type": "scholarly",
+            "excerpt": "55. THE LORD OF MERCY — A Medinan sura that highlights God's wonders in this world, describes the end of the world, and paints an evocative picture of the delights of Paradise."
+          },
+          {
+            "name": "Quran.com Chapters API",
+            "url": "https://api.quran.com/api/v4/chapters?language=en",
+            "type": "repository",
+            "excerpt": "\"id\":55,\"revelation_place\":\"madinah\""
+          },
+          {
+            "name": "Tanzil Quran Metadata",
+            "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+            "type": "repository",
+            "excerpt": "// [start, ayas, order, rukus, name, tname, ename, type] :: [4901, 78, 97, 3, 'الرحمن', \"Ar-Rahmaan\", 'The Beneficent', 'Medinan']"
+          }
+        ]
+      },
+      {
+        "claim": "The surah consists of 78 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com Chapters API",
+            "url": "https://api.quran.com/api/v4/chapters?language=en",
+            "type": "repository",
+            "excerpt": "\"id\":55,\"verses_count\":78"
+          },
+          {
+            "name": "Tanzil Quran Metadata",
+            "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+            "type": "repository",
+            "excerpt": "// [start, ayas, order, rukus, name, tname, ename, type] :: [4901, 78, 97, 3, 'الرحمن', \"Ar-Rahmaan\", 'The Beneficent', 'Medinan']"
+          },
+          {
+            "name": "QuranEnc Surah Index (Noor International Center)",
+            "url": "https://quranenc.com/en/browse/english_saheeh",
+            "type": "repository",
+            "excerpt": "55 الرحمن · 78 Verse · Ar-Rahmān"
+          },
+          {
+            "name": "Maulana Muhammad Ali, English Translation and Commentary of the Holy Quran (alahmadiyya.org)",
+            "url": "https://alahmadiyya.org/holy-quran/english-translation-and-commentary-of-the-holy-quran-1951-2002-by-maulana-muhammad-ali/chapter-55-ar-rahman-beneficent/",
+            "type": "scholarly",
+            "excerpt": "Chapter 55 Ar-Rahman The Beneficent — Revealed at Makkah (3 sections; 78 verses)"
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com Chapters API", "Tanzil Quran Metadata", "noorapp repo data"],
+      "2": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "Muhammad Asad, The Message of the Qur'an (attributed full copy)", "Amin Ahsan Islahi, Tadabbur-i-Qur'an (scribd copy of his commentary)", "M. A. S. Abdel Haleem, The Qur'an (Oxford World's Classics, attributed full copy)", "Quran.com Chapters API", "Tanzil Quran Metadata"],
+      "3": ["Quran.com Chapters API", "Tanzil Quran Metadata", "QuranEnc Surah Index (Noor International Center)", "Maulana Muhammad Ali, English Translation and Commentary of the Holy Quran (alahmadiyya.org)"]
+    },
+    "draft_en": "Ar-Rahmaan (The Beneficent) is a surah consisting of 78 verses.",
+    "class": "C",
+    "notes": "Draft (sentence 1) uses claims 1 and 3 only — both VERIFIED. No revelation-place assertion: the classification is a genuine dispute documented with strong authorities on each side (Maududi: majority Makki + Madani traditions from Ibn Abbas/Ikrimah/Qatadah; Asad: 'Period Uncertain', Zamakhshari + Suyuti -> Medina, Baydawi open, most commentators -> Meccan; Islahi: notes and rejects the Madani view; Abdel Haleem's own surah-55 header: 'A Medinan sura'). Shared-provenance disclosures: Asad and Haleem PDFs are attributed mirror copies of their published books (text is the authors' own); Maududi excerpt on searchtruth.com is his own Tafhim text; Islahi text via a scribd copy. Wikipedia/Wikishia were not used as evidence. Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 2 is CONFLICTING."
+  },
+  {
+    "surah_number": 60,
+    "claims": [
+      {
+        "claim": "Surah Al-Mumtahanah (The Woman to be Examined) has 13 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=60",
+            "type": "scholarly",
+            "excerpt": "60. Al-Mumtahanah (The Woman to be Examined). Verses [Section]: 1-13."
+          },
+          {
+            "name": "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-18/surah-al-mumtahana-chapter-60",
+            "type": "scholarly",
+            "excerpt": "The Chapter, revealed in Mecca, has thirteen Verses and owes its designation to the tenth Verse treating of the examination of Emigrant women."
+          }
+        ]
+      },
+      {
+        "claim": "The surah's name derives from the testing/examination of the faith of women fleeing Mecca to Medina (verse 10).",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=60",
+            "type": "scholarly",
+            "excerpt": "This sûrah takes its name from testing the faith of women fleeing Mecca by asking them, for example, if they have emigrated for Islam or only to be separated from their pagan husbands (verse 10)."
+          },
+          {
+            "name": "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-18/surah-al-mumtahana-chapter-60",
+            "type": "scholarly",
+            "excerpt": "(The Woman to be Examined) ... The Chapter, revealed in Mecca, has thirteen Verses and owes its designation to the tenth Verse treating of the examination of Emigrant women."
+          }
+        ]
+      },
+      {
+        "claim": "The surah instructs loyalty to Allah and fellow believers (following the example of Abraham), forbids befriending Allah's enemies, and permits courtesy toward non-Muslims who do not persecute Muslims.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=60",
+            "type": "scholarly",
+            "excerpt": "Muslims are instructed to be loyal to Allah and fellow believers, following the example of Prophet Abraham (peace be upon him) (verses 4-6). The believers are not forbidden from courtesy to non-Muslims as long as they are not persecuting Muslims (verses 8-9)."
+          },
+          {
+            "name": "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-18/surah-al-mumtahana-chapter-60",
+            "type": "scholarly",
+            "excerpt": "The blessed Chapter treats of love for God Almighty and forbidding believers from befriending His enemies. Muslims are also enjoined to regard Prophet Abraham (as) as a model."
+          }
+        ]
+      },
+      {
+        "claim": "Revelation place is genuinely contested: The Clear Quran and Tanzil classify it Medinan; the Enlightening Commentary states 'revealed in Mecca'.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=60",
+            "type": "scholarly",
+            "excerpt": "This Medinian sûrah was revealed prior to the Prophet's conquest of Mecca following the pagans' violation of the peace treaty they had signed with the Muslims at Hudaibiyah."
+          },
+          {
+            "name": "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-18/surah-al-mumtahana-chapter-60",
+            "type": "scholarly",
+            "excerpt": "The Chapter, revealed in Mecca, has thirteen Verses and owes its designation to the tenth Verse treating of the examination of Emigrant women."
+          },
+          {
+            "name": "Tanzil revelation order table",
+            "url": "https://tanzil.net/docs/revelation_order",
+            "type": "repository",
+            "excerpt": "Al-Mumtahana | 60 | Medinan"
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18"],
+      "2": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18"],
+      "3": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18"],
+      "4": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18", "Tanzil revelation order table"]
+    },
+    "draft_en": "Al-Mumtahanah (The Woman to be Examined) has 13 verses and takes its name from the examination of believing emigrant women. It forbids believers from befriending hostile enemies while permitting courtesy toward those who do not fight or expel them, and holds up Prophet Abraham as a model.",
+    "class": "C",
+    "notes": "Draft sentence 1 uses claims 1 and 2 (VERIFIED); sentence 2 uses claim 3 (VERIFIED). No revelation-place assertion: claim 4 is a genuine conflict between two recognized independent commentaries (The Clear Quran: Medinian; Enlightening Commentary: 'revealed in Mecca'; Tanzil concurs with Medinan). The two main sources are editorially independent (Khattab vs Makarem Shirazi/Faqih Imani compilation) with no shared provenance. Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 4 is CONFLICTING."
+  },
+  {
+    "surah_number": 68,
+    "claims": [
+      {
+        "claim": "Surah Al-Qalam has 52 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=68",
+            "type": "scholarly",
+            "excerpt": "Verses [Section]: 1-33[1], 34-52 [2]"
+          },
+          {
+            "name": "Tafsirq (tafsirq.com)",
+            "url": "https://tafsirq.com/en/tilawah/68-al-qalam",
+            "type": "repository",
+            "excerpt": "Tilawah Al-Qalam (The Pen) ... 52 Verse(s) • Surah number 68 • Meccan"
+          }
+        ]
+      },
+      {
+        "claim": "Surah Al-Qalam is broadly classified as Meccan.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=68",
+            "type": "scholarly",
+            "excerpt": "In this Meccan sûrah, the Prophet's heart is reassured and his character is highly praised."
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://iium.edu.my/deed/quran/intro/i068.html",
+            "type": "scholarly",
+            "excerpt": "This too is one of the earliest surahs to be revealed at Makkah, but its subject matter shows that it was sent down at the time when opposition to the Holy Prophet (upon whom be peace) had grown very harsh and tyrannical."
+          }
+        ]
+      },
+      {
+        "claim": "The surah's name Al-Qalam means 'The Pen', from the oath by the pen in verse 1.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=68",
+            "type": "scholarly",
+            "excerpt": "1. By the pen and what everyone writes!"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://iium.edu.my/deed/quran/intro/i068.html",
+            "type": "scholarly",
+            "excerpt": "This Surah is called Nun as well as Qalam, the words with which it begins."
+          },
+          {
+            "name": "Tafsirq (tafsirq.com)",
+            "url": "https://tafsirq.com/en/tilawah/68-al-qalam",
+            "type": "repository",
+            "excerpt": "Tilawah Al-Qalam (The Pen)"
+          }
+        ]
+      },
+      {
+        "claim": "The surah reassures the Prophet, highly praises his character, and urges steadfastness against compromise with the deniers (including the parable of the owners of the garden).",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=68",
+            "type": "scholarly",
+            "excerpt": "In this Meccan sûrah, the Prophet's heart is reassured and his character is highly praised. He (peace be upon him) is advised to be steadfast and not to yield to the pagans who reject his message and call him insane."
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://iium.edu.my/deed/quran/intro/i068.html",
+            "type": "scholarly",
+            "excerpt": "It consists of three themes: Replies to the opponents objections, administration of warning and admonition to them, and exhortation to the Holy Prophet (upon whom be peace) to patience and constancy. At the outset, the Holy Prophet has been addressed, to the effect: 'The disbelievers call you a madman whereas the Book that you are presenting and the sublime conduct that you practise, are by themselves sufficient to refute their false accusations. ... do not at all yield to the din of opposition being kicked up against you, for all this is actually meant to cow you and make you resort to a compromise with them.' ... Then, in vv. 17-33, the parable of the owners of a garden has been presented..."
+          }
+        ]
+      },
+      {
+        "claim": "Verses 17-33 and 48-50 are reported by early commentators to be from Medina.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Tanzil revelation order table",
+            "url": "https://tanzil.net/docs/revelation_order",
+            "type": "repository",
+            "excerpt": "Al-Qalam | 68 | Meccan | Except 17-33 and 48-50, from Medina"
+          },
+          {
+            "name": "The Study Quran (Seyyed Hossein Nasr, HarperOne) via sanawema.com",
+            "url": "https://sanawema.com/068-al-qalam-2/",
+            "type": "scholarly",
+            "excerpt": "It is reported that the early commentators Ibn ʿAbbās and al-Qatādah (d. 117/726) maintained that vv. 1–16, 34–47, and 51–52 are Makkan, while vv. 17–33 and 48–50 are Madinan."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Tafsirq (tafsirq.com)"],
+      "2": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Maududi, Tafhim al-Qur'an (via IIUM deed site)", "Tafsirq (tafsirq.com)"],
+      "4": ["The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "5": ["Tanzil revelation order table", "The Study Quran (Seyyed Hossein Nasr, HarperOne) via sanawema.com"]
+    },
+    "draft_en": "Surah Al-Qalam ('The Pen') is a Meccan surah of 52 verses. It opens with an oath by the pen, reassures the Prophet, and praises his outstanding character.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED (Clear Quran + Maududi's own IIUM-hosted 'Chapter Introductions' page, independent of Khattab). Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claims 3 and 4 (VERIFIED). Shared-provenance disclosure for claim 5: Tanzil's table and The Study Quran both ultimately report the same early-commentator tradition (Ibn Abbas / al-Qatadah); the claim is worded as attesting that the report exists, and a third attestation (2025 Meybod University paper, Journal of Ketab-e Qayyem vol.15 no.2 — itself dissenting from the view) further confirms the report's existence. The verse nuance is deliberately kept out of the draft as intro-level detail, not because it is unverified. All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 76,
+    "claims": [
+      {
+        "claim": "Al-Insan means 'Man'/'Humankind'; the surah is also called Ad-Dahr ('Time').",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://dn790002.ca.archive.org/0/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/076%20-%20Al-Insan%20%28%20Man%20%29.pdf",
+            "type": "scholarly",
+            "excerpt": "This Surah is called Ad-Dahr as well as Al-Insan after the words occurring in the first verse. (page title: '76. Surah Al Insan (Man), also known as Surah Ad Dahr (Time)')"
+          },
+          {
+            "name": "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey",
+            "url": "https://www.islamreligion.com/article/pdf/11379",
+            "type": "scholarly",
+            "excerpt": "CHAPTER 76, AL-INSAN (HUMANKIND) ... it is sometimes referred to as Time (Ad-Dhar)."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via al-islam.org)",
+            "url": "https://al-islam.org/es/node/29791",
+            "type": "scholarly",
+            "excerpt": "(The Arabic meaning of 'Insan' is 'Human'.) There are different titles for this Surah; the most famous are 'MAN' (Insan), 'TIME' (Dahr) and 'HAS THERE COME' (Hal-ata) each of which is taken from one of the words at the beginning of the Surah."
+          }
+        ]
+      },
+      {
+        "claim": "Place of revelation is genuinely disputed: Maududi documents a majority-Makki classical position; the Enlightening Commentary records a Medinan consensus (citing Qurtubi); IslamReligion.com records both views.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://dn790002.ca.archive.org/0/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/076%20-%20Al-Insan%20%28%20Man%20%29.pdf",
+            "type": "scholarly",
+            "excerpt": "Most of the commentators, including Allama Zamakhshari, Imam Razi, Qadi, Baidawi, Allama Nizam ad-Din Nisaburi, Hafiz Ibn Kathir and many others, regard it as a Makki Surah, and, according to Allama Alusi, the same is the opinion of the majority of scholars. However, some commentators hold the view that the Surah was revealed at Madinah, and some others say that it was revealed at Makkah but vv. 8-10 of it were sent down at Madinah."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via al-islam.org)",
+            "url": "https://al-islam.org/es/node/29791",
+            "type": "scholarly",
+            "excerpt": "The consensus of scholars and commentators is that all or at least part of the beginning verses, which explain the position or dignity of the Righteous and their good deeds, were revealed in Medina. From among the famous scholars, we can mention Qartabi the well-known commentator who points out: 'The consensus of scholars believe that the Surah has [been revealed in Medina]'."
+          },
+          {
+            "name": "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey",
+            "url": "https://www.islamreligion.com/article/pdf/11379",
+            "type": "scholarly",
+            "excerpt": "It is generally accepted that it was revealed in Mecca, however, there is some scholarly debate and many scholars believe that the chapter was revealed in Madina. There are even suggestions that part of it was revealed in Medina whilst the majority was revealed in Mecca."
+          }
+        ]
+      },
+      {
+        "claim": "Surah Al-Insan consists of 31 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey",
+            "url": "https://www.islamreligion.com/article/pdf/11379",
+            "type": "scholarly",
+            "excerpt": "This is a thirtyone verse chapter."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via alhassanain.org mirror)",
+            "url": "http://alhassanain.org/english/?com=book&id=936",
+            "type": "scholarly",
+            "excerpt": "Surah al-Insan Chapter 76 (Human) ... Number of Verses: 31"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is to inform humankind of their true position in the world: those who adopt an attitude of gratefulness will meet a good end, while those who take the way of disbelief will meet an evil end.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://dn790002.ca.archive.org/0/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/076%20-%20Al-Insan%20%28%20Man%20%29.pdf",
+            "type": "scholarly",
+            "excerpt": "The theme of this Surah is to inform man of his true position in the world and to tell him that if he understood his true position rightly and adopted the attitude of gratefulness, he would meet with such and such good end, and if he adopted the way of disbelief, he would meet with such and such evil ends."
+          },
+          {
+            "name": "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey",
+            "url": "https://www.islamreligion.com/article/pdf/11379",
+            "type": "scholarly",
+            "excerpt": "The theme of the chapter is to inform humankind of their true position in the world and suggests that he (each human being) should adopt an attitude of gratefulness. After addressing humankind, the chapter goes on to describe Paradise in great detail contrasting the end results for both the evildoers and the righteous."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey", "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via al-islam.org)"],
+      "2": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via al-islam.org)", "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey"],
+      "3": ["IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey", "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via alhassanain.org mirror)"],
+      "4": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "IslamReligion.com - Chapter 76, Al-Insan (Humankind), Aisha Stacey"]
+    },
+    "draft_en": "Al-Insan (Man) consists of 31 verses. Its theme is to inform humankind of their true position in the world: those who adopt an attitude of gratefulness will meet a good end, while those who take the way of disbelief will meet an evil end.",
+    "class": "C",
+    "notes": "Draft sentence 1 uses claims 1 and 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED). No revelation-place assertion: claim 2 is a genuine scholarly conflict (Maududi documents majority-Makki classical authorities vs Medinan view; Enlightening Commentary asserts Medinan consensus citing Qurtubi; IslamReligion records both). Wikipedia was fully removed from the evidence (was present for name/verse count in the prior packet); the alternate name 'Hal-Ata' could not be corroborated by a second acceptable source this round and is excluded from the claim. Shared-provenance disclosures: the archive.org PDF is a mirror of Maududi's Tafhim (same provenance as the IIUM deed version, not an independent source); the alhassanain.org page is the same Enlightening Commentary text as on al-islam.org (one provenance). Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 2 is CONFLICTING."
+  },
+  {
+    "surah_number": 83,
+    "claims": [
+      {
+        "claim": "Surah 83 is named Al-Mutaffifin, meaning 'those who give short measure or weight' (the defrauders).",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/83/index.html",
+            "type": "scholarly",
+            "excerpt": "It is derived from the very first verse; Wayl-ul-lil mutaffifin. (page title: '83. Surah Al Mutaffifin (Those Who Deal in Fraud)')"
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=83",
+            "type": "scholarly",
+            "excerpt": "The word mutaffifin 'those who give short measure or weight' is derived from Tatfif 'to give short measure or short weight'."
+          }
+        ]
+      },
+      {
+        "claim": "Surah Al-Mutaffifin consists of 36 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/al-mutaffifin",
+            "type": "repository",
+            "excerpt": "Read and listen to the full Surah Al-Mutaffifin (Chapter 83), consisting of 36 verses."
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=83",
+            "type": "scholarly",
+            "excerpt": "Surah Al-Mutaffifin 83:1-36"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is the Hereafter: it warns those who defraud in measure and weight of the coming Day, contrasts the recorded deeds of the wicked (Sijjin) with the reward of the righteous (Illiyyin), and closes with the believers vindicated over the disbelievers who mocked them.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/83/index.html",
+            "type": "scholarly",
+            "excerpt": "The theme of this Surah too is the Hereafter. In the first six verses the people have been taken to task for the prevalent evil practice in their commercial dealings... in vv. 7-17, it has been said: The deeds of the wicked are already being recorded in the black list of the culprits, and in the Hereafter they will meet with utter ruin. Then in vv. 18-28, the best end of the virtuous has been described... In conclusion, the believers have been consoled, and the disbelievers warned, as if to say: 'The people who are disgracing and humiliating the believers today, are culprits who, on the Resurrection Day, will meet with a most evil end in consequence of their conduct, and these very believers will feel comforted when they see their fate.'"
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=83",
+            "type": "scholarly",
+            "excerpt": "This Meccan sûrah begins with a warning to those who defraud scales about the horrible Day ahead, where the wicked will be severely punished and the virtuous will be richly rewarded. The sûrah closes by stating that the disbelievers will be paid back for making fun of the believers."
+          }
+        ]
+      },
+      {
+        "claim": "Place of revelation is genuinely disputed: Maududi argues earliest-Makki while documenting a Madani view; Maariful Quran documents Makki authorities (Ibn Masud and most mushaf copies) and Madani authorities (Ibn Abbas, Qatadah, Muqatil, Dahhak, with a Nasa'i/Ibn Majah narration); the Enlightening Commentary states opinions are divided.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/83/index.html",
+            "type": "scholarly",
+            "excerpt": "The style of the Surah and its subject matter clearly show that it was revealed in the earliest stage at Makkah... Some commentators regard this as a Madani Surah. This misunderstanding has been caused by a tradition from Ibn Abbas according to which when the Holy Prophet (upon whom be peace) arrived in Madinah, the evil of giving short weight and measure was widespread among the people there. Then Allah sent down Wayl ul-lil mutaffifin... (Nasa'i, Ibn Majah, Ibn Marduyah, Ibn Jarir, Baihaqi: Shu'ab-il-Iman)"
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=83",
+            "type": "scholarly",
+            "excerpt": "According to Sayyidna 'Abdullah Ibn Masud, Surah Tatfif was revealed in Makkah. Therefore, most of the copies of the Qur'an refer to it as the Makki Surah. According to Sayyidna Ibn 'Abbas, Qatadah, Muqatil and Dahhak, it is a Madani Surah... Imam Nasa'i transmits a narrative from Sayyidna Ibn 'Abbas that when the Holy Prophet arrived in Madinah, the people of Madinah... used to cheat and short measure. For this reason, Allah revealed the Surah. It is reported from Sayyidna Ibn 'Abbas that this is the first Surah that was revealed as soon as the Holy Prophet arrived at Madinah. (Reported by Hakim, Nasa'i, and Ibn Majah, with sound chain of narrators)"
+          },
+          {
+            "name": "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 19",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-19/surah-mutaffifin-chapter-83",
+            "type": "scholarly",
+            "excerpt": "Opinions are divided about this Surah on whether it is a Meccan Surah or a Medinan one... some commentators consider a part of the Surah Meccan and another part of it belonging to the Medina period. But, on the whole, this Surah seems chronologically close to the Meccan period."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info"],
+      "2": ["Quran.com", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"],
+      "3": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"],
+      "4": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info", "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 19"]
+    },
+    "draft_en": "Al-Mutaffifin (The Defrauders) is the 83rd surah of the Quran, consisting of 36 verses. Its theme is the Hereafter: it warns those who defraud in measure and weight of the coming Day, contrasts the recorded deeds of the wicked with the reward of the righteous, and closes with the believers vindicated over the disbelievers who mocked them.",
+    "class": "C",
+    "notes": "Draft sentence 1 uses claims 1 and 2 (VERIFIED); sentence 2 uses claim 3 (VERIFIED, upgraded from UNVERIFIED via the Clear Quran intro as second independent source). No revelation-place assertion: claim 4 is a genuine dispute (Makki per Ibn Masud + most mushaf copies + Maududi; Madani per Ibn Abbas/Qatadah/Muqatil/Dahhak with a sound-chain Nasa'i/Ibn Majah narration; Enlightening Commentary: opinions divided). Wikipedia was fully removed from the evidence; English glosses vary across sources ('The Defrauding', 'Those Who Deal in Fraud', 'those who defraud scales') — the draft keeps the prior verified gloss 'The Defrauders'. The Clear Quran intro's 'Meccan' label is that source's own position in the dispute, not drafted. Shared-provenance disclosure: searchtruth.com is a mirror of Maududi's Tafhim (same provenance as the IIUM deed version). Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 4 is CONFLICTING."
+  },
+  {
+    "surah_number": 91,
+    "claims": [
+      {
+        "claim": "Surah 91 is named Ash-Shams, after the word with which it opens, rendered 'The Sun'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/91",
+            "type": "repository",
+            "excerpt": "Surah Ash-Shams ... The Sun"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i091.html",
+            "type": "scholarly",
+            "excerpt": "The Sura has been so designated after the word Ash-shams with which it opens."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 91 was revealed in Makkah, in the earliest period.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/91",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i091.html",
+            "type": "scholarly",
+            "excerpt": "revealed in the earliest period at Makkah"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 91 consists of 15 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/91",
+            "type": "repository",
+            "excerpt": "consisting of 15 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=91",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-15"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is distinguishing good from evil and warning those who insist on the evil way of its evil end; people have free choice to purify or corrupt their souls — those who choose purity will succeed, those who choose corruption will be destroyed, as the fate of Thamud illustrates.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i091.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is to distinguish the good from the evil and to warn the people, who were refusing to understand this distinction and insisting on following the evil way, of the evil end."
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://www.islamicstudies.info/quran/theclearquran.php?sura=91&verse=1&to=15",
+            "type": "scholarly",
+            "excerpt": "This Meccan sûrah states that people have free choice to purify or corrupt their souls. Those who choose purity will be successful, and those who choose corruption will be destroyed like the people of Thamûd."
+          },
+          {
+            "name": "IslamReligion.com - Chapter 91, Ash-Shams (Sun), Aisha Stacey (corroborating)",
+            "url": "http://www.islamreligion.com/articles/11337/chapter-91-ash-shams-sun",
+            "type": "scholarly",
+            "excerpt": "The central theme of this chapter is the choice between purifying or corrupting the soul, and the nation of Thamud is used as an example of corruption."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info", "IslamReligion.com - Chapter 91, Ash-Shams (Sun), Aisha Stacey (corroborating)"]
+    },
+    "draft_en": "Ash-Shams (The Sun) is a Meccan surah consisting of 15 verses. It distinguishes good from evil, teaching that whoever purifies his soul will succeed, while whoever corrupts it will fail — as the fate of Thamud illustrates.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED via The Clear Quran intro as a second independent source (Maududi d.1979 vs Khattab contemporary — different authorship and phrasing), with IslamReligion's named-author summary as third corroboration. Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED). All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 92,
+    "claims": [
+      {
+        "claim": "Surah 92 is named Al-Lail, after the word wal-lail with which it opens, rendered 'The Night'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/92",
+            "type": "repository",
+            "excerpt": "Surah Al-Layl ... The Night"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i092.html",
+            "type": "scholarly",
+            "excerpt": "The Sura takes its name from the word wal-lail with which it opens."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 92 was revealed in Makkah, in about the same (earliest) period as Surah 91.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/92",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i092.html",
+            "type": "scholarly",
+            "excerpt": "both these Surahs were sent down in about the same period"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 92 consists of 21 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/92",
+            "type": "repository",
+            "excerpt": "consisting of 21 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=92",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-21"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is distinguishing the two ways of life and explaining the contrast between their ultimate ends and results.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i092.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is to distinguish between the two different ways of life and to explain the contrast between their ultimate ends and results."
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=92",
+            "type": "scholarly",
+            "excerpt": "This Meccan sûrah emphasizes Allah's power to create and show the Way, the people's ability to choose between good and evil, and the consequences of each route."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"]
+    },
+    "draft_en": "Al-Lail (The Night) is a Meccan surah consisting of 21 verses. It distinguishes the two ways of life and explains the contrast between their ultimate ends.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED via The Clear Quran intro (independent of Maududi). Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED), trimmed during assembly to the exact verified claim wording ('distinguishing the two ways of life and explaining the contrast between their ultimate ends') rather than an un-sourced characterization of the two ways. Shared-provenance disclosure: quranguide.info/archive.org PDFs of Tafhim are the same Maududi work as the IIUM deed version — one source, not several. All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 93,
+    "claims": [
+      {
+        "claim": "Surah 93 takes its name Ad-Duha from its very first word, rendered 'The Morning Hours'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/93",
+            "type": "repository",
+            "excerpt": "Surah Ad-Duhaa ... The Morning Hours"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i093.html",
+            "type": "scholarly",
+            "excerpt": "The Sura takes its name Ad-Duha from the very first word."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 93 was revealed at Makkah in the earliest period.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/93",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i093.html",
+            "type": "scholarly",
+            "excerpt": "belongs to the earliest period at Makkah"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 93 consists of 11 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/93",
+            "type": "repository",
+            "excerpt": "consisting of 11 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=93",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-11"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is consoling the Prophet and removing his anxiety and distress caused by the suspension of Revelation.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i093.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is to console the Holy Prophet (upon whom be peace) and its object to remove his anxiety and distress, which he had been caused by the suspension of Revelation."
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://www.islamicstudies.info/quran/theclearquran.php?sura=93",
+            "type": "scholarly",
+            "excerpt": "It is reported that the revelation stopped for a while after the initial sûrahs of the Quran, so some Meccan pagans started to mock the Prophet (peace be upon him), saying that Allah has become neglectful and hateful of him (peace be upon him). Therefore, this Meccan sûrah was revealed to refute their false allegations and remind the Prophet (peace be upon him) of some of Allah's favours."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"]
+    },
+    "draft_en": "Ad-Duha (The Morning Hours) is a Meccan surah consisting of 11 verses. It consoles the Prophet after the suspension of revelation, assuring him that his Lord has not forsaken him.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED via The Clear Quran intro (independent of Maududi: 'sent down to console the Holy Prophet' vs 'revealed to refute their false allegations and remind the Prophet of Allah's favours'). Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED), with the closing clause echoing the surah's own verse 93:3 (canonical text, not an invented claim). All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 94,
+    "claims": [
+      {
+        "claim": "Surah 94 is titled Ash-Sharh (also called Al-Inshirah), named after its opening words.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/94",
+            "type": "repository",
+            "excerpt": "Surah Ash-Sharh"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i094.html",
+            "type": "scholarly",
+            "excerpt": "The Sura is so designated after the first sentence."
+          },
+          {
+            "name": "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)",
+            "url": "https://quran.com/surah/94/info",
+            "type": "scholarly",
+            "excerpt": "The surah is known variously as 'Sūrat al-Sharḥ' or 'Sūrat al-Inshirāḥ' (The Relief/Expansion)"
+          }
+        ]
+      },
+      {
+        "claim": "The title is rendered 'The Relief' in English.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com Surah Info (Sahih International naming)",
+            "url": "https://quran.com/surah/94/info",
+            "type": "repository",
+            "excerpt": "The surah is known variously as 'Sūrat al-Sharḥ' or 'Sūrat al-Inshirāḥ' (The Relief/Expansion)"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 94 was sent down in Makkah, just after Surah Ad-Duha.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/94",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i094.html",
+            "type": "scholarly",
+            "excerpt": "According to Hadrat Abdullah bin Abbas, it was sent down in Makkah just after wad-Duha."
+          },
+          {
+            "name": "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)",
+            "url": "https://quran.com/surah/94/info",
+            "type": "scholarly",
+            "excerpt": "Chronology: It is counted as the 12th surah in the order of revelation, revealed immediately after Sūrat al-Ḍuḥā"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 94 consists of 8 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/94",
+            "type": "repository",
+            "excerpt": "consisting of 8 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=94",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-8"
+          },
+          {
+            "name": "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)",
+            "url": "https://quran.com/surah/94/info",
+            "type": "scholarly",
+            "excerpt": "Ayah Count: 8 ayahs"
+          }
+        ]
+      },
+      {
+        "claim": "Its aim is consoling and encouraging the Messenger.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via islamicstudies.info)",
+            "url": "https://www.islamicstudies.info/quran/towards.php?sura=94",
+            "type": "scholarly",
+            "excerpt": "While he faced hostility all around him, Allah consoled him, reminding him of His many favours. This assurance is repeated twice in order to comfort the Prophet (peace be upon him) that the present difficult phase will not last long."
+          },
+          {
+            "name": "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)",
+            "url": "https://quran.com/surah/94/info",
+            "type": "scholarly",
+            "excerpt": "This Makkan surah is an affirmation and consolation to the Prophet (peace be upon him) during his persecution. It came to provide further support and spiritual encouragement to the Prophet (peace be upon him) by reminding him of the divine graces already conferred upon him."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)", "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)"],
+      "2": ["Quran.com Surah Info (Sahih International naming)"],
+      "3": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)", "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)"],
+      "4": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)", "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)"],
+      "5": ["Maududi, Tafhim al-Qur'an (via islamicstudies.info)", "Quran.com Surah Info (adapted from Tafsir Ibn Ashur)"]
+    },
+    "draft_en": "Ash-Sharh (also called Al-Inshirah) is a Meccan surah consisting of 8 verses. It consoles and encourages the Messenger, assuring him that with hardship comes ease.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED via quran.com's Ibn Ashur-adapted Surah Info as a second independent source (Ibn Ashur's classical Tafsir al-Tahrir wa al-Tanwir vs Maududi's modern Tafhim — independent scholarship). Draft sentence 1 uses claims 1, 3, 4 (VERIFIED); sentence 2 uses claim 5 (VERIFIED), with the closing clause echoing the surah's own repeated verses 94:5-6 (canonical text, not an invented claim). Claim 2 ('The Relief' rendering) stays PARTIALLY_VERIFIED and is deliberately EXCLUDED from the draft: only quran.com/Sahih International renders it so; The Clear Quran renders the title 'Uplifting the Heart', Maududi titles it 'Inshiraah', and Al-Islam.org's Illuminating Lantern renders 'The opening-up' — so 'The Relief' is not the consensus scholarly rendering. All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 95,
+    "claims": [
+      {
+        "claim": "Surah 95 is named At-Tin, after its very first word, rendered 'The Fig'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/95",
+            "type": "repository",
+            "excerpt": "Surah At-Tin ... The Fig"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i095.html",
+            "type": "scholarly",
+            "excerpt": "The Sura has been so named after the very First word at-tin."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 95 is a Makki revelation according to the majority of scholars; a minority view (Qatadah, and one of two reports from Ibn Abbas) holds it Madani.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/95",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i095.html",
+            "type": "scholarly",
+            "excerpt": "the majority of scholars regard it as a Makki revelation (Qatadah, and one of two reports from Ibn Abbas, hold it Madani)"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 95 consists of 8 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/95",
+            "type": "repository",
+            "excerpt": "consisting of 8 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=95",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-8"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is the rewards and punishments of the Hereafter.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i095.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is the rewards and punishments of the Hereafter."
+          },
+          {
+            "name": "The Illuminating Lantern (Habib al-Kazimi), Al-Islam.org",
+            "url": "https://al-islam.org/id/illuminating-lantern-exposition-subtleties-quran-part-thirty-habib-al-kazimi/surah-tin-no-95-fig",
+            "type": "scholarly",
+            "excerpt": "Sometimes, Allah summarizes all the goals of a surah in a single sentence. We can identify a possible instance of this in the verse: 'Is not Allah the fairest of all judges?' (at-Tin, 95:8). As if to say that the only conclusion to be drawn from everything that has been said in this surah, namely the magnificence of the material realm, choosing some persons as prophets, while reducing others to the lowest states, the promise of never-ending rewards and the threat of retribution for the denier, all of that springs from Allah's absolute authority over everything in existence."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "The Illuminating Lantern (Habib al-Kazimi), Al-Islam.org"]
+    },
+    "draft_en": "At-Tin (The Fig) is a Meccan surah consisting of 8 verses. Its theme is the rewards and punishments of the Hereafter.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED: the second source (Kazimi's Illuminating Lantern) is fully independent of Maududi (Shia scholarly commentary vs Sunni Tafhim). Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED). The documented minority Madani view (Qatadah; one Ibn Abbas report) is preserved in claim 2 but the draft follows the majority position attested by >=2 independent sources (quran.com + Maududi). Note: the Kazimi page served English content under an /id/ language-prefixed al-islam.org URL; excerpt taken as fetched. All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 97,
+    "claims": [
+      {
+        "claim": "Surah 97 is designated Al-Qadr, after the word in its very first verse, rendered 'The Power'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/97",
+            "type": "repository",
+            "excerpt": "Surah Al-Qadr ... The Power"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i097.html",
+            "type": "scholarly",
+            "excerpt": "The Sura has been so designated after the word al-qadr in the very first verse."
+          }
+        ]
+      },
+      {
+        "claim": "Whether Surah 97 is a Makki or a Madani revelation is disputed, with named authorities on both sides.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/97/index.html",
+            "type": "scholarly",
+            "excerpt": "Whether it is a Makki or a Madani revelation is disputed. Abu Hayyan in Al-Bahr al-Muhti has made the claim that the majority of scholars regard it as a Madani Surah. Ali bin Ahmad al-Wahidi in his commentary says that this is the first Surah to be sent down in Madinah. Contrary to this, Al Mawardi says that according to the majority of scholars it is a Makki revelation, and the same view has Imam Suyuti expressed in Al-Itqan. Ibn Mardayah has cited Ibn Abbas, Ibn Az Zubair and Hadrat Aishah as saying that this Surah was revealed at Makkah."
+          },
+          {
+            "name": "Quran.com",
+            "url": "http://quran.com/al-qadr",
+            "type": "repository",
+            "excerpt": "Read and listen to the full Surah Al-Qadr (Chapter 97), consisting of 5 verses. Revealed in Mecca (Juz 30)"
+          },
+          {
+            "name": "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-20/surah-qadr-chapter-97",
+            "type": "scholarly",
+            "excerpt": "the Surah is known as Meccan"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 97 consists of 5 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "http://quran.com/al-qadr",
+            "type": "repository",
+            "excerpt": "Read and listen to the full Surah Al-Qadr (Chapter 97), consisting of 5 verses. Revealed in Mecca (Juz 30)"
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=97",
+            "type": "scholarly",
+            "excerpt": "Surah Al-Qadr 97:1-5"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is to acquaint man with the value, worth and importance of the Quran, revealed on the Night of Decree.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/97/index.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is to acquaint man with the value, worth and importance of the Quran. Its being placed just after Surah Al-Alaq in the arrangement of the Quran by itself explains that the Holy Book, the revelation of which began with the first five verses of Surah Al-Alaq, was sent down in a destiny making night. It is a glorious Book and its revelation for mankind is full of blessings."
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=97",
+            "type": "scholarly",
+            "excerpt": "this Meccan sûrah celebrates the glorious night the Quran was revealed"
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "Quran.com", "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an"],
+      "3": ["Quran.com", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"],
+      "4": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"]
+    },
+    "draft_en": "Al-Qadr (The Power) is a surah consisting of 5 verses. Its theme is to acquaint man with the value, worth and importance of the Quran, revealed on the Night of Decree.",
+    "class": "C",
+    "notes": "Draft sentence 1 uses claims 1 and 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED, upgraded from PARTIALLY_VERIFIED via the Clear Quran intro). No revelation-place assertion: claim 2 is a genuine dispute — Maududi himself documents both sides claiming the majority (Abu Hayyan/Wahidi: majority-Madani vs Mawardi/Suyuti/Ibn Abbas-Ibn Zubair-Aishah: Makki); quran.com and the Enlightening Commentary label it Meccan. The Clear Quran intro's 'Meccan' label is that source's own position in the dispute, not drafted. Shared-provenance disclosure: searchtruth.com is a mirror of Maududi's Tafhim (same provenance as the IIUM deed version). Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 2 is CONFLICTING."
+  },
+  {
+    "surah_number": 98,
+    "claims": [
+      {
+        "claim": "Surah 98 is designated Al-Bayyinah, after the word at the end of its first verse, rendered 'The Clear Proof'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/98",
+            "type": "repository",
+            "excerpt": "Surah Al-Bayyinah ... The Clear Proof"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i098.html",
+            "type": "scholarly",
+            "excerpt": "The Sura is so designated after the word al-bayyinah occurring at the end of the first verse."
+          },
+          {
+            "name": "m.qurano.com (corroborating)",
+            "url": "https://m.qurano.com/en/98-al-bayyina/",
+            "type": "repository",
+            "excerpt": "Surah Title: The Clear Proof"
+          }
+        ]
+      },
+      {
+        "claim": "Whether Surah 98 was revealed at Makkah or Madinah is disputed.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/98/index.html",
+            "type": "scholarly",
+            "excerpt": "Where it was revealed, at Makkah or Madinah, is also disputed. Some commentators say it is a Makki revelation according to most scholars; others say it is a Madani revelation according to most scholars. Ibn Az Zubair and Ata bin Yasar hold the view that it is Madani. Ibn Abbas and Qatadah are reported to have held two views, first that it is Makki, second that it is Madani. Hadrat Aishah regards it as a Makki Surah. Abu Hayyan, author of Bahr al-Muhit, and Abdul Munim ibn al-Faras, author of Ahkam al-Quran, also have preferred to regard it as Makki. As for its contents, there is nothing in it to indicate whether it was revealed at Makkah or at Madinah."
+          },
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/98",
+            "type": "repository",
+            "excerpt": "Revealed in Medina"
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=98&verse=1&to=8",
+            "type": "scholarly",
+            "excerpt": "According to this Medinian sûrah, the Prophet (peace be upon him) was sent so the disbelievers may change their ways and devote their worship to Allah alone."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 98 consists of 8 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Islamway.net",
+            "url": "https://en.islamway.net/quran/chapter/98/al-bayyinah-the-clear-evidence?media=&view=rates&page=4&lid=7285&lrank=2005-03-23%2000:00:00",
+            "type": "repository",
+            "excerpt": "Medinan | Verses count: 8"
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=98&verse=1&to=8",
+            "type": "scholarly",
+            "excerpt": "Surah Al-Bayyinah 98:1-8"
+          }
+        ]
+      },
+      {
+        "claim": "The surah explains why a Messenger had to be sent as the clear proof with the Book in pristine form: those who believe and act righteously are the best of creatures, promised eternal Paradise, while those who refuse the Messenger are the worst of creatures, facing everlasting Hell.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via doortodeen.com mirror)",
+            "url": "https://doortodeen.com/quran/98-surah-al-bayyinah-the-clear-evidence/",
+            "type": "scholarly",
+            "excerpt": "in this Surah it has been explained why it was necessary to send a Messenger along with this Holy Book. First of all the need of sending a Messenger has been explained, saying: The people of the world, be they from among the followers of the earlier scriptures or from among the idolaters, could not possibly be freed from their state of unbelief, until a Messenger was sent whose appearance by itself should be a clear proof of his apostleship, and he should present the Book of God before the people in its original, pristine form."
+          },
+          {
+            "name": "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/theclearquran.php?sura=98&verse=1&to=8",
+            "type": "scholarly",
+            "excerpt": "According to this Medinian sûrah, the Prophet (peace be upon him) was sent so the disbelievers may change their ways and devote their worship to Allah alone. Those who believe are promised a great reward, whereas those who persist in disbelief are warned of a horrible punishment."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)", "m.qurano.com (corroborating)"],
+      "2": ["Maududi, Tafhim al-Qur'an (via searchtruth.com mirror)", "Quran.com", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"],
+      "3": ["Islamway.net", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"],
+      "4": ["Maududi, Tafhim al-Qur'an (via doortodeen.com mirror)", "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"]
+    },
+    "draft_en": "Al-Bayyinah (The Clear Proof) is a surah consisting of 8 verses. It explains why a Messenger was sent as the clear proof with the Book in pristine form: those who believe and do righteous deeds are the best of creatures, promised Gardens of Eternity, while those who persist in disbelief are the worst of creatures, warned of everlasting Hell.",
+    "class": "C",
+    "notes": "Prior draft kept unchanged — all its claims were already VERIFIED and were re-corroborated this round. No revelation-place assertion: claim 2 is a genuine dispute (Maududi: contents settle nothing, authorities split; quran.com and the Clear Quran label it Medinan). Shared-provenance disclosure: the doortodeen.com page is a mirror of Maududi's Tafhim (same provenance as the searchtruth/IIUM versions); the second theme source is the genuinely independent Clear Quran intro. The 'Medinian' label in the Clear Quran theme quote is that source's position in the dispute, not drafted. Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 2 is CONFLICTING."
+  },
+  {
+    "surah_number": 99,
+    "claims": [
+      {
+        "claim": "Surah 99 takes its name from the word zilzal in its first verse, rendered 'The Earthquake'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://ia601402.us.archive.org/32/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/099%20-%20Az-Zalzalah%20(%20The%20Earthquake%20).pdf",
+            "type": "scholarly",
+            "excerpt": "(page title: '99. Surah Az Zalzala (The Earthquake)')"
+          },
+          {
+            "name": "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey",
+            "url": "https://webcache001.islamreligion.com/article/pdf/10776",
+            "type": "scholarly",
+            "excerpt": "CHAPTER 99, AZ-ZALZALAH (THE EARTHQUAKE)"
+          }
+        ]
+      },
+      {
+        "claim": "Surah 99 consists of 8 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey",
+            "url": "https://webcache001.islamreligion.com/article/pdf/10776",
+            "type": "scholarly",
+            "excerpt": "(article structured as 'Verses 1-3', 'Verses 4 and 5', 'Verses 6-8')"
+          },
+          {
+            "name": "The Clear Quran, Mustafa Khattab (clearquran.com)",
+            "url": "https://www.clearquran.com/099.html",
+            "type": "scholarly",
+            "excerpt": "Quran Chapter 99 in English. The Quake. az-Zalzalah. (verses 1–8 listed in full)"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is the second life after death and the presentation before man of the full record of his deeds.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://ia601402.us.archive.org/32/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/099%20-%20Az-Zalzalah%20(%20The%20Earthquake%20).pdf",
+            "type": "scholarly",
+            "excerpt": "Its theme is the second life after death and presentation in it before man of the full record of the deeds done by him in the world."
+          },
+          {
+            "name": "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey",
+            "url": "https://webcache001.islamreligion.com/article/pdf/10776",
+            "type": "scholarly",
+            "excerpt": "the earth will cast out, as if it were a video recording, a record of all the deeds and actions that have taken place throughout its history. ... Every single thing and every single person's deeds and actions will be laid bare. ... they go to where they will be confronted with their deeds, both the good and the bad."
+          }
+        ]
+      },
+      {
+        "claim": "Its revelation place is disputed: Makki according to Ibn Masud, Ata, Jabir, Mujahid and one report from Ibn Abbas; Madani according to Qatadah, Muqatil and another report from Ibn Abbas.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://ia601402.us.archive.org/32/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/099%20-%20Az-Zalzalah%20(%20The%20Earthquake%20).pdf",
+            "type": "scholarly",
+            "excerpt": "In the absence of this tradition every reader who reads the Qur'an with understanding will feel that it is a Makki Surah. More than that: from its theme and style he would feel that it must have been sent down in the earliest stage at Makkah when the fundamental principles and beliefs of Islam were being presented before the people in a concise but highly effective way. (Prior packet documented the named authorities from Maududi IIUM i099: Makki per Ibn Masud, Ata, Jabir, Mujahid and one Ibn Abbas report; Madani per Qatadah, Muqatil and another Ibn Abbas report.)"
+          },
+          {
+            "name": "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey",
+            "url": "https://webcache001.islamreligion.com/article/pdf/10776",
+            "type": "scholarly",
+            "excerpt": "There is some scholarly dispute about whether this chapter was revealed in Mecca or Medina."
+          },
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/99",
+            "type": "repository",
+            "excerpt": "Revealed in Medina"
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey"],
+      "2": ["IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey", "The Clear Quran, Mustafa Khattab (clearquran.com)"],
+      "3": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey"],
+      "4": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "IslamReligion.com - Chapter 99, Az-Zalzalah (The Earthquake), Aisha Stacey", "Quran.com"]
+    },
+    "draft_en": "Az-Zalzalah (The Earthquake) is a surah consisting of 8 verses. Its theme is the second life after death, when man will be presented with the full record of his deeds.",
+    "class": "C",
+    "notes": "Draft sentence 1 uses claims 1 and 2 (VERIFIED); sentence 2 uses claim 3 (VERIFIED, upgraded from PARTIALLY_VERIFIED via the IslamReligion chapter-99 article as second independent source). No revelation-place assertion: claim 4 is a genuine dispute (Makki: Ibn Masud, Ata, Jabir, Mujahid, one Ibn Abbas report; Madani: Qatadah, Muqatil, another Ibn Abbas report; quran.com labels it Medinan). No Wikipedia was used for this surah's claims. The archive.org PDF is a Maududi Tafhim mirror (shared provenance with searchtruth/IIUM versions). Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 4 is CONFLICTING."
+  },
+  {
+    "surah_number": 100,
+    "claims": [
+      {
+        "claim": "Surah 100 is entitled Al-Adiyat, after the word with which it opens, rendered 'The Courser'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/100",
+            "type": "repository",
+            "excerpt": "Surah Al-'Adiyat ... The Courser"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i100.html",
+            "type": "scholarly",
+            "excerpt": "The Sura has been so entitled after the word al adiyat with which it opens."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 100 is a Makki surah, revealed in the earliest stage at Makkah (Ibn Masud, Jabir, Hasan Basri, Ikrimah, Ata); Anas and Qatadah held it Madani.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/100",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i100.html",
+            "type": "scholarly",
+            "excerpt": "Though according to Hadrat Ibn Masud, Jabir, Hasan Basri, Ikrimah and Ata, it is a Makki Surah, yet, according to Hadrat Anas and Qatadah it is Madani. However, the subject matter of the Surah and its style clearly indicate that it is not only Makki but was revealed in the earliest stage at Makkah."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 100 consists of 11 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/100",
+            "type": "repository",
+            "excerpt": "consisting of 11 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=100",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-11"
+          }
+        ]
+      },
+      {
+        "claim": "Its object is to make people realize how evil man becomes when heedless of the Hereafter, and to warn that even the secrets hidden in hearts will be scrutinized.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i100.html",
+            "type": "scholarly",
+            "excerpt": "Its object is to make the people realize how evil man becomes when he denies the Hereafter, or becomes heedless of it, and also to warn them that in the Hereafter not only their visible and apparent deeds but even the secrets hidden in their hearts too will be subjected to scrutiny."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (Makarem Shirazi et al., compiled under Sayyid Kamal Faqih Imani), Al-Islam.org",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-20/surah-adiyat-chapter-100",
+            "type": "scholarly",
+            "excerpt": "From the aforementioned statements, it is understood that at the beginning of the Surah there are some awakening oaths and then, reference is made to some human weaknesses like blasphemy, miserliness, and mammonism. Concluding the Surah, a comprehensive hint is made to the Resurrection, and the fact that Allah knows everything about His servants."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (Makarem Shirazi et al., compiled under Sayyid Kamal Faqih Imani), Al-Islam.org"]
+    },
+    "draft_en": "Al-Adiyat (The Courser) is a Meccan surah consisting of 11 verses. It warns of how evil man becomes when heedless of the Hereafter, reminding that even the secrets hidden in hearts will be scrutinized.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED: the Enlightening Commentary (vol. 20) is a separate Shia scholarly compilation, fully independent of Maududi. Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED). The documented minority Madani view (Anas, Qatadah) is preserved in claim 2 but the draft follows the position attested by >=2 independent sources (quran.com + Maududi; the Enlightening Commentary spot-check added nothing new — it prefers Medinan, the same already-documented minority view). All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 101,
+    "claims": [
+      {
+        "claim": "Surah 101 takes its name from its first word Al-Qariah, rendered 'The Calamity'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/101",
+            "type": "repository",
+            "excerpt": "Surah Al-Qari'ah ... The Calamity"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i101.html",
+            "type": "scholarly",
+            "excerpt": "The Surah takes its name from its first word al-qariah."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 101 is a Makki surah; there is no dispute about it.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/101",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i101.html",
+            "type": "scholarly",
+            "excerpt": "There is no dispute about its being a Makki Surah."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 101 consists of 11 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/101",
+            "type": "repository",
+            "excerpt": "consisting of 11 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=101",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-11"
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is Resurrection and the Hereafter.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i101.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is Resurrection and the Hereafter."
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=101",
+            "type": "scholarly",
+            "excerpt": "This Surah mentions the weighing of human deeds. He whose scales are heavy will be led to Paradise, and he whose scales are light will be led to Hell."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info"]
+    },
+    "draft_en": "Al-Qariah (The Calamity) is a Meccan surah consisting of 11 verses. Its theme is Resurrection and the Hereafter.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED: Maariful Quran (Deobandi/Hanafi scholarly tradition) is fully independent of Maududi. Makki-no-dispute status stands per Maududi. Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED). All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 102,
+    "claims": [
+      {
+        "claim": "Surah 102 takes its name from the word at-takathur in its first verse, rendered 'The Rivalry in world increase'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/102",
+            "type": "repository",
+            "excerpt": "Surah At-Takathur ... The Rivalry in world increase"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i102.html",
+            "type": "scholarly",
+            "excerpt": "The Sura taken its name from the word at takathur in the first verse."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 102 is a Makki surah according to a great majority of commentators; some traditions consider it Madani.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/102",
+            "type": "repository",
+            "excerpt": "Revealed in Mecca"
+          },
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i102.html",
+            "type": "scholarly",
+            "excerpt": "according to the sayings of all commentators this Surah is Makki. However, there are some traditions, on the basis of which it is considered a Madani Surah."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (corroborating)",
+            "url": "https://al-islam.org/hi/node/43958",
+            "type": "scholarly",
+            "excerpt": "Numerous commentators believe that this Surah has been revealed in Mecca; then the subject mentioned in the Surah about vying and self-glorification is, customarily, referring to the tribes of Quraish who used to boast to each other, in vain, about worthless affairs. But, some others, such as the late Tabarsi who cited his idea in Majma'-al-Bayan, believe that the Surah was revealed in Medina... seems more proper [as Meccan]."
+          }
+        ]
+      },
+      {
+        "claim": "Surah 102 consists of 8 verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Quran.com",
+            "url": "https://quran.com/102",
+            "type": "repository",
+            "excerpt": "consisting of 8 verses"
+          },
+          {
+            "name": "IslamicStudies.info - Towards (Qur'an text)",
+            "url": "https://islamicstudies.info/quran/towards.php?sura=102",
+            "type": "primary",
+            "excerpt": "Verses [Section]: 1-8"
+          }
+        ]
+      },
+      {
+        "claim": "It warns of the evil consequences of world-worship — spending life acquiring ever more worldly wealth and pleasures until death — and that every blessing will be accounted for in the Hereafter.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via IIUM deed site)",
+            "url": "https://www.iium.edu.my/deed/quran/intro/i102.html",
+            "type": "scholarly",
+            "excerpt": "the people have been warned of the evil consequences of world worship because of which they spend their lives in acquiring more and more of worldly wealth, material benefits and pleasures, and position and power, till death ... For each one of these blessings and comforts you will surely be called to account in the Hereafter."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20, Al-Islam.org",
+            "url": "https://al-islam.org/hi/node/43958",
+            "type": "scholarly",
+            "excerpt": "The content of the Surah in general is firstly, a scorn on those people who, based on things of no value, boast to each other and secondly, there is a warning about the proposition of the Hereafter and the Hell-fire; and finally, warning that we will be questioned about the bounties in our life."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)"],
+      "2": ["Quran.com", "Maududi, Tafhim al-Qur'an (via IIUM deed site)", "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (corroborating)"],
+      "3": ["Quran.com", "IslamicStudies.info - Towards (Qur'an text)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via IIUM deed site)", "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20, Al-Islam.org"]
+    },
+    "draft_en": "At-Takathur is a Meccan surah consisting of 8 verses. It warns against rivalry in worldly increase and reminds that every blessing will be accounted for in the Hereafter.",
+    "class": "A",
+    "notes": "Theme claim upgraded from PARTIALLY_VERIFIED to VERIFIED: the second source covers all three limbs of the theme claim (scorn of boasting over worthless affairs = world-worship; Hereafter/Hell-fire warning; questioning about bounties = every blessing accounted for) and is independent of Maududi. Draft sentence 1 uses claims 1, 2, 3 (VERIFIED); sentence 2 uses claim 4 (VERIFIED). The documented minority Madani traditions are preserved in claim 2 but the draft follows the majority position attested by >=2 independent sources. Quran.com's 'The Rivalry in world increase' rendering is retained verbatim in the name claim but left out of the draft for readability. Shared-provenance disclosure: the second sources for surahs 100 and 102 both come from the same commentary series (Enlightening Commentary, vol. 20) — each surah's evidence pair still consists of two independent sources (Maududi + Enlightening Commentary). Note: the al-islam.org page served English content under a /hi/ language-prefixed node URL; excerpt taken as fetched. All draft claims are VERIFIED with >=2 independent sources: eligible for automatic publication."
+  },
+  {
+    "surah_number": 107,
+    "claims": [
+      {
+        "claim": "Surah 107 is named Al-Ma'un (The Small Kindnesses) and has seven verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/107/index.html",
+            "type": "scholarly",
+            "excerpt": "Surah Al Ma'un (The Small Kindnesses) (printed translation spans verses 1-7)"
+          },
+          {
+            "name": "IslamReligion.com - Chapter 107, Al-Ma'un (The Small Kindness), Aisha Stacey",
+            "url": "https://www.islamreligion.com/articles/10762/chapter-107-almaunsmallkindness",
+            "type": "scholarly",
+            "excerpt": "Chapter 107, Al-Ma'un (The Small Kindness) (sections 'Verses 1-3' and 'Verses 4-7'). This chapter is named after the final words of the final verse."
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is to point out what kind of morals a man develops when he refuses to believe in the Hereafter: driving away the orphan, failing to urge feeding the poor, praying heedlessly and for show, and withholding small kindnesses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/107/index.html",
+            "type": "scholarly",
+            "excerpt": "Its theme is to point out what kind of morals a man develops when he refuses to believe in the Hereafter. (Translation: 'Have you seen him who belies the rewards and punishments of the Hereafter? He it is who drives away the orphan and does not urge giving away the food of the poor. Then woe to the praying ones, who are careless of their Prayer, who do good to be seen, and withhold small kindnesses.')"
+          },
+          {
+            "name": "IslamReligion.com - Chapter 107, Al-Ma'un (The Small Kindness), Aisha Stacey",
+            "url": "https://www.islamreligion.com/articles/10762/chapter-107-almaunsmallkindness",
+            "type": "scholarly",
+            "excerpt": "Those who deny the Judgment ... drive away the orphans, the most vulnerable of any society. They make a show of their religious obligations but refuse to help others. They refuse to do even the smallest kindness to others."
+          }
+        ]
+      },
+      {
+        "claim": "Revelation place is genuinely contested: Maududi documents Ibn Abbas (via Ibn Marduyah), Ata and Jabir as Makki against Abu Hayyan citing Ibn Abbas, Qatadah and Dahhak as Madani; Sayyid Qutb's Fi Zilal records a split (Makkan per some, Makkan-Madinan per others).",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via searchtruth.com)",
+            "url": "https://www.searchtruth.com/tafsir/Quran/107/index.html",
+            "type": "scholarly",
+            "excerpt": "Ibn Marduyah has cited Ibn Abbas ... as saying that this Surah is Makki ... But Abu Hayyan in Al-Bahr al-Muhit has cited Ibn Abbas, Qatadah and Dahhak as saying that this Surah was revealed at Madinah."
+          },
+          {
+            "name": "Sayyid Qutb, Fi Zilal al-Qur'an (via islamicstudies.info)",
+            "url": "https://www.islamicstudies.info/quran/fidhilal/Surah107.pdf",
+            "type": "scholarly",
+            "excerpt": "This sūrah is a Makkan revelation according to some authorities and a Makkan-Madinan one according to others, with the first three verses said to have been revealed in Makkah and the rest in Madinah."
+          },
+          {
+            "name": "IslamReligion.com - Chapter 107, Al-Ma'un (The Small Kindness), Aisha Stacey",
+            "url": "https://www.islamreligion.com/articles/10762/chapter-107-almaunsmallkindness",
+            "type": "scholarly",
+            "excerpt": "(reports the majority-Meccan position)"
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Maududi, Tafhim al-Qur'an (via searchtruth.com)", "IslamReligion.com - Chapter 107, Al-Ma'un (The Small Kindness), Aisha Stacey"],
+      "2": ["Maududi, Tafhim al-Qur'an (via searchtruth.com)", "IslamReligion.com - Chapter 107, Al-Ma'un (The Small Kindness), Aisha Stacey"],
+      "3": ["Maududi, Tafhim al-Qur'an (via searchtruth.com)", "Sayyid Qutb, Fi Zilal al-Qur'an (via islamicstudies.info)", "IslamReligion.com - Chapter 107, Al-Ma'un (The Small Kindness), Aisha Stacey"]
+    },
+    "draft_en": "Al-Ma'un (The Small Kindnesses) has seven verses. It condemns those who deny the Judgment — shown by driving away the orphan, failing to encourage feeding the poor, neglecting prayer while performing it for show, and withholding small acts of kindness.",
+    "class": "C",
+    "notes": "Fresh draft composed this round from VERIFIED claims only; weak prior sources (Wikipedia, WikiShia, MyUltimateDecision summary) fully replaced with recognized sources (Maududi, Fi Zilal, IslamReligion). Draft sentence 1 uses claim 1 (VERIFIED); sentence 2 uses claim 2 (VERIFIED). No revelation-place assertion: claim 3 is a genuine dispute — both Maududi and Fi Zilal document the split while leaning Madani; IslamReligion reports the majority-Meccan position. Maududi and Fi Zilal are editorially independent works (different authors, different tafsirs). Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 3 is CONFLICTING."
+  },
+  {
+    "surah_number": 112,
+    "claims": [
+      {
+        "claim": "Surah 112 is named Al-Ikhlas (Sincerity) and has four verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://ia601402.us.archive.org/32/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/112%20-%20Al-Ikhlas%20(%20Sincerity%20).pdf",
+            "type": "scholarly",
+            "excerpt": "112. Surah Al Ikhlas (The Purity) / (Sincerity)"
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=112&verse=1&to=4",
+            "type": "scholarly",
+            "excerpt": "Surah Al-Ikhlas 112:1-4."
+          },
+          {
+            "name": "Ecohumanism academic journal (corroborating)",
+            "url": "https://www.journal.ecohumanism.co.uk/",
+            "type": "scholarly",
+            "excerpt": "Number of Its Verses: Four verses."
+          }
+        ]
+      },
+      {
+        "claim": "It deals exclusively with Allah's oneness (tawhid): He is One and self-sufficient, neither begetting nor begotten, and nothing is comparable to Him.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://ia601402.us.archive.org/32/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/112%20-%20Al-Ikhlas%20(%20Sincerity%20).pdf",
+            "type": "scholarly",
+            "excerpt": "Al-Ikhlas is not merely the name of this Surah but also the title of its contents, for it deals exclusively with Tauhid."
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=112&verse=1&to=4",
+            "type": "scholarly",
+            "excerpt": "Say, (The truth is: Allah is One.) He neither begot anyone, nor was begotten. And equal to Him has never been any one."
+          }
+        ]
+      },
+      {
+        "claim": "Whether it is a Makki or a Madani surah is disputed: Maududi documents both sides; Maariful Quran records Ibn Masud, Hasan Basri, Ata, Ikrimah and Jabir as Makki against Qatadah, Dahhak and others as Madani.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (archive.org mirror PDF)",
+            "url": "https://ia601402.us.archive.org/32/items/Maududi-Tafhim-al-Quran-The_Meaning_of_the_Quran/112%20-%20Al-Ikhlas%20(%20Sincerity%20).pdf",
+            "type": "scholarly",
+            "excerpt": "Whether it is a Makki or a Madani Surah is disputed..."
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=112&verse=1&to=4",
+            "type": "scholarly",
+            "excerpt": "In view of these conflicting reports, there is a divergence of opinion as to whether this is a Makki Surah or Madani Surah. According to Sayyidna ` Abdullah Ibn Masud, Hasan Basri, ` Ata', ` Ikrimah and Jabir ... the Surah is Makki and, according to Qatadah, Dahhak ... and others, it is Madani."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info", "Ecohumanism academic journal (corroborating)"],
+      "2": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info"],
+      "3": ["Maududi, Tafhim al-Qur'an (archive.org mirror PDF)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info"]
+    },
+    "draft_en": "Al-Ikhlas (Sincerity) has four verses and deals exclusively with the oneness of Allah: He is One and self-sufficient, neither begetting nor begotten, and nothing is comparable to Him.",
+    "class": "C",
+    "notes": "Fresh draft composed this round from VERIFIED claims only; weak prior sources (Wikipedia, ParanormalDergi, SarkarHealings, LinkGeanie) fully replaced with recognized sources (Maududi, Maariful Quran, Ecohumanism journal). Draft sentence 1 uses claim 1 (VERIFIED); sentence 2 uses claim 2 (VERIFIED). No revelation-place assertion: claim 3 is a genuine dispute. Shared-provenance disclosure: both Maududi and Maariful cite many of the same inherited classical reports (Ibn Masud, Hasan Basri, Ata, Ikrimah, Jabir / Qatadah, Dahhak, dual Ibn Abbas narration); they are independent modern commentary works but share underlying narration material. Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 3 is CONFLICTING."
+  },
+  {
+    "surah_number": 113,
+    "claims": [
+      {
+        "claim": "Surah 113 is named Al-Falaq (The Daybreak) and has five verses.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (via shiavault.com mirror of the al-islam.org chapter)",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-20/surah-falaq-chapter-113",
+            "type": "scholarly",
+            "excerpt": "(The Daybreak) and Number of Verses: 5. (page title 'Surah Falaq, Chapter 113')"
+          },
+          {
+            "name": "The Illuminating Lantern (Habib al-Kazimi), Al-Islam.org",
+            "url": "https://al-islam.org/illuminating-lantern-exposition-subtleties-quran-part-thirty-habib-al-kazimi/surah-al-falaq-no-113",
+            "type": "scholarly",
+            "excerpt": "Surah al-Falaq (No. 113: 'The Dawn') (verses 113:1 through 113:5 printed)"
+          }
+        ]
+      },
+      {
+        "claim": "Together with Surah An-Nas it forms the Mu'awwidhatayn (the two surahs in which refuge with Allah is sought).",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via en.alukah.net mirror)",
+            "url": "https://en.alukah.net/world_muslims/7/5202/",
+            "type": "scholarly",
+            "excerpt": "Although these two Surahs of the Qur'an are separate entities and are written in the Mushaf also under separate names, yet they are so deeply related mutually and their contents so closely resemble each other's that they have been designated by a common name Mu'awwidhatayn (the two Surahs in which refuge with Allah has been sought)."
+          },
+          {
+            "name": "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info",
+            "url": "https://islamicstudies.info/quran/maarif.php?sura=112&verse=1&to=4",
+            "type": "scholarly",
+            "excerpt": "the mu'awwadhatain (i.e. the last two surahs of the Holy Qur'an)."
+          }
+        ]
+      },
+      {
+        "claim": "Its theme is seeking refuge with the Lord of the dawn from all created evil — the darkness of night, those who blow on knots, and the envier when he envies.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via en.alukah.net mirror)",
+            "url": "https://en.alukah.net/world_muslims/7/5202/",
+            "type": "scholarly",
+            "excerpt": "The Prophet was commanded to tell the people: 'I seek refuge with the Lord of the dawn, from the evil of everything that He has created, and from the evil of the darkness of night and from the evil of magicians, men and women, and from the evil of the envious.'"
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (via shiavault.com mirror of the al-islam.org chapter)",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-20/surah-falaq-chapter-113",
+            "type": "scholarly",
+            "excerpt": "The Surah contains some divine teaching commands ... to seek refuge with Allah from every kind of ill arising from outer nature, dark and evil plotting and envy on the part of others."
+          }
+        ]
+      },
+      {
+        "claim": "Revelation place is genuinely contested: Maududi records Hasan Basri, Ikrimah, Ata, Jabir bin Zaid and one Ibn Abbas report as Makki, against another Ibn Abbas report, Ibn Zubair and Qatadah as Madani; the Enlightening Commentary records both positions.",
+        "status": "CONFLICTING",
+        "sources": [
+          {
+            "name": "Maududi, Tafhim al-Qur'an (via en.alukah.net mirror)",
+            "url": "https://en.alukah.net/world_muslims/7/5202/",
+            "type": "scholarly",
+            "excerpt": "Hadrat Hasan Basri, 'Ikrimah, 'Ata' and Jabir bin Zaid say that these Surahs are Makki. A tradition from Hadrat 'Abdullah bin 'Abbas also supports the same view. However, according to another tradition from him, it is Madani and the same view is held also by Hadrat 'Abdullah bin Zubair and Qatadah."
+          },
+          {
+            "name": "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (via shiavault.com mirror of the al-islam.org chapter)",
+            "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-20/surah-falaq-chapter-113",
+            "type": "scholarly",
+            "excerpt": "Some commentators believe that this Surah is Meccan while some others know it to be Medinan."
+          }
+        ]
+      }
+    ],
+    "claim_source_map": {
+      "1": ["An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (via shiavault.com mirror of the al-islam.org chapter)", "The Illuminating Lantern (Habib al-Kazimi), Al-Islam.org"],
+      "2": ["Maududi, Tafhim al-Qur'an (via en.alukah.net mirror)", "Maariful Quran (Mufti Muhammad Shafi), islamicstudies.info"],
+      "3": ["Maududi, Tafhim al-Qur'an (via en.alukah.net mirror)", "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (via shiavault.com mirror of the al-islam.org chapter)"],
+      "4": ["Maududi, Tafhim al-Qur'an (via en.alukah.net mirror)", "An Enlightening Commentary into the Light of the Holy Qur'an vol. 20 (via shiavault.com mirror of the al-islam.org chapter)"]
+    },
+    "draft_en": "Al-Falaq (The Daybreak) has five verses, and together with Surah An-Nas it is one of the Mu'awwidhatayn. It commands seeking refuge with Allah, Lord of the dawn, from all created evil — the darkness of night, those who blow on knots, and the envier when he envies.",
+    "class": "C",
+    "notes": "Fresh draft composed this round from VERIFIED claims only; weak prior sources (Wikipedia, Iqra-Ilm, LinkGeanie, TheLastDialogue summary) fully replaced with recognized sources (Maududi, Maariful Quran, Enlightening Commentary vol. 20, Illuminating Lantern). Draft sentence 1 uses claims 1 and 2 (VERIFIED); sentence 2 uses claim 3 (VERIFIED). No revelation-place assertion: claim 4 is a genuine dispute. Provenance disclosures: (a) the alukah.net page is a mirror carrying Maududi's Tafhim text verbatim — one Maududi source, not two; (b) the Enlightening Commentary and the Illuminating Lantern are independent works by different authors (Makarem Shirazi vs Habib al-Kazimi), though both hosted on al-islam.org; the shiavault copy is a mirror of the al-islam.org chapter. Maariful claim-2 evidence is cited at the sura=112 Maariful URL where the mu'awwadhatain reference appears in context. Draft is recorded as a human-review artifact only — not eligible for automatic publication while claim 4 is CONFLICTING."
+  }
+]

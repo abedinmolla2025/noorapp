@@ -1,0 +1,782 @@
+{
+ "batch": 3,
+ "index_range": [
+  80,
+  119
+ ],
+ "records": [
+  {
+   "record_id": "115c5b7c-a3a5-4810-ac5f-943beb003968",
+   "slug": "dua-for-guidance-surah-taa-haa-20-27",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Taa-Haa 20:27",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "8ea78a2b-c9ff-4d88-9beb-c5d4f7a04077",
+   "slug": "dua-for-family-surah-al-anbiyaa-21-89",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Anbiyaa 21:89",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "aedd1ed6-0f42-4af2-a2e1-af7db9d34f71",
+   "slug": "dua-for-protection-surah-al-muminoon-23-98",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Muminoon 23:98",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "f59b717f-9588-466e-80f8-f4f84033c009",
+   "slug": "dua-for-forgiveness-surah-al-muminoon-23-109",
+   "prior_classification": "A",
+   "virtue_claim": "Allah loves those who repent and return to Him sincerely.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Muminoon 23:109",
+   "template_id": "T3",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 2:222 (Surah Al-Baqarah)",
+    "url": "https://quran.com/2/222",
+    "excerpt": "Surely Allah loves those who always turn to Him in repentance and those who purify themselves."
+   },
+   "claim_supported": "partial",
+   "distinction": "verse (supporting text is a Quranic verse; cited reference is wrong)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "correct virtue_reference from Quran 40:60 to Quran 2:222 (claim \"Allah loves those who repent\" is supported by 2:222, not by the cited 40:60)",
+   "correction_note": "Batch agent mislabeled SUPPORTED; adjudicated: cited reference wrong, claim true per 2:222"
+  },
+  {
+   "record_id": "d2c4fdd5-0a4c-48ed-8882-82423ff93461",
+   "slug": "dua-for-guidance-surah-ash-shuaraa-26-83",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Ash-Shu'araa 26:83",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "11fb2895-1643-4d43-8a8f-5d989ac7430a",
+   "slug": "dua-for-guidance-surah-ash-shuaraa-26-85",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Ash-Shu'araa 26:85",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "1e132200-0347-4761-9816-5bd8e522f64d",
+   "slug": "dua-for-family-surah-ash-shuaraa-26-86",
+   "prior_classification": "A",
+   "virtue_claim": "Allah loves those who repent and return to Him sincerely.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Ash-Shu'araa 26:86",
+   "template_id": "T3",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 2:222 (Surah Al-Baqarah)",
+    "url": "https://quran.com/2/222",
+    "excerpt": "Surely Allah loves those who always turn to Him in repentance and those who purify themselves."
+   },
+   "claim_supported": "partial",
+   "distinction": "verse (supporting text is a Quranic verse; cited reference is wrong)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "correct virtue_reference from Quran 40:60 to Quran 2:222 (claim \"Allah loves those who repent\" is supported by 2:222, not by the cited 40:60)",
+   "correction_note": "Batch agent mislabeled SUPPORTED; adjudicated: cited reference wrong, claim true per 2:222"
+  },
+  {
+   "record_id": "b6f8ec25-69a0-459d-97eb-785064522ef9",
+   "slug": "dua-for-rizq-surah-al-qasas-28-24",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Qasas 28:24",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "6223336e-c17b-43c4-9d41-9ee6f0ee5ef6",
+   "slug": "dua-for-guidance-surah-al-ankaboot-29-30",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Ankaboot 29:30",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "835edbb9-43db-4afe-8f22-641bc1af0c93",
+   "slug": "dua-for-forgiveness-surah-ghafir-40-7",
+   "prior_classification": "A",
+   "virtue_claim": "Allah loves those who repent and return to Him sincerely.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Ghafir 40:7",
+   "template_id": "T3",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 2:222 (Surah Al-Baqarah)",
+    "url": "https://quran.com/2/222",
+    "excerpt": "Surely Allah loves those who always turn to Him in repentance and those who purify themselves."
+   },
+   "claim_supported": "partial",
+   "distinction": "verse (supporting text is a Quranic verse; cited reference is wrong)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "correct virtue_reference from Quran 40:60 to Quran 2:222 (claim \"Allah loves those who repent\" is supported by 2:222, not by the cited 40:60)",
+   "correction_note": "Batch agent mislabeled SUPPORTED; adjudicated: cited reference wrong, claim true per 2:222"
+  },
+  {
+   "record_id": "ab2d11af-87ab-46c8-a8da-3273d22d5769",
+   "slug": "dua-for-forgiveness-surah-al-hashr-59-10",
+   "prior_classification": "A",
+   "virtue_claim": "Allah loves those who repent and return to Him sincerely.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Hashr 59:10",
+   "template_id": "T3",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 2:222 (Surah Al-Baqarah)",
+    "url": "https://quran.com/2/222",
+    "excerpt": "Surely Allah loves those who always turn to Him in repentance and those who purify themselves."
+   },
+   "claim_supported": "partial",
+   "distinction": "verse (supporting text is a Quranic verse; cited reference is wrong)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "correct virtue_reference from Quran 40:60 to Quran 2:222 (claim \"Allah loves those who repent\" is supported by 2:222, not by the cited 40:60)",
+   "correction_note": "Batch agent mislabeled SUPPORTED; adjudicated: cited reference wrong, claim true per 2:222"
+  },
+  {
+   "record_id": "4ca60df9-9b5e-4e8e-ba31-0ac775f35e18",
+   "slug": "dua-for-protection-surah-al-mumtahana-60-5",
+   "prior_classification": "A",
+   "virtue_claim": "Allah loves those who repent and return to Him sincerely.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Mumtahana 60:5",
+   "template_id": "T3",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 2:222 (Surah Al-Baqarah)",
+    "url": "https://quran.com/2/222",
+    "excerpt": "Surely Allah loves those who always turn to Him in repentance and those who purify themselves."
+   },
+   "claim_supported": "partial",
+   "distinction": "verse (supporting text is a Quranic verse; cited reference is wrong)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "correct virtue_reference from Quran 40:60 to Quran 2:222 (claim \"Allah loves those who repent\" is supported by 2:222, not by the cited 40:60)",
+   "correction_note": "Batch agent mislabeled SUPPORTED; adjudicated: cited reference wrong, claim true per 2:222"
+  },
+  {
+   "record_id": "85d51414-8acd-4e91-9579-f723f115e5fc",
+   "slug": "dua-for-forgiveness-surah-at-tahrim-66-8",
+   "prior_classification": "A",
+   "virtue_claim": "Allah loves those who repent and return to Him sincerely.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah At-Tahrim 66:8",
+   "template_id": "T3",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 2:222 (Surah Al-Baqarah)",
+    "url": "https://quran.com/2/222",
+    "excerpt": "Surely Allah loves those who always turn to Him in repentance and those who purify themselves."
+   },
+   "claim_supported": "partial",
+   "distinction": "verse (supporting text is a Quranic verse; cited reference is wrong)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "correct virtue_reference from Quran 40:60 to Quran 2:222 (claim \"Allah loves those who repent\" is supported by 2:222, not by the cited 40:60)",
+   "correction_note": "Batch agent mislabeled SUPPORTED; adjudicated: cited reference wrong, claim true per 2:222"
+  },
+  {
+   "record_id": "6c378b71-fe04-4155-8eec-7eedfb47e87d",
+   "slug": "dua-for-protection-surah-at-tahrim-66-11",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah At-Tahrim 66:11",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "4909c6cc-4eaf-4aa7-ac45-0e21bdd8c253",
+   "slug": "dua-for-guidance-surah-al-ikhlaas-112-1",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Ikhlaas 112:1",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "daad4c15-d860-45c6-bda8-d2ef44c45dcc",
+   "slug": "dua-for-protection-surah-al-falaq-113-1",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Falaq 113:1",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "58184290-66a6-4606-9164-957de8d79517",
+   "slug": "dua-for-protection-surah-al-falaq-113-2",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Falaq 113:2",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "ac22871d-e383-4ec6-a211-f6b214b43541",
+   "slug": "dua-for-protection-surah-al-falaq-113-3",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Falaq 113:3",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "fb62e767-b05b-4ac3-af3b-2a1116047c77",
+   "slug": "dua-for-protection-surah-al-falaq-113-4",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Falaq 113:4",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "b43e5df6-32f3-42eb-a8aa-0d89cfecf3c6",
+   "slug": "dua-for-protection-surah-al-falaq-113-5",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Falaq 113:5",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "8c1433e9-4463-453a-bdcf-1a212bbb5ab0",
+   "slug": "dua-for-protection-surah-an-naas-114-2",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah An-Naas 114:2",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "08edb819-5bcf-4698-b730-9af235f39660",
+   "slug": "dua-for-protection-surah-an-naas-114-4",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah An-Naas 114:4",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "b63296ee-e28c-4f31-ae4b-de38ee686459",
+   "slug": "dua-for-protection-surah-an-naas-114-5",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah An-Naas 114:5",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "c4bf10a7-8a22-452f-b779-e9eb43eb753a",
+   "slug": "dua-for-protection-surah-an-naas-114-6",
+   "prior_classification": "B",
+   "virtue_claim": "Sincere reliance on Allah brings protection and tranquility to the heart.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah An-Naas 114:6",
+   "template_id": "T2",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about 'protection and tranquility' as a promised outcome; the specific protection/tranquility claim is an interpretive extension.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'protection and tranquility' wording."
+  },
+  {
+   "record_id": "19bac378-5e6d-4750-9d82-16f1a2112edb",
+   "slug": "dua-for-guidance-surah-al-faatiha-1-2",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Faatiha 1:2",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "90b4e796-5b8c-433c-bf91-b715b75f98e7",
+   "slug": "dua-for-guidance-surah-al-baqara-2-46",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Baqara 2:46",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "19f30596-1cc6-479a-a92c-531091e61bb7",
+   "slug": "dua-for-faith-surah-al-baqara-2-126",
+   "prior_classification": "B",
+   "virtue_claim": "Provision is from Allah; dua aligns effort with trust in Him.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Baqara 2:126",
+   "template_id": "T4",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes the dua invitation/response guarantee, but says nothing about provision (rizq); the provision claim is an interpretive extension not grounded in the cited verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; the provision claim is not grounded in the cited verse."
+  },
+  {
+   "record_id": "f285bbad-cded-449d-a093-fd9ace86a53e",
+   "slug": "dua-for-guidance-surah-al-baqara-2-129",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Baqara 2:129",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "8f6a9035-2f62-4f91-b986-aec11dab5727",
+   "slug": "dua-for-faith-surah-al-baqara-2-260",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Baqara 2:260",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "5d26254b-0c51-4300-8ff0-52cd0620d84f",
+   "slug": "dua-for-faith-surah-al-baqara-2-277",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Al-Baqara 2:277",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "66e57416-65db-4009-8074-dd99887975c3",
+   "slug": "dua-for-faith-surah-aal-i-imraan-3-7",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Aal-i-Imraan 3:7",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "02420ef2-dd39-458e-ab1f-8da91e7d8750",
+   "slug": "dua-for-guidance-surah-aal-i-imraan-3-9",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Aal-i-Imraan 3:9",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "87fc1435-3b73-4d40-8742-14f7bb6e577f",
+   "slug": "dua-for-guidance-surah-aal-i-imraan-3-40",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Aal-i-Imraan 3:40",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "0ce394d1-6414-4af1-beb7-a1c886aba58f",
+   "slug": "dua-for-guidance-surah-aal-i-imraan-3-41",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Aal-i-Imraan 3:41",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "9858ebeb-f565-4a42-a747-afdef6d7098c",
+   "slug": "dua-for-guidance-surah-aal-i-imraan-3-47",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Aal-i-Imraan 3:47",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "9e4c5fd8-63d5-4077-b178-33aac78ba605",
+   "slug": "dua-for-guidance-surah-aal-i-imraan-3-51",
+   "prior_classification": "B",
+   "virtue_claim": "Dua relieves burden by turning the heart fully to Allah.",
+   "cited_reference": "Quran 40:60",
+   "dua_reference": "Surah Aal-i-Imraan 3:51",
+   "template_id": "T1",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 40:60 (Surah Ghafir)",
+    "url": "https://quran.com/40/60",
+    "excerpt": "Your Lord has proclaimed, \"Call upon Me, I will respond to you. Surely those who are too proud to worship Me will enter Hell, fully humbled.\""
+   },
+   "claim_supported": "partial: 40:60 establishes that Allah commands/invites dua and guarantees response (dua is worship), but says nothing about 'relieving burden'; the specific relief claim is an interpretive extension of the verse.",
+   "distinction": "interpretation (of a Quranic verse)",
+   "evidence_class": "PARTIALLY_SUPPORTED",
+   "safe_action": "No DB change. Keep render-suppressed; do not republish this claim cited to 40:60 without scholar review of the specific 'relieves burden' wording."
+  },
+  {
+   "record_id": "1fa4542a-d3bc-4998-8e6b-e027f1a6d459",
+   "slug": "dua-for-faith-surah-al-maaidah-5-83",
+   "prior_classification": "D",
+   "virtue_claim": "This dua reconnects the heart to Allah in moments of need and uncertainty.",
+   "cited_reference": "Surah Al-Maaidah 5:83",
+   "dua_reference": "Surah Al-Maaidah 5:83",
+   "template_id": "T8",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 5:83 (Surah Al-Ma'idah)",
+    "url": "https://quran.com/5/83",
+    "excerpt": "When they listen to what has been revealed to the Messenger, you see their eyes overflowing with tears for recognizing the truth. They say, \"Our Lord! We believe, so count us among the witnesses.\""
+   },
+   "claim_supported": "no: the virtue text is byte-identical filler pasted across 50 unrelated duas (faith, guidance, forgiveness; Quranic and hadith sources alike). The cited source (the dua's own reference, mirrored into virtue_reference) was not used to derive any claim — the same sentence cannot be a virtue of Zakariya's heir-dua (19:5), Isa's table-dua (5:114), and the Prophet's istighfar hadith (Bukhari 6307) simultaneously.",
+   "distinction": "none (generic template filler; no specific claim to verify)",
+   "evidence_class": "TEMPLATE",
+   "safe_action": "Proposal only (no DB write): SET virtue=NULL, virtue_reference=NULL when privileged access is available."
+  },
+  {
+   "record_id": "b9a9b667-533d-41f1-9097-97862a277b83",
+   "slug": "dua-for-guidance-surah-al-maaidah-5-114",
+   "prior_classification": "D",
+   "virtue_claim": "This dua reconnects the heart to Allah in moments of need and uncertainty.",
+   "cited_reference": "Surah Al-Maaidah 5:114",
+   "dua_reference": "Surah Al-Maaidah 5:114",
+   "template_id": "T8",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 5:114 (Surah Al-Ma'idah)",
+    "url": "https://quran.com/5/114",
+    "excerpt": "Jesus, son of Mary, prayed, \"O Allah, our Lord! Send us from heaven a table spread with food as a feast for us—the first and last of us—and as a sign from You. Provide for us! You are indeed the Best Provider.\""
+   },
+   "claim_supported": "no: the virtue text is byte-identical filler pasted across 50 unrelated duas (faith, guidance, forgiveness; Quranic and hadith sources alike). The cited source (the dua's own reference, mirrored into virtue_reference) was not used to derive any claim — the same sentence cannot be a virtue of Zakariya's heir-dua (19:5), Isa's table-dua (5:114), and the Prophet's istighfar hadith (Bukhari 6307) simultaneously.",
+   "distinction": "none (generic template filler; no specific claim to verify)",
+   "evidence_class": "TEMPLATE",
+   "safe_action": "Proposal only (no DB write): SET virtue=NULL, virtue_reference=NULL when privileged access is available."
+  },
+  {
+   "record_id": "91b92ec4-0316-48fc-aa81-56eba00451d2",
+   "slug": "dua-for-faith-surah-maryam-19-5",
+   "prior_classification": "D",
+   "virtue_claim": "This dua reconnects the heart to Allah in moments of need and uncertainty.",
+   "cited_reference": "Surah Maryam 19:5",
+   "dua_reference": "Surah Maryam 19:5",
+   "template_id": "T8",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Quran 19:5 (Surah Maryam)",
+    "url": "https://quran.com/19/5",
+    "excerpt": "And I am concerned about ʹthe faith ofʹ my relatives after me, since my wife is barren. So grant me, by Your grace, an heir,"
+   },
+   "claim_supported": "no: the virtue text is byte-identical filler pasted across 50 unrelated duas (faith, guidance, forgiveness; Quranic and hadith sources alike). The cited source (the dua's own reference, mirrored into virtue_reference) was not used to derive any claim — the same sentence cannot be a virtue of Zakariya's heir-dua (19:5), Isa's table-dua (5:114), and the Prophet's istighfar hadith (Bukhari 6307) simultaneously.",
+   "distinction": "none (generic template filler; no specific claim to verify)",
+   "evidence_class": "TEMPLATE",
+   "safe_action": "Proposal only (no DB write): SET virtue=NULL, virtue_reference=NULL when privileged access is available."
+  },
+  {
+   "record_id": "722ac39b-46c6-4c92-a67d-97d48a53f5a5",
+   "slug": "dua-for-forgiveness-surah-quran-x-146",
+   "prior_classification": "D",
+   "virtue_claim": "This dua reconnects the heart to Allah in moments of need and uncertainty.",
+   "cited_reference": "Sahih al-Bukhari 6307",
+   "dua_reference": "Sahih al-Bukhari 6307",
+   "template_id": "T8",
+   "virtue_matches_template": true,
+   "source_located": {
+    "citation": "Sahih al-Bukhari 6307",
+    "url": "https://sunnah.com/bukhari:6307",
+    "excerpt": "Narrated Abu Huraira: I heard Allah's Messenger (ﷺ) saying. \"By Allah! I ask for forgiveness from Allah and turn to Him in repentance more than seventy times a day.\""
+   },
+   "claim_supported": "no: the virtue text is byte-identical filler pasted across 50 unrelated duas (faith, guidance, forgiveness; Quranic and hadith sources alike). The cited source (the dua's own reference, mirrored into virtue_reference) was not used to derive any claim — the same sentence cannot be a virtue of Zakariya's heir-dua (19:5), Isa's table-dua (5:114), and the Prophet's istighfar hadith (Bukhari 6307) simultaneously.",
+   "distinction": "none (generic template filler; no specific claim to verify)",
+   "evidence_class": "TEMPLATE",
+   "safe_action": "Proposal only (no DB write): SET virtue=NULL, virtue_reference=NULL when privileged access is available."
+  }
+ ],
+ "counts": {
+  "PARTIALLY_SUPPORTED": 30,
+  "SUPPORTED": 6,
+  "TEMPLATE": 4
+ },
+ "classification_differences": [],
+ "notes": "All 40 virtue texts verified byte-identical to their templates. Quran 40:60 and 2:222 excerpts read live from quran.com (The Clear Quran translation); 5:83, 5:114, 19:5 read live from quran.com; Bukhari 6307 read live from sunnah.com. No DB writes attempted."
+}

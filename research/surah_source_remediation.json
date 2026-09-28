@@ -1,0 +1,785 @@
+{
+ "remediated": [
+  {
+   "surah": 63,
+   "theme_dropped": true,
+   "old_sources": [
+    "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+    "Quran O (m.qurano.com)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 63, \"name_simple\": \"Al-Munafiqun\", \"translated_name\": \"The Hypocrites\", \"revelation_place\": \"madinah\", \"verses_count\": 11}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 63, \"englishName\": \"Al-Munaafiqoon\", \"englishNameTranslation\": \"The Hypocrites\", \"revelationType\": \"Medinan\", \"numberOfAyahs\": 11}"
+    }
+   ]
+  },
+  {
+   "surah": 66,
+   "theme_dropped": false,
+   "old_sources": [
+    "Shiavault - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18",
+    "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+    "Shiavault - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 66, \"name_simple\": \"At-Tahrim\", \"translated_name\": \"The Prohibition\", \"revelation_place\": \"madinah\", \"verses_count\": 12}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 66, \"englishName\": \"At-Tahrim\", \"englishNameTranslation\": \"The Prohibition\", \"revelationType\": \"Medinan\", \"numberOfAyahs\": 12}"
+    }
+   ]
+  },
+  {
+   "surah": 67,
+   "theme_dropped": false,
+   "old_sources": [
+    "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18",
+    "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+    "Tanzil revelation order table"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "The Clear Quran (Dr. Mustafa Khattab), islamicstudies.info",
+    "Al-Islam.org - An Enlightening Commentary into the Light of the Holy Qur'an vol. 18"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 67, \"name_simple\": \"Al-Mulk\", \"translated_name\": \"The Sovereignty\", \"revelation_place\": \"makkah\", \"verses_count\": 30}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 67, \"englishName\": \"Al-Mulk\", \"englishNameTranslation\": \"The Sovereignty\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 30}"
+    }
+   ]
+  },
+  {
+   "surah": 69,
+   "theme_dropped": false,
+   "old_sources": [
+    "Tafsir Ibn Kathir (via quran4u.com)",
+    "Abdullah Yusuf Ali, Introduction and Summary (via quran4u.com)",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "Abdullah Yusuf Ali, Introduction and Summary (via quran4u.com)"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 69, \"name_simple\": \"Al-Haqqah\", \"translated_name\": \"The Reality\", \"revelation_place\": \"makkah\", \"verses_count\": 52}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 69, \"englishName\": \"Al-Haaqqa\", \"englishNameTranslation\": \"The Reality\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 52}"
+    }
+   ]
+  },
+  {
+   "surah": 70,
+   "theme_dropped": false,
+   "old_sources": [
+    "IslamReligion.com - Chapter 70, Al-Ma'arij",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "Wikipedia - Al-Maarij"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "IslamReligion.com - Chapter 70, Al-Ma'arij"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 70, \"name_simple\": \"Al-Ma'arij\", \"translated_name\": \"The Ascending Stairways\", \"revelation_place\": \"makkah\", \"verses_count\": 44}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 70, \"englishName\": \"Al-Ma'aarij\", \"englishNameTranslation\": \"The Ascending Stairways\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 44}"
+    }
+   ]
+  },
+  {
+   "surah": 71,
+   "theme_dropped": true,
+   "old_sources": [
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "Wikipedia - Nuh",
+    "Iqra-Ilm - Surah Nuh"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 71, \"name_simple\": \"Nuh\", \"translated_name\": \"Noah\", \"revelation_place\": \"makkah\", \"verses_count\": 28}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 71, \"englishName\": \"Nooh\", \"englishNameTranslation\": \"Noah\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 28}"
+    }
+   ]
+  },
+  {
+   "surah": 72,
+   "theme_dropped": true,
+   "old_sources": [
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "Maulana Muhammad Ali, English Translation and Commentary (1951/2002)",
+    "Wikipedia - Al-Jinn"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 72, \"name_simple\": \"Al-Jinn\", \"translated_name\": \"The Jinn\", \"revelation_place\": \"makkah\", \"verses_count\": 28}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 72, \"englishName\": \"Al-Jinn\", \"englishNameTranslation\": \"The Jinn\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 28}"
+    }
+   ]
+  },
+  {
+   "surah": 73,
+   "theme_dropped": false,
+   "old_sources": [
+    "Hamariweb - Surah Al-Muzammil summary",
+    "IslamReligion.com - Chapter 73, Al-Muzzamil (Enfolded)",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "IslamReligion.com - Chapter 73, Al-Muzzamil (Enfolded)"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 73, \"name_simple\": \"Al-Muzzammil\", \"translated_name\": \"The Enshrouded One\", \"revelation_place\": \"makkah\", \"verses_count\": 20}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 73, \"englishName\": \"Al-Muzzammil\", \"englishNameTranslation\": \"The Enshrouded One\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 20}"
+    }
+   ]
+  },
+  {
+   "surah": 74,
+   "theme_dropped": true,
+   "old_sources": [
+    "IslamReligion.com - Chapter 74, Al-Muddaththir",
+    "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "NoorAcademy - Surah Mudathir Summary"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 74, \"name_simple\": \"Al-Muddaththir\", \"translated_name\": \"The Cloaked One\", \"revelation_place\": \"makkah\", \"verses_count\": 56}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 74, \"englishName\": \"Al-Muddaththir\", \"englishNameTranslation\": \"The Cloaked One\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 56}"
+    }
+   ]
+  },
+  {
+   "surah": 77,
+   "theme_dropped": false,
+   "old_sources": [
+    "Maududi, Tafhim al-Qur'an intro (via alukah.net)",
+    "Tafsir Namuneh (Makarim Shirazi, via alhassanain.org)",
+    "Wikipedia - Al-Mursalat"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "Maududi, Tafhim al-Qur'an intro (via alukah.net)",
+    "Tafsir Namuneh (Makarim Shirazi, via alhassanain.org)"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 77, \"name_simple\": \"Al-Mursalat\", \"translated_name\": \"The Emissaries\", \"revelation_place\": \"makkah\", \"verses_count\": 50}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 77, \"englishName\": \"Al-Mursalaat\", \"englishNameTranslation\": \"The Emissaries\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 50}"
+    }
+   ]
+  },
+  {
+   "surah": 78,
+   "theme_dropped": false,
+   "old_sources": [
+    "An Enlightening Commentary into the Light of the Holy Quran vol.19 (via al-islam.org)",
+    "IslamReligion.com - Chapter 78, An-Naba (The Great News)",
+    "Maududi, Tafhim al-Qur'an intro (via alukah.net)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "Maududi, Tafhim al-Qur'an intro (via alukah.net)",
+    "IslamReligion.com - Chapter 78, An-Naba (The Great News)"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 78, \"name_simple\": \"An-Naba\", \"translated_name\": \"The Tidings\", \"revelation_place\": \"makkah\", \"verses_count\": 40}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 78, \"englishName\": \"An-Naba\", \"englishNameTranslation\": \"The Announcement\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 40}"
+    }
+   ]
+  },
+  {
+   "surah": 80,
+   "theme_dropped": false,
+   "old_sources": [
+    "Wikipedia (Abasa)",
+    "IslamHouse (Noble Quran English, Sura 80)",
+    "Quran.com"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 80, \"name_simple\": \"'Abasa\", \"translated_name\": \"He Frowned\", \"revelation_place\": \"makkah\", \"verses_count\": 42}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 80, \"englishName\": \"Abasa\", \"englishNameTranslation\": \"He frowned\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 42}"
+    }
+   ]
+  },
+  {
+   "surah": 81,
+   "theme_dropped": false,
+   "old_sources": [
+    "Wikipedia (At-Takwir)",
+    "Quran O (qurano.com)",
+    "Quran.com"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 81, \"name_simple\": \"At-Takwir\", \"translated_name\": \"The Overthrowing\", \"revelation_place\": \"makkah\", \"verses_count\": 29}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 81, \"englishName\": \"At-Takwir\", \"englishNameTranslation\": \"The Overthrowing\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 29}"
+    }
+   ]
+  },
+  {
+   "surah": 82,
+   "theme_dropped": false,
+   "old_sources": [
+    "Quran O (qurano.com)",
+    "Quran.com"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 82, \"name_simple\": \"Al-Infitar\", \"translated_name\": \"The Cleaving\", \"revelation_place\": \"makkah\", \"verses_count\": 19}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 82, \"englishName\": \"Al-Infitaar\", \"englishNameTranslation\": \"The Cleaving\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 19}"
+    }
+   ]
+  },
+  {
+   "surah": 84,
+   "theme_dropped": false,
+   "old_sources": [
+    "Muslims Forum For Peace",
+    "NetQuran (QuranWeb English translation)",
+    "Quran.com"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 84, \"name_simple\": \"Al-Inshiqaq\", \"translated_name\": \"The Sundering\", \"revelation_place\": \"makkah\", \"verses_count\": 25}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 84, \"englishName\": \"Al-Inshiqaaq\", \"englishNameTranslation\": \"The Splitting Open\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 25}"
+    }
+   ]
+  },
+  {
+   "surah": 85,
+   "theme_dropped": false,
+   "old_sources": [
+    "Manal.ca (Quran translation PDF, Sura 85)",
+    "Muslims Forum For Peace",
+    "NetQuran (QuranWeb English translation)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 85, \"name_simple\": \"Al-Buruj\", \"translated_name\": \"The Mansions of the Stars\", \"revelation_place\": \"makkah\", \"verses_count\": 22}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 85, \"englishName\": \"Al-Burooj\", \"englishNameTranslation\": \"The Constellations\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 22}"
+    }
+   ]
+  },
+  {
+   "surah": 86,
+   "theme_dropped": false,
+   "old_sources": [
+    "AskIslamPedia (Surah At-Tariq Wiki)",
+    "Muslims Forum For Peace",
+    "Quran.com"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 86, \"name_simple\": \"At-Tariq\", \"translated_name\": \"The Nightcommer\", \"revelation_place\": \"makkah\", \"verses_count\": 17}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 86, \"englishName\": \"At-Taariq\", \"englishNameTranslation\": \"The Morning Star\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 17}"
+    }
+   ]
+  },
+  {
+   "surah": 87,
+   "theme_dropped": false,
+   "old_sources": [
+    "Quran.com",
+    "The Last Dialogue (Surah Al-Ala Summary)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 87, \"name_simple\": \"Al-A'la\", \"translated_name\": \"The Most High\", \"revelation_place\": \"makkah\", \"verses_count\": 19}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 87, \"englishName\": \"Al-A'laa\", \"englishNameTranslation\": \"The Most High\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 19}"
+    }
+   ]
+  },
+  {
+   "surah": 88,
+   "theme_dropped": false,
+   "old_sources": [
+    "NetQuran (QuranWeb English translation)",
+    "Quran.com",
+    "Quran.is"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 88, \"name_simple\": \"Al-Ghashiyah\", \"translated_name\": \"The Overwhelming\", \"revelation_place\": \"makkah\", \"verses_count\": 26}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 88, \"englishName\": \"Al-Ghaashiya\", \"englishNameTranslation\": \"The Overwhelming\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 26}"
+    }
+   ]
+  },
+  {
+   "surah": 89,
+   "theme_dropped": false,
+   "old_sources": [
+    "Islamic Vault (Surah Al-Fajr)",
+    "NetQuran (QuranWeb English translation)",
+    "Quran.com"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 89, \"name_simple\": \"Al-Fajr\", \"translated_name\": \"The Dawn\", \"revelation_place\": \"makkah\", \"verses_count\": 30}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 89, \"englishName\": \"Al-Fajr\", \"englishNameTranslation\": \"The Dawn\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 30}"
+    }
+   ]
+  },
+  {
+   "surah": 90,
+   "theme_dropped": false,
+   "old_sources": [
+    "Pickthall translation (via GitHub mirror)",
+    "Dawatul Quran commentary (via islamicstudies.info)",
+    "AskIslamPedia (Surah Al-Balad Wiki)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 90, \"name_simple\": \"Al-Balad\", \"translated_name\": \"The City\", \"revelation_place\": \"makkah\", \"verses_count\": 20}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 90, \"englishName\": \"Al-Balad\", \"englishNameTranslation\": \"The City\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 20}"
+    }
+   ]
+  },
+  {
+   "surah": 96,
+   "theme_dropped": false,
+   "old_sources": [
+    "IslamicStudies.info — Towards (Qur'an text)",
+    "Maududi (IIUM)",
+    "Qutb (IIUM)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata",
+    "Sahih al-Bukhari 3 (sunnah.com)"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 96, \"name_simple\": \"Al-'Alaq\", \"translated_name\": \"The Clot\", \"revelation_place\": \"makkah\", \"verses_count\": 19}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 96, \"englishName\": \"Al-Alaq\", \"englishNameTranslation\": \"The Clot\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 19}"
+    }
+   ]
+  },
+  {
+   "surah": 103,
+   "theme_dropped": false,
+   "old_sources": [
+    "Ibn Kathir tafsir via Quran.com",
+    "NurulQuran Dawrah-e-Quran flowchart (study aid)",
+    "Islamic Vault (Quran text repository)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 103, \"name_simple\": \"Al-'Asr\", \"translated_name\": \"The Declining Day\", \"revelation_place\": \"makkah\", \"verses_count\": 3}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 103, \"englishName\": \"Al-Asr\", \"englishNameTranslation\": \"The Declining Day, Epoch\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 3}"
+    }
+   ]
+  },
+  {
+   "surah": 104,
+   "theme_dropped": true,
+   "old_sources": [
+    "Al-Islam.org (scholarly commentary)",
+    "AskIslamPedia wiki (Sahih International-based)",
+    "NetQuran / QuranWeb (Quran text repository)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 104, \"name_simple\": \"Al-Humazah\", \"translated_name\": \"The Traducer\", \"revelation_place\": \"makkah\", \"verses_count\": 9}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 104, \"englishName\": \"Al-Humaza\", \"englishNameTranslation\": \"The Traducer\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 9}"
+    }
+   ]
+  },
+  {
+   "surah": 105,
+   "theme_dropped": true,
+   "old_sources": [
+    "Ibn Kathir via IqraSense (classical tafsir)",
+    "Maududi Tafheem-ul-Quran via IslamicStudies.info (scholarly commentary)",
+    "AskIslamPedia wiki (Sahih International-based)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 105, \"name_simple\": \"Al-Fil\", \"translated_name\": \"The Elephant\", \"revelation_place\": \"makkah\", \"verses_count\": 5}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 105, \"englishName\": \"Al-Fil\", \"englishNameTranslation\": \"The Elephant\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 5}"
+    }
+   ]
+  },
+  {
+   "surah": 106,
+   "theme_dropped": true,
+   "old_sources": [
+    "BestHadith (Quran text repository)",
+    "IslamWP (Quran text repository)",
+    "IslamicSurah.com (Quran text repository)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 106, \"name_simple\": \"Quraysh\", \"translated_name\": \"Quraysh\", \"revelation_place\": \"makkah\", \"verses_count\": 4}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 106, \"englishName\": \"Quraish\", \"englishNameTranslation\": \"Quraysh\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 4}"
+    }
+   ]
+  },
+  {
+   "surah": 108,
+   "theme_dropped": false,
+   "old_sources": [
+    "Al-Islam.org (scholarly commentary)",
+    "AskIslamPedia wiki (Sahih International-based)",
+    "Wikipedia - Al-Kawthar (tertiary reference)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 108, \"name_simple\": \"Al-Kawthar\", \"translated_name\": \"The Abundance\", \"revelation_place\": \"makkah\", \"verses_count\": 3}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 108, \"englishName\": \"Al-Kawthar\", \"englishNameTranslation\": \"Abundance\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 3}"
+    }
+   ]
+  },
+  {
+   "surah": 109,
+   "theme_dropped": false,
+   "old_sources": [
+    "Maududi Tafheem exegesis via MyUltimateDecision (scholarly)",
+    "Sana Wema / The Study Quran (Seyyed Hossein Nasr) (scholarly)",
+    "SarkarHealings (Quran study site)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 109, \"name_simple\": \"Al-Kafirun\", \"translated_name\": \"The Disbelievers\", \"revelation_place\": \"makkah\", \"verses_count\": 6}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 109, \"englishName\": \"Al-Kaafiroon\", \"englishNameTranslation\": \"The Disbelievers\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 6}"
+    }
+   ]
+  },
+  {
+   "surah": 110,
+   "theme_dropped": false,
+   "old_sources": [
+    "Al-Islam.org (scholarly commentary)",
+    "IslamWP (Quran text repository)",
+    "Quran O / Qurano.com (Quran repository)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 110, \"name_simple\": \"An-Nasr\", \"translated_name\": \"The Divine Support\", \"revelation_place\": \"madinah\", \"verses_count\": 3}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 110, \"englishName\": \"An-Nasr\", \"englishNameTranslation\": \"Divine Support\", \"revelationType\": \"Medinan\", \"numberOfAyahs\": 3}"
+    }
+   ]
+  },
+  {
+   "surah": 111,
+   "theme_dropped": true,
+   "old_sources": [
+    "Sana Wema / The Study Quran (Seyyed Hossein Nasr) (scholarly)",
+    "Disputatia (Quran translation wiki)",
+    "Wikipedia - Al-Masad (tertiary reference)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 111, \"name_simple\": \"Al-Masad\", \"translated_name\": \"The Palm Fiber\", \"revelation_place\": \"makkah\", \"verses_count\": 5}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 111, \"englishName\": \"Al-Masad\", \"englishNameTranslation\": \"The Palm Fibre\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 5}"
+    }
+   ]
+  },
+  {
+   "surah": 114,
+   "theme_dropped": true,
+   "old_sources": [
+    "Maududi Tafheem-ul-Quran via IslamicStudies.info (scholarly commentary)",
+    "Maududi Tafheem-ul-Quran via IslamicStudies.info (scholarly commentary)",
+    "AskIslamPedia wiki (Sahih International-based)"
+   ],
+   "new_sources": [
+    "Quran.com Chapters API",
+    "AlQuran Cloud Surah Metadata"
+   ],
+   "evidence": [
+    {
+     "source": "Quran.com Chapters API",
+     "excerpt": "{\"id\": 114, \"name_simple\": \"An-Nas\", \"translated_name\": \"Mankind\", \"revelation_place\": \"makkah\", \"verses_count\": 6}"
+    },
+    {
+     "source": "AlQuran Cloud Surah Metadata",
+     "excerpt": "{\"number\": 114, \"englishName\": \"An-Naas\", \"englishNameTranslation\": \"Mankind\", \"revelationType\": \"Meccan\", \"numberOfAyahs\": 6}"
+    }
+   ]
+  }
+ ],
+ "stripped_weak": [
+  {
+   "surah": 1,
+   "stripped": [
+    "Quranic Arabic Corpus"
+   ]
+  },
+  {
+   "surah": 91,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 92,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 93,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 94,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 95,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 100,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 101,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  },
+  {
+   "surah": 102,
+   "stripped": [
+    "IslamicStudies.info - Towards (Qur'an text)"
+   ]
+  }
+ ],
+ "notes": []
+}

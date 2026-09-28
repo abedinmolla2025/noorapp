@@ -1,0 +1,149 @@
+-- ============================================================
+-- NOOR APP — QUIZ C-RECORD VERIFIED-CHANGE PROPOSALS (PROPOSAL ONLY)
+-- Generated: 2026-09-28
+-- Sources: research/quiz_c_reresearch.json (independent re-research),
+--          direct live row reads of all 17 records (2026-09-28).
+-- DO NOT EXECUTE without legitimate privileged DB access AND human review.
+-- Supabase writes are currently RLS-blocked for this agent; every
+-- statement below is a deterministic, evidence-backed proposal.
+--
+-- Classification from the re-research:
+--   VERIFIED_KEEP:    7ff963fe, 22581591, 30d473e5, 30fecbf8  -> no change
+--   VERIFIED_CORRECT: 9322e182, 1e8646d1, cc209308, f4f1cb3c, bf41f99d
+--   VERIFIED_RETIRE:  fa6b14bc, 47cebbaf, 21268d41, 09d8d668, 942d1620
+--   CONFLICTING:      acc3a306, 2d8b8a13, 878f699d -> NO STATEMENTS
+--   UNVERIFIED:       0
+--
+-- Schema facts (verified by live row reads): quiz_questions.correct_answer
+-- is an INTEGER index into the options array. question_en holds the English
+-- question; the displayed `question` column is Bengali.
+-- REVIEW-TRANSLATION: any Bengali text authored in these proposals is a
+-- draft translation and must be verified before publication.
+-- ============================================================
+
+-- ---------- 9322e182: prophets named in the Quran: key 20 -> 25 ----------
+-- Live: options ["২০","২৫","৩০","৩৫"], correct_answer = 0 ("২০").
+-- Evidence: 18 prophets in 6:83-86 + 7 elsewhere = 25; no reputable source
+-- supports 20. (research/quiz_c_reresearch.json, 9322e182)
+-- Deterministic: set correct_answer to the index of "২৫".
+-- PROPOSED:
+-- UPDATE quiz_questions
+-- SET correct_answer = 1
+-- WHERE id LIKE '9322e182%';
+
+-- ---------- 1e8646d1: Masjid al-Haram minarets: key 9 -> 13 + reword ----------
+-- Live: options ["৭","৯","১১","১৩"], correct_answer = 1 ("৯").
+-- Evidence: official Saudi sources (Saudipedia, pep.gov.sa) report 13;
+-- the unqualified question is time-ambiguous (7 -> 9 -> 11 -> 13).
+-- Deterministic: question_en -> "How many minarets does Masjid al-Haram
+-- currently have?"; correct_answer -> index of "১৩" (= 3).
+-- REVIEW-TRANSLATION: Bengali `question` reword ("বর্তমানে") not verified.
+-- PROPOSED:
+-- UPDATE quiz_questions
+-- SET question_en = 'How many minarets does Masjid al-Haram currently have?',
+--     correct_answer = 3
+-- WHERE id LIKE '1e8646d1%';
+
+-- ---------- cc209308: greatest-jihad framing -> Tirmidhi 1621 rebuild ----------
+-- Live: key index 1 ("নফসের বিরুদ্ধে জিহাদ"), status 'disputed'.
+-- Evidence: the "greatest/lesser jihad" superlative report is weak /
+-- non-Prophetic (Permanent Committee, al-Bayhaqi, Ibn Hajar). Jami'
+-- at-Tirmidhi 1621 (Hasan Sahih per at-Tirmidhi; authenticated by al-Hakim
+-- and al-Albani in as-Sahiha): the mujahid is one who strives against his
+-- own nafs in obedience to Allah.
+-- Deterministic minimal correction: reword question_en to "Who is the true
+-- mujahid (the one who strives)?"; keep key index 1 (option already matches
+-- the verified meaning); set source_reference to Tirmidhi 1621 with grading;
+-- remove superlative framing from the explanation.
+-- REVIEW-TRANSLATION: Bengali question/options reword not verified.
+-- PROPOSED:
+-- UPDATE quiz_questions
+-- SET question_en = 'Who is the true mujahid (the one who strives)?',
+--     source_reference = 'Jami'' at-Tirmidhi 1621 - graded Hasan Sahih by at-Tirmidhi; authenticated by al-Hakim and by al-Albani in as-Sahiha'
+-- WHERE id LIKE 'cc209308%';
+-- (explanation_en rewrite to drop the superlative requires the exact new
+--  English text — the research JSON gives the framing rule, not a final
+--  paragraph; compose from the verified hadith text before executing.)
+
+-- ---------- f4f1cb3c: sajdah count -> attribute Hanafi 14 ----------
+-- Live: options ["১২","১৪","১৫","১৬"], correct_answer = 2 ("১৫").
+-- NOTE: the research JSON records key_current "14", but the live row reads
+-- correct_answer = 2 -> "১৫". The research action is "disambiguate by
+-- authority": reword question_en to "According to the Hanafi school, how
+-- many verses of prostration (sajdah tilawah) are there in the Quran?" and
+-- key the Hanafi count 14. Do NOT attribute 15 to "the Shafi'i/Hanbali
+-- schools" — evidence shows Shafi'i = 14 (excluding Sad 38:24).
+-- Deterministic: question_en reword (verified); correct_answer -> index of
+-- "১৪" (= 1).
+-- REVIEW-TRANSLATION: Bengali question reword not verified.
+-- PROPOSED:
+-- UPDATE quiz_questions
+-- SET question_en = 'According to the Hanafi school, how many verses of prostration (sajdah tilawah) are there in the Quran?',
+--     correct_answer = 1
+-- WHERE id LIKE 'f4f1cb3c%';
+
+-- ---------- bf41f99d: sajdah count -> attribute Ibn Baz / Permanent Committee 15 ----------
+-- Live: options ["১০","১২","১৪","১৬"], correct_answer = 2 ("১৪").
+-- NOTE: the research JSON records key_current "15" and says "key 15
+-- retained", but the live row reads correct_answer = 2 -> "১৪" and the
+-- options array contains NO "১৫". The verified correction is the
+-- attribution reword: "According to Ibn Baz and the Permanent Committee,
+-- how many verses of prostration (sajdah tilawah) are there in the Quran?"
+-- The options-array completion (append "১৫", re-key to its index) is the
+-- deterministic reading of the verified intent but is NOT fully specified
+-- in the research packet — HUMAN CONFIRMATION REQUIRED before executing
+-- the options edit.
+-- REVIEW-TRANSLATION: Bengali question reword not verified.
+-- PROPOSED (question part only — verified):
+-- UPDATE quiz_questions
+-- SET question_en = 'According to Ibn Baz and the Permanent Committee, how many verses of prostration (sajdah tilawah) are there in the Quran?'
+-- WHERE id LIKE 'bf41f99d%';
+-- (options/key completion pending human confirmation; see note above.)
+
+-- ---------- 30fecbf8: option reword "Provision and nature" -> "Rain" ----------
+-- Classification VERIFIED_KEEP; this is a verified wording improvement, not
+-- a required correction.
+-- Live options: ["ওহী বহন","শিঙায় ফুঁক দেওয়া","রিজিক ও প্রকৃতি নিয়ন্ত্রণ","জান কবজ করা"],
+-- key index 2. "রিজিক ও প্রকৃতি নিয়ন্ত্রণ" is a non-standard formulation
+-- found in no reputable source; IslamQA #9477: Mikail "entrusted with the rain".
+-- REVIEW-TRANSLATION: Bengali "বৃষ্টি" for "Rain" not independently verified.
+-- PROPOSED (execute only after translation review):
+-- UPDATE quiz_questions
+-- SET options = '["ওহী বহন","শিঙায় ফুঁক দেওয়া","বৃষ্টি ও রিজিক","জান কবজ করা"]'
+-- WHERE id LIKE '30fecbf8%';
+-- (30d473e5 carries the same conditional note, but its live options contain
+--  no such wording — no statement needed.)
+
+-- ---------- VERIFIED_RETIRE x5 (publication-state decision required) ----------
+-- Evidence summaries in research/quiz_c_reresearch.json:
+--   fa6b14bc, 47cebbaf : Mi'raj month is scholarly inference, not a Prophetic
+--                         statement (duplicate pair — retire both).
+--   21268d41            : flood duration unstated in the Quran (29:14 gives
+--                         950 years among his people, not flood length).
+--   09d8d668            : "40 neighbors" report weak; cited Bukhari 6014 does
+--                         not establish the 40-house figure; the al-Hasan
+--                         al-Basri attribution could not be confirmed.
+--   942d1620            : false premise — no surah lists the 99 names.
+-- Retirements change publication state; per standing policy these need a
+-- deliberate human publication decision IN ADDITION to privileged access.
+-- PROPOSED (one statement per id, execute only with both authorizations):
+-- UPDATE quiz_questions SET is_active = false, verification_status = 'retired'
+-- WHERE id LIKE 'fa6b14bc%';
+-- UPDATE quiz_questions SET is_active = false, verification_status = 'retired'
+-- WHERE id LIKE '47cebbaf%';
+-- UPDATE quiz_questions SET is_active = false, verification_status = 'retired'
+-- WHERE id LIKE '21268d41%';
+-- UPDATE quiz_questions SET is_active = false, verification_status = 'retired'
+-- WHERE id LIKE '09d8d668%';
+-- UPDATE quiz_questions SET is_active = false, verification_status = 'retired'
+-- WHERE id LIKE '942d1620%';
+
+-- ---------- CONFLICTING: NO STATEMENTS ----------
+-- acc3a306  (rukus: 540 vs 558 — convention dispute)
+-- 2d8b8a13, 878f699d (Allah count: 2698 vs 2699 vs 2721 by convention)
+-- Policy: do not modify records where evidence is conflicting.
+-- NOTE (new finding, 2026-09-28): 2d8b8a13 and 878f699d are an EXACT
+-- duplicate pair (identical Bengali questions modulo quotes, identical
+-- options, key, source_reference, status). Consolidation is BLOCKED by the
+-- CONFLICTING classification — documented for human decision; the pair is
+-- NOT added to the canonical map.
