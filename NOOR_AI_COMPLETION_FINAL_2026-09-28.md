@@ -81,8 +81,13 @@ leave unpublished what evidence cannot support.
   /quran/60 (class C — correctly no intro): all PASS
 
 ## Production
-- Commit: _TBD_ · Vercel: noorappold · noorapp-ucmi untouched · no DNS/domain/
-  env/AdSense changes · no AdSense review submitted
+- Commit: **7e219ae** (3dbb9ef..7e219ae pushed to origin/main)
+- Vercel: **dpl_BFjXeJ1DaFyixesJfw35hZ9h4Ehj READY** on noorappold
+- Production verified live: /quran/68 (new intro + badges + caption),
+  /quran/104 (remediated intro, no weak sources), /quran/60 (class C —
+  correctly no intro)
+- noorapp-ucmi untouched · no DNS/domain/env/AdSense changes · no AdSense
+  review submitted
 
 ## Remaining unresolved (need human moves, not more AI effort)
 1. 97 hadith chapter intros — research in flight; publish only class-A
