@@ -1,0 +1,674 @@
+[
+ {
+  "chapter_number": 10,
+  "title_en_verified": "Call to Prayers (Adhaan)",
+  "title_ar_verified": "كتاب الأذان",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 11,
+  "title_en_verified": "Friday Prayer",
+  "title_ar_verified": "كتاب الجمعة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 12,
+  "title_en_verified": "Fear Prayer",
+  "title_ar_verified": "كتاب صلاة الخوف",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 13,
+  "title_en_verified": "The Two Festivals (Eids)",
+  "title_ar_verified": "كتاب العيدين",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 15,
+  "title_en_verified": "Invoking Allah for Rain (Istisqaa)",
+  "title_ar_verified": "كتاب الاستسقاء",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 16,
+  "title_en_verified": "Eclipses",
+  "title_ar_verified": "كتاب الكسوف",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 18,
+  "title_en_verified": "Shortening the Prayers (At-Taqseer)",
+  "title_ar_verified": "كتاب التقصير",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 19,
+  "title_en_verified": "Prayer at Night (Tahajjud)",
+  "title_ar_verified": "كتاب التهجد",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 20,
+  "title_en_verified": "Virtues of Prayer at Masjid Makkah and Madinah",
+  "title_ar_verified": "كتاب فضل الصلاة فى مسجد مكة والمدينة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 21,
+  "title_en_verified": "Actions while Praying",
+  "title_ar_verified": "كتاب العمل فى الصلاة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 22,
+  "title_en_verified": "Forgetfulness in Prayer",
+  "title_ar_verified": "كتاب السهو",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 23,
+  "title_en_verified": "Funerals (Al-Janaa'iz)",
+  "title_ar_verified": "كتاب الجنائز",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 24,
+  "title_en_verified": "Obligatory Charity Tax (Zakat)",
+  "title_ar_verified": "كتاب الزكاة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 27,
+  "title_en_verified": "Pilgrims Prevented from Completing the Pilgrimage",
+  "title_ar_verified": "كتاب المحصر",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 28,
+  "title_en_verified": "Penalty of Hunting while on Pilgrimage",
+  "title_ar_verified": "كتاب جزاء الصيد",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 29,
+  "title_en_verified": "Virtues of Madinah",
+  "title_ar_verified": "كتاب فضائل المدينة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 30,
+  "title_en_verified": "Fasting",
+  "title_ar_verified": "كتاب الصوم",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 31,
+  "title_en_verified": "Praying at Night in Ramadaan (Taraweeh)",
+  "title_ar_verified": "كتاب صلاة التراويح",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 32,
+  "title_en_verified": "Virtues of the Night of Qadr",
+  "title_ar_verified": "كتاب فضل ليلة القدر",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 33,
+  "title_en_verified": "Retiring to a Mosque for Remembrance of Allah (I'tikaf)",
+  "title_ar_verified": "كتاب الاعتكاف",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 34,
+  "title_en_verified": "Sales and Trade",
+  "title_ar_verified": "كتاب البيوع",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 35,
+  "title_en_verified": "Sales in which a Price is paid for Goods to be Delivered Later (As-Salam)",
+  "title_ar_verified": "كتاب السلم",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 36,
+  "title_en_verified": "Shuf'a",
+  "title_ar_verified": "كتاب الشفعة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 37,
+  "title_en_verified": "Hiring",
+  "title_ar_verified": "كتاب الإجارة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 38,
+  "title_en_verified": "Transferance of a Debt from One Person to Another (Al-Hawaala)",
+  "title_ar_verified": "كتاب الحوالات",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 39,
+  "title_en_verified": "Kafalah",
+  "title_ar_verified": "كتاب الكفالة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 40,
+  "title_en_verified": "Representation, Authorization, Business by Proxy",
+  "title_ar_verified": "كتاب الوكالة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 41,
+  "title_en_verified": "Agriculture",
+  "title_ar_verified": "كتاب المزارعة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 42,
+  "title_en_verified": "Distribution of Water",
+  "title_ar_verified": "كتاب المساقاة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 43,
+  "title_en_verified": "Loans, Payment of Loans, Freezing of Property, Bankruptcy",
+  "title_ar_verified": "كتاب فى الاستقراض",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 44,
+  "title_en_verified": "Khusoomaat",
+  "title_ar_verified": "كتاب الخصومات",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 45,
+  "title_en_verified": "Lost Things Picked up by Someone (Luqatah)",
+  "title_ar_verified": "كتاب فى اللقطة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 46,
+  "title_en_verified": "Oppressions",
+  "title_ar_verified": "كتاب المظالم",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 47,
+  "title_en_verified": "Partnership",
+  "title_ar_verified": "كتاب الشركة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 48,
+  "title_en_verified": "Mortgaging",
+  "title_ar_verified": "كتاب الرهن",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 49,
+  "title_en_verified": "Manumission of Slaves",
+  "title_ar_verified": "كتاب العتق",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 50,
+  "title_en_verified": "Makaatib",
+  "title_ar_verified": "كتاب المكاتب",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 51,
+  "title_en_verified": "Gifts",
+  "title_ar_verified": "كتاب الهبة وفضلها والتحريض عليها",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 52,
+  "title_en_verified": "Witnesses",
+  "title_ar_verified": "كتاب الشهادات",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 53,
+  "title_en_verified": "Peacemaking",
+  "title_ar_verified": "كتاب الصلح",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 54,
+  "title_en_verified": "Conditions",
+  "title_ar_verified": "كتاب الشروط",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 55,
+  "title_en_verified": "Wills and Testaments (Wasaayaa)",
+  "title_ar_verified": "كتاب الوصايا",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 56,
+  "title_en_verified": "Fighting for the Cause of Allah (Jihaad)",
+  "title_ar_verified": "كتاب الجهاد والسير",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 57,
+  "title_en_verified": "One-fifth of Booty to the Cause of Allah (Khumus)",
+  "title_ar_verified": "كتاب فرض الخمس",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 58,
+  "title_en_verified": "Jizyah and Mawaada'ah",
+  "title_ar_verified": "كتاب الجزية والموادعة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 59,
+  "title_en_verified": "Beginning of Creation",
+  "title_ar_verified": "كتاب بدء الخلق",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 60,
+  "title_en_verified": "Prophets",
+  "title_ar_verified": "كتاب أحاديث الأنبياء",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 61,
+  "title_en_verified": "Virtues and Merits of the Prophet (pbuh) and his Companions",
+  "title_ar_verified": "كتاب المناقب",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 62,
+  "title_en_verified": "Companions of the Prophet",
+  "title_ar_verified": "كتاب فضائل أصحاب النبى صلى الله عليه وسلم",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 63,
+  "title_en_verified": "Merits of the Helpers in Madinah (Ansaar)",
+  "title_ar_verified": "كتاب مناقب الأنصار",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 64,
+  "title_en_verified": "Military Expeditions led by the Prophet (pbuh) (Al-Maghaazi)",
+  "title_ar_verified": "كتاب المغازى",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 65,
+  "title_en_verified": "Prophetic Commentary on the Qur'an (Tafseer of the Prophet (pbuh))",
+  "title_ar_verified": "كتاب التفسير",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 66,
+  "title_en_verified": "Virtues of the Qur'an",
+  "title_ar_verified": "كتاب فضائل القرآن",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 67,
+  "title_en_verified": "Wedlock, Marriage (Nikaah)",
+  "title_ar_verified": "كتاب النكاح",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 68,
+  "title_en_verified": "Divorce",
+  "title_ar_verified": "كتاب الطلاق",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 69,
+  "title_en_verified": "Supporting the Family",
+  "title_ar_verified": "كتاب النفقات",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 70,
+  "title_en_verified": "Food, Meals",
+  "title_ar_verified": "كتاب الأطعمة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 71,
+  "title_en_verified": "Sacrifice on Occasion of Birth (`Aqiqa)",
+  "title_ar_verified": "كتاب العقيقة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 72,
+  "title_en_verified": "Hunting, Slaughtering",
+  "title_ar_verified": "كتاب الذبائح والصيد",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 73,
+  "title_en_verified": "Al-Adha Festival Sacrifice (Adaahi)",
+  "title_ar_verified": "كتاب الأضاحي",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 74,
+  "title_en_verified": "Drinks",
+  "title_ar_verified": "كتاب الأشربة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 75,
+  "title_en_verified": "Patients",
+  "title_ar_verified": "كتاب المرضى",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 76,
+  "title_en_verified": "Medicine",
+  "title_ar_verified": "كتاب الطب",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 77,
+  "title_en_verified": "Dress",
+  "title_ar_verified": "كتاب اللباس",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 78,
+  "title_en_verified": "Good Manners and Form (Al-Adab)",
+  "title_ar_verified": "كتاب الأدب",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 79,
+  "title_en_verified": "Asking Permission",
+  "title_ar_verified": "كتاب الاستئذان",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 80,
+  "title_en_verified": "Invocations",
+  "title_ar_verified": "كتاب الدعوات",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 81,
+  "title_en_verified": "To make the Heart Tender (Ar-Riqaq)",
+  "title_ar_verified": "كتاب الرقاق",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 82,
+  "title_en_verified": "Divine Will (Al-Qadar)",
+  "title_ar_verified": "كتاب القدر",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 83,
+  "title_en_verified": "Oaths and Vows",
+  "title_ar_verified": "كتاب الأيمان والنذور",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 84,
+  "title_en_verified": "Expiation for Unfulfilled Oaths",
+  "title_ar_verified": "كتاب كفارات الأيمان",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 85,
+  "title_en_verified": "Laws of Inheritance (Al-Faraa'id)",
+  "title_ar_verified": "كتاب الفرائض",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 86,
+  "title_en_verified": "Limits and Punishments set by Allah (Hudood)",
+  "title_ar_verified": "كتاب الحدود",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 87,
+  "title_en_verified": "Blood Money (Ad-Diyat)",
+  "title_ar_verified": "كتاب الديات",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 88,
+  "title_en_verified": "Apostates",
+  "title_ar_verified": "كتاب استتابة المرتدين والمعاندين وقتالهم",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 89,
+  "title_en_verified": "(Statements made under) Coercion",
+  "title_ar_verified": "كتاب الإكراه",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 90,
+  "title_en_verified": "Tricks",
+  "title_ar_verified": "كتاب الحيل",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 91,
+  "title_en_verified": "Interpretation of Dreams",
+  "title_ar_verified": "كتاب التعبير",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 92,
+  "title_en_verified": "Afflictions and the End of the World",
+  "title_ar_verified": "كتاب الفتن",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 93,
+  "title_en_verified": "Judgments (Ahkaam)",
+  "title_ar_verified": "كتاب الأحكام",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 94,
+  "title_en_verified": "Wishes",
+  "title_ar_verified": "كتاب التمنى",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 95,
+  "title_en_verified": "Accepting Information Given by a Truthful Person",
+  "title_ar_verified": "كتاب أخبار الآحاد",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 96,
+  "title_en_verified": "Holding Fast to the Qur'an and Sunnah",
+  "title_ar_verified": "كتاب الاعتصام بالكتاب والسنة",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ },
+ {
+  "chapter_number": 97,
+  "title_en_verified": "Oneness, Uniqueness of Allah (Tawheed)",
+  "title_ar_verified": "كتاب التوحيد",
+  "title_bn": null,
+  "status": "MISSING_VERIFIED_BN",
+  "action": "DO_NOT_INVENT — awaiting verified Bengali source / scholar review"
+ }
+]

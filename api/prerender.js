@@ -744,16 +744,29 @@ async function loadHadithRowsSsr(lang, chapterId) {
   return rows;
 }
 
+// ── Sahih al-Bukhari chapter title-selection contract ─────────────────────
+// Canonical rule lives in src/lib/hadithChapterTitle.ts (selectHadithChapterTitle).
+// This implementation MUST stay behaviorally identical to it: the serverless
+// function cannot import the TS module, so the rule is mirrored here verbatim.
+// Behavioral parity is asserted by scripts/verify-hadith-title-consistency.mjs
+// over all 97 chapters × bangla/english/urdu on every run.
+// Contract: bangla → verified title_bn else verified English title;
+//           english → verified English title; urdu → verified title_ar else
+//           verified English title. Never Arabic for bangla/english, never
+//           invented. DB (hadith_chapters) is the source of truth.
 const HADITH_CHAPTER_OVERRIDES = {
   38: { bangla: "হাওয়ালা (ঋণ হস্তান্তর)", english: "Transfer of a Debt (Al-Hawaala)", urdu: "حوالہ (قرض کی منتقلی)" },
   82: { bangla: "তাকদির (আল-কদর)", english: "Divine Will (Al-Qadar)", urdu: "تقدیر (القدر)" },
 };
+const HADITH_GENERIC_BOOK_LABEL = { bangla: "কিতাব", english: "Book", urdu: "کتاب" };
 const getHadithChapterName = (chapter, lang) => {
-  if (!chapter) return `${lang === "bangla" ? "কিতাব" : lang === "urdu" ? "کتاب" : "Book"}`;
-  if (HADITH_CHAPTER_OVERRIDES[Number(chapter.chapter_number)]?.[lang]) return HADITH_CHAPTER_OVERRIDES[Number(chapter.chapter_number)][lang];
-  if (lang === "bangla") return chapter.title_bn || chapter.title;
-  if (lang === "urdu") return chapter.title_ar || chapter.title;
-  return chapter.title;
+  if (!chapter) return HADITH_GENERIC_BOOK_LABEL[lang] || HADITH_GENERIC_BOOK_LABEL.english;
+  const override = HADITH_CHAPTER_OVERRIDES[Number(chapter.chapter_number)];
+  if (override && override[lang]) return override[lang];
+  const title = (chapter.title || "").trim();
+  if (lang === "bangla") return (chapter.title_bn || "").trim() || title;
+  if (lang === "urdu") return (chapter.title_ar || "").trim() || title;
+  return title;
 };
 
 const hadithCardMarkup = (row, lang, meta, chapterMap, isDetail = false) => {

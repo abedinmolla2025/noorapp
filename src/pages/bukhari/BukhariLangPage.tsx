@@ -9,6 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import BottomNavigation from "@/components/BottomNavigation";
 import hadithChapterIntros from "@/data/hadith-chapter-intros.json";
+import { selectHadithChapterTitle } from "@/lib/hadithChapterTitle";
 
 // Keep the Hadith visual language identical to the premium Dua cards.
 const ISLAMIC_PATTERN_1 = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='136' viewBox='0 0 160 136'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke-width='3.4' d='M-10 29C10 7 39 4 59 17c16 11 18 32 5 44-13 11-34 7-38-8-3-13 9-24 22-19 16 6 21 27 12 43-11 22-35 31-60 22'/%3E%3Cpath stroke-width='2.7' d='M68-10C56 13 61 38 81 49c18 10 39 0 40-19 1-16-15-25-28-15-14 11-8 35 9 44 18 9 39 7 52-5'/%3E%3Cpath stroke-width='3.2' d='M82 61c18-20 49-22 68-5 16 14 13 40-7 50-17 9-36-1-37-18-1-15 16-25 29-16 16 11 17 36 3 54-15 20-44 27-69 14'/%3E%3Cpath stroke-width='2' d='M2 87c16-15 39-17 55-6M132 103c-8 8-10 19-4 29M45 112c9-10 24-12 36-5'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='13' cy='52' r='2.4'/%3E%3Ccircle cx='20' cy='48' r='1.5'/%3E%3Ccircle cx='72' cy='103' r='2.2'/%3E%3Cpath d='M34 8c6 7 6 15 0 22-6-7-6-15 0-22ZM102 122c8-10 17-10 25 0-8-4-17-4-25 0Z'/%3E%3C/g%3E%3Cg fill='%23ffffff' font-family='serif' text-anchor='middle' opacity='0.05'%3E%3Ctext x='44' y='55' font-size='17' transform='rotate(-18 44 55)'%3Eالله%3C/text%3E%3Ctext x='118' y='34' font-size='14' transform='rotate(13 118 34)'%3Eرب%3C/text%3E%3Ctext x='42' y='105' font-size='13'%3Eنور%3C/text%3E%3C/g%3E%3C/svg%3E")`;
@@ -152,22 +153,9 @@ interface KitabInfo {
 }
 
 function getChapterName(chapterId: number, lang: LangSlug, kitabMap: Map<number, KitabInfo>): string {
-  const kitab = kitabMap.get(chapterId);
-  if (chapterId === 38) {
-    const verifiedNames = { bangla: "হাওয়ালা (ঋণ হস্তান্তর)", english: "Transfer of a Debt (Al-Hawaala)", urdu: "حوالہ (قرض کی منتقلی)" };
-    return verifiedNames[lang];
-  }
-  if (chapterId === 82) {
-    const verifiedNames = { bangla: "তাকদির (আল-কদর)", english: "Divine Will (Al-Qadar)", urdu: "تقدیر (القدر)" };
-    return verifiedNames[lang];
-  }
-  if (kitab) {
-    if (lang === "bangla") return kitab.title_bn || kitab.title;
-    if (lang === "urdu") return kitab.title_ar || kitab.title;
-    return kitab.title;
-  }
-  const fallback = { bangla: "কিতাব", english: "Book", urdu: "کتاب" };
-  return `${fallback[lang]} ${chapterId}`;
+  // Single deterministic contract — see src/lib/hadithChapterTitle.ts.
+  // api/prerender.js (getHadithChapterName) implements the identical rule.
+  return selectHadithChapterTitle(kitabMap.get(chapterId) ?? null, lang);
 }
 
 // ── Lang-specific SEO helpers ────────────────────────────────
@@ -417,12 +405,12 @@ export default function BukhariLangPage() {
   const kitabMap = useMemo(() => {
     const m = new Map<number, KitabInfo>();
     if (kitabData) {
+      // DB rows pass through unmodified: hadith_chapters is the source of
+      // truth for canonical titles (completed Hadith reconstruction).
+      // No per-chapter overrides here — verified overrides live in
+      // src/lib/hadithChapterTitle.ts and apply identically in SPA/prerender.
       for (const k of kitabData) {
-        if (k.chapter_number === 97 && (!k.title_bn || k.title_bn.includes("হারানো"))) {
-          m.set(97, { ...k, title: "Tawheed", title_bn: "তাওহীদ (আল্লাহর একত্ববাদ)", hadith_count: 188 });
-        } else {
-          m.set(k.chapter_number, k);
-        }
+        m.set(k.chapter_number, k);
       }
     }
     return m;
