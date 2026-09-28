@@ -7,6 +7,13 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import quizCanonicals from "../data/quiz-duplicate-canonicals.json";
+import quizAnswerSafeguards from "../data/quiz-answer-safeguards.json";
+import {
+  getEffectiveAnswerIndex,
+  getAcceptedAnswerText,
+  SUPPRESS_INDEX,
+  type SafeguardDoc,
+} from "../lib/quizAnswerSafeguard";
 
 const SITE_ORIGIN = "https://noorapp.in";
 const ELIGIBLE = new Set(["verified", "verified_primary", "verified_secondary"]);
@@ -14,6 +21,10 @@ const ELIGIBLE = new Set(["verified", "verified_primary", "verified_secondary"])
 // strongest verified record (see QUIZ_FORENSIC_AUDIT_2026-09-28.md). DB untouched.
 const QUIZ_CANONICAL_MAP: Record<string, string> =
   (quizCanonicals as { map?: Record<string, string> }).map ?? {};
+// P0-7 answer-key safeguards (2026-09-28): render-layer acceptedAnswer
+// suppression/correction for records whose stored key is provably contradicted
+// by reviewed evidence. DB untouched; see research/forensic/P0-7-answer-key-NEEDS-REVIEW.csv.
+const QUIZ_SAFEGUARDS: SafeguardDoc = quizAnswerSafeguards as SafeguardDoc;
 
 type QuizRecord = {
   id: string;
@@ -31,11 +42,24 @@ type QuizRecord = {
 };
 
 function QuizJsonLd({ record, url }: { record: QuizRecord; url: string }) {
-  const answerBn = record.options_bn?.[record.correct_answer];
-  const answerEn = record.options_en?.[record.correct_answer];
+  // P0-7: the effective index is the stored key, unless a safeguard overrides
+  // it. SUPPRESS_INDEX => omit acceptedAnswer (assert no machine-readable
+  // answer claim for records whose stored key is provably contradicted).
+  // "correct" => assert the evidence-backed option text. Never invent.
+  const effectiveIndex = getEffectiveAnswerIndex(record, QUIZ_SAFEGUARDS);
+  const answerText = getAcceptedAnswerText(record, QUIZ_SAFEGUARDS);
   const questionText = [record.question_bn, record.question_en].filter(Boolean).join(" / ");
-  const answerText = [answerBn, answerEn].filter(Boolean).join(" / ");
-  if (!ELIGIBLE.has(record.verification_status ?? "") || !questionText || !answerText) return null;
+  if (!ELIGIBLE.has(record.verification_status ?? "") || !questionText) return null;
+  const hasSafeguard = Boolean(QUIZ_SAFEGUARDS.records?.[record.id]);
+  if (!answerText && !hasSafeguard) return null;
+  const questionNode: Record<string, unknown> = {
+    "@type": "Question",
+    eduQuestionType: "Flashcard",
+    text: questionText,
+  };
+  if (answerText) {
+    questionNode.acceptedAnswer = { "@type": "Answer", text: answerText };
+  }
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -49,12 +73,7 @@ function QuizJsonLd({ record, url }: { record: QuizRecord; url: string }) {
       alignmentType: "educationalSubject",
       targetName: `Islamic studies — ${record.category || "General"}`,
     }],
-    hasPart: [{
-      "@type": "Question",
-      eduQuestionType: "Flashcard",
-      text: questionText,
-      acceptedAnswer: { "@type": "Answer", text: answerText },
-    }],
+    hasPart: [questionNode],
   };
 
   return <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />;
@@ -83,6 +102,11 @@ export default function QuizDetailPage() {
 
   const title = record ? `${record.question_bn || record.question_en} | Noor Quiz` : "Islamic Quiz | Noor";
   const description = record?.explanation_bn || record?.explanation_en || "Verified Islamic quiz question from Noor.";
+  // P0-7: the single render-corrected record (9322e182) displays the
+  // evidence-backed option as the answer; suppressed records keep the stored
+  // display (only their JSON-LD acceptedAnswer is withdrawn).
+  const effectiveAnswerIndex = record ? getEffectiveAnswerIndex(record, QUIZ_SAFEGUARDS) : SUPPRESS_INDEX;
+  const displayAnswerIndex = effectiveAnswerIndex >= 0 ? effectiveAnswerIndex : (record?.correct_answer ?? SUPPRESS_INDEX);
   const optionRows = useMemo(() => {
     if (!record) return [];
     const count = Math.max(record.options_bn?.length || 0, record.options_en?.length || 0);
@@ -137,7 +161,7 @@ export default function QuizDetailPage() {
                 <CardContent className="space-y-6">
                   <ol className="grid gap-3">
                     {optionRows.map((option, index) => (
-                      <li key={index} className={`rounded-lg border p-4 ${index === record.correct_answer ? "border-primary bg-primary/10" : ""}`}>
+                      <li key={index} className={`rounded-lg border p-4 ${index === displayAnswerIndex ? "border-primary bg-primary/10" : ""}`}>
                         <span className="mr-3 font-semibold">{String.fromCharCode(65 + index)}.</span>{option.bn}
                         {option.en && option.en !== option.bn && <span lang="en" className="mt-1 block text-sm text-muted-foreground">{option.en}</span>}
                       </li>
@@ -145,8 +169,8 @@ export default function QuizDetailPage() {
                   </ol>
                   <section aria-labelledby="answer-heading" className="rounded-lg bg-primary/10 p-4">
                     <h2 id="answer-heading" className="mb-2 font-semibold">সঠিক উত্তর / Correct answer</h2>
-                    <p>{record.options_bn?.[record.correct_answer] || record.options_en?.[record.correct_answer]}</p>
-                    {record.options_en?.[record.correct_answer] && record.options_bn?.[record.correct_answer] && <p lang="en" className="text-sm text-muted-foreground">{record.options_en[record.correct_answer]}</p>}
+                    <p>{record.options_bn?.[displayAnswerIndex] || record.options_en?.[displayAnswerIndex]}</p>
+                    {record.options_en?.[displayAnswerIndex] && record.options_bn?.[displayAnswerIndex] && <p lang="en" className="text-sm text-muted-foreground">{record.options_en[displayAnswerIndex]}</p>}
                   </section>
                   {(record.explanation_bn || record.explanation_en) && <section><h2 className="mb-2 font-semibold">ব্যাখ্যা / Explanation</h2><p>{record.explanation_bn || record.explanation_en}</p>{record.explanation_en && record.explanation_bn && <p lang="en" className="mt-2 text-muted-foreground">{record.explanation_en}</p>}</section>}
                   {record.source_reference && <section><h2 className="mb-2 font-semibold">Source</h2><p className="whitespace-pre-wrap text-sm text-muted-foreground">{record.source_reference}</p></section>}

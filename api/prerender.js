@@ -564,6 +564,54 @@ const getQuizCanonicalId = (id) => {
   return typeof primary === "string" && primary ? primary : id;
 };
 
+// Quiz answer-key safeguards (P0-7, 2026-09-28). Render-layer only: for quiz
+// records whose stored answer key is provably contradicted by reviewed
+// evidence, the JSON-LD acceptedAnswer is suppressed — or, for the single
+// record where the evidence is decisive and the evidence-backed option exists
+// verbatim in the row's options, corrected to that option. DB untouched.
+// Mirrors src/lib/quizAnswerSafeguard.ts verbatim (this file cannot import TS).
+// Missing file => no safeguards => render as stored (fail-safe, same as the
+// canonical map). Malformed per-record data fails closed to suppression.
+let quizSafeguards = null;
+const getQuizSafeguards = () => {
+  if (quizSafeguards === null) {
+    const doc = loadToolData("quiz-answer-safeguards.json");
+    quizSafeguards = doc && typeof doc.records === "object" && !Array.isArray(doc.records) ? doc.records : {};
+  }
+  return quizSafeguards;
+};
+const QUIZ_SUPPRESS_INDEX = -1;
+const normQuizOpt = (s) => String(s ?? "").trim();
+const quizOptionText = (record, index) => {
+  if (!Number.isInteger(index) || index < 0) return "";
+  const bn = Array.isArray(record.options_bn) ? record.options_bn : [];
+  const en = Array.isArray(record.options_en) ? record.options_en : [];
+  const opts = bn.length ? bn : en;
+  return normQuizOpt(opts[index]);
+};
+// Stored-key sanity: the key must point at a real, non-empty option.
+const isQuizStoredKeyValid = (record) => quizOptionText(record, record.correct_answer) !== "";
+// Effective correct-answer index the render layer may assert, or -1 to
+// suppress the accepted answer. Never throws; fail-closed to -1.
+const getQuizEffectiveAnswerIndex = (record) => {
+  try {
+    const stored = Number.isInteger(record?.correct_answer) ? record.correct_answer : -1;
+    if (!isQuizStoredKeyValid(record)) return QUIZ_SUPPRESS_INDEX;
+    const entry = getQuizSafeguards()[String(record?.id ?? "")];
+    if (!entry || typeof entry !== "object") return stored;
+    if (entry.action === "suppress") return QUIZ_SUPPRESS_INDEX;
+    if (entry.action === "correct") {
+      const eff = entry.effective_correct_answer;
+      const expected = Array.isArray(entry.expected_text) ? entry.expected_text.map(normQuizOpt) : [];
+      if (Number.isInteger(eff) && expected.length > 0 && expected.includes(quizOptionText(record, eff))) {
+        return eff;
+      }
+      return QUIZ_SUPPRESS_INDEX; // evidence stale or row drifted: do not assert
+    }
+    return stored;
+  } catch { return QUIZ_SUPPRESS_INDEX; }
+};
+
 const renderNamesOfAllah = () => {
   const names = loadToolData("names-of-allah.json");
   if (!Array.isArray(names) || names.length === 0) return "";
@@ -832,12 +880,25 @@ function structuredData({ description }) {
   return `<script type="application/ld+json">${JSON.stringify({ "@context": "https://schema.org", "@graph": graph }).replace(/</g, "\\u003c")}</script>`;
 }
 
-function quizStructuredData(record, canonical) {
+function quizStructuredData(record, canonical, effectiveIndex) {
   const questionText = [record.question_bn, record.question_en].filter(Boolean).join(" / ");
-  const answerBn = Array.isArray(record.options_bn) ? record.options_bn[record.correct_answer] : null;
-  const answerEn = Array.isArray(record.options_en) ? record.options_en[record.correct_answer] : null;
+  // P0-7: effectiveIndex === -1 => the stored key is provably contradicted by
+  // reviewed evidence, so no accepted answer is asserted in structured data.
+  // A "correct" safeguard asserts the evidence-backed option text instead.
+  const suppressed = effectiveIndex === QUIZ_SUPPRESS_INDEX;
+  const answerBn = !suppressed && Array.isArray(record.options_bn) ? record.options_bn[effectiveIndex] : null;
+  const answerEn = !suppressed && Array.isArray(record.options_en) ? record.options_en[effectiveIndex] : null;
   const answerText = [answerBn, answerEn].filter(Boolean).join(" / ");
-  if (!questionText || !answerText) return "";
+  if (!questionText) return "";
+  if (!answerText && !suppressed) return "";
+  const questionNode = {
+    "@type": "Question",
+    "eduQuestionType": "Flashcard",
+    "text": questionText,
+  };
+  if (answerText) {
+    questionNode.acceptedAnswer = { "@type": "Answer", "text": answerText };
+  }
   const data = {
     "@context": "https://schema.org",
     "@type": "Quiz",
@@ -850,12 +911,7 @@ function quizStructuredData(record, canonical) {
       "alignmentType": "educationalSubject",
       "targetName": `Islamic studies — ${record.category || "General"}`,
     }],
-    "hasPart": [{
-      "@type": "Question",
-      "eduQuestionType": "Flashcard",
-      "text": questionText,
-      "acceptedAnswer": { "@type": "Answer", "text": answerText },
-    }],
+    "hasPart": [questionNode],
   };
   return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
 }
@@ -2190,12 +2246,18 @@ export default async function handler(req, res) {
         description = "This Noor quiz question is not published or is awaiting editorial review.";
         bodyContent = `<main class="min-h-screen bg-background p-8"><div class="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8"><h1 class="text-2xl font-bold">Quiz question unavailable</h1><p class="mt-3 text-muted-foreground">This question is not published or is awaiting editorial review.</p><a class="mt-6 inline-block text-primary hover:underline" href="/quiz">Browse the daily quiz</a></div></main>`;
       } else {
-        const answerBn = Array.isArray(record.options_bn) ? record.options_bn[record.correct_answer] : null;
-        const answerEn = Array.isArray(record.options_en) ? record.options_en[record.correct_answer] : null;
+        // P0-7: effective answer index — the single render-corrected record
+        // (9322e182) displays/asserts the evidence-backed option; suppressed
+        // records keep the stored display (only their JSON-LD acceptedAnswer
+        // is withdrawn). Fail-closed: -1 => suppress.
+        const quizEffIdx = getQuizEffectiveAnswerIndex(record);
+        const quizDisplayIdx = quizEffIdx >= 0 ? quizEffIdx : record.correct_answer;
+        const answerBn = Array.isArray(record.options_bn) ? record.options_bn[quizDisplayIdx] : null;
+        const answerEn = Array.isArray(record.options_en) ? record.options_en[quizDisplayIdx] : null;
         const questionBn = record.question_bn || record.question_en || "Islamic quiz question";
         const questionEn = record.question_en && record.question_bn ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.question_en)}</p>` : "";
         const options = Array.isArray(record.options_bn) && record.options_bn.length ? record.options_bn : (record.options_en || []);
-        const optionHtml = options.map((option, index) => `<li class="rounded-xl border border-border p-4 ${index === record.correct_answer ? "border-primary bg-primary/10" : ""}"><strong>${String.fromCharCode(65 + index)}.</strong> ${esc(option)}${record.options_en?.[index] && record.options_en[index] !== option ? `<span lang="en" class="mt-1 block text-sm text-muted-foreground">${esc(record.options_en[index])}</span>` : ""}</li>`).join("");
+        const optionHtml = options.map((option, index) => `<li class="rounded-xl border border-border p-4 ${index === quizDisplayIdx ? "border-primary bg-primary/10" : ""}"><strong>${String.fromCharCode(65 + index)}.</strong> ${esc(option)}${record.options_en?.[index] && record.options_en[index] !== option ? `<span lang="en" class="mt-1 block text-sm text-muted-foreground">${esc(record.options_en[index])}</span>` : ""}</li>`).join("");
         // Duplicate question URLs consolidate here: the link canonical (and og:url)
         // point at the primary record; JSON-LD below reuses the same URL.
         canonicalUrl = `${SITE_ORIGIN}/quiz/${encodeURIComponent(getQuizCanonicalId(record.id))}`;
@@ -2219,7 +2281,7 @@ export default async function handler(req, res) {
           }
         } catch (e) { console.error("[SSR] quiz detail related failed", e); }
         bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl"><nav aria-label="Breadcrumb" class="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground"><a href="/" class="hover:underline">Home</a><span aria-hidden="true">›</span><a href="/quiz" class="hover:underline">Quiz</a><span aria-hidden="true">›</span><span>${esc(record.category || "Islamic studies")}</span></nav><div class="rounded-2xl border border-border bg-card p-6 shadow-sm"><a class="text-sm text-primary hover:underline" href="/quiz">← Back to Daily Quiz</a><p class="mt-6 text-sm font-semibold text-primary">${esc(record.category || "Islamic studies")}</p><h1 class="mt-2 text-2xl font-bold leading-relaxed">${esc(questionBn)}</h1>${questionEn}<ol class="mt-6 grid gap-3">${optionHtml}</ol><section aria-labelledby="answer-heading" class="mt-6 rounded-xl bg-primary/10 p-4"><h2 id="answer-heading" class="font-semibold">সঠিক উত্তর / Correct answer</h2><p class="mt-2">${esc(answerBn || answerEn || "")}</p>${answerBn && answerEn ? `<p lang="en" class="text-sm text-muted-foreground">${esc(answerEn)}</p>` : ""}</section>${record.explanation_bn || record.explanation_en ? `<section class="mt-6"><h2 class="font-semibold">ব্যাখ্যা / Explanation</h2><p class="mt-2 leading-7">${esc(record.explanation_bn || record.explanation_en)}</p>${record.explanation_bn && record.explanation_en ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.explanation_en)}</p>` : ""}</section>` : ""}${record.source_reference ? `<section class="mt-6"><h2 class="font-semibold">Source</h2><p class="mt-2 whitespace-pre-wrap text-sm text-muted-foreground">${esc(record.source_reference)}</p></section>` : ""}<p class="mt-6 border-t border-border pt-4 text-sm"><a class="text-primary hover:underline" href="/sources">Editorial sources and methodology</a></p></div>${relatedQuizHtml}</article></main>`;
-        extraStructuredData = quizStructuredData(record, canonical);
+        extraStructuredData = quizStructuredData(record, canonical, quizEffIdx);
       }
     }
     // --- Quiz Hub Page: category-grouped index of verified questions ---

@@ -188,3 +188,40 @@ console.log("[extract-tool-data] done");
   fs.writeFileSync(path.join(outDir, "quiz-canonicals.json"), JSON.stringify(doc) + "\n");
   console.log(`[extract-tool-data] quiz-canonicals.json: ${entries.length} duplicate mappings`);
 }
+
+// Quiz answer-key safeguards (P0-7, 2026-09-28): render-layer acceptedAnswer
+// suppression/correction for records whose stored key is provably contradicted
+// by reviewed evidence. Copied verbatim so api/prerender.js can apply them
+// without DB changes. Validation is strict: a malformed file fails the build
+// rather than shipping silent no-safeguard behavior.
+{
+  const srcFile = path.join(root, "src", "data", "quiz-answer-safeguards.json");
+  const doc = JSON.parse(fs.readFileSync(srcFile, "utf8"));
+  if (!doc || typeof doc.records !== "object" || Array.isArray(doc.records)) {
+    throw new Error("[extract-tool-data] quiz-answer-safeguards: expected { records: { <uuid>: {...} } }");
+  }
+  const uuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+  for (const [id, sg] of Object.entries(doc.records)) {
+    if (!uuidRe.test(id)) {
+      throw new Error(`[extract-tool-data] quiz-answer-safeguards: bad id ${id}`);
+    }
+    if (!sg || (sg.action !== "correct" && sg.action !== "suppress")) {
+      throw new Error(`[extract-tool-data] quiz-answer-safeguards: ${id} needs action correct|suppress`);
+    }
+    if (sg.action === "correct") {
+      if (!Number.isInteger(sg.effective_correct_answer) || sg.effective_correct_answer < 0) {
+        throw new Error(`[extract-tool-data] quiz-answer-safeguards: ${id} needs integer effective_correct_answer`);
+      }
+      if (!Array.isArray(sg.expected_text) || !sg.expected_text.length || !sg.expected_text.every((t) => typeof t === "string" && t.trim())) {
+        throw new Error(`[extract-tool-data] quiz-answer-safeguards: ${id} needs non-empty expected_text`);
+      }
+    }
+    for (const k of ["reason", "evidence", "db_fix_needed"]) {
+      if (typeof sg[k] !== "string" || !sg[k].trim()) {
+        throw new Error(`[extract-tool-data] quiz-answer-safeguards: ${id} missing ${k}`);
+      }
+    }
+  }
+  fs.writeFileSync(path.join(outDir, "quiz-answer-safeguards.json"), JSON.stringify(doc) + "\n");
+  console.log(`[extract-tool-data] quiz-answer-safeguards.json: ${Object.keys(doc.records).length} safeguarded records`);
+}
