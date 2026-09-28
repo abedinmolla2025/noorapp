@@ -1,0 +1,96 @@
+surah_number,name,overall,has_draft,nonverified_claims,notes
+1,Al-Faatiha,VERIFIED,True,,"Note: an academic survey (HYPOTHESIS vol.4/2025, citing Fahd Bin Abdurrahman Ar-Rumi) lists this surah among 12 with some scholarly disagreement on Makki/Madani status; however the standard references"
+2,Al-Baqara,VERIFIED,True,,
+3,Aal-i-Imraan,VERIFIED,True,,"Rendering variant only: Quran.com gives 'Family of Imran' vs Tanzil/repo 'The Family of Imraan' — same meaning, no substantive conflict."
+4,An-Nisaa,VERIFIED,True,,
+5,Al-Maaida,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Table Spread' vs Tanzil/repo 'The Table' — same meaning, no substantive conflict."
+6,Al-An'aam,VERIFIED,True,,
+7,Al-A'raaf,VERIFIED,True,,
+8,Al-Anfaal,VERIFIED,True,,
+9,At-Tawba,VERIFIED,True,,
+10,Yunus,VERIFIED,True,,"Rendering variant only: Quran.com gives 'Jonah' vs Tanzil/repo 'Jonas' — same meaning, no substantive conflict."
+11,Hud,VERIFIED,True,,
+12,Yusuf,VERIFIED,True,,
+13,Ar-Ra'd,VERIFIED,True,,"Note: an academic survey (HYPOTHESIS vol.4/2025, citing Fahd Bin Abdurrahman Ar-Rumi) lists this surah among 12 with some scholarly disagreement on Makki/Madani status; however the standard references"
+14,Ibrahim,VERIFIED,True,,
+15,Al-Hijr,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Rocky Tract' vs Tanzil/repo 'The Rock' — same meaning, no substantive conflict."
+16,An-Nahl,VERIFIED,True,,
+17,Al-Israa,VERIFIED,True,,
+18,Al-Kahf,VERIFIED,True,,
+19,Maryam,VERIFIED,True,,
+20,Taa-Haa,VERIFIED,True,,"Rendering variant only: Quran.com gives 'Ta-Ha' vs Tanzil/repo 'Taa-Haa' — same meaning, no substantive conflict."
+21,Al-Anbiyaa,VERIFIED,True,,
+22,Al-Hajj,VERIFIED,True,,
+23,Al-Muminoon,VERIFIED,True,,
+24,An-Noor,VERIFIED,True,,
+25,Al-Furqaan,VERIFIED,True,,
+26,Ash-Shu'araa,VERIFIED,True,,
+27,An-Naml,VERIFIED,True,,
+28,Al-Qasas,VERIFIED,True,,
+29,Al-Ankaboot,VERIFIED,True,,
+30,Ar-Room,VERIFIED,True,,
+31,Luqman,VERIFIED,True,,
+32,As-Sajda,VERIFIED,True,,
+33,Al-Ahzaab,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Combined Forces' vs Tanzil/repo 'The Clans' — same meaning, no substantive conflict."
+34,Saba,VERIFIED,True,,
+35,Faatir,VERIFIED,True,,"Rendering variant only: Quran.com gives 'Originator' vs Tanzil/repo 'The Originator' — same meaning, no substantive conflict."
+36,Yaseen,VERIFIED,True,,"Rendering variant only: Quran.com gives 'Ya Sin' vs Tanzil/repo 'Yaseen' — same meaning, no substantive conflict."
+37,As-Saaffaat,VERIFIED,True,,"Rendering variant only: Quran.com gives 'Those who set the Ranks' vs Tanzil/repo 'Those drawn up in Ranks' — same meaning, no substantive conflict."
+38,Saad,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Letter ""Saad""' vs Tanzil/repo 'The letter Saad' — same meaning, no substantive conflict."
+39,Az-Zumar,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Troops' vs Tanzil/repo 'The Groups' — same meaning, no substantive conflict."
+40,Ghafir,VERIFIED,True,,
+41,Fussilat,VERIFIED,True,,
+42,Ash-Shura,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Consultation' vs Tanzil/repo 'Consultation' — same meaning, no substantive conflict."
+43,Az-Zukhruf,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Ornaments of Gold' vs Tanzil/repo 'Ornaments of gold' — same meaning, no substantive conflict."
+44,Ad-Dukhaan,VERIFIED,True,,
+45,Al-Jaathiya,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Crouching' vs Tanzil/repo 'Crouching' — same meaning, no substantive conflict."
+46,Al-Ahqaf,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Wind-Curved Sandhills' vs Tanzil/repo 'The Dunes' — same meaning, no substantive conflict."
+47,Muhammad,VERIFIED,True,,
+48,Al-Fath,VERIFIED,True,,
+49,Al-Hujuraat,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Rooms' vs Tanzil/repo 'The Inner Apartments' — same meaning, no substantive conflict."
+50,Qaaf,VERIFIED,True,,"Rendering variant only: Quran.com gives 'The Letter ""Qaf""' vs Tanzil/repo 'The letter Qaaf' — same meaning, no substantive conflict."
+51,Adh-Dhaariyat,VERIFIED,True,,
+52,At-Tur,VERIFIED,True,,
+53,An-Najm,VERIFIED,True,,
+54,Al-Qamar,VERIFIED,True,,
+56,Al-Waaqia,VERIFIED,True,,
+57,Al-Hadid,VERIFIED,True,,
+58,Al-Mujaadila,VERIFIED,True,,Transliteration variants exist ('Al-Mujadila' in Clear Quran/Yusuf Ali vs repo 'Al-Mujaadila'); route uses the repo spelling. Tanzil excerpt captured from its revelation-order table in the pre-compact
+59,Al-Hashr,VERIFIED,True,,"Name translation variants are preserved: Al-Islam renders hashr as 'gathering', the Clear Quran describes it as 'the exile'. Maulana Muhammad Ali's English Translation and Commentary of the Holy Quran"
+61,As-Saff,VERIFIED,True,,The Spanish URL (al-islam.org/es/node/29771) is the same publisher and translation as the English Enlightening Commentary pages used elsewhere; not double-counted with Shiavault. Tanzil excerpt captur
+62,Al-Jumu'a,VERIFIED,True,,The direct Al-Islam.org page (al-islam.org/es/node/29772) returned HTTP 403 on 2026-09-28 and was not retried or bypassed; the Shiavault copy of the same Enlightening Commentary serves as the second i
+63,Al-Munaafiqoon,VERIFIED,True,,Quran O provides the primary translated text (verses 7-10) independently corroborating the Clear Quran commentary's theme summary.
+64,At-Taghaabun,VERIFIED,True,,English renderings of taghabun vary across sources ('Mutual Loss and Gain' in the Enlightening Commentary; the repo uses 'Mutual Disillusion'); the draft uses the Enlightening Commentary's rendering s
+65,At-Talaaq,VERIFIED,True,,Tanzil excerpt captured from its revelation-order table in the pre-compaction session.
+66,At-Tahrim,VERIFIED,True,,"Both sources also record the honey narrative's details (Zaynab bint Jahsh, Hafsah and 'A'ishah); the draft uses it only because it is directly part of the surah's occasion as stated by both sources, w"
+67,Al-Mulk,VERIFIED,True,,The Spanish URL (al-islam.org/es/node/29777) is the same publisher and translation as the English Enlightening Commentary pages used elsewhere. Tanzil excerpt captured from its revelation-order table 
+69,Al-Haaqqa,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type."
+70,Al-Ma'aarij,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type."
+71,Nooh,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type."
+72,Al-Jinn,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type. Maududi notes the revelation was at the earliest stag"
+73,Al-Muzzammil,VERIFIED,True,,"Scholarly nuance, not a surah-level conflict: Maududi and IslamReligion.com agree vv. 1-19 are unanimously Makki, but many commentators regard v. 20 (mentioning fighting in Allah's way and the prescri"
+74,Al-Muddaththir,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type. Maududi records the tradition (Bukhari, Muslim, Musna"
+75,Al-Qiyaama,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type."
+77,Al-Mursalaat,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type. Note: Tafsir Namuneh mentions some define verse 48 as"
+78,An-Naba,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type."
+79,An-Naazi'aat,VERIFIED,True,,"All four candidate facts VERIFIED by >=2 independent reputable sources; repo data corroborates name translation, verse count, and revelation type."
+80,Abasa,VERIFIED,True,Major themes: divine rebuke prioritizing influential listene,Theme claim rests on a single secondary source; not used in draft. No verse-count differences across counting traditions were reported by the consulted sources.
+81,At-Takwir,VERIFIED,True,Major themes: signs of the coming Day of Judgment (cosmic up,Theme claim has two thin sources (encyclopedia summary + tafsir section heading); kept at PARTIALLY_VERIFIED and excluded from draft. No verse-count differences across counting traditions were reporte
+82,Al-Infitaar,VERIFIED,True,,No reputable source with an explicit theme statement was found in this pass; theme claim omitted rather than filled with generic content. No verse-count differences across counting traditions were rep
+84,Al-Inshiqaaq,VERIFIED,True,Major themes: description of the Last Day; those given their,Name meaning VERIFIED on the underlying sense (splitting/sundering of the sky); English title renderings legitimately vary across sources. Theme claim rests on a single secondary source; not used in d
+85,Al-Burooj,VERIFIED,True,,"Name meaning VERIFIED; 'The Mansions of the Stars' vs 'The Constellations' are variant English renderings of the same Arabic, not a conflict. No reputable explicit theme statement found in this pass; "
+86,At-Taariq,VERIFIED,True,Major themes: Allah's oath by the piercing star that every s,"Name meaning VERIFIED on the underlying sense (the night-comer / piercing star, per 86:3). The repo's rendering 'The Morning Star' has only single-source support (Muslims Forum) in this pass; draft us"
+87,Al-A'laa,VERIFIED,True,,No reputable explicit theme statement found in this pass; theme claim omitted rather than filled with generic content. No verse-count differences across counting traditions were reported.
+88,Al-Ghaashiya,VERIFIED,True,Major themes: the overwhelming reality of the Day of Judgmen,Theme claim rests on a single secondary source; not used in draft. No verse-count differences across counting traditions were reported.
+89,Al-Fajr,VERIFIED,True,,One quran.com search snippet contained contaminated text (unrelated chapter content); it was not used as evidence. No reputable explicit theme statement found in this pass; theme claim omitted rather 
+90,Al-Balad,VERIFIED,True,Major themes: man created in toil/struggle; 'the steep path',Theme claim rests on a single source's header note; not used in draft. No verse-count differences across counting traditions were reported.
+96,Al-Alaq,VERIFIED,True,,The first-revelation claim is attested by two independent scholarly commentaries (Maududi; Qutb); both rest on the same underlying report (Aishah's hadith as transmitted in Sahih al-Bukhari and Sahih 
+103,Al-Asr,VERIFIED,True,Its message centers on four qualities that save man from los,"No differing verse counts found in any source; standard Kufan/Hafs numbering. Theme claim rests on a single op-ed source, so no theme sentence in draft."
+104,Al-Humaza,VERIFIED,True,,Name rendered 'The Traducer' (repo's rendering) is attested by AskIslamPedia alongside 'The Slanderer'/'The Backbiter'. No verse-count differences found; standard Kufan/Hafs numbering.
+105,Al-Fil,VERIFIED,True,,No verse-count differences found; standard Kufan/Hafs numbering.
+106,Quraish,VERIFIED,True,,No verse-count differences found; standard Kufan/Hafs numbering.
+108,Al-Kawthar,VERIFIED,True,It is a message of consolation to the Prophet: Allah has gra,Wikipedia notes 'several opinions regarding its timing and contextual background of revelation' — the Meccan classification itself is agreed; only the precise timing within the Meccan period is debate
+109,Al-Kaafiroon,VERIFIED,True,It declares the believer's complete disavowal of shirk and r,"The Study Quran's 'early Makkan' specificity and Maududi's 'Makkan' agree; no conflict. No verse-count differences found; standard Kufan/Hafs numbering. Theme claim single-source, so no theme sentence"
+110,An-Nasr,VERIFIED,True,"It brings glad tidings of a great victory for Islam, after w","Per the brief, the 'last-revealed surah' claim was deliberately NOT researched or asserted. No verse-count differences found; standard Kufan/Hafs numbering. Theme claim single-source, so no theme sent"
+111,Al-Masad,VERIFIED,True,,No verse-count differences found; standard Kufan/Hafs numbering.
+114,An-Naas,VERIFIED,True,,"No verse-count differences found; standard Kufan/Hafs numbering. No Makki/Madani dispute found in sources (unlike 107, 112, 113)."

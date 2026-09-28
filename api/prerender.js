@@ -1103,6 +1103,18 @@ export default async function handler(req, res) {
             const revelationBadge = surahMeta && surahMeta.revelationType
               ? `<span class="inline-block rounded-full border border-white/30 bg-white/10 px-2.5 py-0.5 text-[10px] font-medium">${surahMeta.revelationType === "Meccan" ? "মক্কী" : "মাদানী"}</span>`
               : "";
+            // Evidence-first surah introductions (research 2026-09-28): only
+            // surahs whose every published claim reached VERIFIED are present
+            // in surah-intros.json. Rendered with source attribution; surahs
+            // without a verified intro render nothing — no placeholder.
+            const surahIntroList = loadToolData("surah-intros.json");
+            const surahIntro = Array.isArray(surahIntroList)
+              ? surahIntroList.find((s) => Number(s.number) === surahNum)
+              : null;
+            const surahIntroHtml = surahIntro && surahIntro.intro_en
+              ? `<div class="border-b border-border bg-card"><p class="mx-auto max-w-3xl px-4 pt-4 text-sm">${esc(surahIntro.intro_en)}</p>
+                 <p class="mx-auto max-w-3xl px-4 pb-4 pt-1 text-[11px] text-muted-foreground">Sources: ${surahIntro.sources.map((s) => `<a href="${esc(s.url)}" class="underline">${esc(s.name)}</a>`).join(" · ")}</p></div>`
+              : "";
             const surahNav = `
               <nav aria-label="Surah navigation" class="mx-auto flex max-w-3xl items-stretch justify-between gap-3 border-t border-border bg-card px-4 py-5">
                 ${prevMeta ? `<a href="/quran/${prevMeta.number}" class="flex-1 rounded-xl border border-border px-4 py-3 text-left hover:bg-muted"><span class="block text-[10px] font-bold uppercase tracking-wider text-muted-foreground">← Previous Surah</span><span class="mt-1 block font-semibold text-primary">${esc(prevMeta.englishName)}</span></a>` : `<span class="flex-1"></span>`}
@@ -1123,6 +1135,7 @@ export default async function handler(req, res) {
                     <span class="text-2xl font-arabic">${esc(ar.name)}</span>
                   </div>
                 </header>
+                ${surahIntroHtml}
                 <main class="max-w-3xl mx-auto bg-card shadow-sm border-x border-border min-h-screen">
                   ${ayahs}
                 </main>

@@ -1,0 +1,689 @@
+[
+ {
+  "id": "7ff963fe-1dd0-4b89-b1e7-aae7167b696b",
+  "question_valid": true,
+  "options_valid": true,
+  "key_correct": true,
+  "recommendation": "KEEP",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Quranic Arabic Corpus: proper-noun lemma tokens — Musa 136, Ibrahim 69, Isa 25, Muhammad 4, Ahmad 1. Musa exceeds every other option.",
+    "sources": [
+     {
+      "name": "Quranic Arabic Corpus, concordance",
+      "url": "https://corpus.quran.com/search.jsp?q=lem%3AmuwsaY%60+pos%3Apn",
+      "type": "primary_text",
+      "excerpt": "Results 1 to 50 of 136 for pos:pn lem:muwsaY"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Independent academic source: Moses is 'mentioned by name... more than any other figure in the text' (says 'some 137' — approximate method, does not affect the comparative answer).",
+    "sources": [
+     {
+      "name": "Oxford Bibliographies, 'Moses' (Islamic Studies)",
+      "url": "https://www.oxfordbibliographies.com/abstract/document/obo-9780195390155/obo-9780195390155-0134.xml",
+      "type": "scholarly",
+      "excerpt": "Moses is mentioned by name some 137 times in the Qur'an, more than any other figure in the text."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "2d8b8a13-41aa-41da-a698-d6d73ec7a3d5",
+  "question_valid": true,
+  "options_valid": false,
+  "key_correct": false,
+  "recommendation": "NEEDS_MORE_EVIDENCE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Quranic Arabic Corpus: the proper noun allah occurs 2,699 times (root hamza-lam-ha total 2,851 = 147 ilah + 2,699 allah + 5 allahumma).",
+    "sources": [
+     {
+      "name": "Quranic Arabic Corpus, Quran Dictionary",
+      "url": "https://corpus.quran.com/qurandictionary.jsp?q=Alh",
+      "type": "primary_text",
+      "excerpt": "The triliteral root hamza lam ha occurs 2851 times in the Quran, in three derived forms: 147 times as the noun ilah; 2699 times as the proper noun allah; five times as the form of address allahumma"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "The Corpus's 2,699 count includes the Allah of the opening Basmala (1:1:2).",
+    "sources": [
+     {
+      "name": "Quranic Arabic Corpus, Quran Dictionary",
+      "url": "https://corpus.quran.com/qurandictionary.jsp?q=Alh",
+      "type": "primary_text",
+      "excerpt": "| (1:1:2) l-lahi | (of) Allah |"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "2,698's documented origin: Abdul-Baqi's concordance tabulation (980+592+1,126) omitting 1:1; the 19-numerology proponents themselves admit 2,699 is the undoctored count ('not a multiple of 19, unless we remove one'). No neutral reputable counting convention makes 2,698 — or any listed option — correct.",
+    "sources": [
+     {
+      "name": "Daniel Lomax, critical essay (secondary analysis) + masjidtucson.org Appendix 24 (admission against interest)",
+      "url": "https://bahai-library.com/lomax_number_nineteen_quran",
+      "type": "scholarly",
+      "excerpt": "592 + 980 + 1126 = 2698... Abdulbaqi also omitted 1:1 when counting 'Allah,' so the number in the so-called 'numbered verses' turns out to be 2699."
+     }
+    ],
+    "status": "PARTIALLY_VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "878f699d-0124-43cd-9bbf-a6917183b59d",
+  "question_valid": true,
+  "options_valid": false,
+  "key_correct": false,
+  "recommendation": "NEEDS_MORE_EVIDENCE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Quranic Arabic Corpus: the proper noun allah occurs 2,699 times (root hamza-lam-ha total 2,851 = 147 ilah + 2,699 allah + 5 allahumma).",
+    "sources": [
+     {
+      "name": "Quranic Arabic Corpus, Quran Dictionary",
+      "url": "https://corpus.quran.com/qurandictionary.jsp?q=Alh",
+      "type": "primary_text",
+      "excerpt": "The triliteral root hamza lam ha occurs 2851 times in the Quran, in three derived forms: 147 times as the noun ilah; 2699 times as the proper noun allah; five times as the form of address allahumma"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "The Corpus's 2,699 count includes the Allah of the opening Basmala (1:1:2).",
+    "sources": [
+     {
+      "name": "Quranic Arabic Corpus, Quran Dictionary",
+      "url": "https://corpus.quran.com/qurandictionary.jsp?q=Alh",
+      "type": "primary_text",
+      "excerpt": "| (1:1:2) l-lahi | (of) Allah |"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "2,698's documented origin: Abdul-Baqi's concordance tabulation (980+592+1,126) omitting 1:1; the 19-numerology proponents themselves admit 2,699 is the undoctored count ('not a multiple of 19, unless we remove one'). No neutral reputable counting convention makes 2,698 — or any listed option — correct.",
+    "sources": [
+     {
+      "name": "Daniel Lomax, critical essay (secondary analysis) + masjidtucson.org Appendix 24 (admission against interest)",
+      "url": "https://bahai-library.com/lomax_number_nineteen_quran",
+      "type": "scholarly",
+      "excerpt": "592 + 980 + 1126 = 2698... Abdulbaqi also omitted 1:1 when counting 'Allah,' so the number in the so-called 'numbered verses' turns out to be 2699."
+     }
+    ],
+    "status": "PARTIALLY_VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "9322e182-0aaa-4fee-8907-753bcc5a1970",
+  "question_valid": true,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "CORRECT",
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Twenty-five prophets are mentioned by name in the Quran; full 25-name list given (Adam, Idris, Nuh, Hud, Salih, Ibrahim, Lut, Ismail, Ishaq, Yaqub, Yusuf, Shuayb, Ayyub, Dhul-Kifl, Musa, Harun, Dawud, Sulayman, Ilyas, al-Yasa, Yunus, Zakariyya, Yahya, Isa, Muhammad).",
+    "sources": [
+     {
+      "name": "Islam Question & Answer, Q10468 (sourced to Shaykh al-Tuwayjri, Usool al-Deen al-Islami)",
+      "url": "http://islamqa.info/en/answers/10468",
+      "type": "scholarly",
+      "excerpt": "of whom Allah has mentioned twenty five in the Quran, and we are obliged to believe in all of them. They are: Adam, Idris, Nuh, Hud, Salih, Ibrahim, Loot, Isma'il, Ishaq, Ya'qub, Yusuf, Shu'ayb, Ayub, Dhu'l-Kifl, Musa, Harun, Dawud, Sulayman, Ilyas, Al-Yasa', Yunus, Zakariyya, Yahya, 'Isa and Muhammad"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Eighteen named together in Al-An'am 6:83-86; the remaining seven named elsewhere (Adam 3:33, Hud 11:50, Salih 11:61, Shuayb 11:84, Idris and Dhul-Kifl 21:85, Muhammad 48:29).",
+    "sources": [
+     {
+      "name": "Ulum Al-Azhar Academy + Quranic Arabic Corpus morphology (21:85, 48:29)",
+      "url": "https://ulumalazhar.com/how-many-messengers-in-islam/",
+      "type": "scholarly",
+      "excerpt": "Twenty-five prophets and messengers are mentioned in the Noble Qur'an. Eighteen of them are listed in Surah Al-An'am, while the rest are mentioned across various other surahs."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "proposed_fix": {
+   "correct_answer": 1,
+   "explanation_en": "The Qur'an names eighteen prophets together in 6:83-86 (Abraham, Isaac, Jacob, Noah, David, Solomon, Job, Joseph, Moses, Aaron, Zechariah, John, Jesus, Elias, Ishmael, Elisha, Jonah, Lot). Seven more are named elsewhere - Adam (3:33), Hud (11:50), Salih (11:61), Shu'ayb (11:84), Idris and Dhul-Kifl (21:85), and Muhammad (48:29) - making twenty-five named prophets in total.",
+   "explanation_bn": "DRAFT-TRANSLATION-NEEDS-NATIVE-REVIEW: কুরআনে ৬:৮৩-৮৬ আয়াতে একসাথে আঠারোজন নবীর নাম উল্লেখ আছে (ইবরাহীম, ইসহাক, ইয়াকুব, নূহ, দাউদ, সুলাইমান, আইয়ুব, ইউসুফ, মূসা, হারূন, যাকারিয়া, ইয়াহইয়া, ঈসা, ইলিয়াস, ইসমাঈল, আল-ইয়াসা, ইউনুস, লূত)। আরও সাতজন অন্যত্র নামোল্লেখিত — আদম (৩:৩৩), হূদ (১১:৫০), সালিহ (১১:৬১), শুআইব (১১:৮৪), ইদরীস ও যুল-কিফল (২১:৮৫), এবং মুহাম্মাদ (৪৮:২৯) — মোট পঁচিশজন।"
+  }
+ },
+ {
+  "id": "1e8646d1-2c68-404c-b7ae-04daf388ea19",
+  "question_valid": true,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "CORRECT",
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Masjid al-Haram currently has 13 minarets (General Presidency statement, 24 Mar 2025).",
+    "sources": [
+     {
+      "name": "Saudi Press Agency dispatch via UNA-OIC",
+      "url": "https://una-oic.org/en/all/2025/03/23/%D9%85%D9%86%D8%A7%D8%B1%D8%A7%D8%AA-%D8%A7%D9%84%D9%85%D8%B3%D8%AC%D8%AF-%D8%A7%D9%84%D8%AD%D8%B1%D8%A7%D9%85-%D8%AA%D8%AD%D9%81-%D9%85%D8%B9%D9%85%D8%A7%D8%B1%D9%8A%D8%A9-%D9%85%D8%B3%D8%AA%D9%85/",
+      "type": "official_state_agency",
+      "excerpt": "According to the General Presidency for the Affairs of the Grand Mosque and the Prophet's Mosque, the Grand Mosque has 13 minarets, all of which are similar in design but differ in height"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Saudipedia: 'There are thirteen minarets, all of which are similar in their external design.'",
+    "sources": [
+     {
+      "name": "Saudipedia (official Saudi encyclopedia), Grand Mosque Minarets",
+      "url": "https://saudipedia.com/en/grand-mosque-minarets",
+      "type": "official_repository",
+      "excerpt": "There are thirteen minarets, all of which are similar in their external design."
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Nine was the genuine historical count after King Fahd's second Saudi expansion (1409 AH / 1988 CE); it later rose to 11 (King Abdullah expansion) and then 13. So '9' is outdated as a current answer but was a real past phase — the question needs a 'currently' qualifier.",
+    "sources": [
+     {
+      "name": "Journal of Architecture, Planning & Construction Management (IIUM), 'Chronology of Multi Minarets in Mosques'",
+      "url": "https://journals.iium.edu.my/kaed/index.php/japcm/article/download/532/414",
+      "type": "academic",
+      "excerpt": "The second expansion of king Fahd Ibn Abdul Aziz 1409/1988 which built new pair minarets on his new entrance ... as a result, the mosque had nine minarets. The third expansion of king Abdullah at present time occurred by building new pair minarets on his entrance, therefore, the mosque has eleven minarets (Holy Mosque, 2013)."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "proposed_fix": {
+   "question_en": "How many minarets does Masjid al-Haram currently have?",
+   "question_bn": "REVIEW-TRANSLATION: মসজিদুল হারামে বর্তমানে কতটি মিনারেট আছে?",
+   "correct_answer": 3,
+   "explanation_en": "According to the General Presidency for the Affairs of the Grand Mosque and the Prophet's Mosque, the Grand Mosque has 13 minarets (Saudi Press Agency, 24 Mar 2025); Saudipedia likewise states: 'There are thirteen minarets.' Nine was the count after King Fahd's second Saudi expansion (1988) and is now outdated - hence 'currently'.",
+   "explanation_bn": "REVIEW-TRANSLATION: গ্র্যান্ড মসজিদ ও মসজিদে নববীর বিষয়ক সাধারণ কর্তৃপক্ষ (General Presidency) জানিয়েছে, মসজিদুল হারামে ১৩টি মিনারেট রয়েছে (সৌদি প্রেস এজেন্সি, ২৪ মার্চ ২০২৫); সৌদিপিডিয়াও বলেছে 'তেরোটি মিনারেট আছে'। বাদশাহ ফাহাদের দ্বিতীয় সৌদি সম্প্রসারণের (১৯৮৮) পর মিনারেটের সংখ্যা ছিল ৯টি — যা এখন পুরনো তথ্য, তাই 'বর্তমানে' শব্দটি যুক্ত করা হয়েছে।"
+  }
+ },
+ {
+  "id": "fa6b14bc-0d7b-472c-a348-428c59be28d9",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "RETIRE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "No authentic hadith dates the Isra' and Mi'raj to Rajab or any specific month; every specific dating is unauthenticated per the scholars of hadith.",
+    "sources": [
+     {
+      "name": "IslamQA.info, fatwa 60288 (quoting Shaykh Ibn Baz)",
+      "url": "https://archive-1446.islamqa.info/index.php/en/downloads/answers/60288",
+      "type": "scholarly",
+      "excerpt": "With regard to this night on which the Isra' and Mi'raj took place, there is nothing in the authentic Hadiths to indicate that it is in Rajab or in any other month. Everything that has been narrated concerning a specific date for these events cannot be proven to have come from the Prophet (peace and blessings of Allah be upon him) according to the scholars of Hadith."
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Classical scholarship records five/six differing opinions (Rabi-ul-Awwal, Rabi-u-Thani, Rajab, Ramadan, Shawwal, Zulhijjah); no certainty is possible.",
+    "sources": [
+     {
+      "name": "Mufti Muhammad Taqi Usmani, 'The Month of Rajab' (citing al-Zurqani)",
+      "url": "https://masjideumar.co.uk/files/islamic-living/28-05-12.pdf",
+      "type": "scholarly",
+      "excerpt": "We cannot say with absolute certainty in which night the great event of mi'raj took place. Although some traditions relate this event to 27th night of the month of Rajab, yet there are other traditions that suggest other dates. Al-Zurqani ... has referred to five different views in this respect: Rabi-ul-Awwal, Rabi-u-Thani, Rajab, Ramadan and Shawwal."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "47cebbaf-f252-4344-bd34-4c0200408150",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "RETIRE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "No authentic hadith dates the Isra' and Mi'raj to Rajab or any specific month; every specific dating is unauthenticated per the scholars of hadith.",
+    "sources": [
+     {
+      "name": "IslamQA.info, fatwa 60288 (quoting Shaykh Ibn Baz)",
+      "url": "https://archive-1446.islamqa.info/index.php/en/downloads/answers/60288",
+      "type": "scholarly",
+      "excerpt": "With regard to this night on which the Isra' and Mi'raj took place, there is nothing in the authentic Hadiths to indicate that it is in Rajab or in any other month. Everything that has been narrated concerning a specific date for these events cannot be proven to have come from the Prophet (peace and blessings of Allah be upon him) according to the scholars of Hadith."
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Classical scholarship records five/six differing opinions (Rabi-ul-Awwal, Rabi-u-Thani, Rajab, Ramadan, Shawwal, Zulhijjah); no certainty is possible.",
+    "sources": [
+     {
+      "name": "Mufti Muhammad Taqi Usmani, 'The Month of Rajab' (citing al-Zurqani)",
+      "url": "https://masjideumar.co.uk/files/islamic-living/28-05-12.pdf",
+      "type": "scholarly",
+      "excerpt": "We cannot say with absolute certainty in which night the great event of mi'raj took place. Although some traditions relate this event to 27th night of the month of Rajab, yet there are other traditions that suggest other dates. Al-Zurqani ... has referred to five different views in this respect: Rabi-ul-Awwal, Rabi-u-Thani, Rajab, Ramadan and Shawwal."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "21268d41-57af-450b-839b-4ab773ced7ec",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "RETIRE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "The Quran's flood narrative (11:40-44) states NO duration — neither for the onset, the flooding, nor the subsiding.",
+    "sources": [
+     {
+      "name": "Quran 11:40 (quran.com)",
+      "url": "https://quran.com/11:40",
+      "type": "primary_text",
+      "excerpt": "And when Our command came and the oven burst with water, We said to Noah, 'Take into the Ark a pair from every species along with your family...'"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Ibn Kathir's only duration-like figures for the flood are explicitly Israelite reports (Isra'iliyyat) which his own method rejects without authentic hadith support; the 'forty days' there is a different detail (days after the mountaintops appeared before the window was opened), not the flood duration.",
+    "sources": [
+     {
+      "name": "Tafsir Ibn Kathir (abridged) of 11:48 + methodological caution (Vol. 5)",
+      "url": "https://quran.com/11:48/tafsirs/en-tafisr-ibn-kathir",
+      "type": "classical_work",
+      "excerpt": "The People of the Tawrah (the Jews) claim that this occurred during the seventh month (of the year) and it lasted for seventeen nights... Then after forty more days, Nuh opened the small window in the roof of the ship"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "The familiar '40 days' figure matches the Biblical Genesis account ('forty days and forty nights' of rain), not any Islamic source — the likely origin of the quiz row's key.",
+    "sources": [
+     {
+      "name": "Genesis 7:4, 7:12 (comparative reference)",
+      "url": "http://noahbickart.fastmail.fm.user.fm/TRS200/Flood_Chart.pdf",
+      "type": "repository",
+      "excerpt": "For in seven days' time I will make it rain upon the earth, forty days and forty nights (Genesis 7:4)"
+     }
+    ],
+    "status": "PARTIALLY_VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "22581591-abc5-469f-99fb-4309b830a54e",
+  "question_valid": true,
+  "options_valid": true,
+  "key_correct": true,
+  "recommendation": "NEEDS_MORE_EVIDENCE",
+  "proposed_fix": null,
+  "confidence": "medium",
+  "evidence": [
+   {
+    "claim": "The only hasan-graded hadith about the trumpet-blower, Tirmidhi 2431, does NOT name Israfil — only 'the one with the horn' (sahib al-qarn).",
+    "sources": [
+     {
+      "name": "Sunnah.com, Jami' at-Tirmidhi 2431",
+      "url": "https://sunnah.com/tirmidhi:2431",
+      "type": "primary_text",
+      "excerpt": "How can I be comfortable when the one with the horn is holding it to his lip, his ears listening for when he will be ordered to blow... [Abu' Eisa said:] This Hadith is Hasan."
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "IslamQA's scholarly article on belief in angels states Israfil is entrusted with the trumpet-blast — a doctrinal statement, not a graded hadith; the sole reputable source joining the name to the duty.",
+    "sources": [
+     {
+      "name": "IslamQA.info #9477, Belief in the angels",
+      "url": "https://archive-1446.islamqa.info/index.php/en/downloads/answers/9477",
+      "type": "scholarly",
+      "excerpt": "Israfil (peace be upon him) is entrusted with sounding the trumpetblast (to herald the onset of the Day of Resurrection)"
+     }
+    ],
+    "status": "PARTIALLY_VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "30fecbf8-5fa7-49bf-9938-816a45cde439",
+  "question_valid": true,
+  "options_valid": false,
+  "key_correct": true,
+  "recommendation": "NEEDS_MORE_EVIDENCE",
+  "proposed_fix": null,
+  "confidence": "medium",
+  "evidence": [
+   {
+    "claim": "The only reputable source joining Mika'il's name to rain is IslamQA #9477's doctrinal article — one source, no hadith chain or grading.",
+    "sources": [
+     {
+      "name": "IslamQA.info #9477, Belief in the angels",
+      "url": "https://archive-1446.islamqa.info/index.php/en/downloads/answers/9477",
+      "type": "scholarly",
+      "excerpt": "Mikail (peace be upon him) is entrusted with the rain"
+     }
+    ],
+    "status": "PARTIALLY_VERIFIED"
+   },
+   {
+    "claim": "Ibn Kathir's tafsir of 2:97-98 (the verse naming Mika'il) assigns him no rain/provision duty; Tirmidhi 3117's cloud-angel is unnamed; Quran 2:98 names Mika'il without duties.",
+    "sources": [
+     {
+      "name": "Ibn Kathir (abridged), Tafsir of 2:98 via quran.com",
+      "url": "https://quran.com/2:98/tafsirs/en-tafisr-ibn-kathir",
+      "type": "classical_work",
+      "excerpt": "The scholars of Tafsir agree that this Ayah (2: 97-98) was revealed in response to the Jews who claimed that Jibril (Gabriel) is an enemy of the Jews and that Mika'il (Michael) is their friend."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "note": "Option wording problem: 'Provision and nature' is vague/non-standard; the scholarly formulation is rain/rizq (sustenance)."
+ },
+ {
+  "id": "30d473e5-4f5b-4d7c-8f51-981b6303b6c0",
+  "question_valid": true,
+  "options_valid": true,
+  "key_correct": true,
+  "recommendation": "NEEDS_MORE_EVIDENCE",
+  "proposed_fix": null,
+  "confidence": "medium",
+  "evidence": [
+   {
+    "claim": "The only reputable source joining Mika'il's name to rain is IslamQA #9477's doctrinal article — one source, no hadith chain or grading.",
+    "sources": [
+     {
+      "name": "IslamQA.info #9477, Belief in the angels",
+      "url": "https://archive-1446.islamqa.info/index.php/en/downloads/answers/9477",
+      "type": "scholarly",
+      "excerpt": "Mikail (peace be upon him) is entrusted with the rain"
+     }
+    ],
+    "status": "PARTIALLY_VERIFIED"
+   },
+   {
+    "claim": "Ibn Kathir's tafsir of 2:97-98 (the verse naming Mika'il) assigns him no rain/provision duty; Tirmidhi 3117's cloud-angel is unnamed; Quran 2:98 names Mika'il without duties.",
+    "sources": [
+     {
+      "name": "Ibn Kathir (abridged), Tafsir of 2:98 via quran.com",
+      "url": "https://quran.com/2:98/tafsirs/en-tafisr-ibn-kathir",
+      "type": "classical_work",
+      "excerpt": "The scholars of Tafsir agree that this Ayah (2: 97-98) was revealed in response to the Jews who claimed that Jibril (Gabriel) is an enemy of the Jews and that Mika'il (Michael) is their friend."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "09d8d668-63f8-4756-a699-5f1109aeeeee",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "RETIRE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Al-Albani ruled that everything narrated suggesting the Prophet defined the neighbour as forty houses is da'eef and not saheeh.",
+    "sources": [
+     {
+      "name": "IslamQA.info #236489 (quoting al-Albani, Silsilat al-Ahaadeeth ad-Da'eefah 1/446)",
+      "url": "https://archive-1446.islamqa.info/en/downloads/answers/236489",
+      "type": "scholarly",
+      "excerpt": "Everything that has been narrated suggesting that the Prophet (blessings and peace of Allah be upon him) defined it as being forty (houses in each direction) is da'eef and is not saheeh."
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "The 'forty houses' statement is authentically attributed to al-Hasan al-Basri (a Tabi'i), not to the Prophet.",
+    "sources": [
+     {
+      "name": "Al-Adab al-Mufrad 109 (Imam al-Bukhari)",
+      "url": "https://muslimandquran.com/hadith/hadith-detail/2614",
+      "type": "classical_work",
+      "excerpt": "Al-Hasan was asked about the neighbour and said, 'The term neighbour includes the forty houses in front a person, the forty houses behind him, the forty houses on his right and the forty houses on his left.'"
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ]
+ },
+ {
+  "id": "cc209308-1002-49ce-b511-d4eda894b240",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "REWRITE",
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Tirmidhi 1621: 'The Mujahid is one who strives against his own soul' — graded Hasan Sahih by at-Tirmidhi; also authenticated by al-Hakim and al-Albani (as-Sahihah 549); Ibn Taymiyyah called its isnad jayyid. It defines the mujahid; it does NOT rank any jihad as 'greatest'.",
+    "sources": [
+     {
+      "name": "Sunnah.com, Jami' at-Tirmidhi 1621 + IslamQA.info #202449",
+      "url": "https://sunnah.com/tirmidhi:1621",
+      "type": "primary_text",
+      "excerpt": "The Mujahid is one who strives against his own soul. [Abu 'Eisa said:] ... The Hadith is Hasan Sahih."
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "The 'greater jihad' report ('We have returned from the lesser jihad to the greater jihad') is not authentic: al-Bayhaqi graded its chain weak; Ibn Hajar traced the wording to the Tabi'i Ibrahim ibn Abi 'Ablah, not the Prophet.",
+    "sources": [
+     {
+      "name": "IslamQA.org fatwa (Mufti Ebrahim Desai), citing al-Bayhaqi and Ibn Hajar",
+      "url": "https://islamqa.org/hanafi/askimam/80906/is-it-permissible-to-prepare-a-gcse-religious-education-exam-on-islam/",
+      "type": "scholarly",
+      "excerpt": "the hadith in reference is classified as Mawdhu' (Fabricated)... al-Bayhaqi: this isnad has weakness in it... Ibn Hajar: it is well-known on tongues but it is from the speech of Ibrahim ibn Abi 'Ablah"
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "proposed_fix": {
+   "question_en": "According to Jami' at-Tirmidhi 1621, the mujahid is the one who strives against ___?",
+   "question_bn": "REVIEW-TRANSLATION: জামি' আত-তিরমিযীর ১৬২১ নম্বর হাদিস অনুযায়ী, মুজাহিদ হলো সেই ব্যক্তি যে কিসের বিরুদ্ধে জিহাদ করে?",
+   "options_en": [
+    "His enemy",
+    "His own soul (nafs)",
+    "Poverty",
+    "His fear"
+   ],
+   "options_bn": "REVIEW-TRANSLATION: [\"শত্রুর বিরুদ্ধে\", \"নিজের নফসের বিরুদ্ধে\", \"দারিদ্র্যের বিরুদ্ধে\", \"ভয়ের বিরুদ্ধে\"]",
+   "correct_answer": 1,
+   "explanation_en": "The Prophet (peace be upon him) said: 'The Mujahid is one who strives against his own soul.' (Jami' at-Tirmidhi 1621 - graded Hasan Sahih by Imam at-Tirmidhi). Note: the popular 'greater jihad' report ('We have returned from the lesser jihad to the greater jihad') is not an authentic hadith - al-Bayhaqi graded its chain weak, and Ibn Hajar traced the wording to the Tabi'i Ibrahim ibn Abi 'Ablah, not the Prophet.",
+   "explanation_bn": "REVIEW-TRANSLATION: রাসূলুল্লাহ (সা.) বলেছেন: 'মুজাহিদ হলো সেই ব্যক্তি যে নিজের নফসের বিরুদ্ধে জিহাদ করে।' (জামি' আত-তিরমিযী ১৬২১ — ইমাম তিরমিযী এটিকে হাসান-সহীহ বলেছেন)。"
+  }
+ },
+ {
+  "id": "f4f1cb3c-cb26-4760-9d96-534884bec559",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "REWRITE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Hanafi madhhab counts 14 sajdah-tilawah verses, excluding the second sajdah of Surah al-Hajj (22:77) but including Sad (38:24).",
+    "sources": [
+     {
+      "name": "IslamQA (Hanafi) Procedure of Sajdah Tilawah + Maarif-ul-Quran 22:73-78",
+      "url": "https://islamqa.org/hanafi/fatwa-tt/134348/procedure-of-sajdah-tilawah/",
+      "type": "scholarly",
+      "excerpt": "There are 14 Sajdah Tilawat in The Quran... 6) Surah Al Haj (22) Ayat 18 ... 10) Surah Saad (38) Ayat 24"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Shafi'i/Ahmad and the 'preponderant opinion' (Ibn Baz, Permanent Committee) count 15, including both Hajj sajdahs (22:18 and 22:77). The 14-vs-15 differentiator is Hajj 22:77, not Sad 38:24.",
+    "sources": [
+     {
+      "name": "Fatwas of Ibn Baz, Vol 24, p.406 + Maarif-ul-Quran + Tafheem-ul-Quran",
+      "url": "http://abdurrahman.org/wp-content/uploads/2017/09/sujud-ul-tilawah-prostration-of-recitation1.pdf",
+      "type": "scholarly",
+      "excerpt": "There are fifteen prostrations of recitation in the Qur'an, according to the correct opinion of scholars: ... two in Surah Al-Hajj ... one in Surah Sad ..."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "note": "Keeping both 14 and 15 as correct for near-identical stems is a contradiction. The stem must name the madhhab AND the included/excluded verse (e.g. 'According to the Hanafi madhhab, which excludes the second sajdah of Surah al-Hajj (22:77), how many sajdah-tilawah verses are there?'). School choice is an editorial decision — no automatic fix."
+ },
+ {
+  "id": "bf41f99d-8406-400d-b42d-f6903f0de61e",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "REWRITE",
+  "proposed_fix": null,
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Hanafi madhhab counts 14 sajdah-tilawah verses, excluding the second sajdah of Surah al-Hajj (22:77) but including Sad (38:24).",
+    "sources": [
+     {
+      "name": "IslamQA (Hanafi) Procedure of Sajdah Tilawah + Maarif-ul-Quran 22:73-78",
+      "url": "https://islamqa.org/hanafi/fatwa-tt/134348/procedure-of-sajdah-tilawah/",
+      "type": "scholarly",
+      "excerpt": "There are 14 Sajdah Tilawat in The Quran... 6) Surah Al Haj (22) Ayat 18 ... 10) Surah Saad (38) Ayat 24"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Shafi'i/Ahmad and the 'preponderant opinion' (Ibn Baz, Permanent Committee) count 15, including both Hajj sajdahs (22:18 and 22:77). The 14-vs-15 differentiator is Hajj 22:77, not Sad 38:24.",
+    "sources": [
+     {
+      "name": "Fatwas of Ibn Baz, Vol 24, p.406 + Maarif-ul-Quran + Tafheem-ul-Quran",
+      "url": "http://abdurrahman.org/wp-content/uploads/2017/09/sujud-ul-tilawah-prostration-of-recitation1.pdf",
+      "type": "scholarly",
+      "excerpt": "There are fifteen prostrations of recitation in the Qur'an, according to the correct opinion of scholars: ... two in Surah Al-Hajj ... one in Surah Sad ..."
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "note": "Keeping both 14 and 15 as correct for near-identical stems is a contradiction. The stem must name the madhhab AND the included/excluded verse (e.g. 'According to the Hanafi madhhab, which excludes the second sajdah of Surah al-Hajj (22:77), how many sajdah-tilawah verses are there?'). School choice is an editorial decision — no automatic fix."
+ },
+ {
+  "id": "acc3a306-5e79-41c4-b817-ecb452d667a8",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "NEEDS_MORE_EVIDENCE",
+  "proposed_fix": null,
+  "confidence": "medium",
+  "evidence": [
+   {
+    "claim": "540 is the traditional South Asian design goal: 20 rak'ahs x 27 Taraweeh nights = 540 ruku sections, devised by the ulema of Bukhara (~4th century Hijri) to complete the Quran by the 27th of Ramadan.",
+    "sources": [
+     {
+      "name": "British Library Asian and African Studies Blog (citing 'Abd al-Qayum al-Sindi) + Quran Made Easy (Mufti Afzal Hoosen Elias)",
+      "url": "https://samvera-fcrepo-bl.s3.eu-west-1.amazonaws.com/5d799962a47583145366131c289962b4560a995e",
+      "type": "academic",
+      "excerpt": "As a section of the Qur'an would be recited during each of the 20 rakat (cycles) of the evening tarawih prayers during Ramadan, each concluding with the ordained bow or ruku', the Qur'an was therefore divided into 540 (20 x 27) ruku'"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Actual ruku marker counts are disputed: other authorities give 558, and the Quran Foundation's Indopak-script API models ruku_number up to 558. Rukus are editorial printing markers, not revealed counts.",
+    "sources": [
+     {
+      "name": "British Library + Quran Foundation API docs",
+      "url": "https://github.com/quran/qf-api-docs/blob/HEAD/docs/content_apis_versioned/quran-verses-indopak-nastaleeq.api.mdx",
+      "type": "repository",
+      "excerpt": "although other authorities give the number of ruku' as 558 ... ruku_number ... maximum: 558, minimum: 1"
+     }
+    ],
+    "status": "CONFLICTING"
+   }
+  ]
+ },
+ {
+  "id": "942d1620-dd6e-453f-9c3e-a927ddc7a3e5",
+  "question_valid": false,
+  "options_valid": true,
+  "key_correct": false,
+  "recommendation": "REWRITE",
+  "confidence": "high",
+  "evidence": [
+   {
+    "claim": "Al-Hashr 59:22-24 contain only a limited cluster of Allah's names (~15 distinct), not 99. Names present: Allah, Ar-Rahman, Ar-Rahim (22); Al-Malik, Al-Quddus, As-Salam, Al-Mu'min, Al-Muhaymin, Al-Aziz, Al-Jabbar, Al-Mutakabbir (23); Al-Khaliq, Al-Bari', Al-Musawwir, Al-Hakim (24).",
+    "sources": [
+     {
+      "name": "Quran.com API (Quran Foundation), 59:22-24, Sahih International",
+      "url": "https://api.quran.com/api/v4/verses/by_key/59:22",
+      "type": "primary_text",
+      "excerpt": "He is Allah, other than whom there is no deity, the Sovereign, the Pure, the Perfection, the Grantor of Security, the Overseer, the Exalted in Might, the Compeller, the Superior. (59:23)"
+     }
+    ],
+    "status": "VERIFIED"
+   },
+   {
+    "claim": "Sahih al-Bukhari 2736 states Allah has ninety-nine names but lists none of them; no surah is given as the source of a 99-name list.",
+    "sources": [
+     {
+      "name": "Sunnah.com, Sahih al-Bukhari 2736",
+      "url": "https://sunnah.com/bukhari:2736",
+      "type": "primary_text",
+      "excerpt": "Allah's Messenger said, 'Allah has ninety-nine names, i.e. one-hundred minus one, and whoever knows them will go to Paradise.'"
+     }
+    ],
+    "status": "VERIFIED"
+   }
+  ],
+  "proposed_fix": {
+   "question_en": "The closing verses of which surah mention several of Allah's names, such as Al-Malik and Al-Quddus?",
+   "question_bn": "REVIEW-TRANSLATION: কোন সূরার সমাপনী আয়াতগুলোতে আল্লাহর বেশ কয়েকটি নাম উল্লেখ আছে, যেমন আল-মালিক ও আল-কুদ্দুস?",
+   "options_en": [
+    "Al-Hashr",
+    "Al-A'raf",
+    "Ta-Ha",
+    "Al-An'am"
+   ],
+   "options_bn": [
+    "আল-হাশর",
+    "আল-আ'রাফ",
+    "তা-হা",
+    "আল-আন'আম"
+   ],
+   "correct_answer": 0,
+   "explanation_en": "Surah Al-Hashr's closing verses (59:22-24) contain a cluster of Allah's names, including Al-Malik (the Sovereign) and Al-Quddus (the Pure). Note: no surah lists all 99 names - the hadith in Sahih al-Bukhari 2736 says Allah has ninety-nine names but does not list them.",
+   "explanation_bn": "REVIEW-TRANSLATION: সূরা আল-হাশরের সমাপনী আয়াতগুলোতে (৫৯:২২–২৪) আল্লাহর বেশ কিছু নাম রয়েছে, যার মধ্যে আল-মালিক ও আল-কুদ্দুস অন্তর্ভুক্ত। মনে রাখুন: কোনো সূরাতেই ৯৯টি নাম একসাথে উল্লেখ নেই — সহীহ বুখারী ২৭৩৬ নম্বর হাদীসে ৯৯টি নামের কথা বলা হলেও নামগুলোর তালিকা দেওয়া হয়নি।"
+  }
+ }
+]

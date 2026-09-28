@@ -5,6 +5,13 @@ import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuranData, Surah } from "@/hooks/useQuranData";
 import SurahReader from "@/components/SurahReader";
+import surahIntros from "@/data/surah-intros.json";
+
+interface SurahIntro {
+  number: number;
+  intro_en: string;
+  sources: { name: string; url: string }[];
+}
 
 const QuranPage = () => {
   const navigate = useNavigate();
@@ -132,7 +139,38 @@ const QuranPage = () => {
                 <span className="text-2xl font-arabic text-[hsl(45,93%,58%)]">{selectedSurah.name}</span>
               </div>
             </motion.header>
-            
+
+            {/* Verified surah introduction (evidence-first research 2026-09-28).
+                Rendered only when every claim reached VERIFIED; surahs without
+                a verified intro show nothing — no placeholder. */}
+            {(() => {
+              const intro = (surahIntros as SurahIntro[]).find(
+                (i) => i.number === selectedSurah.number
+              );
+              if (!intro) return null;
+              return (
+                <div className="mx-4 mt-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+                  <p className="text-sm text-white/85">{intro.intro_en}</p>
+                  <p className="mt-1.5 text-[11px] text-white/50">
+                    Sources:{" "}
+                    {intro.sources.map((s, idx) => (
+                      <span key={s.url}>
+                        {idx > 0 && " · "}
+                        <a
+                          href={s.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="underline hover:text-white/80"
+                        >
+                          {s.name}
+                        </a>
+                      </span>
+                    ))}
+                  </p>
+                </div>
+              );
+            })()}
+
             <SurahReader
               surahNumber={selectedSurah.number}
               surahName={selectedSurah.englishName}

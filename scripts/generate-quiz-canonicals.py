@@ -34,10 +34,15 @@ NEAR_DUP_PAIRS = [
 # Explicitly excluded per the report:
 # 9e706e3c/23e49c9e (needs_review involved), 62df78df/f2d00410 (disputed),
 # f4f1cb3c/bf41f99d (disputed), 3334d4ff/a66899e7 (needs_review involved),
-# 299c664b/a8c91f0c (needs-editorial-review), EXACT-38 (correct-answer conflict).
+# 299c664b/a8c91f0c (needs-editorial-review — researched 2026-09-28, both stay).
 
 # Exact-group overrides, keyed by frozenset of 8-char prefixes (from report §3).
-EXACT_EXCLUDE = [frozenset(("f3b63b75", "330d1142"))]          # EXACT-38
+# EXACT-38 (f3b63b75/330d1142) was excluded for "correct-answer conflict", but
+# direct row reads on 2026-09-28 refuted that: both rows teach "albaqarah",
+# identical explanations, same source (Quran 2:255), both verified_primary
+# (evidence: research/quiz_pairs.json). It now flows through as a normal exact
+# group; the retention rule picks 330d1142 (has Bengali).
+EXACT_EXCLUDE = []
 EXACT_PARTIAL = {  # group prefixes -> allowed mergeable edge prefixes
     frozenset(("cb669489", "dbaf94d7", "1653909f")): ("cb669489", "1653909f"),   # EXACT-20
     frozenset(("7f596085", "404b63d2", "79b5109a")): ("7f596085", "404b63d2"),   # EXACT-24
@@ -207,7 +212,9 @@ def main():
         "method": "exact groups re-derived (NFC/whitespace/casefold/punctuation-strip); "
                   "near-dup pairs transcribed from report §4 and validated "
                   "(similarity>=0.80, identical explanations); exclusions per report "
-                  "(EXACT-38, EXACT-20/24 partial, needs-review pairs); retention rule: "
+                  "(EXACT-20/24 partial, needs-review pairs); EXACT-38 re-admitted "
+                  "2026-09-28 after direct row reads refuted the correct-answer-conflict "
+                  "exclusion (evidence: research/quiz_pairs.json); retention rule: "
                   "question_bn populated > richer source_reference > editorial_note present > lower order_index",
         "note": "Render-layer canonical hints only. No DB changes. Reversible: delete this file's consumers.",
         "excluded_needs_review": excluded_needs_review,

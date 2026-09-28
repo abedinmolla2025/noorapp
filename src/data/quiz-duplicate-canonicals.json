@@ -1,7 +1,7 @@
 {
  "generated": "2026-09-28",
  "source": "QUIZ_FORENSIC_AUDIT_2026-09-28.md",
- "method": "exact groups re-derived (NFC/whitespace/casefold/punctuation-strip); near-dup pairs transcribed from report §4 and validated (similarity>=0.80, identical explanations); exclusions per report (EXACT-38, EXACT-20/24 partial, needs-review pairs); retention rule: question_bn populated > richer source_reference > editorial_note present > lower order_index",
+ "method": "exact groups re-derived (NFC/whitespace/casefold/punctuation-strip); near-dup pairs transcribed from report §4 and validated (similarity>=0.80, identical explanations); exclusions per report (EXACT-20/24 partial, needs-review pairs); EXACT-38 re-admitted 2026-09-28 after direct row reads refuted the correct-answer-conflict exclusion (evidence: research/quiz_pairs.json); retention rule: question_bn populated > richer source_reference > editorial_note present > lower order_index",
  "note": "Render-layer canonical hints only. No DB changes. Reversible: delete this file's consumers.",
  "excluded_needs_review": [
   {
@@ -35,6 +35,7 @@
   "1a52f940-44a3-4693-8a3e-46f255f6ac49": "c9b2b485-752a-4251-a996-256114315cd6",
   "b9b8a99d-6354-4ad0-84e7-d9eec64d978c": "22f4fc07-fab2-4308-a2df-149e8f9413d8",
   "2d8b8a13-41aa-41da-a698-d6d73ec7a3d5": "878f699d-0124-43cd-9bbf-a6917183b59d",
+  "f3b63b75-8d4f-43cc-af5f-2d415b0f8b3d": "330d1142-b39d-4fc0-9796-5cb56525b123",
   "a7c5492f-a01f-4b8f-8fd2-15b2995836fa": "356fe03f-d566-43b0-9b9a-af9c796e92c1",
   "a8a1f099-d316-4bb9-b748-73bf6d30b2f9": "3c4ae60a-24a1-4874-aa65-c9fd209deb8a",
   "3c67af7a-0389-4c99-a473-38650118a834": "dab2684d-38a5-496d-835f-b9d9c8900fee",
