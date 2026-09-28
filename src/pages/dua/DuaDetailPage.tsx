@@ -40,6 +40,24 @@ const isExplanationBnSuppressed = (slug: string | null | undefined): boolean =>
 const getSuppressedExplanationBn = (dua: { slug: string | null; explanation_bn: string | null }): string | null =>
   isExplanationBnSuppressed(dua.slug) ? null : dua.explanation_bn;
 
+// P0-5 follow-up (2026-09-29): per-row benefits promise suppression.
+// These rows carry uncited specific fazilat promises in benefits_bn (e.g.
+// dua-after-wudu: "অযুর পর এটি পাঠ করলে জান্নাতের আটটি দরজাই খুলে যায়";
+// the-master-of-seeking-forgiveness carries a similar uncited promise) with
+// no verified citation in repo evidence (NOOR_DUA_VIRTUE_FORENSIC_AUDIT.md
+// classes all 158 virtue-carrying rows C/D; the benefits columns were never
+// source-verified — TRK2-023). The whole benefits list is withheld at render
+// for exactly these rows. Do NOT add other rows here casually: the Phase-6
+// spot-check found most benefits_bn text descriptive, not promissory.
+// Mirror: api/prerender.js dua detail branch (defense-in-depth nulling).
+const BENEFITS_SUPPRESSED_SLUGS = new Set([
+  "dua-after-wudu",
+  "the-master-of-seeking-forgiveness",
+]);
+
+const isBenefitsSuppressed = (slug: string | null | undefined): boolean =>
+  !!slug && BENEFITS_SUPPRESSED_SLUGS.has(slug);
+
 interface DuaRow {
   id: string;
   slug: string | null;
@@ -301,15 +319,26 @@ const getDuaRich = (dua: DuaRow, language: DuaLang) => {
     return bn;
   };
   const benefits =
-    pick(dua.benefits_en, dua.benefits_hi, dua.benefits_ur, dua.benefits_bn) ?? null;
+    // P0-5 follow-up: withheld for the 2 promise-bearing rows (single
+    // decision point). Prerender never renders benefits at all.
+    isBenefitsSuppressed(dua.slug)
+      ? null
+      : pick(dua.benefits_en, dua.benefits_hi, dua.benefits_ur, dua.benefits_bn) ?? null;
+  // P0-5 follow-up: the 11 promise-leak rows withhold EVERY explanation
+  // variant (en/hi/ur carry the same uncited attributed claims as the bn
+  // text — residual Batch-5 finding), not just explanation_bn. Withheld
+  // until each promise is scholar-verified with an exact citation.
+  const explanationWithheld = isExplanationBnSuppressed(dua.slug);
+  const explanation = explanationWithheld
+    ? null
+    : pick(
+        dua.explanation_en,
+        dua.explanation_hi,
+        dua.explanation_ur,
+        dua.explanation_bn,
+      );
   return {
-    explanation: pick(
-      dua.explanation_en,
-      dua.explanation_hi,
-      dua.explanation_ur,
-      // P0-5: withheld for the 11 promise-leak rows (single decision point).
-      isExplanationBnSuppressed(dua.slug) ? null : dua.explanation_bn,
-    ),
+    explanation,
     benefits: benefits && benefits.length > 0 ? benefits : null,
     whenToRecite: pick(
       dua.when_to_recite_en,

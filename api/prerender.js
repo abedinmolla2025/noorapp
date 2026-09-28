@@ -1778,6 +1778,32 @@ export default async function handler(req, res) {
         ]);
         if (dua.slug && EXPLANATION_BN_SUPPRESSED_SLUGS.has(dua.slug)) {
           dua.explanation_bn = null;
+          // P0-5 follow-up (2026-09-29): withhold EVERY explanation variant
+          // for these rows, not just _bn — the en/hi/ur variants carry the
+          // same uncited attributed claims (residual Batch-5 finding). The
+          // renderer never reads the variants today, so this is
+          // defense-in-depth against future template changes.
+          dua.explanation_en = null;
+          dua.explanation_hi = null;
+          dua.explanation_ur = null;
+        }
+
+        // P0-5 follow-up (2026-09-29): per-row benefits promise suppression.
+        // dua-after-wudu and the-master-of-seeking-forgiveness carry uncited
+        // specific fazilat promises in benefits_bn with no verified citation
+        // in repo evidence. The prerender never renders the benefits section
+        // at all (see the "intentionally not rendered" comment below), so
+        // this nulling is defense-in-depth keeping the row object clean.
+        // Mirror: src/pages/dua/DuaDetailPage.tsx (BENEFITS_SUPPRESSED_SLUGS).
+        const BENEFITS_SUPPRESSED_SLUGS = new Set([
+          "dua-after-wudu",
+          "the-master-of-seeking-forgiveness",
+        ]);
+        if (dua.slug && BENEFITS_SUPPRESSED_SLUGS.has(dua.slug)) {
+          dua.benefits_bn = null;
+          dua.benefits_en = null;
+          dua.benefits_hi = null;
+          dua.benefits_ur = null;
         }
 
         // Disambiguate same-titled duas (several authentic duas can share a
