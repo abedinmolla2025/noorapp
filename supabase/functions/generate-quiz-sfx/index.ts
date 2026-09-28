@@ -1,4 +1,9 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  HttpError,
+  requireAdmin,
+  requireSecret,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,8 +16,13 @@ serve(async (req) => {
   }
 
   try {
+    // P0-1 follow-up fix: this calls a paid third-party API (ElevenLabs)
+    // with a server secret, so anonymous invocation would burn quota —
+    // admin-only.
+    await requireAdmin(req);
+
     const { type } = await req.json();
-    const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
+    const ELEVENLABS_API_KEY = requireSecret("ELEVENLABS_API_KEY");
 
     if (!ELEVENLABS_API_KEY) {
       throw new Error("ELEVENLABS_API_KEY not configured");
@@ -66,10 +76,11 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in generate-quiz-sfx:", error);
+    const status = error instanceof HttpError ? error.status : 500;
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(
       JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
 });

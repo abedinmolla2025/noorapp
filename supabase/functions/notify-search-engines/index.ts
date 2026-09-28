@@ -1,4 +1,8 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  HttpError,
+  requireAdmin,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +22,10 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // P0-1 follow-up fix: this function writes to seo_index_log with the
+    // service role and triggers external API calls, so it is admin-only.
+    await requireAdmin(req);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -84,7 +92,8 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Search engine notification error:", err);
-    return json(500, {
+    const status = err instanceof HttpError ? err.status : 500;
+    return json(status, {
       success: false,
       error: err instanceof Error ? err.message : "Unknown error",
     });

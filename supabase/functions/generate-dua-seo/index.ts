@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import {
+  httpErrorResponse,
+  requireAdmin,
+  requireSecret,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +11,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -44,10 +48,13 @@ async function generateForDua(args: {
     ? `গল্পের নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nগল্পের বাংলা টেক্সট:\n${(args.bengali || "(টেক্সট নেই)").slice(0, 4000)}\n\nএই গল্পের জন্য explanation ও benefits (শিক্ষা) তৈরি করো।`
     : `দোয়ার নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nআরবি:\n${args.arabic || "(আরবি নেই)"}\n\nবাংলা অর্থ:\n${args.bengali || "(অনুবাদ নেই, আরবি থেকে বের করো)"}\n\nএই দোয়ার জন্য বাংলা explanation_bn ও benefits_bn তৈরি করো।`;
 
+  // Fail closed: the Lovable key is a secret and must never be hardcoded.
+  const lovableApiKey = requireSecret("LOVABLE_API_KEY");
+
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      Authorization: `Bearer ${lovableApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -151,6 +158,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // P0-1: stats and process (dua + story) require an authenticated admin.
+    // The service-role client is only created AFTER this check.
+    await requireAdmin(req);
+
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process";
     const kind: "dua" | "story" = body.contentType === "story" ? "story" : "dua";
@@ -264,12 +275,6 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("generate-dua-seo error", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return httpErrorResponse(e, corsHeaders);
   }
 });
