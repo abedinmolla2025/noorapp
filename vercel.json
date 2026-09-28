@@ -97,7 +97,7 @@
   ],
   "functions": {
     "api/prerender.js": {
-      "includeFiles": "dist/{app.html,data/names-of-allah.json,data/prayer-guide-steps.json,data/dhikr-list.json,data/hijri-months.json,data/islamic-important-dates.json,data/quran-surahs.json,data/quiz-canonicals.json,data/surah-intros.json}"
+      "includeFiles": "dist/{app.html,data/names-of-allah.json,data/prayer-guide-steps.json,data/dhikr-list.json,data/hijri-months.json,data/islamic-important-dates.json,data/quran-surahs.json,data/quiz-canonicals.json,data/surah-intros.json,data/hadith-chapter-intros.json}"
     },
     "api/sitemap.js": {
       "includeFiles": "dist/data/quiz-canonicals.json"

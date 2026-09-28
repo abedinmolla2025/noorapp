@@ -1,0 +1,1949 @@
+[
+  {
+    "chapter_number": 1,
+    "app_title": "Revelation",
+    "actual_book": "Wahy (Revelation)",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "Bukhari opens the Sahih with the Book of Revelation because revelation (wahy) is the source of all matters of religion and shari'ah; the remaining books (belief, prayer, zakat, and the rest) branch out from this source, so revelation is placed before everything else, even before faith and knowledge.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Qari Muhammad Tayyib (former head of Darul Uloom Deoband), 'The Last Hadith of Sahih Bukhari' — lecture delivered 11 July 1977, English translation (foreword July 2009)",
+            "url": "https://www.scribd.com/document/658361016/Last-Hadith-of-Sahih-Bukhari",
+            "type": "Scholarly lecture, English translation (published)",
+            "exact excerpt": "He started the book with the chapter 'how the wahy began'; since wahy is in fact the source of all matters of religion and shari'ah. Then, it branched out to the kitab al-iman, kitab al-salah, kitab al-zakah etc."
+          },
+          {
+            "name": "Qari Muhammad Tayyib, 'The Last Hadith of Sahih Bukhari' (same lecture)",
+            "url": "https://www.scribd.com/document/658361016/Last-Hadith-of-Sahih-Bukhari",
+            "type": "Scholarly lecture, English translation (published)",
+            "exact excerpt": "Therefore, Imam Bukhari first mentioned the source of the Shari'ah and then its branches followed."
+          },
+          {
+            "name": "Allamah Mahmud Hasan Deobandi, 'Al-Abwab wa al-Tarajim' pp. 16-17, as quoted in commentary on Sahih al-Bukhari 6689",
+            "url": "https://en.tohed.com/hadith/bukhari/6689/",
+            "type": "Classical scholarly work, quoted in commentary (aggregator-hosted; provenance disclosed)",
+            "exact excerpt": "First, consider why the author began the book with the chapter of Revelation. What is the reason for this? Whereas, in other books of hadith, the chapters on the virtues of the Qur'an are mentioned in their proper place, and several chapters regarding the descent of revelation are mentioned there. What is the purpose of bringing only one chapter forward here? Therefore, it was appropriate to mention revelation before everything else, even before faith and knowledge."
+          },
+          {
+            "name": "Allamah Mahmud Hasan Deobandi, 'Al-Abwab wa al-Tarajim' pp. 16-17 (same quotation)",
+            "url": "https://en.tohed.com/hadith/bukhari/6689/",
+            "type": "Classical scholarly work, quoted in commentary (aggregator-hosted; provenance disclosed)",
+            "exact excerpt": "So, it is understood from this that the author rahimahullah's purpose at this point is that, since all Islamic matters depend on revelation, and this is the only evidence in which there is not the slightest possibility of error or mistake from any side."
+          }
+        ]
+      },
+      {
+        "claim": "The Sahih's opening hadith is the hadith of intentions — placed first to remind the compiler and readers that intentions must be for Allah alone — followed by hadiths on wahy and the different ways the Prophet received revelation.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute, 'Qabeelat Nurayn Collectors Edition: An Introduction to the Sahih of Imam Al-Bukhari' (January 2012)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "The first hadith that Imam Bukhari begins his book with is the hadith of intention. The hadith explains that every reward for a particular deed is determined by the intention that the person has when committing the deed. Imam Bukhari begins with this hadith to remind himself and others that his intentions have to be for the sake of Allah alone in writing this book."
+          },
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute (same work)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "The second hadith of Sahih Bukhari talks about wahy (revelation) and the different ways in which the Prophet (salAllahu alayhi wa sallam) received revelation."
+          },
+          {
+            "name": "Islaam.net — Explanation of Hadeeth 1 (Imam an-Nawawi's 40 Hadith commentary series)",
+            "url": "https://www2.islaam.net/hadith-and-sunnah/collections-of-hadith/imam-an-nawawis-40-hadith/hadeeth-1-actions-are-but-by-intentions/",
+            "type": "scholarly commentary site hosting classical hadith commentary",
+            "exact excerpt": "This is a saheeh hadeeth that has been agreed upon by the scholars, and is collected in both the collections of al-Bukhari (Hadeeth No. 1) and Muslim (Hadeeth No. 1907)."
+          }
+        ]
+      }
+    ],
+    "draft_en": "Sahih al-Bukhari opens with the Book of Revelation because revelation is the source of all matters of religion, placed before faith, knowledge, and every other book. It begins with the hadith of intentions — reminding compiler and reader that deeds are judged by intention.",
+    "class": "A",
+    "notes": "Three independent scholarly sources converge on the arrangement rationale (revelation as the source of the Shari'ah): Tayyib's 1977 Khatm-e-Bukhari lecture, Mahmud Hasan Deobandi's Al-Abwab wa al-Tarajim (d. 1920), and Qadhi's 2012 AlMaghrib lecture notes. The Abu Aaliyah/Ar-Rajhi foreword independently corroborates the revelation-first arrangement ('Imam Al-Bukhari began his collection of Sahih Hadith with the chapter of Revelation since this is where Islam began'). Claim 2 rests on Qadhi alone (PARTIALLY_VERIFIED) but is consistent with the other sources. Coordinator cross-check 2026-09-28: added islaam.net (Nawawi 40-hadith commentary: intentions hadith is Bukhari Hadeeth No. 1) as second independent source for the opening-hadith claim; claim upgraded to VERIFIED. Draft trimmed of the 'continues with narrations on how revelation came' clause, which had only single-source support. Coordinator cross-check 2026-09-28: added islaam.net (Nawawi 40-hadith commentary: intentions hadith is Bukhari Hadeeth No. 1) as second independent source for the opening-hadith claim; claim upgraded to VERIFIED. Draft trimmed of the single-source 'continues with narrations on how revelation came' clause."
+  },
+  {
+    "chapter_number": 2,
+    "app_title": "Belief",
+    "actual_book": "Iman (Belief)",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "The Book of Belief follows Revelation because iman is the foundation and base upon which all actions are built; the validity of all actions depends on the purity of iman, and no action is acceptable without it.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Qari Muhammad Tayyib, 'The Last Hadith of Sahih Bukhari' — lecture delivered 11 July 1977, English translation (foreword July 2009)",
+            "url": "https://www.scribd.com/document/658361016/Last-Hadith-of-Sahih-Bukhari",
+            "type": "Scholarly lecture, English translation (published)",
+            "exact excerpt": "The chapter of wahy was followed by the chapter of iman; since the validity of all actions depends on the purity of iman. No action is acceptable without iman."
+          },
+          {
+            "name": "Foreword to 'Sahih Al-Bukhari: The Book of Faith' explained by Shaykh Abdul Aziz Ar-Rajhi (hosted by Abu Aaliyah Abdullah ibn Dwight Battle)",
+            "url": "https://www.abuaaliyah.com/sahih-al-bukhari-the-book-of-faith/",
+            "type": "Named-scholar commentary, foreword (published book; hosted by translator)",
+            "exact excerpt": "Following this Imam Al-Bukhari mentioned the book of Iman(faith); as it is the foundation and the principle that actions are built on. There's no action without intention and no actions without faith."
+          }
+        ]
+      },
+      {
+        "claim": "Bukhari presents iman as encompassing both inward belief and outward speech and actions; the book's chapters establish that faith must be accompanied by speech and actions, the position of Ahl al-Sunnah as against the Murji'ah.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute, 'Qabeelat Nurayn Collectors Edition: An Introduction to the Sahih of Imam Al-Bukhari' (January 2012)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "When talking about Eman, Imam Bukharis position was that if just one pillar of Islam was taken out, the individual would not be considered a Muslim. Imam Bukhari believed that eman was not just an internal understanding; internal eman is only confirmed with external actions."
+          },
+          {
+            "name": "Foreword to 'Sahih Al-Bukhari: The Book of Faith' explained by Shaykh Abdul Aziz Ar-Rajhi (hosted by Abu Aaliyah Abdullah ibn Dwight Battle)",
+            "url": "https://www.abuaaliyah.com/sahih-al-bukhari-the-book-of-faith/",
+            "type": "Named-scholar commentary, foreword (published book; hosted by translator)",
+            "exact excerpt": "The origin of Iman is the affirmation in the heart. This is connected with actions in Heart and on the body. For that reason, Imam Al-Bukhari said: \"Faith is speech and actions\". This is the correct view as proven from the various texts he mentioned in this chapter. Imam Al-Bukhari mentioned numerous chapters in this book that prove faith must be accompanied with speech and actions. This is the belief of Ahlus Sunnah. Unlike the Murji'a who believe that actions aren't included in Iman and this is incorrect."
+          }
+        ]
+      }
+    ],
+    "draft_en": "The Book of Belief follows Revelation because faith is the foundation on which all actions are built — no deed is valid without it. The book establishes that iman combines inward affirmation with outward speech and actions, presenting the position of Ahl al-Sunnah on the nature of faith.",
+    "class": "A",
+    "notes": "Three independent scholarly sources: Tayyib (1977 lecture), Ar-Rajhi's commentary foreword (via Abu Aaliyah), and Qadhi's 2012 AlMaghrib notes. Both claims are supported by at least two independent sources. Theological detail kept to what the sources jointly support; no claim made about disputed specifics beyond the sources."
+  },
+  {
+    "chapter_number": 3,
+    "app_title": "Knowledge",
+    "actual_book": "'Ilm (Knowledge)",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "The Book of Knowledge is placed after Revelation and Belief because knowledge must precede action: once a person has iman, they need to know how to fulfill its requirements, which cannot be done in ignorance.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute, 'Qabeelat Nurayn Collectors Edition: An Introduction to the Sahih of Imam Al-Bukhari' (January 2012)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "In the Sahih, Imam Bukhari puts the Book of Knowledge after the Books of Revelation and Eman because after the message has been revealed through the Prophet (salAllahu alayhi wa sallam) and we have believed in it we are required to perform some actions."
+          },
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute (same work)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "Knowledge should precede actions. Without knowing how, when and what to do, acceptable actions cannot be performed."
+          },
+          {
+            "name": "Qari Muhammad Tayyib, 'The Last Hadith of Sahih Bukhari' — lecture delivered 11 July 1977, English translation (foreword July 2009)",
+            "url": "https://www.scribd.com/document/658361016/Last-Hadith-of-Sahih-Bukhari",
+            "type": "Scholarly lecture, English translation (published)",
+            "exact excerpt": "Therefore, he followed it by kitab al-'ilm (knowledge); since now when a person had iman, he needed to know how to fulfill its requirement and obviously it cannot be observed in ignorance."
+          },
+          {
+            "name": "Qari Muhammad Tayyib, 'The Last Hadith of Sahih Bukhari' (same lecture)",
+            "url": "https://www.scribd.com/document/658361016/Last-Hadith-of-Sahih-Bukhari",
+            "type": "Scholarly lecture, English translation (published)",
+            "exact excerpt": "Therefore, kitab al-iman was followed by kitab al-'ilm so that the importance and significance of 'ilm is stressed."
+          }
+        ]
+      },
+      {
+        "claim": "The Book of Knowledge addresses al-Bukhari's educational thought: the goals of learning, types of learners, teaching methods, and the etiquette and virtues of seeking and transmitting knowledge.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "'Features of Imam al-Bukhari's Educational Thought: Analytical Reading of the \"Knowledge\" Chapter of al-Jami' al-Sahih' (academic paper; author not shown in retrieved abstract)",
+            "url": "http://cdn.ethraadl.com/eduuploads/1/64066.pdf",
+            "type": "Academic paper (abstract retrieved)",
+            "exact excerpt": "The paper addresses al-Bukhari's thought relating to educational goals, types of learners, teaching methods, and supporting tools and means. It concludes with al-Bukhari's views on some educational issues, terms, and educational concepts that he, in particular, has given attention to."
+          },
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute, 'Qabeelat Nurayn Collectors Edition: An Introduction to the Sahih of Imam Al-Bukhari' (January 2012)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "Method of Teaching Knowledge or generating interest: The leader and teacher quizzing his students, asking questions to generate interest and teaching knowledge using interesting methods."
+          }
+        ]
+      }
+    ],
+    "draft_en": "The Book of Knowledge comes after Revelation and Belief because knowledge must precede action: once a person has faith, they need to learn how to fulfill its requirements. The book covers the virtue of knowledge, its methods, and the etiquette of teaching and learning.",
+    "class": "A",
+    "notes": "Two strong independent scholarly sources (Qadhi, Tayyib) converge on the arrangement rationale; an academic paper on Bukhari's educational thought provides a third, independent angle on the book's themes. Class A on the strength of Qadhi + Tayyib."
+  },
+  {
+    "chapter_number": 4,
+    "app_title": "Ablution (Wudu)",
+    "actual_book": "Wudu (Ablution)",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "The Book of Ablution opens with a Qur'anic verse on purification and closes with the virtue of performing ablution before sleep.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "'Hidayat al-Qari: Commentary on Sahih Bukhari' by Maulana Dawood Raz, English rendering (aggregator-hosted)",
+            "url": "https://en.tohed.com/hadith/ibn-majah/3876/",
+            "type": "Urdu commentary, English rendering (aggregator-hosted; provenance disclosed)",
+            "exact excerpt": "The leader of the messengers, Imam Bukhari, rahimahullah, began the Book of Ablution (Kitab al-Wudu) with the noble verse ... and now he concludes the Book of Ablution with the virtue of performing ablution (wudu) before sleeping."
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Only one fragmentary source found, hosted on a hadith-mirror aggregator (en.tohed.com) rendering an Urdu commentary; no second independent source. Search angles tried: (1) targeted 'Kitab al-Wudu' commentary/arrangement search — returned only hadith-level commentary notes and hadith mirrors; (2) general web search for scholarly overviews of Bukhari's Book of Ablution — no book-level overview prose found. The excerpt gives opening/closing arrangement detail but is single-source and the host is not independently reputable, hence C rather than B. Coordinator reclassification 2026-09-28: worker marked C, but scheme defines C as conflicting evidence; a single fragmentary per-hadith note via an aggregator is insufficient evidence, so D."
+  },
+  {
+    "chapter_number": 5,
+    "app_title": "Bathing (Ghusl)",
+    "actual_book": "Ghusl (Bathing)",
+    "title_matches_content": true,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Search angles tried: (1) 'Kitab al-Ghusl' commentary/scholar search — returned hadith-text mirrors (QNS Academy), an autogenerated Scriptsure 'overview' PDF (AI-generated, excluded), and a Shah Waliullah chapter-heading note via tohed.com concerning only a single chapter (bathing with covering), not the book as a whole; (2) general web search — no named-scholar or academic book-level overview of Bukhari's Book of Bathing. Nothing meets the two-independent-source bar; honestly D."
+  },
+  {
+    "chapter_number": 6,
+    "app_title": "Menstruation",
+    "actual_book": "Hayd (Menstruation)",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "The Book of Menstruation is where Bukhari treats the rulings of menstruation, distinguishing menstrual blood (hayd) from irregular bleeding (istihada) and postnatal bleeding (nifas), each carrying different rulings.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "'Hidayat al-Qari: Commentary on Sahih Bukhari' by Maulana Dawood Raz, English rendering (aggregator-hosted)",
+            "url": "https://en.tohed.com/hadith/bukhari/331/",
+            "type": "Urdu commentary, English rendering (aggregator-hosted; provenance disclosed)",
+            "exact excerpt": "Imam Bukhari rahimahullah has not brought this hadith here to discuss the rulings of menstruation, but only to establish the washing of blood, because the rulings of menstruation will be discussed later in the Book of Menstruation (Kitab al-Hayd). Women experience three types of blood: Menstrual blood (hayd), irregular bleeding (istihada), and postnatal bleeding (nifas). The rulings for these three are different and will be explained later."
+          },
+          {
+            "name": "'Hidayat al-Qari: Commentary on Sahih Bukhari' by Maulana Dawood Raz, English rendering (same page)",
+            "url": "https://en.tohed.com/hadith/bukhari/331/",
+            "type": "Urdu commentary, English rendering (aggregator-hosted; provenance disclosed)",
+            "exact excerpt": "With this heading, Imam Bukhari rahimahullah's objective is to clarify that there is a difference between the rulings of menstruation (hayd) and abnormal bleeding (istihada)."
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Both excerpts come from the same commentary page (single underlying source: Hidayat al-Qari via aggregator), so they do not count independently. Search angles tried: (1) targeted 'Kitab al-Hayd' commentary search — only this hadith-level commentary note with partial book-scope information; (2) general web search — no scholarly book-level overview found. Single weak source, hence C. Coordinator reclassification 2026-09-28: worker marked C, but scheme defines C as conflicting evidence; both excerpts come from the same single commentary page via an aggregator, so D (insufficient evidence)."
+  },
+  {
+    "chapter_number": 7,
+    "app_title": "Tayammum",
+    "actual_book": "Tayammum",
+    "title_matches_content": true,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Search angles tried: (1) 'Kitab al-Tayammum' commentary/scholar search — returned fiqh/polemical articles (e.g., mahajjah.com), generic tayammum fiqh guides, and hadith mirrors, none discussing Bukhari's book arrangement or scope; (2) general web search — no named-scholar or academic overview of Bukhari's Book of Tayammum. Honestly D."
+  },
+  {
+    "chapter_number": 8,
+    "app_title": "Prayers (Salat)",
+    "actual_book": "Salat (Prayer)",
+    "title_matches_content": true,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Search angles tried: (1) 'Kitab al-Salat' / 'Book of Prayers' commentary search — returned an autogenerated Scriptsure 'overview' PDF (AI-generated, excluded), generic fiqh manuals on prayer, and hadith mirrors; (2) translation-introduction search — found Muhammad Hamidullah's French introduction to the Sahih (whole-collection scope, not a per-book overview) and retail copy for the Darussalam translation; (3) academic angle — Azami's and Siddiqi's works describe the Sahih's methodology, not this book's scope. Honestly D."
+  },
+  {
+    "chapter_number": 9,
+    "app_title": "Prayer Times",
+    "actual_book": "Mawaqit al-Salat (Prayer Times)",
+    "title_matches_content": true,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Search angles tried: (1) 'Mawaqit al-Salat' / prayer-times book commentary search — returned fiqh articles on prayer times, hadith mirrors (QuranGuide PDFs), and polemical Shia-Sunni pages, none addressing Bukhari's book scope or arrangement; (2) general web search — no named-scholar or academic overview. Honestly D."
+  },
+  {
+    "chapter_number": 10,
+    "app_title": "Friday Prayer",
+    "actual_book": "Adhan (Call to Prayer)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Search angles tried: (1) 'Kitab al-Jumu'a' / Friday Prayer book commentary search — returned an autogenerated Scriptsure 'overview' PDF (AI-generated, excluded), hadith mirrors, and a Shia fiqh lecture on Friday prayer (not about Bukhari's book); (2) general web search — no named-scholar or academic book-level overview of Bukhari's Book of Friday Prayer. Honestly D. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 11,
+    "app_title": "Fear Prayer",
+    "actual_book": "Jumu'ah (Friday Prayer)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Search angles tried: (1) fear-prayer / 'Salat al-Khawf' book commentary search — returned IslamQA fiqh rulings (fiqh rulings excluded by the research rules), an autogenerated Scriptsure 'overview' PDF (AI-generated, excluded), and hadith mirrors; (2) general web search — no named-scholar or academic overview of Bukhari's Book of Fear Prayer. Honestly D. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 12,
+    "app_title": "Shortening Prayer",
+    "actual_book": "Salat al-Khawf (Fear Prayer)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Shortening Prayer') was re-homed to chapter 18, because it describes 'Taqsir al-Salat (Shortening Prayer)' while this chapter's actual hadith content is 'Salat al-Khawf (Fear Prayer)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first. The Qadhi/AlMaghrib material on shortening/travel questions describes Kitab al-Taqsir (chapter 18's content), confirmed by the '19 days' Ibn 'Abbas hadith (#1080) in this dataset's book_18."
+  },
+  {
+    "chapter_number": 13,
+    "app_title": "Supererogatory Prayer",
+    "actual_book": "'Idayn (Two Festivals)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari places the Book of the Two Eids among the voluntary (supererogatory) prayers that are performed in congregation, following the chapters on the obligatory prayer.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ثم تلا ذلك بما يشرع فيه الجماعة من النوافل فذكر العيدين والوتر والاستسقاء والكسوف وأخره لاختصاصه بهيئة مخصوصة وهي زيادة الركوع"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari's account of Bukhari's arrangement — found, single source; (2) Fath al-Bari Kitab al-Eidayn book opening — located, but it comments on the first sub-heading only, with no book-level scope statement; (3) Umdat al-Qari Eid-book opening — not located (only sub-chapter pages surfaced). One credible source only, so class B. Sanity check: the app's bundled hadiths for chapter 13 (nos. 948-989) are the Two Eids book, matching the custom label. Coordinator correction 2026-09-28: the worker's 'matching the custom label' is incorrect — the Supabase title is 'Supererogatory Prayer', not 'The Two Festivals'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 14,
+    "app_title": "Witr Prayer",
+    "actual_book": "Witr",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "Bukhari gives Witr its own distinct headings, separate from the chapters on Tahajjud and voluntary prayer, rather than subsuming it under them.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/1839/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D9%88%D8%AA%D8%B1",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ولم يتعرض البخاري لحكمه لكن إفراده بترجمة عن أبواب التهجد والتطوع يقتضي أنه غير ملحق بها عنده"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/1871",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أَي: هَذِه أَبْوَاب الْوتر: أَي: فِي بَيَان أَحْكَامهَا، هَكَذَا هُوَ عِنْد الْمُسْتَمْلِي، وَعند البَاقِينَ: بَاب مَا جَاءَ فِي الْوتر... وَفِي بعض النّسخ: كتاب الْوتر"
+          }
+        ]
+      },
+      {
+        "claim": "The book sets out the rulings of Witr; Bukhari made headings for some of its debated aspects.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/1839/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D9%88%D8%AA%D8%B1",
+            "type": "classical hadith commentary",
+            "exact excerpt": "قال ابن التين : اختلف في الوتر في سبعة أشياء : في وجوبه ، وعدده ، واشتراط النية فيه ، واختصاص بقراءة ، واشتراط شفع قبله ، وفي آخر وقته ، وصلاته في السفر على الدابة... وقد ترجم البخاري لبعض ما ذكرناه"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/1871",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أَي: هَذِه أَبْوَاب الْوتر: أَي: فِي بَيَان أَحْكَامهَا"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari devotes a distinct book to the Witr prayer, giving it headings of its own rather than subsuming it under the chapters on Tahajjud and voluntary prayer. The book sets out the rulings of Witr.",
+    "class": "A",
+    "notes": "Two genuinely independent classical commentaries — Ibn Hajar's Fath al-Bari and al-Ayni's Umdat al-Qari (rival, independently authored works) — corroborate the same scope claims with verbatim excerpts. The app's bundled hadiths for chapter 14 (nos. 990-1004) are the Witr book, matching the custom label."
+  },
+  {
+    "chapter_number": 15,
+    "app_title": "Night Prayer",
+    "actual_book": "Istisqa (Prayer for Rain)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari places the Book of Istisqa (prayer for rain) among the voluntary prayers performed in congregation, after the Two Eids and Witr.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ثم تلا ذلك بما يشرع فيه الجماعة من النوافل فذكر العيدين والوتر والاستسقاء والكسوف"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari's arrangement account — found, single source; (2) Fath al-Bari Kitab al-Istisqa book opening — not located via search; (3) Umdat al-Qari or other commentary on this book — not located. Single credible source, so class B. The app's bundled hadiths for chapter 15 (nos. 1005-1039) are the Istisqa book, matching the custom label. Coordinator correction 2026-09-28: the Supabase title is 'Night Prayer', which does NOT match the Istisqa (rain prayer) content. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 16,
+    "app_title": "Prayer in General",
+    "actual_book": "Kusuf (Eclipses)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari places the Book of the Eclipse (Kusuf) last among the congregational voluntary prayers, noting its distinctive additional bowing.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "فذكر العيدين والوتر والاستسقاء والكسوف وأخره لاختصاصه بهيئة مخصوصة وهي زيادة الركوع"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari's arrangement account — found, single source; (2) Fath al-Bari Kitab al-Kusuf book opening — not located via search; (3) Umdat al-Qari or other commentary — not located. Single credible source, so class B. The app's bundled hadiths for chapter 16 (nos. 1040-1066) are the Eclipse book, matching the custom label. Coordinator correction 2026-09-28: the Supabase title is 'Prayer in General', which does NOT match the Eclipse content. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 17,
+    "app_title": "Prostration",
+    "actual_book": "Sujud al-Qur'an (Prostration during Recitation)",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "Bukhari follows the eclipse book with the prostration of Qur'an recitation, since it may occur during prayer and adds a distinctive prostration.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ثم تلاه بما فيه زيادة سجود فذكر سجود التلاوة ; لأنه قد يقع في الصلاة ، وكان إذا وقع اشتملت الصلاة على زيادة مخصوصة"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari's arrangement account — found, single source; (2) Fath al-Bari book opening for Qur'an prostration — not located via search; (3) Umdat al-Qari or other commentary — not located. Single credible source, so class B. The app's bundled hadiths for chapter 17 (nos. 1067-1079) are the Qur'an-prostration book, matching the custom label."
+  },
+  {
+    "chapter_number": 18,
+    "app_title": "Recitation in Prayer",
+    "actual_book": "Taqsir al-Salat (Shortening Prayer)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari follows that with the shortening of prayer (Qasr), which involves a reduction in the number of rak'as.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "فتلاه بما يقع فيه نقص من عددها وهو قصر الصلاة"
+          }
+        ]
+      },
+      {
+        "claim": "The Book of Shortening the Prayer addresses the fiqh questions of how long a traveler may continue shortening prayers and what minimum distance constitutes travel; Bukhari sometimes states a fiqh position in his chapter headings and sometimes leaves the matter for the reader to weigh the evidences.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute, 'Qabeelat Nurayn Collectors Edition: An Introduction to the Sahih of Imam Al-Bukhari' (January 2012)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "Explanation of the fiqh opinions on the issues of 1) how long can one remain shortening the prayer and 2) what is the shortest distance that constitutes as travel. As we will discuss later Imam Bukhari may take a certain fiqh opinion or sometimes leave the matter to the reader to analyze and understand the evidences."
+          },
+          {
+            "name": "Shaykh Yasir Qadhi / AlMaghrib Institute (same work, on the book's chapters)",
+            "url": "https://www.scribd.com/document/230301437",
+            "type": "Named-scholar lecture notes (published)",
+            "exact excerpt": "To discuss the issue of how long can one remain a Musafir while staying away from home, Imam Bukhari brings two ahadith with different number of days from Ibn Abbas (19 days) and Anas (10 days). The following ahadith are mentioned in this chapter; however, Imam Bukhari does not appear to hold a specific opinion in regards to how long can one remain shortening the prayer, and leaves it to the reader."
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari's arrangement account — found, single source; (2) Fath al-Bari Kitab Taqsir al-Salah book opening — not located via search; (3) Umdat al-Qari or other commentary — not located. Single credible source, so class B. The app's bundled hadiths for chapter 18 (nos. 1080-1119) are the shortening-prayer book, matching the custom label. RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 12 (published title 'Shortening Prayer') but describes 'Taqsir al-Salat (Shortening Prayer)', which is the actual hadith content of chapter 18. Chapter 12's own content is 'Salat al-Khawf (Fear Prayer)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 19,
+    "app_title": "Imam",
+    "actual_book": "Tahajjud (Night Prayer)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Book of Tahajjud (night prayer) establishes the legitimacy of night prayer without addressing its legal ruling.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/2067/%D9%83%D8%AA%D8%A7%D8%A8-%D8%A7%D9%84%D8%AA%D9%87%D8%AC%D8%AF",
+            "type": "classical hadith commentary",
+            "exact excerpt": "وقصد البخاري إثبات مشروعية قيام الليل مع عدم التعرض لحكمه"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/2033",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أَي: هَذَا بَاب فِي بَيَان التَّهَجُّد بِاللَّيْلِ، وَفِي رِوَايَة الْكشميهني من اللَّيْل وَهُوَ أوفق للفظ الْقُرْآن"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Tahajjud gathers the reports on night prayer; his aim is to establish the legitimacy of night prayer without addressing its legal ruling.",
+    "class": "A",
+    "notes": "Coordinator re-grade 2026-09-28: worker's class C reflected the app's wrong label ('Imam'), not conflicting sources — Fath al-Bari and 'Umdat al-Qari agree. Two independent classical commentaries -> VERIFIED -> A. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 20,
+    "app_title": "Congregation",
+    "actual_book": "Fadl al-Salat fi Masjid Makkah wa al-Madinah",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "The book concerns the virtue of prayer in the mosques of Makkah and Madinah; Bukhari places this heading among the voluntary-prayer chapters.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/761/?idfrom=2191&idto=2206",
+            "type": "classical hadith commentary",
+            "exact excerpt": "قوله : ( باب فضل الصلاة في مسجد مكة والمدينة )... وظاهر إيراد المصنف لهذه الترجمة في أبواب التطوع يشعر بأن المراد بالصلاة في الترجمة صلاة النافلة ، ويحتمل أن يراد بها ما هو أعم من ذلك فيدخل النافلة ، وهذا أوجه"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari book opening — found, single source; (2) Umdat al-Qari or another commentary on this book — not located; (3) general web — nothing usable. Single credible source, so class B. Label note: the custom label 'Mosque' is imprecise — the actual book (bundled hadiths 1188-1197) is specifically the virtue of prayer in the Makkah and Madinah mosques. Not contradictory, but the label should ideally be narrowed before publishing. Coordinator correction 2026-09-28: the Supabase title is 'Congregation', an imprecise label for the book on the virtue of prayer in the Makkah and Madinah mosques. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 21,
+    "app_title": "Iqama",
+    "actual_book": "al-'Amal fi al-Salat (Actions during Prayer)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "After the voluntary prayers, Bukhari gives headings for what prayer requires once begun — refraining from speech, from superfluous actions, and from things that break the fast — the subject of the Book of Actions in Prayer.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ثم للصلاة بعد الشروع فيها شروط ثلاثة وهي ترك الكلام وترك الأفعال الزائدة وترك المفطر فترجم لذلك"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Angles attempted: (1) Fath al-Bari's arrangement account — found, single source; (2) Fath al-Bari Kitab al-Amal fi al-Salah book opening — not located via search; (3) Umdat al-Qari or other commentary — not located. Single credible source, so class B. The app's bundled hadiths for chapter 21 (nos. 1198-1223) are the Actions-in-Prayer book, matching the custom label. Coordinator correction 2026-09-28: the Supabase title is 'Iqama', which does NOT match the actions-during-prayer content. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 22,
+    "app_title": "Funerals",
+    "actual_book": "al-Sahw (Forgetfulness in Prayer)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "The bundled hadiths (nos. 1224-1236) concern forgetfulness in prayer (Sahw); Bukhari places the rulings of forgetfulness after the conditions of prayer.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ثم بطلانها يختص بما وقع على وجه العمد فاقتضى ذلك ذكر أحكام السهو"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Coordinator re-grade 2026-09-28: worker's class C reflected the app's wrong label ('Funerals'), not source conflict. Single Fath al-Bari source -> B. The funerals claim from this record was re-homed to ch 23. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 23,
+    "app_title": "Zakat",
+    "actual_book": "al-Jana'iz (Funerals)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Book of Funerals (Janaza) sets out the rulings of funerals; it follows the prayer chapters as 'a prayer with no bowing or prostration'.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/index.php?page=bookcontents&ID=243&idfrom=672&idto=977&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ثم جميع ما تقدم متعلق بالصلاة ذات الركوع والسجود فعقب ذلك بصلاة لا ركوع فيها ولا سجود وهي الجنازة"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://www.islamweb.net/amp/ar/library/content/303/5053/",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أي هذا كتاب في بيان أحكام الجنائز"
+          }
+        ]
+      },
+      {
+        "claim": "The bundled hadiths (nos. 1237-1394) are Bukhari's Book of Funerals, setting out the rulings of funerals; Bukhari places it between Prayer and Zakat.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://islamweb.net/ar/library/index.php?page=bookcontents&ID=797&idfrom=2282&idto=2572&flag=0&bk_no=52&ayano=0&surano=0&bookhad=0",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أورد المصنف وغيره كتاب الجنائز بين الصلاة والزكاة لتعلقها بهما ، ولأن الذي يفعل بالميت من غسل وتكفين وغير ذلك أهمه الصلاة عليه ، لما فيها من فائدة الدعاء له بالنجاة من العذاب ولا سيما عذاب القبر الذي سيدفن فيه."
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://www.islamweb.net/amp/ar/library/content/303/5053/",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أي هذا كتاب في بيان أحكام الجنائز"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Funerals (Janaza) sets out the rulings of funerals — a prayer with no bowing or prostration — placed after the prayer chapters and before the Book of Zakat.",
+    "class": "A",
+    "notes": "Coordinator re-grade 2026-09-28: worker's class C reflected the app's wrong label ('Zakat'), not source conflict. Two independent classical commentaries (Fath al-Bari, 'Umdat al-Qari) support both claims -> A. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 24,
+    "app_title": "Fasting",
+    "actual_book": "al-Zakat",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Book of Zakat sets out the rulings of Zakat, the third pillar of Islam.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/2573/",
+            "type": "classical hadith commentary",
+            "exact excerpt": "وهي الركن الثالث من الأركان التي بني الإسلام عليها... وإنما ترجم المصنف بذلك على عادته في إيراد الأدلة الشرعية المتفق عليها والمختلف فيها"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/2419",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أَي: هَذَا كتاب فِي بَيَان أَحْكَام الزَّكَاة"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Zakat sets out the rulings of Zakat, the third pillar of Islam.",
+    "class": "A",
+    "notes": "Coordinator re-grade 2026-09-28: worker's class C reflected the app's wrong label ('Fasting'), not source conflict. Claim trimmed: the Fath al-Bari excerpt is truncated mid-sentence, so 'agreed-upon and disputed evidences' is excluded; the published wording is fully supported by both excerpts. B24 carried a duplicate Zakat claim (deduped). TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 25,
+    "app_title": "Hajj",
+    "actual_book": "al-Hajj",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "Bukhari devotes the Book of Hajj to explaining Hajj.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/2792/?idfrom&idto&start",
+            "type": "classical hadith commentary",
+            "exact excerpt": "ور تبه على مقاصد متناسبة : فبدأ بما يتعلق بالمواقيت ، ثم بدخول مكة وما معها ثم بصفة الحج ، ثم بأحكام العمرة ، ثم بمحرمات الإحرام ، ثم بفضل المدينة"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/2620",
+            "type": "classical hadith commentary",
+            "exact excerpt": "هَذَا كتاب فِي بَيَان الْحَج"
+          }
+        ]
+      },
+      {
+        "claim": "Hajj means purposeful intent in language, and in law the journey to the Sacred House with specific rites.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/2792/?idfrom&idto&start",
+            "type": "classical hadith commentary",
+            "exact excerpt": "وأصل الحج في اللغة القصد ، وقال الخليل : كثرة القصد إلى معظم . وفي الشرع القصد إلى البيت الحرام بأعمال مخصوصة"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/2620",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أما لغة: فمعناه القصد... وأما شرعا: الحج قصد إلى زيارة البيت الحرام على وجه التعظيم بأفعال مخصوصة"
+          }
+        ]
+      },
+      {
+        "claim": "Bukhari places the Hajj book after Zakat and before Fasting.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/2792/?idfrom&idto&start",
+            "type": "classical hadith commentary",
+            "exact excerpt": "وقدم المصنف الحج على الصيام لمناسبة لطيفة تقدم ذكرها في المقدمة"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/2620",
+            "type": "classical hadith commentary",
+            "exact excerpt": "لما كَانَ لِلْحَجِّ اشْتِرَاك مَعَ الزَّكَاة فِي كَونهمَا عبَادَة مَالِيَّة ذكره عقيب الزَّكَاة"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari devotes the Book of Hajj to explaining Hajj — purposeful intent in language, and in law the journey to the Sacred House with specific rites. He places it after the Book of Zakat and before the Book of Fasting.",
+    "class": "A",
+    "notes": "Two genuinely independent classical commentaries (Fath al-Bari, Umdat al-Qari) corroborate the same scope claims. The placement claim is jointly attested: Fath al-Bari attests Hajj placed before Fasting; Umdat al-Qari attests it placed after Zakat (both being financial worship). The app's bundled hadiths for chapter 25 (nos. 1513-1772) are the Hajj book, matching the custom label — the only chapter in 19-25 where label and content align."
+  },
+  {
+    "chapter_number": 26,
+    "app_title": "Umrah",
+    "actual_book": "al-'Umrah",
+    "title_matches_content": true,
+    "claims": [
+      {
+        "claim": "'Umrah' in the language means 'visiting'; in sharia terminology it is the journey intending the Ka'ba for the rites, under specific conditions.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/3246/باب-وجوب-العمرة-وفضلها",
+            "type": "classical commentary",
+            "exact excerpt": "والعمرة في اللغة الزيارة، وقيل إنها مشتقة من عمارة المسجد الحرام، وجزم المصنف بوجوب العمرة"
+          },
+          {
+            "name": "HadithPortal commentary (sharh 31) — commentator not identified in retrieved evidence",
+            "url": "https://hadithportal.com/index.php?show=hadith&h_id=1693&uid=0&sharh=31&book=33&bab_id=1099",
+            "type": "hadith commentary site; attribution uncertain, disclosed",
+            "exact excerpt": "وهي في اللغة الزيارة وقيل القصد إلى مكان عامر وفي الشرع قصد الكعبة للنسك بشروط مخصوصة"
+          }
+        ]
+      },
+      {
+        "claim": "Bukhari held the 'umrah to be obligatory (he 'decisively affirmed its obligation').",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/3246/باب-وجوب-العمرة-وفضلها",
+            "type": "classical commentary",
+            "exact excerpt": "وجزم المصنف بوجوب العمرة"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Two source-type angles tried: (1) Fath al-Bari book opening — secured, strong; (2) second commentary (HadithPortal sharh 31) — secured but the commentator's identity could not be established from retrieved evidence (possibly al-Qastallani; NOT asserted), so treated as weak, not independent. A third angle (named-scholar lesson or university material on Kitab al-'Umrah) was not found. The Fath al-Bari opening is largely definitional plus a fiqh position on obligation, so the usable book-level material is thin. Class B: one strong source only."
+  },
+  {
+    "chapter_number": 27,
+    "app_title": "Selling",
+    "actual_book": "al-Muhsar (Prevented Pilgrim)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Selling') was re-homed to chapter 34, because it describes 'al-Buyu' (Sales)' while this chapter's actual hadith content is 'al-Muhsar (Prevented Pilgrim)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 28,
+    "app_title": "Buying and Selling",
+    "actual_book": "Jaza' al-Sayd (Penalty for Hunting on Pilgrimage)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Buying and Selling') was re-homed to chapter 34, because it describes 'al-Buyu' (Sales)' while this chapter's actual hadith content is 'Jaza' al-Sayd (Penalty for Hunting on Pilgrimage)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 29,
+    "app_title": "Wages",
+    "actual_book": "Fada'il al-Madinah (Virtues of Madinah)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Three distinct angles tried, none yielding quotable book-level prose: (1) Arabic search for the Fath al-Bari opening of Kitab al-Ijarah — returned only Islamweb topical-index ('al-'ard al-mawdu'i') hits pointing at individual chapters, no book-opening commentary; (2) English searches for scholarly overviews of Bukhari's Book of Hiring/Wages — returned fiqh-of-ijarah articles, hadith mirrors, and indexes; (3) general structural searches on Bukhari's transaction books — no book-level overview prose. Underlying book assumed: Kitab al-Ijarah. Class D. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 30,
+    "app_title": "Loans",
+    "actual_book": "al-Sawm (Fasting)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Book of Fasting sets out the rulings of fasting.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari — Ibn Hajar al-Asqalani (IslamWeb digital library)",
+            "url": "https://www.islamweb.net/ar/library/content/52/3461/%D8%A8%D8%A7%D8%A8-%D9%88%D8%AC%D9%88%D8%A8-%D8%B5%D9%88%D9%85-%D8%B1%D9%85%D8%B6%D8%A7%D9%86",
+            "type": "classical hadith commentary",
+            "exact excerpt": "والصوم والصيام في اللغة : الإمساك ، وفي الشرع : إمساك مخصوص في زمن مخصوص عن شيء مخصوص بشرائط مخصوصة... أشار بذلك إلى مبدأ فرض الصيام"
+          },
+          {
+            "name": "Umdat al-Qari — Badr al-Din al-Ayni (Shamela digital library)",
+            "url": "https://mail.shamela.ws/book/5756/3056",
+            "type": "classical hadith commentary",
+            "exact excerpt": "أَي: هَذَا كتاب فِي بَيَان أَحْكَام الصّيام... وَالَّذِي ذكره البُخَارِيّ من تَأْخِير الصَّوْم وَذكره فِي الْأَخير هُوَ الْأَوْجه والأنسب"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Fasting sets out the rulings of fasting.",
+    "class": "A",
+    "notes": "Coordinator re-grade 2026-09-28: re-homed from B24 (researched under chapter 24's wrong 'Fasting' label; the Fasting book is chapter 30's content). Claim trimmed: both excerpts are truncated, so the arrangement details ('opens with Ramadan obligation', 'last among worship books') are excluded; the published wording is fully supported by 'Umdat al-Qari's complete clause and Fath al-Bari's definition. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 31,
+    "app_title": "Mortgage",
+    "actual_book": "Salat al-Tarawih",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Two to three angles tried: (1) Arabic search for the Fath al-Bari opening of Kitab al-Rahn — returned one Islamweb fatwa on a single hadith (fiqh of benefiting from pledged property; not book-level prose) plus topical-index hits; (2) general English/Arabic searches — fiqh articles and mirrors only; (3) structural searches on Bukhari's transaction books — nothing book-specific. Underlying book: Kitab al-Rahn (Mortgage/Pledge). No quotable book-level overview prose secured. Class D. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 32,
+    "app_title": "Gifts",
+    "actual_book": "Fadl Laylat al-Qadr",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Gifts') was re-homed to chapter 51, because it describes 'al-Hibah (Gifts)' while this chapter's actual hadith content is 'Fadl Laylat al-Qadr'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 33,
+    "app_title": "Wills",
+    "actual_book": "al-I'tikaf",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Wills') was re-homed to chapter 55, because it describes 'al-Wasaya (Wills)' while this chapter's actual hadith content is 'al-I'tikaf'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 34,
+    "app_title": "Inheritance",
+    "actual_book": "al-Buyu' (Sales)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "'Buyu'' is the plural of 'bay'' (sale), pluralized because of the variety of its types; sale is the transfer of ownership to another for a price, and purchase is its acceptance — each term is also used for the other.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/3748/?idfrom&idto&start",
+            "type": "classical commentary",
+            "exact excerpt": "والبيوع جمع بيع، وجمع لاختلاف أنواعه. والبيع نقل ملك إلى الغير بثمن، والشراء قبوله، ويطلق كل منهما على الآخر"
+          }
+        ]
+      },
+      {
+        "claim": "The Muslims are unanimously agreed on the permissibility of sale; wisdom requires it, because a person's need is usually attached to what is in another's hand.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/3748/?idfrom&idto&start",
+            "type": "classical commentary",
+            "exact excerpt": "وأجمع المسلمون على جواز البيع والحكمة تقتضيه؛ لأن حاجة الإنسان تتعلق بما في يد صاحبه غالبا"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 27 (published title 'Selling') but describes 'al-Buyu' (Sales)', which is the actual hadith content of chapter 34. Chapter 27's own content is 'al-Muhsar (Prevented Pilgrim)'. C28 carried identical Fath al-Bari Buyu' claims (deduped). TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 35,
+    "app_title": "Jihad",
+    "actual_book": "al-Salam (Advance Payment)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) Bukhari-Pedia 'al-Darari fi dabt wa 'add kutub wa abwab al-Bukhari' page for Kitab al-Jihad — a chapter-title inventory (merit, intention, preparation, travel, horses, women's participation, conduct, prisoners, treaties, spoils), useful as a locator but explicitly a counting work, not scholarly synthesis; (2) al-Kandhalawi's al-Abwab wa al-Tarajim via Shamela — one excerpt touched the book's arrangement ('كتاب الجهاد عند هذا العبد الضعيف ينتهي إلى بدء الخلق') but was too ambiguous to quote safely; (3) English academic searches on jihad/maghazi terminology — terminology only, not book-specific. No quotable book-level prose secured, but concrete leads exist (notably the Fath al-Bari opening of Kitab al-Jihad wa al-Siyar was never directly retrieved). Class C: leads, no usable evidence. Coordinator reclassification 2026-09-28: worker marked C, but scheme defines C as conflicting evidence; no conflicting evidence was found (Fath al-Bari opening never retrieved, one ambiguous excerpt) — so D (insufficient evidence). TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 36,
+    "app_title": "Beginning of Creation",
+    "actual_book": "al-Shuf'ah (Preemption)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Beginning of Creation') was re-homed to chapter 59, because it describes 'Bad' al-Khalq (Beginning of Creation)' while this chapter's actual hadith content is 'al-Shuf'ah (Preemption)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 37,
+    "app_title": "Prophets",
+    "actual_book": "al-Ijarah (Hire/Wages)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Prophets') was re-homed to chapter 60, because it describes 'Ahadith al-Anbiya' (Prophets)' while this chapter's actual hadith content is 'al-Ijarah (Hire/Wages)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 38,
+    "app_title": "Virtues of the Qur'an",
+    "actual_book": "al-Hawalah (Transfer of Debt)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Virtues of the Qur'an') was re-homed to chapter 65, because it describes 'Fada'il al-Qur'an (Virtues of the Qur'an)' while this chapter's actual hadith content is 'al-Hawalah (Transfer of Debt)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 39,
+    "app_title": "Merits of the Ansar",
+    "actual_book": "al-Kafalah (Guarantee)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Merits of the Ansar') was re-homed to chapter 63, because it describes 'Manaqib al-Ansar (Virtues of the Ansar)' while this chapter's actual hadith content is 'al-Kafalah (Guarantee)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 40,
+    "app_title": "Military Expeditions",
+    "actual_book": "al-Wakalah (Agency)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Military Expeditions') was re-homed to chapter 64, because it describes 'al-Maghazi (Military Expeditions)' while this chapter's actual hadith content is 'al-Wakalah (Agency)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 41,
+    "app_title": "Conditions",
+    "actual_book": "al-Harth wa al-Muzara'ah (Cultivation)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Ibn Hajar's conclusion states that the Book of Sharecropping (Kitab al-Muzara'a) covers, in addition to sharecropping proper, the attached topics of reviving dead land (ihya' al-mawat) and related narrations.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Ibn Hajar al-'Asqalani, Fath al-Bari, conclusion (khatima) of Kitab al-Muzara'a (quoted).",
+            "url": "https://foughala-star.7olm.org/t4733-topic",
+            "type": "classical commentary",
+            "exact excerpt": "اشتمل كتاب المزارعة وما أضيف إليه من إحياء الموات وغيره من الأحاديث المرفوعة على أربعين حديثا"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 95 (published title 'Sharecropping') but describes 'al-Harth wa al-Muzara'ah (Cultivation)', which is the actual hadith content of chapter 41. Chapter 95's own content is 'Akhbar al-Ahad (Solitary Reports)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 42,
+    "app_title": "Oaths and Vows",
+    "actual_book": "al-Musaqat (Irrigation)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic-journal search for studies of Bukhari's Kitab al-Ayman; (2) the AL-HAYAT Research Journal paper 'Fiqh Principles and Legal Maxims in Kitab al-Ayman of Bada'i al-Sana'i' — about al-Kasani's Hanafi fiqh book, not Bukhari's, so excluded; (3) en.tohed.com per-hadith commentary (Hidayat al-Qari / Shaykh Abdul Sattar al-Hammad) — hadith-level commentary, not book-level overview, and disqualified by 'hadith text as commentary' rule. No book-level overview prose found. Note: Bukhari's book is Kitab al-Ayman wa'n-Nudhur (one book); the app splits Oaths (42/54). TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 43,
+    "app_title": "Penalties",
+    "actual_book": "al-Istiqrad (Loans and Repayment of Debts)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Kitab al-Istiqrad wa Ada' al-Duyun wa al-Hajr wa al-Taflis is one of the sections of Sahih al-Bukhari dealing with financial transactions (muamalah).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Nik Mohd Zaim Ab Rahim, Ishak Suliaman & Mohd Bakhit Ali, 'Fiqh al-Hadith' analysis of Kitab al-Istiqrad wa Ada' al-Duyun, Al-Basirah journal (Universiti Malaya)",
+            "url": "https://mjs.um.edu.my/index.php/ALBASIRAH/article/view/18967",
+            "type": "peer-reviewed journal article",
+            "exact excerpt": "Through an examination of fiqh al-hadith in Kitab al-Istiqrad wa Ada' al-Duyun wa al-Hajr wa al-Taflis, which is one of the sections dealing with financial transactions (muamalah) in Sahih al-Bukhari…"
+          }
+        ]
+      },
+      {
+        "claim": "Imam al-Bukhari systematically explains the concept of debt through coherently structured subthemes — such as debt repayment, bankruptcy, and asset restriction — presented in a clear, organized manner through the chapter headings (tarjamah bab).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Nik Mohd Zaim Ab Rahim, Ishak Suliaman & Mohd Bakhit Ali, 'Fiqh al-Hadith' analysis of Kitab al-Istiqrad wa Ada' al-Duyun, Al-Basirah journal (Universiti Malaya)",
+            "url": "https://mjs.um.edu.my/index.php/ALBASIRAH/article/view/18967",
+            "type": "peer-reviewed journal article",
+            "exact excerpt": "The findings indicate, among other things, that Imam al-Bukhari systematically explains the concept of debt through the structuring of subthemes, each of which demonstrates coherence and alignment, such as debt repayment, bankruptcy, and asset restriction. These matters are presented in a clear and organized manner through the chapter headings (Tarjamah Bab)."
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 70 (published title 'Debt') but describes 'al-Istiqrad (Loans and Repayment of Debts)', which is the actual hadith content of chapter 43. Chapter 70's own content is 'al-At'imah (Food)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 44,
+    "app_title": "Hunting",
+    "actual_book": "al-Khusumat (Quarrels/Disputes)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic-journal search for studies of Bukhari's Kitab al-Sayd / al-Dhaba'ih; (2) en.tohed.com per-hadith commentary on hunting hadiths — hadith-level, excluded; (3) Pertanika journal article on al-Banjari's Sabil al-Muhtadin (Kitab al-Sayd wa'l-Dhaba'ih section) — about a different author's fiqh work, not Bukhari's book overview. No book-level overview prose found. Note: in Bukhari, hunting and slaughtering are one book (Kitab al-Dhaba'ih wa's-Sayd); the app splits them as 44/45. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 45,
+    "app_title": "Slaughtering",
+    "actual_book": "al-Luqata (Lost Property)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic-journal search; (2) en.tohed.com threads on sacrifice timeframes citing Bukhari's Kitab al-Dhaba'ih wa's-Sayd / Kitab al-Adahi — fiqh rulings on qurbani, not book-level overview; (3) per-hadith commentary. No book-level overview prose found. Note: same Bukhari book as chapter 44. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 46,
+    "app_title": "Food",
+    "actual_book": "al-Mazalim (Wrongful Acts/Injustice)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "In Sahih al-Bukhari, 'Kitab al-Mazalim' (Book of Unjust Gains/Oppressions) is an original arrangement: the 'Mazalim' book title and its content within a hadith collection are unique to Bukhari's Sahih.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Mustafa Öztürk, 'Buhârî'de Haksızlık Anlayışı (Kitâbu'l-Mezâlim Örneği)' / 'The Concept of Injustice in al-Bukhāri (The Case of Kitāb al-Maẓālim)', Şırnak University Journal of Divinity Faculty 27 (December 2021), pp. 181–207",
+            "url": "https://doi.org/10.35415/sirnakifd.974793",
+            "type": "peer-reviewed journal article",
+            "exact excerpt": "'Kitāb al-maẓālim' has originality unique to Bukhāri's Sahih in terms of content and serving as a chapter title, as well as being in a hadith book."
+          }
+        ]
+      },
+      {
+        "claim": "The book's content covers violations of rights across the dimensions of faith, morality, virtue, and law — not law alone.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Mustafa Öztürk, 'Buhârî'de Haksızlık Anlayışı (Kitâbu'l-Mezâlim Örneği)' / 'The Concept of Injustice in al-Bukhāri (The Case of Kitāb al-Maẓālim)', Şırnak University Journal of Divinity Faculty 27 (December 2021), pp. 181–207",
+            "url": "https://doi.org/10.35415/sirnakifd.974793",
+            "type": "peer-reviewed journal article",
+            "exact excerpt": "The results of the study have shown that the content of 'maẓālim' has dimensions not only related to law, but also to faith, conscience, morality and virtue."
+          }
+        ]
+      },
+      {
+        "claim": "Al-Bukhari opens the book with a section titled 'Qisas al-Mazalim'; although the title evokes worldly retaliation, the hadith placed under it concerns the otherworldly retribution for injustices committed by believers in this life.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Mustafa Öztürk, 'Buhârî'de Haksızlık Anlayışı (Kitâbu'l-Mezâlim Örneği)' / 'The Concept of Injustice in al-Bukhāri (The Case of Kitāb al-Maẓālim)', Şırnak University Journal of Divinity Faculty 27 (December 2021), pp. 181–207",
+            "url": "https://doi.org/10.35415/sirnakifd.974793",
+            "type": "peer-reviewed journal article",
+            "exact excerpt": "In fact, al-Bukhari draws attention to this matter at this chapter's first section (bāb) titled as 'Qiṣāṣ al-Maẓālim.' Even though the title evokes the meaning of worldly retaliation, the hadith just below the title refers to the otherworldly retribution, especially for the injustices committed by the believers in their worldly life."
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 68 (published title 'Unjust Gains') but describes 'al-Mazalim (Wrongful Acts/Injustice)', which is the actual hadith content of chapter 46. Chapter 68's own content is 'al-Talaq (Divorce)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 47,
+    "app_title": "Drinks",
+    "actual_book": "al-Sharikah (Partnership)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic-journal search for studies of Bukhari's Kitab al-Ashribah; (2) Abu Dawud Kitab al-Ashribah hadith mirrors (IslamicFinder) — hadith text, excluded; (3) scriptsure.org 'Book 74: Drinks' PDF overview — AI-generated polemical page, hard-excluded. No book-level overview prose found. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 48,
+    "app_title": "Medicine",
+    "actual_book": "al-Rahn (Mortgage/Pledge)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Medicine') was re-homed to chapter 76, because it describes 'al-Tibb (Medicine)' while this chapter's actual hadith content is 'al-Rahn (Mortgage/Pledge)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first. A second independent pass (Group F, by actual content) found the same two academic sources for Kitab al-Tibb; see chapter 76."
+  },
+  {
+    "chapter_number": 49,
+    "app_title": "Dress",
+    "actual_book": "al-'Itq (Manumission)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Ibn Hajar's conclusion states that the Book of Manumission (Kitab al-'Itq) is joined with the connected topic of mukataba (a slave's contract to purchase his own freedom).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Ibn Hajar al-'Asqalani, Fath al-Bari, conclusion (khatima) of Kitab al-'Itq.",
+            "url": "https://mail.taghrib.org/ar/library/pdf/2037/2963",
+            "type": "classical commentary",
+            "exact excerpt": "خاتمة اشتمل كتاب العتق وما اتصل به من المكاتب على ستة وستين حديثا"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 88 (published title 'Manumission') but describes 'al-'Itq (Manumission)', which is the actual hadith content of chapter 49. Chapter 88's own content is 'Istitabat al-Murtaddin (Apostates)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 50,
+    "app_title": "Adornment",
+    "actual_book": "al-Mukatab (Contracted Manumission)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic search for a Bukhari 'book of adornment' — none exists as a separate book in Sahih al-Bukhari (adornment material is inside Kitab al-Libas; Sahih Muslim's corresponding book is titled Kitab al-Libas wa'z-Zinah, Book 24, per islamicnet.com); (2) same angles as chapter 49 (thesis not located; classical tarajim literature has no English prose located); (3) hadith-level commentary only. Editorial observation, not a verified claim: the app's chapter 50 ('Adornment') does not map to a distinct Bukhari book — its underlying material is Kitab al-Libas. No book-level overview prose found. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 51,
+    "app_title": "Asking Permission",
+    "actual_book": "al-Hibah (Gifts)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari adjoined 'ariyah (gratuitous loan for use) to hibah (gifts) because it is a gift of benefits (manafi').",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/1665/?idfrom=4779&idto=4780",
+            "type": "classical commentary",
+            "exact excerpt": "والبخاري أضاف العارية إلى الهبة لأنها هبة المنافع"
+          }
+        ]
+      },
+      {
+        "claim": "The Book of Gifts, together with the narrations on 'umra and 'ariyah included in it, comprises ninety-nine hadiths.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb — book conclusion",
+            "url": "https://www.islamweb.net/amp/ar/library/content/52/4796/",
+            "type": "classical commentary",
+            "exact excerpt": "اشتمل كتاب الهبة وما معها من أحاديث العمرى والعارية على تسعة وتسعين حديثا"
+          }
+        ]
+      },
+      {
+        "claim": "Ibn Hajar's conclusion to the book states that Kitab al-Hiba covers, alongside gifts proper, the connected narrations on 'umra (life-grants) and 'ariya (loans for use).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Ibn Hajar al-'Asqalani, Fath al-Bari, conclusion (khatima) of Kitab al-Hiba.",
+            "url": "https://www.islamweb.net/amp/ar/library/content/52/4796/?%3F%3F-%3F%3F%3F-%3F%3F%3F-%3F%3F%3F%3F-%3F%3F%3F-%3F%3F%3F-%3F%3F%3F%3F%3F%3F%3F-%3F%3F%3F%3F%3F%3F%3F",
+            "type": "classical commentary",
+            "exact excerpt": "( خاتمة ) اشتمل كتاب الهبة وما معها من أحاديث العمرى والعارية على تسعة وتسعين حديثا مائة إلا واحدا"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 32 (published title 'Gifts') but describes 'al-Hibah (Gifts)', which is the actual hadith content of chapter 51. Chapter 32's own content is 'Fadl Laylat al-Qadr'. RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 87 (published title 'Gifts') but describes 'al-Hibah (Gifts)', which is the actual hadith content of chapter 51. Chapter 87's own content is 'al-Diyat (Blood Money)'. Shared provenance disclosed: all Hibah excerpts come from Ibn Hajar's Fath al-Bari (book opening + conclusion), one underlying work -> class B, not A. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 52,
+    "app_title": "Greetings",
+    "actual_book": "al-Shahadat (Witnesses)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Ibn Hajar's conclusion states that the Book of Testimonies (Kitab al-Shahadat) includes, besides testimony proper, connected material such as drawing lots (qur'a).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Ibn Hajar al-'Asqalani, Fath al-Bari, conclusion (khatima) of Kitab al-Shahadat.",
+            "url": "https://www.taghrib.org/ar/library/pdf/2037/3061",
+            "type": "classical commentary",
+            "exact excerpt": "اشتمل كتاب الشهادات وما اتصل به من القرعة وغير ذلك من الأحاديث المرفوعة على ستة وسبعين حديثا"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 89 (published title 'Witnesses') but describes 'al-Shahadat (Witnesses)', which is the actual hadith content of chapter 52. Chapter 89's own content is 'al-Ikrah (Coercion)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 53,
+    "app_title": "Invocations",
+    "actual_book": "al-Sulh (Reconciliation)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic-journal search for studies of Bukhari's Kitab al-Da'awat; (2) scriptsure.org 'Book 80: Invocations' PDF overview — AI-generated polemical page, hard-excluded; (3) isb.org.uk Asma ul-Husna worksheet — cites one hadith from Kitab al-Da'awat, hadith-level only; (4) Egyptian journal (jasis.journals.ekb.eg) on fiqh al-Bukhari in chapter headings — general methodology, not a Da'awat overview. No book-level overview prose found. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 54,
+    "app_title": "Oaths",
+    "actual_book": "al-Shurut (Conditions)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic-journal search for studies of Bukhari's Kitab al-Ayman; (2) flyriver.com 'Sahih Bukhari Integration' pages — AI-generated spam, hard-excluded; (3) en.tohed.com per-hadith commentary — hadith-level, excluded. Editorial observation, not a verified claim: Bukhari's book is Kitab al-Ayman wa'n-Nudhur (oaths and vows, one book); the app's 42/54 split ('Oaths and Vows' vs 'Oaths') does not reflect separate Bukhari books. No book-level overview prose found. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 55,
+    "app_title": "Divorce",
+    "actual_book": "al-Wasaya (Wills)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "'Wasaya' is the plural of 'wasiyah'; in sharia it is a specific charge attached to after death, which may be accompanied by a voluntary donation.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/4975/%D8%A8%D8%A7%D8%A8-%D8%A7%D9%84%D9%88%D8%B5%D8%A7%D9%8A%D8%A7",
+            "type": "classical commentary",
+            "exact excerpt": "والوصايا جمع وصية كالهدايا وتطلق على فعل الموصي وعلى ما يوصي به من مال أو غيره من عهد ونحوه"
+          },
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/4975/%D8%A8%D8%A7%D8%A8-%D8%A7%D9%84%D9%88%D8%B5%D8%A7%D9%8A%D8%A7",
+            "type": "classical commentary",
+            "exact excerpt": "وفي الشرع عهد خاص مضاف إلى ما بعد الموت، وقد يصحبه التبرع"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 33 (published title 'Wills') but describes 'al-Wasaya (Wills)', which is the actual hadith content of chapter 55. Chapter 33's own content is 'al-I'tikaf'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 56,
+    "app_title": "Nikah",
+    "actual_book": "al-Jihad",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) English academic/named-scholar web search for Kitab al-Nikah book-level overview prose — found only an unnamed lecture-series index (iHeart) and a USIM journal article on marriage in Bulugh al-Maram (not Bukhari). (2) Arabic search on tarajim of Sahih al-Bukhari (journal.tu.edu.ye) — treats chapter-heading methodology generally, not the Nikah book specifically. (3) Google Books/scholarly-excerpt angle — no accessible book-level summary of Bukhari's Kitab al-Nikah found. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 57,
+    "app_title": "Gifts",
+    "actual_book": "al-Khums (One-fifth of Booty)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic journal search on hibah/gifts in Bukhari (scribd course doc; thefreelibrary fiqh paper on the legal rulings of gifts) — all fiqh analysis of individual hadiths, not an overview of Bukhari's book scope/arrangement. (2) named-scholar sites (abuaaliyah.com, SeekersGuidance) — no book-level page found. (3) general web — only hadith-text mirrors (hadithcollection.com, qnsacademy PDFs). No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 58,
+    "app_title": "Manumission",
+    "actual_book": "al-Jizyah",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic web search for Kitab al-Itq / Kitab al-Mukataba overview — only Wikipedia's Mukataba article and dictionary mirrors quoting it (Wikipedia-derived content is excluded). (2) Arabic and Fath al-Bari angles — no accessible book-level commentary on scope/arrangement found. (3) hadith-text mirrors (scriptsure.org, hadithcollection mirrors) carry generated overviews that are excluded as unattributed/potentially generated. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 59,
+    "app_title": "Witnesses",
+    "actual_book": "Bad' al-Khalq (Beginning of Creation)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "The book is about the beginning — i.e., the origination — of creation, meaning the created beings.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/2013/?idfrom=5801&idto=6051",
+            "type": "classical commentary",
+            "exact excerpt": "وبدء الخلق بفتح أوله وبالهمزة أي ابتداؤه والمراد خلق المخلوقات"
+          },
+          {
+            "name": "'Umdat al-Qari (al-'Ayni) via Taghrib mirror",
+            "url": "https://mail.taghrib.org/ar/library/pdf/2040/4452",
+            "type": "classical commentary",
+            "exact excerpt": "أي هذا كتاب في بيان بدء الخلق ... والخلق بمعنى المخلوق"
+          }
+        ]
+      },
+      {
+        "claim": "Bukhari's concern in this book is with evidences and proofs of God's lordship and oneness in His creation of the heavens and the earth and all within them.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Dr. Ali ibn Abd al-Aziz al-Shibl — lesson series summary via Alukah",
+            "url": "https://www.alukah.net/fayad/15/115245/%d9%83%d8%aa%d8%a7%d8%a8-%d8%a8%d8%af%d8%a1-%d8%a7%d9%84%d8%ae%d9%84%d9%82-%d8%b5%d8%ad%d9%8a%d8%ad-%d8%a7%d9%84%d8%a8%d8%ae%d8%a7%d8%b1%d9%8a-3/",
+            "type": "named-scholar lesson summary",
+            "exact excerpt": "عُنِي فيه الإمام البخاري بشواهد ودلائل ربوبية الله ووحدانيته في خلقه السموات والأرض وما فيهن"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Kitab Bad' al-Khalq — 'The Beginning of Creation' — is the book on the origination of creation: that is, the created beings.",
+    "class": "A",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 36 (published title 'Beginning of Creation') but describes 'Bad' al-Khalq (Beginning of Creation)', which is the actual hadith content of chapter 59. Chapter 36's own content is 'al-Shuf'ah (Preemption)'. Class A on the strength of two independent classical commentaries (Ibn Hajar and al-'Ayni) concurring on the book's subject. The draft is deliberately minimal: it uses ONLY the verified claim. A richer thematic claim (the book as evidences of God's lordship and oneness) has one strong named-scholar source (al-Shibl via Alukah) but no second independent source — a targeted Arabic search for corroboration returned only duplicate crawls of the same Alukah page. Do not expand the draft with the theme until a second source is found. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 60,
+    "app_title": "Judgments",
+    "actual_book": "Ahadith al-Anbiya' (Prophets)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "The book gathers the reports (ahadith) concerning the prophets (anbiya, plural of nabi).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/2030/?idfrom=6052&idto=6348",
+            "type": "classical commentary",
+            "exact excerpt": "قوله: (بسم الله الرحمن الرحيم: كتاب أحاديث الأنبياء) ... والأنبياء جمع نبي"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 37 (published title 'Prophets') but describes 'Ahadith al-Anbiya' (Prophets)', which is the actual hadith content of chapter 60. Chapter 37's own content is 'al-Ijarah (Hire/Wages)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 61,
+    "app_title": "Compromises",
+    "actual_book": "al-Manaqib (Virtues)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic law journals on sulh (Jurnal Syariah UM; Aida Othman's Arab Law Quarterly piece) — they cite individual hadiths under Kitab al-Sulh but never describe the book's scope, themes, or arrangement; the Othman PDF surfaced only via a sci-hub mirror. (2) USIM OAREP conference papers on sulh — discuss sulh as dispute resolution, not Bukhari's book. (3) Arabic search — nothing chapter-specific. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 62,
+    "app_title": "Losses",
+    "actual_book": "Fada'il Ashab al-Nabi (Virtues of the Companions)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic search for Kitab al-Khusumat — no results with book-level prose; only hadith-text mirrors. (2) Arabic tarajim angle — no chapter-specific description. (3) named-scholar and Google Books angles — nothing found. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 63,
+    "app_title": "Irrigation",
+    "actual_book": "Manaqib al-Ansar (Virtues of the Ansar)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "'Ansar' is an Islamic name: the Prophet named al-Aws, al-Khazraj, and their allies with it.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/2138/?idfrom=6857&idto=7178",
+            "type": "classical commentary",
+            "exact excerpt": "هو اسم إسلامي، سمى به النبي - صلى الله عليه وسلم - الأوس والخزرج وحلفاءهم كما في حديث أنس"
+          }
+        ]
+      },
+      {
+        "claim": "The book recounts their exploits and merits — what they did in the expeditions and in support of Islam.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/2138/?idfrom=6857&idto=7178",
+            "type": "classical commentary",
+            "exact excerpt": "أي يحكي ما كان من مآثرهم في المغازي ونصر الإسلام"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 39 (published title 'Merits of the Ansar') but describes 'Manaqib al-Ansar (Virtues of the Ansar)', which is the actual hadith content of chapter 63. Chapter 39's own content is 'al-Kafalah (Guarantee)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 64,
+    "app_title": "Agriculture",
+    "actual_book": "al-Maghazi (Military Expeditions)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "The book treats the Prophet's maghazi — his military expeditions. 'Maghazi' is the plural of 'maghzan'; 'ghazw' is setting out to fight the enemy. Its subject is the Prophet's campaigns against the disbelievers, whether he led them in person or dispatched armies under his command — encompassing expeditions into enemy lands as well as battles fought where the enemy came, such as Uhud and al-Khandaq.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/7179/باب-غزوة-العشيرة-أو-العسيرة",
+            "type": "classical commentary",
+            "exact excerpt": "والمراد بالمغازي هنا ما وقع من قصد النبي - صلى الله عليه وسلم - الكفار بنفسه أو بجيش من قبله، وقصدهم أعم من أن يكون إلى بلادهم أو إلى الأماكن التي حلوها حتى دخل مثل أحد والخندق"
+          },
+          {
+            "name": "'Umdat al-Qari (al-'Ayni) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/303/2214/?idfrom=15965&idto=17388",
+            "type": "classical commentary",
+            "exact excerpt": "أي هذا كتاب في بيان مغازي النبي - صلى الله عليه وسلم - والمغازي جمع مغزى ... والغزو السير إلى القتال مع العدو"
+          }
+        ]
+      },
+      {
+        "claim": "Bukhari does not distinguish maghazi from saraya (the smaller expeditions he dispatched); he includes the saraya and the bu'uth (dispatches) in this book as well.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Muhammad Zakariyya al-Kandhalawi, al-Abwab wa al-Tarajim, via Bukhari-Pedia",
+            "url": "https://www.bukhari-pedia.net/book/abwab_trajm/2520",
+            "type": "classical-style commentary on Bukhari's chapter headings",
+            "exact excerpt": "إلَّا أنَّ الإمام البخاريَّ لم يفرِّق بينهما، ولذا ذكر في كتاب [المغازي] السَّرايا والبعوث أيضًا"
+          },
+          {
+            "name": "'Umdat al-Qari (al-'Ayni) via Islamweb — discussing the saraya/bu'uth within Kitab al-Maghazi",
+            "url": "https://www.islamweb.net/ar/library/content/303/2214/?idfrom=15965&idto=17388",
+            "type": "classical commentary (corroborating inclusion; the explicit non-distinction is al-Kandhalawi's)",
+            "exact excerpt": "وأما سراياه وبعوثه فقال ابن إسحاق: ثمانية وثلاثون، وقال ابن سعد: سبعة وأربعون"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Kitab al-Maghazi is the book of the Prophet's military expeditions. 'Maghazi' is the plural of 'maghzan', and 'ghazw' means setting out to fight the enemy. Its subject is the Prophet's campaigns against the disbelievers — whether he led them himself or sent armies under his command — encompassing expeditions into enemy lands as well as battles fought where the enemy came, such as Uhud and al-Khandaq. Bukhari does not separate maghazi from saraya (the smaller expeditions he dispatched): he includes the saraya and the bu'uth (dispatches) in this book as well.",
+    "class": "A",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 40 (published title 'Military Expeditions') but describes 'al-Maghazi (Military Expeditions)', which is the actual hadith content of chapter 64. Chapter 40's own content is 'al-Wakalah (Agency)'. Class A: two independent classical commentaries (Ibn Hajar's Fath al-Bari and al-'Ayni's 'Umdat al-Qari) concur on the book's scope; al-Kandhalawi's al-Abwab wa al-Tarajim independently supplies the arrangement point (no maghazi/saraya distinction), corroborated by al-'Ayni's treatment of the saraya and bu'uth inside this book. Provenance disclosure: the Bukhari-Pedia page also reproduces a Fath al-Bari passage on this point — that shared passage was NOT counted as independent; only al-Kandhalawi's own synthesis ('لم يفرق بينهما') was used. Both Islamweb-hosted commentaries are distinct works by distinct authors; the shared host is not shared provenance. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 65,
+    "app_title": "Sharecropping",
+    "actual_book": "Fada'il al-Qur'an (Virtues of the Qur'an)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari placed the Book of the Virtues of the Qur'an after the Book of Tafsir, because tafsir (exegesis) is more important — so he began with it.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Ibn Kathir's Tafsir introduction, via lesson transcript (Sh. Ibrahim Rafiq al-Tawil) on Baheth",
+            "url": "https://baheth.ieasybooks.com/ar/media/%D9%81%D8%B6%D8%A7%D8%A6%D9%84-%D8%A7%D9%84%D9%82%D8%B1%D8%A2%D9%86-%D9%84%D8%A7%D8%A8%D9%86-%D9%83%D8%AB%D9%8A%D8%B1-%D8%A7%D9%84%D8%B4%D9%8A%D8%AE-%D8%A5%D8%A8%D8%B1%D8%A7%D9%87%D9%8A%D9%85-%D8%B1%D9%81%D9%8A%D9%82-%D8%A7%D9%84%D8%B7%D9%88%D9%8A%D9%84-%D8%A7%D9%84%D9%85%D8%AC%D9%84%D8%B3-%D8%A7%D9%84%D8%A3%D9%88%D9%84",
+            "type": "classical commentary via lesson transcript; provenance disclosed",
+            "exact excerpt": "ذكر البخاري رحمة الله تعالى عليه كتاب فضائل القرآن بعد كتاب التفسير لان التفسير اهم فلهذا بدأ به"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 38 (published title 'Virtues of the Qur'an') but describes 'Fada'il al-Qur'an (Virtues of the Qur'an)', which is the actual hadith content of chapter 65. Chapter 38's own content is 'al-Hawalah (Transfer of Debt)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 66,
+    "app_title": "Renting",
+    "actual_book": "al-Tafsir (Qur'an Commentary)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic search for Kitab al-Ijarah overview — the Al-Bayan Journal (2025) paper on ijarah in hadith perspective discusses Bukhari hadiths on hiring generally, not the book's scope or arrangement. (2) Arabic and named-scholar angles — nothing book-level. (3) hadith mirrors — excluded. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 67,
+    "app_title": "Lost Property",
+    "actual_book": "al-Nikah (Marriage)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic search for Kitab al-Luqata overview — the USIM Malaysian Journal of Syariah and Law (2021) paper cites individual hadiths 'Al-Bukhariy. Kitab fi al-Luqatah' without describing the book's scope; the iuqibogor journal paper is fiqh of found goods, not a book overview. (2) Arabic angle — nothing chapter-specific. (3) hadith mirrors incl. scriptsure.org generated overviews — excluded. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 68,
+    "app_title": "Unjust Gains",
+    "actual_book": "al-Talaq (Divorce)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Al-Bukhari's Book of Divorce ranges beyond the act of divorce itself: like the other major hadith collections, it devotes chapters to matters with no direct link to terminating a marriage, such as the waiting-period restrictions on widows, and (per Ibn Hajar) treats li'an, zihar and related consequences as appendages of the book.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Scott C. Lucas, \"Divorce, Hadith-Scholar Style: From al-Darimi to al-Tirmidhi,\" Journal of Islamic Studies 19:3 (2008), 325-368. DOI 10.1093/jis/etn005 (author-posted copy).",
+            "url": "https://www.academia.edu/4118325/_Divorce_Hadith_scholar_Style_From_al_Darimi_to_al_Tirmidhi_Journal_of_Islamic_Studies_19_3_2008_325_68",
+            "type": "academic",
+            "exact excerpt": "It became apparent during my initial reading of these six books that they all contain some chapters in their 'Books on Divorce' that lack a clear connection to the process of terminating a marriage. For example, all six books devote at least one chapter to the special restrictions imposed upon a widow during the waiting period (6idda) following her husband's death, called iAd:d in Arabic."
+          },
+          {
+            "name": "Ibn Hajar al-'Asqalani, Fath al-Bari, conclusion (khatima) of Kitab al-Talaq.",
+            "url": "https://www.islamweb.net/ar/library/content/52/9769/%D8%A8%D8%A7%D8%A8-%D8%A7%D9%84%D9%85%D8%AA%D8%B9%D8%A9-%D9%84%D9%84%D8%AA%D9%8A-%D9%84%D9%85-%D9%8A%D9%81%D8%B1%D8%B6-%D9%84%D9%87%D8%A7",
+            "type": "classical commentary",
+            "exact excerpt": "اشتمل كتاب الطلاق وتوابعه من اللعان والظهار وغير ذلك من الأحاديث المرفوعة على مائة وثمانية عشر حديثا"
+          }
+        ]
+      }
+    ],
+    "draft_en": "The Book of Divorce extends beyond the act of terminating a marriage to related questions of waiting periods and other connected consequences of separation.",
+    "class": "A",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 85 (published title 'Divorce') but describes 'al-Talaq (Divorce)', which is the actual hadith content of chapter 68. Chapter 85's own content is 'al-Fara'id (Inheritance)'. Two independent sources: a peer-reviewed Journal of Islamic Studies (Oxford) article comparing the divorce books of six hadith compilers, and Ibn Hajar's classical commentary. Provenance disclosure: Lucas used Fath al-Bari as his edition of Bukhari's text, but his comparative conclusions about the book's scope are independent scholarship. Product note: on noorapp.in the chapter-85 page currently groups Fara'id (inheritance) hadiths (from no. 6723) under the 'Divorce' title; this intro is keyed to the app's displayed title per the brief, and the title/content mismatch should be fixed separately. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 69,
+    "app_title": "Deposits",
+    "actual_book": "al-Nafaqat (Maintenance)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Angles tried: (1) academic/Islamic-finance search for a Bukhari deposits (wadi'ah) book overview — results are fiqh/banking articles on wadi'ah contracts, with no description of a Bukhari book's scope; note also that no dedicated 'Kitab al-Wadi'ah' book exists in Sahih al-Bukhari under that title in standard arrangements. (2) Arabic and named-scholar angles — nothing book-level. (3) hadith mirrors — excluded. No publishable source located. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 70,
+    "app_title": "Debt",
+    "actual_book": "al-At'imah (Food)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Debt') was re-homed to chapter 43, because it describes 'al-Istiqrad (Loans and Repayment of Debts)' while this chapter's actual hadith content is 'al-At'imah (Food)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 71,
+    "app_title": "Prohibition",
+    "actual_book": "al-'Aqiqah",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: the app's published title 'Prohibition' does not describe this chapter's content. Hadiths 5467-5474 (tahnik, naming the newborn) are Sahih al-Bukhari's Kitab al-'Aqiqa. There is no 'Kitab al-Nahy' among these hadiths. Classification is by actual content per the evidence-first mandate; a 'Prohibition' intro here would be factually false. No reputable book-level overview of Kitab al-'Aqiqa was found: the Arabic methodology thesis (Abu Bakr, Emir Abdelkader Univ., Constantine; Dar Ibn Hazm; full text checked via archive.org) contains no mention of al-'Aqiqa; web searches returned only hadith mirrors and fiqh articles, no scholarly book overview. Recommend the app title be corrected before any intro is published. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 72,
+    "app_title": "Expiation",
+    "actual_book": "al-Dhaba'ih wa al-Sayd (Slaughtering and Hunting)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Expiation' vs actual content Kitab al-Dhaba'ih wa'l-Sayd (hunting with mi'rad, slaughtering, game). Hadiths 5475-5544. No reputable book-level overview of this book found; searches returned hadith mirrors and generic kaffarah-fiqh articles only. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 73,
+    "app_title": "Belief",
+    "actual_book": "al-Adahi (Sacrifice)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Faith' vs actual content Kitab al-Adahi (Eid sacrifice). Hadiths 5545-5574. IMPORTANT: the Kitab al-Iman research gathered this phase (Ar-Rajhi foreword via abuaaliyah.com; methodology thesis passage on Kitab al-Iman) does NOT apply to this chapter's content and must not be used here. No reputable book-level overview of Kitab al-Adahi found; the methodology thesis mentions 'Kitab al-Adahi' only in a hadith citation, with no overview prose. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 74,
+    "app_title": "Manners",
+    "actual_book": "al-Ashribah (Drinks)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Manners' vs actual content Kitab al-Ashriba (alcoholic drinks, milk, drinking vessels). Hadiths 5575-5639. IMPORTANT: the Yasir Qadhi/AlMaghrib Kitab al-Adab notes and related Adab sources do NOT apply to this chapter's content. No reputable book-level overview of Kitab al-Ashriba found; the methodology thesis cites 'Kitab al-Ashriba' only in passing. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 75,
+    "app_title": "Greetings",
+    "actual_book": "al-Marda (Sickness)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Greetings' vs actual content Kitab al-Marda (calamity expiating sins, visiting the sick). Hadiths 5640-5677. No reputable book-level overview of Kitab al-Marda found; searches returned hadith mirrors and generic articles only. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 76,
+    "app_title": "Interpretation of Dreams",
+    "actual_book": "al-Tibb (Medicine)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Kitab al-Tibb (Book of Medicine) gathers hadiths on the treatment of illness, including methods of treatment.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Nurdeng Deuraseh, Journal of the International Society for the History of Islamic Medicine (JISHIM), vol. 5 (2006), pp. 2-14 (record via University of Brunei Darussalam e-iLAMI repository)",
+            "url": "https://e-ilami.unissa.edu.bn:8443/handle/20.500.14275/1160?show=full",
+            "type": "academic journal",
+            "exact excerpt": "The book of Medicine (kitab al-tibb) gives primarily idea on the conditions of Muslims in the time of Prophet (s.a.w), how did they prevent and treat the disease."
+          },
+          {
+            "name": "Rusni, M. and Thuraya, A., School of Humanities, Universiti Sains Malaysia, 'A Critical Analysis of the Malay Translation of Medicinal Plants in Kitab al-Tibb of Sahih Al-Bukhari', Global Journal of Al-Thaqafah (GJAT), July 2023 special issue",
+            "url": "http://jurnal.usas.edu.my/gjat/index.php/journal/article/download/55/40",
+            "type": "academic journal",
+            "exact excerpt": "The chapter contains hadith on ethics in health confinement, methods of treatment and acknowledgement of medicinal values in certain items."
+          }
+        ]
+      },
+      {
+        "claim": "Most of al-tibb al-nabawi is preventive medicine (al-tibb al-wiqa'i) rather than therapeutic medicine (al-tibb al-'ilaji).",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Nurdeng Deuraseh, JISHIM, vol. 5 (2006) (as above)",
+            "url": "https://e-ilami.unissa.edu.bn:8443/handle/20.500.14275/1160?show=full",
+            "type": "academic journal",
+            "exact excerpt": "It is found that most of al-tibb al-nabawi is preventive medicine (al-tibb al-wiqa`i) rather than therapeutic medicine (al-tibb al-`ilaji), and has been practiced in the time of the Prophet (s.a.w) and even after."
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Medicine (Kitab al-Tibb) gathers hadiths on the treatment of illness, including methods of treatment.",
+    "class": "A",
+    "notes": "CRITICAL TITLE MISMATCH: the app's published title 'Dreams' does not describe this chapter's content; hadiths 5678-5782 (disease, treatment, plague) are Sahih al-Bukhari's Kitab al-Tibb. The draft describes the ACTUAL content (Medicine), not the app title. Two strong, independent academic sources (2006 JISHIM via Univ. of Brunei repository; 2023 GJAT via Universiti Sains Malaysia), different authors/years/journals. The 2022 IJSSIR article with a near-identical abstract was excluded as non-independent (copied, not independent scholarship). Single-source claims (preventive-medicine emphasis; plant-based medicinal items) are documented but excluded from the draft. Recommend the app title be corrected to 'Medicine'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 77,
+    "app_title": "Invocations",
+    "actual_book": "al-Libas (Dress)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Invocations' vs actual content Kitab al-Libas (garments, dragging garments, gold ring). Hadiths 5783-5969. No reputable book-level overview of Kitab al-Libas found: the 2023 GJAT paper (Rusni & Thuraya) studies translation of archaic words in Kitab al-Libas, not a book overview; baheth Ibn Baz lesson transcripts address individual sub-chapters (images, necklaces), not book-level scope; islamweb Fath al-Bari/Umdat al-Qari pages are sub-chapter commentary. The 2025 JR&S paper on 'Kitab al-Da'awat' is about Jami' al-Tirmidhi, not Bukhari - excluded. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 78,
+    "app_title": "Medicine",
+    "actual_book": "al-Adab (Manners)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Kitab al-Adab collects hadiths on manners and morals (adab and akhlaq).",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Qabeelat Nurayn Collectors Edition: An Introduction to the Sahih of Imam Al-Bukhari (Shaykh Yasir Qadhi, AlMaghrib Institute, January 2012) - course notes",
+            "url": "https://www.scribd.com/document/230301437/Sahih-Al-Bukhari-Collector-s-Edition",
+            "type": "scholar course notes",
+            "exact excerpt": "In this book, Kitaabul Aadaab, the point is to talk about the manners a person should have with everyone around him and the overall manners for the day and night. Reading this as an average Muslim and even as a scholar you will get lots of benefit."
+          },
+          {
+            "name": "Introduction to 'Sahih al-Adab al-Mufrad' by Shaykh Khalid al-'Akk (quoted on majles.alukah.net)",
+            "url": "https://majles.alukah.net/t95444/",
+            "type": "published book introduction, quoted on scholarly network",
+            "exact excerpt": "وقد جاء هذا الكتاب منه استكمالا لما ضمنه في كتابه ((الجامع الصحيح)) من أحاديث الآداب والأخلاق التي بلغت ((ثلاثمائة)) حديث"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Manners (Kitab al-Adab) collects hadiths on manners and morals (adab and akhlaq).",
+    "class": "A",
+    "notes": "CRITICAL TITLE MISMATCH: the app's published title 'Medicine' does not describe this chapter's content; hadiths 5970-6226 ('which deed is loved most by Allah?', patience, conduct) are Sahih al-Bukhari's Kitab al-Adab. The draft describes the ACTUAL content (Manners). Two independent sources: (1) AlMaghrib course notes attributed to Shaykh Yasir Qadhi (medium confidence - student notes, directly verified); (2) published book introduction by named editor Shaykh Khalid al-'Akk, quoted on Alukah's scholarly forum (medium-strong). Corroborated by the Arabic MA thesis (Emir Abdelkader Univ., Constantine; Dar Ibn Hazm), which distinguishes the Sahih's 'Kitab al-Adab' from al-Adab al-Mufrad. The draft uses only the dual-sourced scope claim; Qadhi's 'with everyone around him, by day and night' detail is single-source and excluded. Recommend the app title be corrected to 'Manners'. Coordinator caveat 2026-09-28: second source is Shaykh Khalid al-'Akk's introduction to a different work (Sahih al-Adab al-Mufrad); its excerpt does describe the Jami' al-Sahih's adab/akhlaq material (~300 hadiths), so it stands as medium-strength support for the minimal draft claim. Class A retained with this disclosure. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 79,
+    "app_title": "Dress",
+    "actual_book": "al-Isti'dhan (Asking Permission)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Dress' vs actual content Kitab al-Isti'dhan (greeting the angels, seeking permission). Hadiths 6227-6303. No reputable book-level overview found; the methodology thesis lists an 'al-Isti'dhan wa'l-Birr wa'l-Sila' only as a work of Ibn al-Mubarak, not Bukhari's book. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 80,
+    "app_title": "Adornment",
+    "actual_book": "al-Da'awat (Invocations)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Kitab al-Da'awat gathers hadiths on supplication (du'a): the servant's asking of his Lord.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Alukah.net announcement of 'Du'a' al-Muslim min Sahih al-Imam al-Bukhari' by Dr. Mahir Yasin al-Fahl (Dar Ibn al-Jawzi)",
+            "url": "https://www.alukah.net/culture/0/178436/",
+            "type": "scholarly network publication notice",
+            "exact excerpt": "وهو شرح لكتاب الدعوات من كتب \"صحيح البخاري\" البالغة 97 كتابًا ... وفي هذا الكتاب: ذكر دعاء العبد لربه وفيه دعاء الطلب وسؤال العبد ما ينفعه في دنياه وآخرته ودفع ما يضره وكشف ما ألم به"
+          },
+          {
+            "name": "Baheth transcript of Shaykh 'Abd al-'Aziz ibn Baz's lessons on Kitab al-Da'awat of Sahih al-Bukhari",
+            "url": "https://baheth.ieasybooks.com/en/media/4-1-sharh-sahih-al-bukhari-kitab-al-daawat",
+            "type": "named-scholar lesson transcript",
+            "exact excerpt": "هذا كتاب مقصود منها الحث على الاكثار من الدعاء والعناية بالدعاء لان الله يحب ان يسأل سبحانه وتعالى"
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Supplications (Kitab al-Da'awat) gathers hadiths on supplication (du'a): the servant's asking of his Lord.",
+    "class": "A",
+    "notes": "CRITICAL TITLE MISMATCH: the app's published title 'Adornment' does not describe this chapter's content; hadiths 6304-6411 (the Prophet's special invocation, du'a) are Sahih al-Bukhari's Kitab al-Da'awat. The draft describes the ACTUAL content. Two independent reputable sources (Alukah/Dar Ibn al-Jawzi publication notice for a named scholar's commentary; Ibn Baz lesson transcript). Both excerpts captured verbatim from search-result renderings; direct page opens timed out. The 2025 JR&S paper on Kitab al-Da'awat was checked and EXCLUDED - it studies Jami' al-Tirmidhi, not Sahih al-Bukhari. Single-source details (Ibn Baz's 'urge frequent du'a' purpose point; al-Fahl's dunya/akhirah benefit framing) are documented in claims but excluded from the draft. Recommend the app title be corrected to 'Invocations'. Coordinator note 2026-09-28: worker disclosed both excerpts were captured from search-result renderings after direct page opens timed out; sources are real (named scholar; Alukah/Dar Ibn al-Jawzi publication notice). Class A retained with this disclosure. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 81,
+    "app_title": "Asking Permission",
+    "actual_book": "al-Riqaq (Softening the Heart)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari devoted a book in his Jami' to zuhd and raqa'iq (asceticism and heart-softening), including what is authentic from the Prophet on this subject.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Abu Bakr, 'Manhaj al-Imam al-Bukhari fi Tashih al-Ahadith wa Ta'liliha (min khilal al-Jami' al-Sahih)' - MA thesis, Emir Abdelkader University of Islamic Sciences, Constantine, Algeria (supervisor: Hamzah 'Abd Allah al-Malibari); published by Dar Ibn Hazm, Beirut (full text via archive.org)",
+            "url": "https://archive.org/download/a_879",
+            "type": "academic thesis",
+            "exact excerpt": "وقد أفرد في جامعه كتاباً للزهد والرقاق ضمنه ما صح عن النبي ﷺ في هذا الموضوع"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Asking Permission' vs actual content Kitab al-Riqaq ('two blessings: health and free time', heart-softening reports). Hadiths 6412-6593. One academic source only (methodology thesis) - single-source, so no draft per rules. An IslamQA fatwa mentions raqa'iq chapters in the Sahih only in passing (recommending heart-softening literature generally), not a book-level overview - rejected. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 82,
+    "app_title": "Greetings",
+    "actual_book": "al-Qadar (Divine Decree)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Bukhari's Kitab al-Qadar collects hadiths on predestination/divine decree, conveying that human life is preordained in all its detail.",
+        "status": "VERIFIED",
+        "sources": [
+          {
+            "name": "Abu Bakr, 'Manhaj al-Imam al-Bukhari fi Tashih al-Ahadith wa Ta'liliha (min khilal al-Jami' al-Sahih)' - MA thesis, Emir Abdelkader University of Islamic Sciences, Constantine, Algeria (supervisor: Hamzah 'Abd Allah al-Malibari); published by Dar Ibn Hazm, Beirut (full text via archive.org)",
+            "url": "https://archive.org/download/a_879",
+            "type": "academic thesis",
+            "exact excerpt": "وأما كتاب «القدر» فقد ضمنه الرد على القدرية النفاة"
+          },
+          {
+            "name": "'Al-Bukhari's chapter on predestination: a critical evaluation' - summary record, IIUM Library / Malaysian NEUSEAL consortium catalog (record iium-6870)",
+            "url": "https://neuseal.mod.gov.my/neuseal/Record/iium-6870/Description",
+            "type": "university library catalog record of an academic research work",
+            "exact excerpt": "One of the chapters in the Sahih of al-Bukhari (d.256 A.H.) is \"Kitab al-Qadar\" (Chapter on Predestination). It contains twenty seven (27) traditions. The message conveyed through these reports is that the human life is preordained in all its detail."
+          }
+        ]
+      }
+    ],
+    "draft_en": "Bukhari's Book of Divine Decree (Kitab al-Qadar) collects hadiths on predestination, conveying that human life is preordained in all its detail.",
+    "class": "A",
+    "notes": "CRITICAL TITLE MISMATCH: the app's published title 'Greetings' does not describe this chapter's content; hadiths 6594-6620 (stages in the womb, the writing of decree, vowing) are Sahih al-Bukhari's Kitab al-Qadar. The draft describes the ACTUAL content. Two independent academic sources: the MA thesis (Kitab al-Qadar as refutation of the Qadariyya deniers of decree) and the IIUM library catalog summary (Kitab al-Qadar = Chapter on Predestination; 27 traditions; message = human life preordained in all its detail). Polemical sources (v2.scriptsure.org, answeringislam.net) were rejected per the exclusion rules. The draft uses only the dual-sourced core claim; the thesis's refutation framing is single-source and excluded. Recommend the app title be corrected to 'Divine Will (Qadar)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 83,
+    "app_title": "Invocations",
+    "actual_book": "al-Ayman wa al-Nudhur (Oaths and Vows)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "CRITICAL TITLE MISMATCH: app title 'Invocations' vs actual content Kitab al-Ayman wa'l-Nudhur (oath expiation, vows). Hadiths 6621-6707. No reputable book-level overview found; searches returned hadith mirrors and unrelated du'a literature. Recommend title correction. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 84,
+    "app_title": "Oaths",
+    "actual_book": "Kaffarat al-Ayman (Expiation of Oaths)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "TITLE MISMATCH (partial): app title 'Oaths' vs actual content Kitab Kaffarat al-Ayman - the hadiths (6708-6722: expiation for lice/shaving in ihram, manumission) are specifically about EXPIATION of oaths, not oaths generally. No reputable book-level overview found; searches returned an AI-content site, a forum thread, and polemical scriptsure overviews - all rejected. Recommend title correction to 'Expiation of Oaths'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 85,
+    "app_title": "Divorce",
+    "actual_book": "al-Fara'id (Inheritance)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "The inheritance shares are specifically called 'fara'id' (fixed portions), from His saying 'a fixed portion' — i.e., measured out, known, cut off from others.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Fath al-Bari (Ibn Hajar) via Islamweb",
+            "url": "https://www.islamweb.net/ar/library/content/52/12319/%D8%A8%D8%A7%D8%A8-%D9%82%D9%88%D9%84-%D8%A7%D9%84%D9%84%D9%87-%D8%AA%D8%B9%D8%A7%D9%84%D9%89-%D9%8A%D9%88%D8%B5%D9%8A%D9%83%D9%85-%D8%A7%D9%84%D9%84%D9%87-%D9%81%D9%8A-%D8%A3%D9%88%D9%84%D8%A7%D8%AF%D9%83%D9%85-%D9%84%D9%84%D8%B0%D9%83%D8%B1-%D9%85%D8%AB%D9%84-%D8%AD%D8%B8-%D8%A7%D9%84%D8%A3%D9%86%D8%AB%D9%8A%D9%8A%D9%86",
+            "type": "classical commentary",
+            "exact excerpt": "خصت المواريث باسم الفرائض من قوله تعالى: نصيبا مفروضا أي مقدرا أو معلوما أو مقطوعا عن غيرهم"
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "RE-HOMED 2026-09-28 (coordinator): this evidence was researched under app chapter 34 (published title 'Inheritance') but describes 'al-Fara'id (Inheritance)', which is the actual hadith content of chapter 85. Chapter 34's own content is 'al-Buyu' (Sales)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 86,
+    "app_title": "Nikah",
+    "actual_book": "al-Hudud (Prescribed Penalties)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview prose found after four angles: (1) English academic search (returned only a Bulugh al-Maram thesis, AI-generated pages, and unattributed hadith mirrors); (2) Fath al-Bari opening and conclusion of Kitab al-Nikah (examined; no qualifying scope prose); (3) named-scholar Bukhari lecture index (contents list of sub-topics, not overview prose); (4) Arabic theses on Kitab al-Nikah (aspect-specific studies on rhetoric and usul indications, no book-level arrangement overview). Nothing publishable. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 87,
+    "app_title": "Gifts",
+    "actual_book": "al-Diyat (Blood Money)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Gifts') was re-homed to chapter 51, because it describes 'al-Hibah (Gifts)' while this chapter's actual hadith content is 'al-Diyat (Blood Money)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 88,
+    "app_title": "Manumission",
+    "actual_book": "Istitabat al-Murtaddin (Apostates)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Manumission') was re-homed to chapter 49, because it describes 'al-'Itq (Manumission)' while this chapter's actual hadith content is 'Istitabat al-Murtaddin (Apostates)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 89,
+    "app_title": "Witnesses",
+    "actual_book": "al-Ikrah (Coercion)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Witnesses') was re-homed to chapter 52, because it describes 'al-Shahadat (Witnesses)' while this chapter's actual hadith content is 'al-Ikrah (Coercion)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 90,
+    "app_title": "Judgments",
+    "actual_book": "al-Hiyal (Legal Stratagems)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Fath al-Bari's khatima groups 'Kitab al-Ahkam' with the two books after it (al-Tamanni, Ijazat khabar al-wahid: '...كتاب الأحكام وما بعده من التمني وإجازة خبر الواحد... على مائة حديث وثلاثة وستين حديثا') and cannot characterize Judgments alone. Academic angles returned articles citing isolated Ahkam hadiths, not book-level arrangement analysis. Nothing publishable. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 91,
+    "app_title": "Compromises",
+    "actual_book": "al-Ta'bir (Dream Interpretation)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Fath al-Bari's khatima to Kitab al-Sulh is a hadith count only (31 narrations), with no scope or arrangement prose. Academic angle: Aida Othman's 'And Amicable Settlement Is Best' mentions Bukhari's Kitab al-Sulh but analyzes general sulh doctrine, not the book's arrangement. Nothing publishable. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 92,
+    "app_title": "Losses",
+    "actual_book": "al-Fitan (Tribulations)",
+    "title_matches_content": false,
+    "claims": [
+      {
+        "claim": "Al-Bukhari's Kitab al-Fitan gathers reports on the fitan — the trials foretold to befall the Muslim community — covering both the signs of the end times and episodes of social disintegration, some already witnessed and others yet to come.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Islāmiyyāt 48(1), 'Fitan Traditions and Apocalyptic Narratives: Comparative Examination of Contemporary Western Approaches.'",
+            "url": "http://ejournal.ukm.my/islamiyyat/article/download/102572/18667",
+            "type": "academic",
+            "exact excerpt": "These chapters appear under distinct titles such as \"Kitab al-Fitan\" in Bukhari (Bukhari 1993), \"Kitab alFitan wa ashrat alsa 'a\" in Muslim (Muslim 1955), and \"Kitab al-Fitan\" in Tirmidhi (Tirmidhi 2009). They contain reports concerning both the signs of the end times and anticipated episodes of social disintegration."
+          },
+          {
+            "name": "Nazeer Muhammad, Gulzar Ali & Saeed Shafiq, 'A Research Study On Kitabul-Fitan: Understanding Hadith And The Emergence Of Contemporary Fitnah,' Journal of Positive School Psychology 7(6) (2023), 310-322.",
+            "url": "http://Journalppw.Com/index.php/jpsp/article/download/16994/11032/22088",
+            "type": "academic",
+            "exact excerpt": "Imam Bukhari in his book \"Al-Jam? Al-Sahih Al-Musnad Min Amoor Rasoolullah sallallaahu 'alaihi wa sallam and Sunnah\" has brought a book titled \"Kitab al-Fattan\". In this book, Imam Bukhari has mentioned various trials, some of which have occurred while others have not yet occurred."
+          }
+        ]
+      },
+      {
+        "claim": "Chapters on fitan typically stand at the end or near the end of the classical hadith compilations.",
+        "status": "PARTIALLY_VERIFIED",
+        "sources": [
+          {
+            "name": "Islāmiyyāt 48(1), 'Fitan Traditions and Apocalyptic Narratives: Comparative Examination of Contemporary Western Approaches.'",
+            "url": "http://ejournal.ukm.my/islamiyyat/article/download/102572/18667",
+            "type": "academic",
+            "exact excerpt": "Chapters on fitan are typically located at the end or near the end of these classical hadith compilations."
+          }
+        ]
+      }
+    ],
+    "draft_en": null,
+    "class": "B",
+    "notes": "Two independent academic sources on the book's scope (scope claim verified); a second, arrangement-related claim (end placement) is single-source and excluded from the draft. Title note: the scholarly literature calls this book Kitab al-Fitan (trials/tribulations), which the app renders as 'Losses'; the draft uses 'trials and tribulations (fitan)'. Unlike several sibling chapters, the app's chapter-92 content (fitan hadiths from no. 7048) does match this title. Coordinator downgrade 2026-09-28: the second source ('A Research Study On Kitabul-Fitan') appears in JPSP — the Journal of Positive School Psychology (journalppw.com), a venue whose scope is positive psychology in education and which publishes unrelated material (turtle conservation, agriculture); this is not a strong Islamic-studies source. Class B: the Islāmiyyāt (UKM) paper alone is the strong source. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 93,
+    "app_title": "Irrigation",
+    "actual_book": "al-Ahkam (Judgments)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No readable qualifying overview found. An exact-title Fath al-Bari search for Kitab al-Musaqat returned garbled/unusable text, and no academic or named-scholar book-level overview of the irrigation (musaqat) book was located. Product note: on noorapp.in the chapter-93 page currently groups Ahkam (governance/judgment) hadiths (from no. 7137) under the 'Irrigation' title; this chapter cannot be written until a genuine musaqat overview is found and the mismatch is resolved. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 94,
+    "app_title": "Agriculture",
+    "actual_book": "al-Tamanni (Wishes)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. The University of Malaya article 'Agriculture and Agribusiness from the Perspective of al-Qur'an and al-Sunnah' cites Bukhari's Kitab al-Harth wa al-Muzara'ah but discusses agriculture generally and quotes hadith text as commentary, which the brief excludes; it contains no analysis of the book's arrangement. ScriptSure's page was excluded per the brief. Nothing publishable. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 95,
+    "app_title": "Sharecropping",
+    "actual_book": "Akhbar al-Ahad (Solitary Reports)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "Evidence originally researched under this chapter's published title ('Sharecropping') was re-homed to chapter 41, because it describes 'al-Harth wa al-Muzara'ah (Cultivation)' while this chapter's actual hadith content is 'Akhbar al-Ahad (Solitary Reports)'. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 96,
+    "app_title": "Renting",
+    "actual_book": "al-I'tisam bi al-Kitab wa al-Sunnah (Adherence to Qur'an and Sunnah)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Fath al-Bari's khatima to Kitab al-Ijarah is a hadith count only (30 narrations). A named-scholar article ('Abd al-Muhsin al-'Abbad) analyzes one sub-heading as an example of Bukhari's precise titling, not the book's overall scope; general fiqh results covered wages doctrine, not the book's arrangement. Nothing publishable. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  },
+  {
+    "chapter_number": 97,
+    "app_title": "Lost Property",
+    "actual_book": "al-Tawhid (Divine Unity)",
+    "title_matches_content": false,
+    "claims": [],
+    "draft_en": null,
+    "class": "D",
+    "notes": "No qualifying book-level overview found. Fath al-Bari's khatima to Kitab al-Luqata is a hadith count only (21 narrations). Academic angles (lost-property management and fiqh studies) discuss general doctrine and quote hadith text as commentary, which the brief excludes. Nothing publishable. TITLE MISMATCH (verified 2026-09-28 against the repo's hadith data): the app's published title does not describe this chapter's hadith content. Do NOT publish any introduction under the current title; the title must be corrected to the actual book first."
+  }
+]

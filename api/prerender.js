@@ -1335,6 +1335,26 @@ export default async function handler(req, res) {
         } else {
         const rows = await loadHadithRowsSsr(lang, chapterId);
         const currentChapter = chapterId ? chapterMap.get(chapterId) : null;
+        // Evidence-first hadith chapter introductions (research 2026-09-28):
+        // only chapters whose every published claim reached VERIFIED (>=2
+        // independent reputable sources) AND whose app title matches the
+        // actual hadith content are present in hadith-chapter-intros.json.
+        // Chapters without a verified intro render nothing — no placeholder.
+        const chapterIntroList = loadToolData("hadith-chapter-intros.json");
+        const chapterIntro = Array.isArray(chapterIntroList)
+          ? chapterIntroList.find((i) => Number(i.chapter) === chapterId)
+          : null;
+        const introTypeBadge = (t) =>
+          t === "primary"
+            ? ` <span style="border:1px solid rgba(255,255,255,0.25);border-radius:3px;padding:0 3px;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;">Primary source</span>`
+            : t === "secondary"
+            ? ` <span style="border:1px solid rgba(255,255,255,0.25);border-radius:3px;padding:0 3px;font-size:9px;text-transform:uppercase;letter-spacing:0.04em;">Secondary source</span>`
+            : "";
+        const chapterIntroHtml = chapterIntro && chapterIntro.intro_en
+          ? `<div class="mx-auto mt-3 max-w-4xl rounded-xl border border-white/10 bg-white/5 px-4 py-3"><p class="text-sm text-white/85">${esc(chapterIntro.intro_en)}</p>
+             <p class="mt-2 text-[11px] text-white/50">Sources: ${chapterIntro.sources.map((s) => `<a href="${esc(s.url)}" class="underline">${esc(s.name)}</a>${introTypeBadge(s.type)}`).join(" · ")}</p>
+             <p class="mt-1 text-[10px] italic text-white/35">Source-verified research · Not reviewed by a scholar</p></div>`
+          : "";
         const chapterName = currentChapter
           ? getHadithChapterName(currentChapter, lang)
           : (chapterId ? `${meta.title} — Chapter ${chapterId}` : meta.title);
@@ -1407,6 +1427,7 @@ export default async function handler(req, res) {
                 </div>
               </div>
             </header>
+            ${chapterIntroHtml}
             <main class="max-w-4xl mx-auto p-4 space-y-6">
               ${breadcrumbMarkup(hadithCrumbs)}
               <nav class="flex gap-2 overflow-x-auto pb-1 scrollbar-hide" aria-label="Hadith languages">

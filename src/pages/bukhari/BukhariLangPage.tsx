@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import BottomNavigation from "@/components/BottomNavigation";
+import hadithChapterIntros from "@/data/hadith-chapter-intros.json";
 
 // Keep the Hadith visual language identical to the premium Dua cards.
 const ISLAMIC_PATTERN_1 = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='136' viewBox='0 0 160 136'%3E%3Cg fill='none' stroke='%23ffffff' stroke-opacity='0.05' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath stroke-width='3.4' d='M-10 29C10 7 39 4 59 17c16 11 18 32 5 44-13 11-34 7-38-8-3-13 9-24 22-19 16 6 21 27 12 43-11 22-35 31-60 22'/%3E%3Cpath stroke-width='2.7' d='M68-10C56 13 61 38 81 49c18 10 39 0 40-19 1-16-15-25-28-15-14 11-8 35 9 44 18 9 39 7 52-5'/%3E%3Cpath stroke-width='3.2' d='M82 61c18-20 49-22 68-5 16 14 13 40-7 50-17 9-36-1-37-18-1-15 16-25 29-16 16 11 17 36 3 54-15 20-44 27-69 14'/%3E%3Cpath stroke-width='2' d='M2 87c16-15 39-17 55-6M132 103c-8 8-10 19-4 29M45 112c9-10 24-12 36-5'/%3E%3C/g%3E%3Cg fill='%23ffffff' fill-opacity='0.04'%3E%3Ccircle cx='13' cy='52' r='2.4'/%3E%3Ccircle cx='20' cy='48' r='1.5'/%3E%3Ccircle cx='72' cy='103' r='2.2'/%3E%3Cpath d='M34 8c6 7 6 15 0 22-6-7-6-15 0-22ZM102 122c8-10 17-10 25 0-8-4-17-4-25 0Z'/%3E%3C/g%3E%3Cg fill='%23ffffff' font-family='serif' text-anchor='middle' opacity='0.05'%3E%3Ctext x='44' y='55' font-size='17' transform='rotate(-18 44 55)'%3Eالله%3C/text%3E%3Ctext x='118' y='34' font-size='14' transform='rotate(13 118 34)'%3Eرب%3C/text%3E%3Ctext x='42' y='105' font-size='13'%3Eنور%3C/text%3E%3C/g%3E%3C/svg%3E")`;
@@ -44,6 +45,19 @@ interface Chapter {
   id: number;
   count: number;
 }
+
+interface ChapterIntro {
+  chapter: number;
+  intro_en: string;
+  sources: { name: string; url: string; type?: "primary" | "secondary" }[];
+}
+
+// Source transparency (2026-09-28): every source carries a primary/secondary
+// label; the caption is honest about provenance — never "scholar verified".
+const sourceTypeLabel: Record<string, string> = {
+  primary: "Primary source",
+  secondary: "Secondary source",
+};
 
 // ── UI strings ───────────────────────────────────────────────
 const uiStrings = {
@@ -633,6 +647,47 @@ export default function BukhariLangPage() {
           </div>
         </div>
       </header>
+
+      {/* Verified chapter introduction (evidence-first research 2026-09-28).
+          Rendered only when the chapter's app title matches the actual hadith
+          content and every claim reached VERIFIED. Chapters without a verified
+          intro show nothing — no placeholder. */}
+      {selectedChapter !== null &&
+        (() => {
+          const intro = (hadithChapterIntros as ChapterIntro[]).find(
+            (i) => i.chapter === selectedChapter
+          );
+          if (!intro) return null;
+          return (
+            <div className="mx-auto mt-3 max-w-4xl rounded-xl border border-white/10 bg-white/5 px-4 py-3">
+              <p className="text-sm text-white/85">{intro.intro_en}</p>
+              <p className="mt-2 text-[11px] text-white/50">
+                Sources:{" "}
+                {intro.sources.map((s, idx) => (
+                  <span key={s.url}>
+                    {idx > 0 && " · "}
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="underline hover:text-white/80"
+                    >
+                      {s.name}
+                    </a>
+                    {s.type && (
+                      <span className="ml-1 rounded border border-white/15 px-1 text-[9px] uppercase tracking-wide text-white/40">
+                        {sourceTypeLabel[s.type] ?? s.type}
+                      </span>
+                    )}
+                  </span>
+                ))}
+              </p>
+              <p className="mt-1 text-[10px] italic text-white/35">
+                Source-verified research · Not reviewed by a scholar.
+              </p>
+            </div>
+          );
+        })()}
 
       <main className="max-w-4xl mx-auto px-4 py-6">
         {/* Search & Tabs */}
