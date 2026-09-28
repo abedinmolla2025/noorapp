@@ -122,15 +122,13 @@ export default function SeoIntroSection() {
           <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Hadith apps
           </Link>{" "}
-          available for Bengali Muslims. Browse narrations from well-known Hadith collections, including{" "}
+          available for Bengali Muslims. Browse narrations from the{" "}
           <Link to="/hadith/sahih-bukhari" className="font-medium text-primary underline-offset-2 hover:underline">
             Sahih Bukhari
           </Link>{" "}
-          — one of the major Sunni Hadith collections — and{" "}
-          <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
-            Sahih Muslim
-          </Link>
-          . Where available, entries include Arabic text, translation and reference details so readers
+          collection — one of the major Sunni Hadith collections. Sahih Muslim, Jami at-Tirmidhi and
+          Sunan Abu Dawud are planned for a future release and are not yet available. Where
+          available, entries include Arabic text, translation and reference details so readers
           can check the context instead of relying on an isolated quotation.
           হাদিসের আরবি পাঠ, অনুবাদ ও reference দেখে বুঝে পড়ুন — সম্পূর্ণ বিনামূল্যে।
         </p>
@@ -275,11 +273,8 @@ export default function SeoIntroSection() {
               <Link to="/hadith/sahih-bukhari" className="font-medium text-primary hover:underline">
                 Sahih Bukhari
               </Link>{" "}
-              with Arabic text and Bengali translation. You can also read{" "}
-              <Link to="/hadith" className="font-medium text-primary hover:underline">
-                Sahih Muslim
-              </Link>
-              , Jami at-Tirmidhi, and Sunan Abu Dawud from the Hadith section.
+              with Arabic text and Bengali translation. Sahih Muslim, Jami at-Tirmidhi and Sunan Abu
+              Dawud are planned for a future release and are not yet available on Noor.
             </p>
           </div>
 

@@ -85,13 +85,16 @@ export default function IslamicAppPage() {
               <Link to="/hadith/sahih-bukhari" className="text-primary font-medium hover:underline">Sahih Bukhari</Link> — A major Sunni Hadith collection compiled by Imam al-Bukhari (রহ.)
             </li>
             <li>
-              <Link to="/hadith" className="text-primary font-medium hover:underline">Sahih Muslim</Link> — A major Hadith collection compiled by Imam Muslim
+              <Link to="/hadith/muslim" className="text-primary font-medium hover:underline">Sahih Muslim</Link> — A major Hadith collection compiled by Imam Muslim{" "}
+              <span className="text-xs text-muted-foreground">(planned — not yet available on Noor)</span>
             </li>
             <li>
-              <Link to="/hadith/tirmidhi" className="text-primary font-medium hover:underline">Jami at-Tirmidhi</Link> — Covers fiqh, seerah and virtues with unique hadith grading
+              <Link to="/hadith/tirmidhi" className="text-primary font-medium hover:underline">Jami at-Tirmidhi</Link> — Covers fiqh, seerah and virtues with unique hadith grading{" "}
+              <span className="text-xs text-muted-foreground">(planned — not yet available on Noor)</span>
             </li>
             <li>
-              <Link to="/hadith/abu-dawud" className="text-primary font-medium hover:underline">Sunan Abu Dawud</Link> — A well-known collection with many jurisprudence-related chapters
+              <Link to="/hadith/abu-dawud" className="text-primary font-medium hover:underline">Sunan Abu Dawud</Link> — A well-known collection with many jurisprudence-related chapters{" "}
+              <span className="text-xs text-muted-foreground">(planned — not yet available on Noor)</span>
             </li>
           </ul>
           <p className="mt-3">

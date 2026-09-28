@@ -169,9 +169,10 @@ function rowToStory(row: any, index: number): Story {
 /**
  * Bundled fallback for legitimate sitemap story URLs that are not (yet)
  * published in the database (e.g. prophet-lut-story-islam,
- * umar-ibn-khattab-story-islam). Mirrors the prerender's bundled-first
- * resolution so runtime and prerender agree. Never invents content — it only
- * surfaces the already-bundled record.
+ * umar-ibn-khattab-story-islam). Mirrors the prerender's resolution order
+ * (published DB row first, bundled record as fallback) so runtime and
+ * prerender agree on the same canonical story content. Never invents
+ * content — it only surfaces the already-bundled record.
  */
 export function findBundledStory(slug: string): Story | undefined {
   const raw = (bundledStoriesData as unknown as Record<string, unknown>[]).find(

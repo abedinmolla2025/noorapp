@@ -112,7 +112,7 @@ const AboutPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[
                 { icon: BookOpen, title: "Complete Quran", desc: "Arabic text with English, Urdu & Bengali translations and audio recitation.", link: "/quran" },
-                { icon: ScrollText, title: "Hadith Collections", desc: "Sahih Bukhari, Muslim, Tirmidhi & Abu Dawud — all free and searchable.", link: "/hadith" },
+                { icon: ScrollText, title: "Hadith Collections", desc: "Sahih al-Bukhari — free and searchable, with more collections planned.", link: "/hadith" },
                 { icon: Clock, title: "Prayer Times", desc: "GPS-based accurate prayer times with Athan notification support.", link: "/prayer-times" },
                 { icon: HandHeart, title: "Dua Collection", desc: "Curated duas for daily life with Arabic, transliteration & translation.", link: "/dua" },
                 { icon: HelpCircle, title: "Daily Quiz", desc: "Test and grow your Islamic knowledge every day with fun quizzes.", link: "/quiz" },

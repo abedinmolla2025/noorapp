@@ -32,9 +32,12 @@ export default function HadithPage() {
   const hadithBooks = books ?? fallbackBooks;
 
   // Counts vary by edition and must not be shown until each book has been verified.
+  // Only Sahih al-Bukhari is browsable on Noor; other collections are planned
+  // for a future release, so their summaries must never imply browsing.
   const getBookSummary = (book: typeof fallbackBooks[number]) => {
     const chapters = book.total_chapters ? `${book.total_chapters} chapters` : "Hadith collection";
-    const count = book.id === "muslim" ? undefined : book.total_hadiths;
+    if (book.id !== "bukhari") return `${chapters} · Planned for a future release`;
+    const count = book.total_hadiths;
     return count ? `${chapters} · ${count.toLocaleString()} hadiths` : `${chapters} · Browse by chapter`;
   };
 
@@ -126,7 +129,8 @@ export default function HadithPage() {
           className="mt-3 text-[13px] leading-relaxed max-w-xs mx-auto"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Browse authentic collections from the most trusted scholars of Islam.
+          Read Sahih al-Bukhari — authentic hadith with Arabic text and trusted translations.
+          More collections are planned for a future release.
         </motion.p>
       </div>
 

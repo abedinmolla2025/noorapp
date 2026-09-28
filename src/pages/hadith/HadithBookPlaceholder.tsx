@@ -44,8 +44,9 @@ const bookMeta: Record<string, BookMeta> = {
         <p>
           Imam Muslim spent years in meticulous collection, authentication, and compilation of this
           monumental work. Historical sources describe his careful method of evaluating reports and
-          narrator chains before including them. Edition-level totals and numbering can vary, so this
-          site presents the available text with its book and chapter references. Every hadith in Sahih
+          narrator chains before including them. Edition-level totals and numbering can vary; when
+          the collection launches on Noor, this site will present the text with its book and
+          chapter references. Every hadith in Sahih
           Muslim contains
           an unbroken, fully connected chain of narrators (<em>isnad muttasil</em>), with each
           narrator rigorously verified for trustworthiness (<em>thiqah</em>) and accuracy of
@@ -95,14 +96,15 @@ const bookMeta: Record<string, BookMeta> = {
           (শরহ) রচিত হয়েছে।
         </p>
         <p>
-          On the Noor app, you can browse the complete Sahih Muslim collection, search by keyword or
-          chapter, and read each hadith with its Arabic text, full narrator chain, and Bengali
-          translation. Our goal is to make this timeless treasury of prophetic wisdom accessible to
-          every Bengali-speaking Muslim. <strong>সহীহ মুসলিম পড়ুন — বাংলা অনুবাদ সহ — সম্পূর্ণ বিনামূল্যে।</strong>
+          <strong>Sahih Muslim</strong> is planned for a future release on Noor and is not yet
+          available here. When it launches, readers will be able to browse the collection by chapter
+          and read each hadith with its Arabic text and Bengali translation. Until then, you can
+          read the complete <Link to="/hadith/sahih-bukhari" className="text-primary font-medium hover:underline">Sahih al-Bukhari</Link> collection
+          on Noor — সম্পূর্ণ বিনামূল্যে।
         </p>
 
         <h2 className="text-[14px] font-semibold text-foreground">
-          Explore Other Hadith Collections
+          Learn About Other Hadith Collections
         </h2>
         <ul className="ml-4 list-disc space-y-1">
           {otherBooks
@@ -190,7 +192,7 @@ const bookMeta: Record<string, BookMeta> = {
         </p>
 
         <h2 className="text-[14px] font-semibold text-foreground">
-          Explore Other Hadith Collections
+          Learn About Other Hadith Collections
         </h2>
         <ul className="ml-4 list-disc space-y-1">
           {otherBooks
@@ -279,12 +281,15 @@ const bookMeta: Record<string, BookMeta> = {
           মাদ্রাসাগুলোতে সুনানে আবু দাউদ একটি অপরিহার্য পাঠ্যগ্রন্থ।
         </p>
         <p>
-          On Noor, you can read Sunan Abu Dawud with clear Arabic text and Bengali translation,
-          browse by chapter, and search across thousands of narrations. <strong>সুনানে আবু দাউদ পড়ুন — বাংলা অনুবাদ সহ — সম্পূর্ণ বিনামূল্যে।</strong>
+          <strong>Sunan Abu Dawud</strong> is planned for a future release on Noor and is not yet
+          available here. When it launches, readers will be able to browse the collection by chapter
+          and read each hadith with clear Arabic text and Bengali translation. Until then, you can
+          read the complete <Link to="/hadith/sahih-bukhari" className="text-primary font-medium hover:underline">Sahih al-Bukhari</Link> collection
+          on Noor — সম্পূর্ণ বিনামূল্যে।
         </p>
 
         <h2 className="text-[14px] font-semibold text-foreground">
-          Explore Other Hadith Collections
+          Learn About Other Hadith Collections
         </h2>
         <ul className="ml-4 list-disc space-y-1">
           {otherBooks

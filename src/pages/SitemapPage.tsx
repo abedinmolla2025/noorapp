@@ -19,10 +19,10 @@ const sections = [
       { label: "Sahih Bukhari (Bangla)", href: "/hadith/sahih-bukhari/bangla" },
       { label: "Sahih Bukhari (English)", href: "/hadith/sahih-bukhari/english" },
       { label: "Sahih Bukhari (Urdu)", href: "/hadith/sahih-bukhari/urdu" },
-      { label: "Sahih Muslim", href: "/hadith" },
-      { label: "Jami at-Tirmidhi", href: "/hadith/tirmidhi" },
-      { label: "Sunan Abu Dawud", href: "/hadith/abu-dawud" },
-      // Placeholder collections — links kept for user navigation but these pages are noindex
+      { label: "Sahih Muslim (planned — not yet available)", href: "/hadith/muslim" },
+      { label: "Jami at-Tirmidhi (planned — not yet available)", href: "/hadith/tirmidhi" },
+      { label: "Sunan Abu Dawud (planned — not yet available)", href: "/hadith/abu-dawud" },
+      // Planned collections — noindex placeholder pages; labels say so honestly.
     ],
   },
   {

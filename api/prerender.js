@@ -1608,12 +1608,24 @@ export default async function handler(req, res) {
     // --- Hadith Book Placeholder (noindex) ---
     // React's HadithBookPlaceholder marks these pages noindex (collections not
     // yet published). Mirror that here so bots don't index thin placeholders.
+    // P0-9: only BreadcrumbList JSON-LD — never ItemList/CollectionPage, which
+    // would claim browsable content that does not exist. Mirrors the SPA's
+    // breadcrumb structured data on the same page.
     else if (/^\/hadith\/[^/]+$/.test(routePath)) {
       const bookId = decodeURIComponent(routePath.split("/")[2] || "");
       statusCode = 200;
       robotsDirective = "noindex,follow";
       title = "Hadith collection not yet available | Noor";
       description = "This Hadith collection is not yet available on Noor.";
+      const bookLabel = bookId
+        .split("-")
+        .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+        .join(" ");
+      extraStructuredData = breadcrumbJsonLd([
+        { label: "Home", href: "/" },
+        { label: "Hadith", href: "/hadith" },
+        { label: bookLabel || "Collection", href: `/hadith/${bookId}` },
+      ]);
       bodyContent = `
         <main class="min-h-screen bg-[hsl(158,64%,12%)] text-white px-4 py-16 text-center">
           <p class="text-sm font-semibold uppercase tracking-widest text-amber-400 mb-3">Noor Hadith</p>
@@ -1969,7 +1981,8 @@ export default async function handler(req, res) {
       };
       const catLabel = STORY_CATEGORY_LABELS[catSlug] || catSlug.replace(/[_-]/g, " ");
 
-      // Include both bundled stories and published DB stories in this category.
+      // Include both published DB stories and bundled stories in this category.
+      // DB rows first so titles match what the SPA (useStories) renders.
       const bundledItems = BUNDLED_STORIES.filter((s) => s.category === catSlug)
         .map((s) => ({ slug: s.slug, title: s.title_en, title_bn: s.title_bn, category: s.category }));
       const { data: dbStories } = await supabase
@@ -1979,7 +1992,7 @@ export default async function handler(req, res) {
         .eq("status", "published")
         .eq("category", catSlug);
       const seen = new Set();
-      const items = [...bundledItems, ...(dbStories || [])].filter((s) => {
+      const items = [...(dbStories || []), ...bundledItems].filter((s) => {
         if (!s.slug || seen.has(s.slug)) return false;
         seen.add(s.slug);
         return true;
@@ -2042,18 +2055,23 @@ export default async function handler(req, res) {
       const isTestStorySlug = slug === "test-story-manus" || slug.startsWith("test-");
       let story = null;
       if (!isTestStorySlug) {
-        story = findBundledStory(slug);
-
-        if (!story) {
-          const { data } = await supabase
-            .from("admin_content")
-            .select("*")
-            .eq("slug", slug)
-            .eq("content_type", "story")
-            .eq("status", "published")
-            .maybeSingle();
-          story = data;
-        }
+        // P0-10: bot/human parity. The SPA (StoryDetailPage via useStories /
+        // loadStoriesFromDb) resolves the published DB row first and only falls
+        // back to the bundled record when the story is not published in the
+        // DB. Mirror that order here: bundled records are thin summaries
+        // (~90 words), so reading them first served crawlers thin content while
+        // humans received the full DB narrative (71/72 pages divergent).
+        // Unpublished/draft rows never surface: the DB read is restricted to
+        // status=published; anything else falls through to the bundled record
+        // (or the 404 branch below) — drafts never become indexable.
+        const { data } = await supabase
+          .from("admin_content")
+          .select("*")
+          .eq("slug", slug)
+          .eq("content_type", "story")
+          .eq("status", "published")
+          .maybeSingle();
+        story = data || findBundledStory(slug);
       }
 
       if (isTestStorySlug) {
