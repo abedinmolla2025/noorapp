@@ -988,11 +988,14 @@ export default async function handler(req, res) {
     //   /privacy       -> /privacy-policy (vercel.json 301s this at the edge)
     //   /hadith/bukhari -> /hadith/sahih-bukhari (vercel.json 301s this at the edge;
     //                      /hadith/sahih-bukhari is the real collection route)
+    //   /names         -> /baby-names (SPA redirects client-side; the prerender
+    //                      must 301 too so bots never see a 200 thin shell)
     const CANONICAL_REDIRECTS = {
       "/support": "/contact",
       "/data-sources": "/sources",
       "/privacy": "/privacy-policy",
       "/hadith/bukhari": "/hadith/sahih-bukhari",
+      "/names": "/baby-names",
     };
     if (CANONICAL_REDIRECTS[routePath]) {
       const target = `${SITE_ORIGIN}${CANONICAL_REDIRECTS[routePath]}`;
@@ -1266,6 +1269,11 @@ export default async function handler(req, res) {
         );
         canonicalUrl = `${SITE_ORIGIN}/hadith/h/${slug}`;
         const hadithCanonical = `${SITE_ORIGIN}/hadith/h/${slug}`;
+        // P0-4 (TRK3-1303): single-hadith pages are valid content but thin,
+        // crawler-orphaned (not in sitemap, zero internal-link equity).
+        // Keep them accessible to users; keep them out of the index.
+        // Canonical chapter pages stay index,follow.
+        robotsDirective = "noindex,follow";
         const hadithCrumbs = [
           { label: "Home", href: "/" },
           { label: "Hadith", href: "/hadith" },
@@ -1390,8 +1398,9 @@ export default async function handler(req, res) {
         const chapterList = chapterData || [];
         const chapterMap = new Map(chapterList.map((chapter) => [Number(chapter.chapter_number), chapter]));
         // Nonexistent chapter: real 404 + noindex so invented chapter URLs
-        // cannot become indexable thin pages.
-        if (chapterId && !chapterMap.has(chapterId)) {
+        // cannot become indexable thin pages. The guard uses `!== null`
+        // (not truthiness) because chapter-0 is falsy but equally nonexistent.
+        if (chapterId !== null && !chapterMap.has(chapterId)) {
           statusCode = 404;
           robotsDirective = "noindex,follow";
           title = "Hadith chapter not found | Noor";
@@ -2428,10 +2437,11 @@ export default async function handler(req, res) {
     // Legitimate client-side routes without a dedicated prerender branch keep
     // the app-shell fallback so React can hydrate them. These are the only
     // React-router routes with no prerender coverage (see src/App.tsx):
-    // /names (redirects to /baby-names), /settings, /notifications.
+    // /settings, /notifications. (/names is handled above: it 301s to
+    // /baby-names in parity with the SPA redirect.)
     // Anything else reaching this fallback is genuinely unknown and must
     // return 404 + noindex instead of an indexable 200 app shell.
-    const CLIENT_ONLY_ROUTES = new Set(["/names", "/settings", "/notifications"]);
+    const CLIENT_ONLY_ROUTES = new Set(["/settings", "/notifications"]);
     if (!bodyContent) {
       if (!CLIENT_ONLY_ROUTES.has(routePath)) {
         statusCode = 404;

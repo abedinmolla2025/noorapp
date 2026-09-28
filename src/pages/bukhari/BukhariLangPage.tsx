@@ -585,6 +585,35 @@ export default function BukhariLangPage() {
   };
 
   // ── Render Helpers ──────────────────────────────────────────
+  // P0-4 (TRK3-1302): mirror the prerender guard — an explicit chapter param
+  // that does not exist in hadith_chapters (including chapter-0, which is
+  // falsy as a number but equally nonexistent) renders a chapter-not-found
+  // state with noindex,follow instead of hub-identical thin content.
+  // Gated on kitabMap.size so this only triggers once titles are loaded.
+  const invalidChapter =
+    kitabMap.size > 0 && selectedChapter != null && !kitabMap.has(selectedChapter);
+  if (invalidChapter) {
+    return (
+      <div className="min-h-screen bg-[#0a1a1a] text-white flex items-center justify-center p-4">
+        <Helmet>
+          <title>Hadith chapter not found | Noor</title>
+          <meta name="description" content="The requested hadith chapter could not be found." />
+          <meta name="robots" content="noindex,follow" />
+          <link rel="canonical" href={`https://noorapp.in${window.location.pathname}`} />
+        </Helmet>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-3">অধ্যায় পাওয়া যায়নি</h1>
+          <p className="text-white/70 mb-6">এই অধ্যায়টি সহিহ বুখারীতে নেই। সঠিক অধ্যায় নির্বাচন করুন।</p>
+          <button
+            onClick={() => navigate(`/hadith/sahih-bukhari/${normalizedLang}`)}
+            className="px-6 py-2 bg-[#10b981] rounded-full text-sm font-medium"
+          >
+            অধ্যায় তালিকা দেখুন
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (error) {
     return (
       <div className="min-h-screen bg-[#0a1a1a] text-white flex items-center justify-center p-4">

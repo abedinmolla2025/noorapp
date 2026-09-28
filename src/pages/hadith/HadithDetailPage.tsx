@@ -208,6 +208,10 @@ const HadithDetailPage = () => {
           <title>{seo.title}</title>
           <meta name="description" content={seo.description} />
           <link rel="canonical" href={seo.url} />
+          {/* P0-4 (TRK3-1303): single-hadith detail pages are thin, crawler-
+              orphaned content — noindex,follow to match the prerender layer.
+              The noindex state (hadith not found) above stays noindex. */}
+          <meta name="robots" content="noindex,follow" />
           <meta property="og:type" content="article" />
           <meta property="og:title" content={seo.title} />
           <meta property="og:description" content={seo.description} />
