@@ -657,7 +657,9 @@ const renderDhikrList = () => {
       <p class="text-2xl font-bold text-foreground" lang="ar" dir="rtl">${esc(d.arabic || "")}</p>
       <p class="mt-2 text-sm font-semibold text-primary">${esc(d.transliteration || "")}</p>
       <p class="mt-1 text-sm text-muted-foreground">${esc(d.meaning || "")}${d.target ? ` · ${esc(String(d.target))}×` : ""}</p>
-      ${d.virtue ? `<p class="mt-1 text-xs text-muted-foreground">Virtue: ${esc(d.virtue)}</p>` : ""}
+      <!-- P0-5 (2026-09-29): per-dhikr merit claims are never rendered.
+           The uncited claims were removed from the source (TasbihPage.tsx dhikrList)
+           and this renderer no longer emits them at all. -->
     </li>`).join("");
   return `
     <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
@@ -1732,6 +1734,31 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       if (dua) {
+        // P0-5 (2026-09-29): per-row explanation_bn promise suppression (TRK2-017).
+        // These 11 dua rows carry specific prophetic-attributed fazilat promises
+        // in explanation_bn without precise citations. The virtue/virtue_reference
+        // suppression below does not cover this channel, so the explanation is
+        // nulled for exactly these rows — covering meta description, Article
+        // JSON-LD and the bot HTML body section in one decision point. Do NOT add
+        // other rows here casually: most explanation_bn rows are clean.
+        // Mirror: src/pages/dua/DuaDetailPage.tsx (getSuppressedExplanationBn).
+        const EXPLANATION_BN_SUPPRESSED_SLUGS = new Set([
+          "dua-of-prophet-yunus",
+          "dua-after-wudu",
+          "al-baqarah-2-285",
+          "allahumma-ajirni-minan-naar",
+          "al-baqarah-2-286",
+          "ইসমে-আযমের-দোয়া-অত্যন্ত-ফজিলতপূর্ণ",
+          "dua-before-eating",
+          "dua-before-entering-toilet",
+          "the-master-of-seeking-forgiveness",
+          "dua-when-leaving-home",
+          "ayatul-kursi-2",
+        ]);
+        if (dua.slug && EXPLANATION_BN_SUPPRESSED_SLUGS.has(dua.slug)) {
+          dua.explanation_bn = null;
+        }
+
         // Disambiguate same-titled duas (several authentic duas can share a
         // common name, e.g. for waking up) with the row's own reference.
         // Redundant title prefixes inside the reference are stripped.

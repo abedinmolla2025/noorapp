@@ -7,13 +7,19 @@ import TasbihBeads3D from "@/components/TasbihBeads3D";
 import IslamicEducationalSection from "@/components/seo/IslamicEducationalSection";
 import { tasbihContent } from "@/lib/pageContent/utilityPages";
 
+// P0-5 (2026-09-29): the per-dhikr "virtue" merit claims were removed.
+// TRK2-001: the 6 claims ("Plants a tree in Paradise", etc.) had zero source
+// attribution anywhere in the repo's evidence; per the "cite or remove" action
+// and the no-invented-citation rule they are removed, not cited. Arabic text,
+// transliteration, meaning and target counts are unchanged. This list is also
+// the source of public/data/dhikr-list.json (scripts/extract-tool-data.mjs).
 const dhikrList = [
-  { arabic: "سُبْحَانَ اللَّهِ", transliteration: "SubhanAllah", meaning: "Glory be to Allah", target: 33, virtue: "Plants a tree in Paradise" },
-  { arabic: "الْحَمْدُ لِلَّهِ", transliteration: "Alhamdulillah", meaning: "Praise be to Allah", target: 33, virtue: "Fills the scales of good deeds" },
-  { arabic: "اللَّهُ أَكْبَرُ", transliteration: "Allahu Akbar", meaning: "Allah is the Greatest", target: 34, virtue: "Most beloved words to Allah" },
-  { arabic: "لَا إِلَٰهَ إِلَّا اللَّهُ", transliteration: "La ilaha illallah", meaning: "There is no god but Allah", target: 100, virtue: "Best of remembrance" },
-  { arabic: "أَسْتَغْفِرُ اللَّهَ", transliteration: "Astaghfirullah", meaning: "I seek forgiveness", target: 100, virtue: "Opens the door of mercy" },
-  { arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", transliteration: "SubhanAllahi wa bihamdihi", meaning: "Glory and praise to Allah", target: 100, virtue: "Sins forgiven even if like sea foam" },
+  { arabic: "سُبْحَانَ اللَّهِ", transliteration: "SubhanAllah", meaning: "Glory be to Allah", target: 33 },
+  { arabic: "الْحَمْدُ لِلَّهِ", transliteration: "Alhamdulillah", meaning: "Praise be to Allah", target: 33 },
+  { arabic: "اللَّهُ أَكْبَرُ", transliteration: "Allahu Akbar", meaning: "Allah is the Greatest", target: 34 },
+  { arabic: "لَا إِلَٰهَ إِلَّا اللَّهُ", transliteration: "La ilaha illallah", meaning: "There is no god but Allah", target: 100 },
+  { arabic: "أَسْتَغْفِرُ اللَّهَ", transliteration: "Astaghfirullah", meaning: "I seek forgiveness", target: 100 },
+  { arabic: "سُبْحَانَ اللَّهِ وَبِحَمْدِهِ", transliteration: "SubhanAllahi wa bihamdihi", meaning: "Glory and praise to Allah", target: 100 },
 ];
 
 const TasbihPage = () => {
@@ -191,9 +197,6 @@ const TasbihPage = () => {
           <p className="text-4xl font-arabic text-amber-300 leading-relaxed">{currentDhikr.arabic}</p>
           <p className="text-lg text-white mt-3 font-medium">{currentDhikr.transliteration}</p>
           <p className="text-sm text-emerald-200/70 mt-1">{currentDhikr.meaning}</p>
-          <div className="mt-4 pt-4 border-t border-white/10">
-            <p className="text-xs text-amber-200/80 italic">✨ {currentDhikr.virtue}</p>
-          </div>
         </motion.div>
 
         {/* Main Counter Button with 3D Mala */}

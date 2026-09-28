@@ -9,6 +9,36 @@ import DuaAudioPlayer from "@/components/DuaAudioPlayer";
 import { AdSlot } from "@/components/ads/AdSlot";
 import { useToast } from "@/hooks/use-toast";
 
+// P0-5 (2026-09-29): per-row explanation_bn promise suppression (TRK2-017).
+// These 11 dua rows carry specific prophetic-attributed fazilat promises in
+// explanation_bn without precise citations (e.g. "রাসুলুল্লাহ (সা.) বলেছেন"
+// with no hadith collection/number). The virtue/virtue_reference render
+// suppression (see below) does not cover this channel, so the explanation is
+// withheld for exactly these rows until each promise is scholar-verified with
+// an exact citation. Do NOT add other rows here casually: most explanation_bn
+// rows are clean. Mirror: api/prerender.js dua detail branch.
+const EXPLANATION_BN_SUPPRESSED_SLUGS = new Set([
+  "dua-of-prophet-yunus",
+  "dua-after-wudu",
+  "al-baqarah-2-285",
+  "allahumma-ajirni-minan-naar",
+  "al-baqarah-2-286",
+  "ইসমে-আযমের-দোয়া-অত্যন্ত-ফজিলতপূর্ণ",
+  "dua-before-eating",
+  "dua-before-entering-toilet",
+  "the-master-of-seeking-forgiveness",
+  "dua-when-leaving-home",
+  "ayatul-kursi-2",
+]);
+
+const isExplanationBnSuppressed = (slug: string | null | undefined): boolean =>
+  !!slug && EXPLANATION_BN_SUPPRESSED_SLUGS.has(slug);
+
+// explanation_bn with the P0-5 suppression applied: returns null for the
+// suppressed rows so every consumer (body section, meta description, share
+// text) gets the withheld value from a single decision point.
+const getSuppressedExplanationBn = (dua: { slug: string | null; explanation_bn: string | null }): string | null =>
+  isExplanationBnSuppressed(dua.slug) ? null : dua.explanation_bn;
 
 interface DuaRow {
   id: string;
@@ -277,7 +307,8 @@ const getDuaRich = (dua: DuaRow, language: DuaLang) => {
       dua.explanation_en,
       dua.explanation_hi,
       dua.explanation_ur,
-      dua.explanation_bn,
+      // P0-5: withheld for the 11 promise-leak rows (single decision point).
+      isExplanationBnSuppressed(dua.slug) ? null : dua.explanation_bn,
     ),
     benefits: benefits && benefits.length > 0 ? benefits : null,
     whenToRecite: pick(
@@ -470,7 +501,8 @@ const DuaDetailPage = () => {
       60,
     );
     const description = truncate(
-      dua.explanation_bn?.replace(/\s+/g, " ").trim() ||
+      // P0-5: explanation_bn withheld for the 11 promise-leak rows (TRK2-017).
+      getSuppressedExplanationBn(dua)?.replace(/\s+/g, " ").trim() ||
         dua.content?.replace(/\s+/g, " ").trim() ||
         `${dua.title} এর আরবি, বাংলা উচ্চারণ ও অর্থ পড়ুন।`,
       150
