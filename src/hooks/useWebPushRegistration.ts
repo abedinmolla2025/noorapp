@@ -2,8 +2,12 @@ import { useEffect } from "react";
 import { Capacitor } from "@capacitor/core";
 import { supabase, supabasePublic } from "@/integrations/supabase/client";
 import { getCachedLocation } from "@/lib/location";
+import {
+  buildNotificationPreferencePayload,
+  getOrCreateDeviceId,
+  hasExplicitLocationConsent,
+} from "@/lib/notificationPreferences";
 
-const DEVICE_ID_KEY = "noor_device_id";
 const WEB_PUSH_REGISTERED_KEY = "noor_web_push_registered";
 const WEB_PUSH_VAPID_KEY_HASH = "noor_web_push_vapid_hash";
 const PUSH_OPT_IN_KEY = "noor_push_opt_in";
@@ -16,15 +20,6 @@ const PUSH_OPT_IN_KEY = "noor_push_opt_in";
 // Once a fresh subscription is saved, this flag persists so the migration only
 // ever runs once per browser.
 const PUSH_MIGRATION_V2_KEY = "noor_push_migration_v2";
-
-function getOrCreateDeviceId(): string {
-  const existing = localStorage.getItem(DEVICE_ID_KEY);
-  if (existing) return existing;
-
-  const next = crypto.randomUUID();
-  localStorage.setItem(DEVICE_ID_KEY, next);
-  return next;
-}
 
 function urlBase64ToUint8Array(base64String: string) {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
@@ -43,48 +38,49 @@ function isDuplicateTokenError(error: unknown): boolean {
 }
 
 /**
- * Auto-sync user's current location to prayer notification preferences.
- * This ensures the server-side cron job can send prayer-time push notifications
- * even when the app/tab is closed.
+ * Sync the user's location to prayer notification preferences so the
+ * server-side cron job can send prayer-time push notifications even when the
+ * app/tab is closed.
+ *
+ * P0-3 privacy gates (all must pass, fail-closed):
+ *  1. Explicit location consent — the user must have saved location-based
+ *     prayer preferences in PrayerNotificationSettings. Push opt-in alone is
+ *     NOT location consent, so no silent background collection happens for
+ *     users who never opted into location-based notifications.
+ *  2. The payload is validated and coarsened to 2 decimals (~1.1 km) by
+ *     buildNotificationPreferencePayload(); invalid pairs are never sent.
+ *  3. Written via upsert keyed on the unguessable device_id — no SELECT is
+ *     needed, so this keeps working after anon reads are removed by RLS.
  */
 async function syncLocationToPreferences(deviceId: string) {
+  if (!hasExplicitLocationConsent()) return;
+
   const cached = getCachedLocation();
   if (!cached) return;
 
+  let payload;
   try {
-    const { latitude, longitude } = cached;
-    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-
-    // First try to find existing record by device_id
-    const { data: existing } = await supabasePublic
-      .from("user_notification_preferences" as any)
-      .select("id")
-      .eq("device_id", deviceId)
-      .maybeSingle();
-
-    const payload = {
-      device_id: deviceId,
-      latitude,
-      longitude,
-      timezone,
+    payload = buildNotificationPreferencePayload({
+      deviceId,
+      latitude: cached.latitude,
+      longitude: cached.longitude,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      calculationMethod: "ISNA",
+      enabledPrayers: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
+      notificationOffset: 0,
       enabled: true,
-      updated_at: new Date().toISOString(),
-      calculation_method: "isna",
-      enabled_prayers: ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"],
-      notification_offset: 0
-    };
+    });
+  } catch {
+    // Invalid or unset cached coordinates — never transmit.
+    return;
+  }
 
-    if (existing?.id) {
-      await supabasePublic
-        .from("user_notification_preferences" as any)
-        .update(payload)
-        .eq("id", existing.id);
-    } else {
-      await supabasePublic
-        .from("user_notification_preferences" as any)
-        .insert(payload);
-    }
+  try {
+    const { error } = await supabasePublic
+      .from("user_notification_preferences" as any)
+      .upsert(payload as any, { onConflict: "device_id" });
 
+    if (error) throw error;
     console.log("[webpush] Location synced for prayer notifications");
   } catch (e) {
     console.warn("[webpush] Location sync skipped:", e);

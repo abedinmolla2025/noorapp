@@ -9,19 +9,12 @@ import { useToast } from "@/hooks/use-toast";
 import { Bell, MapPin, Clock, Loader2 } from "lucide-react";
 import { Slider } from "@/components/ui/slider";
 import { supabasePublic } from "@/integrations/supabase/client";
-import { cacheLocation, requestBrowserLocation } from "@/lib/location";
-
-const PREFERENCES_STORAGE_KEY = "noor_prayer_notification_preferences";
-const DEVICE_ID_KEY = "noor_device_id";
-
-function getOrCreateDeviceId(): string {
-  let id = localStorage.getItem(DEVICE_ID_KEY);
-  if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem(DEVICE_ID_KEY, id);
-  }
-  return id;
-}
+import { cacheLocation, requestBrowserLocation, toServerCoordinates } from "@/lib/location";
+import {
+  buildNotificationPreferencePayload,
+  getOrCreateDeviceId,
+  PREFERENCES_STORAGE_KEY,
+} from "@/lib/notificationPreferences";
 
 const CALCULATION_METHODS = [
   { value: "MWL", label: "Muslim World League" },
@@ -100,10 +93,12 @@ export function PrayerNotificationSettings() {
         latitude: position.coords.latitude,
         longitude: position.coords.longitude,
       });
+        // P0-3: show the coarsened pair — what the user sees is what is stored.
+        const coarse = toServerCoordinates(position.coords.latitude, position.coords.longitude);
         setPreferences({
           ...preferences,
-          latitude: position.coords.latitude,
-          longitude: position.coords.longitude,
+          latitude: coarse.latitude,
+          longitude: coarse.longitude,
         });
         setLocationLoading(false);
         toast({ title: "Location updated" });
@@ -120,22 +115,33 @@ export function PrayerNotificationSettings() {
   const savePreferences = async () => {
     setSaving(true);
     try {
+      // P0-3: (0, 0) is the "not set yet" sentinel — never store it.
+      if (preferences.latitude === 0 && preferences.longitude === 0) {
+        toast({
+          title: "Location not set",
+          description: "Use your current location or enter coordinates first.",
+          variant: "destructive",
+        });
+        setSaving(false);
+        return;
+      }
+
       // Save locally
       localStorage.setItem(PREFERENCES_STORAGE_KEY, JSON.stringify(preferences));
 
-      // Sync to database for server-side push notifications
-      const deviceId = getOrCreateDeviceId();
-      const payload = {
-        device_id: deviceId,
+      // Sync to database for server-side push notifications.
+      // P0-3: the payload builder validates the pair and coarsens it to the
+      // 2-decimal precision cap — millimetre precision never leaves the client.
+      const payload = buildNotificationPreferencePayload({
+        deviceId: getOrCreateDeviceId(),
         latitude: preferences.latitude,
         longitude: preferences.longitude,
         timezone: preferences.timezone,
-        calculation_method: preferences.calculation_method,
-        enabled_prayers: preferences.enabled_prayers,
-        notification_offset: preferences.notification_offset,
+        calculationMethod: preferences.calculation_method,
+        enabledPrayers: preferences.enabled_prayers,
+        notificationOffset: preferences.notification_offset,
         enabled: preferences.enabled,
-        updated_at: new Date().toISOString(),
-      };
+      });
 
       const { error } = await supabasePublic
         .from("user_notification_preferences" as any)
@@ -216,20 +222,20 @@ export function PrayerNotificationSettings() {
                   <Label className="text-xs">Latitude</Label>
                   <Input
                     type="number"
-                    step="0.000001"
+                    step="0.01"
                     value={preferences.latitude}
                     onChange={(e) => setPreferences({ ...preferences, latitude: Number(e.target.value) })}
-                    placeholder="23.8103"
+                    placeholder="23.81"
                   />
                 </div>
                 <div className="space-y-2">
                   <Label className="text-xs">Longitude</Label>
                   <Input
                     type="number"
-                    step="0.000001"
+                    step="0.01"
                     value={preferences.longitude}
                     onChange={(e) => setPreferences({ ...preferences, longitude: Number(e.target.value) })}
-                    placeholder="90.4125"
+                    placeholder="90.41"
                   />
                 </div>
               </div>

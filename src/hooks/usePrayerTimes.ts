@@ -5,8 +5,10 @@ import {
   clearLocationRequestDenied,
   getCachedLocation,
   isLocationRequestCoolingDown,
+  isValidCoordinatePair,
   markLocationRequestDenied,
   requestBrowserLocation,
+  toServerCoordinates,
   type CachedLocation,
 } from "@/lib/location";
 
@@ -57,22 +59,32 @@ export const usePrayerTimes = (): UsePrayerTimesReturn => {
   }, [calculationMethod, prayerOffsets]);
 
   const applyCoordinates = useCallback(async (latitude: number, longitude: number, fallback: LocationData) => {
+    // P0-3: reject malformed/out-of-range coordinates and coarsen to the
+    // feature precision cap before the location leaves the client (cache,
+    // aladhan, nominatim all receive the rounded pair).
+    if (!isValidCoordinatePair(latitude, longitude)) {
+      throw new Error("Invalid coordinates");
+    }
+    const coarse = toServerCoordinates(latitude, longitude);
+    const lat = coarse.latitude;
+    const lng = coarse.longitude;
+
     let resolved = fallback;
     try {
-      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${latitude}&lon=${longitude}&accept-language=en`);
+      const response = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&accept-language=en`);
       const data = await response.json();
       resolved = {
         city: data.address?.city || data.address?.town || data.address?.village || data.address?.county || data.address?.state_district || fallback.city,
         country: data.address?.country || fallback.country,
-        latitude,
-        longitude,
+        latitude: lat,
+        longitude: lng,
       };
     } catch {
-      resolved = { ...fallback, latitude, longitude };
+      resolved = { ...fallback, latitude: lat, longitude: lng };
     }
     cacheLocation(resolved);
     setLocation(resolved);
-    await fetchPrayerTimes(latitude, longitude);
+    await fetchPrayerTimes(lat, lng);
     setError(null);
   }, [fetchPrayerTimes]);
 
@@ -99,9 +111,12 @@ export const usePrayerTimes = (): UsePrayerTimesReturn => {
       setIsLoading(true);
       const cached = getCachedLocation();
       try {
-        if (cached) {
-          setLocation(cached);
-          await fetchPrayerTimes(cached.latitude, cached.longitude);
+        // P0-3: never trust a cached pair blindly (localStorage is writable by
+        // the user); a tampered pair falls through to the IP fallback below.
+        if (cached && isValidCoordinatePair(cached.latitude, cached.longitude)) {
+          const coarse = toServerCoordinates(cached.latitude, cached.longitude);
+          setLocation({ ...cached, latitude: coarse.latitude, longitude: coarse.longitude });
+          await fetchPrayerTimes(coarse.latitude, coarse.longitude);
         } else {
           const response = await fetch("https://ipapi.co/json/");
           const data = await response.json();
