@@ -6,9 +6,14 @@ import { ArrowLeft, ExternalLink } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import quizCanonicals from "../data/quiz-duplicate-canonicals.json";
 
 const SITE_ORIGIN = "https://noorapp.in";
 const ELIGIBLE = new Set(["verified", "verified_primary", "verified_secondary"]);
+// Quiz de-duplication (2026-09-28): duplicate question URLs canonicalize to the
+// strongest verified record (see QUIZ_FORENSIC_AUDIT_2026-09-28.md). DB untouched.
+const QUIZ_CANONICAL_MAP: Record<string, string> =
+  (quizCanonicals as { map?: Record<string, string> }).map ?? {};
 
 type QuizRecord = {
   id: string;
@@ -57,7 +62,8 @@ function QuizJsonLd({ record, url }: { record: QuizRecord; url: string }) {
 
 export default function QuizDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const url = `${SITE_ORIGIN}/quiz/${encodeURIComponent(id || "")}`;
+  const canonicalId = (id && QUIZ_CANONICAL_MAP[id]) || id || "";
+  const url = `${SITE_ORIGIN}/quiz/${encodeURIComponent(canonicalId)}`;
   const { data: record, isLoading, isError } = useQuery({
     queryKey: ["quiz-detail", id],
     enabled: Boolean(id),

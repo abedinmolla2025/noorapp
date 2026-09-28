@@ -1,0 +1,61 @@
+{
+ "generated": "2026-09-28",
+ "source": "QUIZ_FORENSIC_AUDIT_2026-09-28.md",
+ "method": "exact groups re-derived (NFC/whitespace/casefold/punctuation-strip); near-dup pairs transcribed from report §4 and validated (similarity>=0.80, identical explanations); exclusions per report (EXACT-38, EXACT-20/24 partial, needs-review pairs); retention rule: question_bn populated > richer source_reference > editorial_note present > lower order_index",
+ "note": "Render-layer canonical hints only. No DB changes. Reversible: delete this file's consumers.",
+ "excluded_needs_review": [
+  {
+   "pair": [
+    "4a1fb4fe-8ffb-4051-80dd-c7876def2847",
+    "6b730819-30d8-4172-b096-c81c108fbe8a"
+   ],
+   "reason": "correct-answer text differs ('before eid prayer' vs 'before eid ulfitr'); forensic audit called it redundant — needs human review"
+  },
+  {
+   "pair": [
+    "30d24f16-b843-44c3-a0e9-e7770b522c1d",
+    "218548e4-e6a9-406a-ba96-0cbd31870d02"
+   ],
+   "reason": "correct-answer text differs ('10th dhul hijjah' vs '10 dhul hijjah'); forensic audit called it redundant — needs human review"
+  },
+  {
+   "pair": [
+    "30fecbf8-5fa7-49bf-9938-816a45cde439",
+    "30d473e5-4f5b-4d7c-8f51-981b6303b6c0"
+   ],
+   "reason": "correct-answer text differs ('provision and nature' vs 'mikail'); forensic audit called it redundant — needs human review"
+  }
+ ],
+ "map": {
+  "05a21517-1f16-4cab-9738-f566c6e41625": "00aa6849-2fea-48ec-ae78-a74f43a35510",
+  "091718c7-c6bc-41e9-a945-135ad3b702a6": "1773428e-bb1c-42cc-8ed5-0d365211e95f",
+  "0ba7b20a-bbc3-4556-9808-5a7f6c2f9cea": "2035ad7b-19c0-4930-878e-a6e844c1880d",
+  "0c8c45cd-6447-4d2b-acbc-878e3715c697": "b6ea5fbd-bdee-483d-ac77-a7f87c8d7fea",
+  "1653909f-349a-4825-914d-15202f682786": "cb669489-b332-4da8-9558-a000f215471d",
+  "1a52f940-44a3-4693-8a3e-46f255f6ac49": "c9b2b485-752a-4251-a996-256114315cd6",
+  "b9b8a99d-6354-4ad0-84e7-d9eec64d978c": "22f4fc07-fab2-4308-a2df-149e8f9413d8",
+  "2d8b8a13-41aa-41da-a698-d6d73ec7a3d5": "878f699d-0124-43cd-9bbf-a6917183b59d",
+  "a7c5492f-a01f-4b8f-8fd2-15b2995836fa": "356fe03f-d566-43b0-9b9a-af9c796e92c1",
+  "a8a1f099-d316-4bb9-b748-73bf6d30b2f9": "3c4ae60a-24a1-4874-aa65-c9fd209deb8a",
+  "3c67af7a-0389-4c99-a473-38650118a834": "dab2684d-38a5-496d-835f-b9d9c8900fee",
+  "3e3b31e4-b206-458c-87a9-f45de0b23251": "8c27b6e0-3791-4a1e-85e5-0f67eb58dfdc",
+  "404b63d2-3288-4afd-8614-9f5c126a9fc9": "7f596085-398f-4565-a6d8-42c37635fe1d",
+  "f4f3d5dd-ff68-465c-968a-41b81d9ebf88": "4481730d-d06a-40b1-ab8f-992ab44f6b3b",
+  "e06d0f16-301d-4721-83dc-3ced7471447c": "49832630-fbe2-4e0a-975e-8d83d3a1a653",
+  "c5eb9615-b201-48b1-8474-92401aa2fcc1": "4e5493a4-2d3e-4b00-b5dd-68238917b9cd",
+  "7281acb7-57a0-46ce-9cab-092d2c40f303": "57249de2-c7e6-4ed5-aef7-066dfbf63acf",
+  "5a9a9c52-62d9-42bf-95fb-bab4b6c05e23": "cc96e45e-6abc-4bf8-8ee0-638deb0e6147",
+  "885164bb-7993-4471-af30-341c7d6fcae4": "6130ba7d-b4ee-4ce9-a3ba-d94e796e4059",
+  "d54ef3fd-05a1-4d2d-a538-dda0f3146001": "cfa59d1a-d55c-4b86-ab78-33ca864706fd",
+  "47cebbaf-f252-4344-bd34-4c0200408150": "fa6b14bc-0d7b-472c-a348-428c59be28d9",
+  "8b2920fd-1348-482c-9d0f-7ec8a4d68175": "790a4853-24a9-42c1-a954-48a1f1a048a3",
+  "16657e2b-c596-4d77-9912-204db7bb6626": "91508a8f-6d13-4227-81e0-3261caca36db",
+  "7ad2bb48-5447-4e46-a26e-027a8b51349f": "a11d7538-01f5-40ff-bdac-28948aff89cf",
+  "3c721283-a3ab-4c39-90db-f1fdc0dbab55": "1ee99660-fe49-4e95-b38d-5f9e53814bcf",
+  "713c1853-27b9-49a5-8b2b-0e28b4a7f84c": "e2bbb2c7-9993-4bdf-ab24-8530c8b90415",
+  "fdc6963f-3100-4935-94bd-d94e49ec3628": "e30b5847-3b42-4cb3-8037-85a589e5cca5",
+  "6d56bfe7-3673-4257-ba28-47b5e06980d7": "608b5612-b389-43eb-8caa-83ef9217c433",
+  "92ceba14-09bc-454e-9348-87df5a1d0d76": "1b2bfc00-a70f-42fa-ba73-19ba7337eea7",
+  "e97e91a8-a1d8-45e3-9bc4-602c296ed497": "b6dde8f3-11a0-4fe9-8bfd-3ccf2a68f225"
+ }
+}

@@ -549,6 +549,21 @@ const loadToolData = (filename) => {
   return null;
 };
 
+// Quiz duplicate -> canonical-primary map (2026-09-28 forensic consolidation).
+// Render-layer only: exact-duplicate question URLs canonicalize to the
+// strongest verified record (see QUIZ_FORENSIC_AUDIT_2026-09-28.md and
+// src/data/quiz-duplicate-canonicals.json). DB untouched. Missing file =>
+// empty map => every URL self-canonicalizes (fail-safe).
+let quizCanonicalMap = null;
+const getQuizCanonicalId = (id) => {
+  if (quizCanonicalMap === null) {
+    const doc = loadToolData("quiz-canonicals.json");
+    quizCanonicalMap = doc && typeof doc.map === "object" && !Array.isArray(doc.map) ? doc.map : {};
+  }
+  const primary = quizCanonicalMap[id];
+  return typeof primary === "string" && primary ? primary : id;
+};
+
 const renderNamesOfAllah = () => {
   const names = loadToolData("names-of-allah.json");
   if (!Array.isArray(names) || names.length === 0) return "";
@@ -2127,7 +2142,10 @@ export default async function handler(req, res) {
         const questionEn = record.question_en && record.question_bn ? `<p lang="en" class="mt-2 text-muted-foreground">${esc(record.question_en)}</p>` : "";
         const options = Array.isArray(record.options_bn) && record.options_bn.length ? record.options_bn : (record.options_en || []);
         const optionHtml = options.map((option, index) => `<li class="rounded-xl border border-border p-4 ${index === record.correct_answer ? "border-primary bg-primary/10" : ""}"><strong>${String.fromCharCode(65 + index)}.</strong> ${esc(option)}${record.options_en?.[index] && record.options_en[index] !== option ? `<span lang="en" class="mt-1 block text-sm text-muted-foreground">${esc(record.options_en[index])}</span>` : ""}</li>`).join("");
-        const canonical = `${SITE_ORIGIN}/quiz/${encodeURIComponent(record.id)}`;
+        // Duplicate question URLs consolidate here: the link canonical (and og:url)
+        // point at the primary record; JSON-LD below reuses the same URL.
+        canonicalUrl = `${SITE_ORIGIN}/quiz/${encodeURIComponent(getQuizCanonicalId(record.id))}`;
+        const canonical = canonicalUrl;
         title = shortenMetaText(`${questionBn} | Noor Quiz`, 70);
         description = shortenMetaText(record.explanation_bn || record.explanation_en || "Verified Islamic quiz question from Noor.", 160);
         // Related questions (same category) for internal linking depth.

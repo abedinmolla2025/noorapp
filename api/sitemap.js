@@ -1,5 +1,31 @@
 const ORIGIN = "https://noorapp.in";
 
+import fs from "node:fs";
+import path from "node:path";
+
+// Quiz duplicate IDs (2026-09-28 forensic consolidation): these URLs stay live
+// but canonicalize to their primary, so they are excluded from the sitemap.
+// Source: src/data/quiz-duplicate-canonicals.json (copied to dist/data at build).
+// Missing file => empty set => nothing excluded (fail-safe).
+function getQuizDuplicateIds() {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", "quiz-canonicals.json"),
+    path.join(process.cwd(), "dist", "data", "quiz-canonicals.json"),
+    path.join("/var/task", "dist", "data", "quiz-canonicals.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (doc && typeof doc.map === "object" && !Array.isArray(doc.map)) {
+          return new Set(Object.keys(doc.map));
+        }
+      }
+    } catch { /* try next candidate */ }
+  }
+  return new Set();
+}
+
 function xmlEscape(value) {
   return String(value)
     .replace(/&/g, "&amp;")
@@ -81,7 +107,10 @@ async function getVerifiedQuizRoutes() {
     });
     if (!response.ok) return [];
     const rows = await response.json();
-    return rows.filter((row) => row.id).map((row) => `/quiz/${encodeURIComponent(row.id)}`);
+    const duplicateIds = getQuizDuplicateIds();
+    return rows
+      .filter((row) => row.id && !duplicateIds.has(row.id))
+      .map((row) => `/quiz/${encodeURIComponent(row.id)}`);
   } catch {
     return [];
   }

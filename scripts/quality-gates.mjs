@@ -17,6 +17,8 @@ const sampleArg = args.find((a) => a.startsWith("--sample"));
 const SAMPLE = sampleArg ? parseInt(sampleArg.split("=")[1], 10) : 0;
 const QUIET = args.includes("--quiet");
 
+import fs from "node:fs";
+
 const log = (...a) => { if (!QUIET) console.log(...a); };
 const failures = [];
 const fail = (gate, detail) => { failures.push(`[${gate}] ${detail}`); };
@@ -42,12 +44,16 @@ async function get(path) {
 }
 
 // ---- Gate 1: sitemap integrity ----
+// Baseline 1003 minus quiz duplicate URLs excluded by the 2026-09-28
+// forensic consolidation (they canonicalize to their primary instead).
+const quizDupes = JSON.parse(fs.readFileSync("public/data/quiz-canonicals.json", "utf8"));
+const expectedSitemapCount = 1003 - Object.keys(quizDupes.map || {}).length;
 const smRes = mockRes();
 await sitemapHandler({ headers: {} }, smRes);
 const sitemapUrls = [...smRes.body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
 const paths = sitemapUrls.map((u) => new URL(u).pathname);
-if (sitemapUrls.length !== 1003) fail("sitemap-count", `expected 1003 URLs, got ${sitemapUrls.length}`);
-else pass("sitemap-count", "1003 URLs");
+if (sitemapUrls.length !== expectedSitemapCount) fail("sitemap-count", `expected ${expectedSitemapCount} URLs, got ${sitemapUrls.length}`);
+else pass("sitemap-count", `${expectedSitemapCount} URLs`);
 
 // ---- Gate 2: every sitemap URL is 200/index/self-canonical/no-ads ----
 const checkPaths = SAMPLE > 0 ? paths.filter((_, i) => i % Math.ceil(paths.length / SAMPLE) === 0) : paths;
@@ -139,6 +145,43 @@ const quizHub = await get("/quiz");
 const quizLinks = new Set([...quizHub.body.matchAll(/href="\/quiz\/([a-f0-9-]+)"/g)].map((x) => x[1]));
 if (quizLinks.size < 281) fail("hub-quiz", `only ${quizLinks.size}/281 question links`);
 else pass("hub-quiz", `${quizLinks.size}/281 questions linked`);
+
+// ---- Gate 8: quiz duplicate consolidation (2026-09-28 forensic) ----
+// Every duplicate question URL must 200 + index,follow and canonicalize to its
+// primary; primaries stay self-canonical; no duplicate URL may be in the sitemap.
+{
+  const canonMap = quizDupes.map || {};
+  const dupIds = Object.keys(canonMap);
+  let okCanon = 0;
+  const badDupCanon = [];
+  for (let i = 0; i < dupIds.length; i += CONC) {
+    const batch = dupIds.slice(i, i + CONC);
+    const results = await Promise.all(batch.map(async (id) => {
+      try { return { id, r: await get(`/quiz/${id}`) }; }
+      catch (e) { return { id, err: String(e) }; }
+    }));
+    for (const { id, r, err } of results) {
+      const want = `https://noorapp.in/quiz/${canonMap[id]}`;
+      if (err || !r || r.statusCode !== 200) { badDupCanon.push(`/quiz/${id} -> bad status`); continue; }
+      const canon = (r.body.match(/<link rel="canonical" href="([^"]+)"/) || [])[1] || "";
+      const robots = (r.body.match(/<meta name="robots" content="([^"]+)"/) || [])[1] || "";
+      if (canon !== want) badDupCanon.push(`/quiz/${id.slice(0, 8)} -> ${canon}`);
+      else if (robots !== "index,follow") badDupCanon.push(`/quiz/${id.slice(0, 8)} robots=${robots}`);
+      else okCanon++;
+    }
+  }
+  // Primaries (a sample) must remain self-canonical.
+  const primarySample = [...new Set(Object.values(canonMap))].slice(0, 10);
+  for (const id of primarySample) {
+    const r = await get(`/quiz/${id}`);
+    const canon = (r.body.match(/<link rel="canonical" href="([^"]+)"/) || [])[1] || "";
+    if (canon !== `https://noorapp.in/quiz/${id}`) badDupCanon.push(`primary ${id.slice(0, 8)} -> ${canon}`);
+  }
+  const dupesInSitemap = dupIds.filter((id) => paths.includes(`/quiz/${id}`));
+  if (dupesInSitemap.length) badDupCanon.push(`${dupesInSitemap.length} duplicate URLs in sitemap`);
+  if (badDupCanon.length) fail("quiz-consolidation", `${badDupCanon.length} bad: ${badDupCanon.slice(0, 5).join("; ")}`);
+  else pass("quiz-consolidation", `${okCanon}/${dupIds.length} duplicates -> primary canonical, primaries self-canonical, sitemap clean`);
+}
 
 // ---- Report ----
 console.log("");
