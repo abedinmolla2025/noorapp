@@ -54,10 +54,10 @@ A (supported) 19 · B (partial) 89 · C (unsupported) 0 · D (generic/template) 
 5. Bengali/Urdu translations for the 95 published intros (separate verified translation evidence needed).
 
 ## F. Production commit
-_(filled at deploy time)_
+`e9cebde` — "Evidence-first remediation: publish 95 verified surah intros; consolidate Ayatul Kursi quiz duplicate" (pushed `808c9f0..e9cebde` to `origin/main`, ls-remote confirmed). 7 files modified, 21 files added (evidence trail + report). `.backups/` untouched and uncommitted. `noorapp-ucmi` untouched.
 
 ## G. Vercel deployment
-_(filled at deploy time)_
+`dpl_GFUrVJWW9Qrb5tDzBWo1rqjD3Mu8` — **READY** on `noorappold` (commit `e9cebde`). Production live-verified: `/quran/2` serves the intro + sources in bot HTML with no ad scripts; `/quiz/f3b63b75-…` emits canonical to the `330d1142` primary; `/quran/60` (Queue C) renders no intro and no placeholder.
 
 ## H. Verdict
 **NOT YET READY** for AdSense review. Reasons: 116/211 introductions still unpublished (need scholar sources); 17 quiz records need source verification; dua DB cleanup blocked on privileged access; quiz explanations remain thin where sources don't support expansion. AdSense review stays paused; none submitted; no approval claimed or guaranteed.
