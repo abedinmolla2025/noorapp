@@ -103,6 +103,12 @@
       "includeFiles": "dist/data/quiz-canonicals.json"
     }
   },
+  "crons": [
+    {
+      "path": "/api/scheduler-tick?key=REPLACE_WITH_SCHEDULER_CRON_SECRET",
+      "schedule": "* * * * *"
+    }
+  ],
   "rewrites": [
     {
       "source": "/sitemap",

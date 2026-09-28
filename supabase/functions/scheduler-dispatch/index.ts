@@ -1,5 +1,11 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.6";
 import webpush from "https://esm.sh/web-push@3.6.7?bundle";
+import {
+  authorizeDispatch,
+  extractScheduleId,
+  parseJsonBody,
+  type AdminVerdict,
+} from "./authz.ts";
 
 /* ------------------------------------------------------------------
  * scheduler-dispatch — invoked by pg_cron every minute (bulk)
@@ -467,22 +473,111 @@ function jsonResponse(payload: unknown, status = 200): Response {
   });
 }
 
+/* ---------------- P0-2 auth gate ----------------
+ * Admin-JWT verification for the admin test/preview path: same
+ * getClaims + is_admin pattern as send-push. The cron-secret path is
+ * decided inside authorizeDispatch (./authz.ts). Never logs tokens.
+ */
+async function verifyAdminJwt(token: string): Promise<AdminVerdict> {
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  if (!url || !anonKey) return "invalid"; // fail closed on misconfiguration
+  try {
+    const authed = createClient(url, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: claims, error: claimsErr } = await authed.auth.getClaims(token);
+    const sub = claimsErr ? "" : String(claims?.claims?.sub ?? "");
+    if (!sub) return "invalid";
+    const { data: isAdmin, error: isAdminErr } = await authed.rpc("is_admin", {
+      _user_id: sub,
+    });
+    if (isAdminErr) return "invalid"; // fail closed: cannot confirm admin
+    return isAdmin === true ? "admin" : "not-admin";
+  } catch {
+    return "invalid";
+  }
+}
+
+/** Structured deny log: decision metadata only — never tokens, never PII. */
+function logDenied(info: {
+  status: number;
+  reason: string;
+  method: string;
+  authPresent: boolean;
+  wantsBulk: boolean;
+  hasScheduleId: boolean;
+}): void {
+  console.warn("[scheduler-dispatch] denied", JSON.stringify(info));
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
+
+  // Parse the body first: a malformed body is rejected with 400 and never
+  // dispatches. Whether the request wants bulk or single dispatch feeds the
+  // auth decision (admins may only fire a single schedule).
+  const parsed = parseJsonBody(await req.text().catch(() => ""));
+  if (!parsed.ok) {
+    logDenied({
+      status: 400,
+      reason: "malformed-body",
+      method: req.method,
+      authPresent: req.headers.has("authorization"),
+      wantsBulk: true,
+      hasScheduleId: false,
+    });
+    return jsonResponse({ ok: false, error: "Malformed JSON body" }, 400);
+  }
+  const body = parsed.body;
+  const scheduleId = extractScheduleId(body);
+  const wantsBulk = scheduleId === null;
+
+  // P0-2 gate: cron shared secret OR valid admin JWT. The secret is read at
+  // request time and trimmed; a missing/empty env var can never match
+  // (fail closed) — never module-scope it with `!`.
+  const cronSecret = (Deno.env.get("SCHEDULER_CRON_SECRET") ?? "").trim();
+  const decision = await authorizeDispatch({
+    method: req.method,
+    authHeader: req.headers.get("authorization"),
+    cronSecret,
+    wantsBulk,
+    verifyAdminJwt,
+  });
+  if (!decision.ok) {
+    logDenied({
+      status: decision.status,
+      reason: decision.reason,
+      method: req.method,
+      authPresent: req.headers.has("authorization"),
+      wantsBulk,
+      hasScheduleId: scheduleId !== null,
+    });
+    const message =
+      decision.status === 405
+        ? "Method not allowed"
+        : decision.status === 403
+          ? "Forbidden"
+          : "Unauthorized";
+    return jsonResponse({ ok: false, error: message }, decision.status);
+  }
+
+  // Only AFTER auth may the service-role client be created.
   const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   try {
-    const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-
-    // Single schedule: admin test / preview
-    if (typeof body.schedule_id === "string" && body.schedule_id) {
-      const result = await dispatchSchedule(svc, body.schedule_id as string);
+    // Single schedule: admin test / preview (cron secret or admin JWT).
+    if (scheduleId) {
+      const result = await dispatchSchedule(svc, scheduleId);
+      if (!result.ok) {
+        return jsonResponse({ ok: false, error: "Schedule not found" }, 404);
+      }
       return jsonResponse(result);
     }
 
-    // Bulk: pg_cron dispatch
+    // Bulk: due-schedule dispatch (cron secret only).
     const nowIso = new Date().toISOString();
     const { data: due, error: dueErr } = await svc
       .from("scheduler_schedules")
