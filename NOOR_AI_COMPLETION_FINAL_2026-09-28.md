@@ -103,3 +103,56 @@ from 95 with 31 weak-sourced), full dua evidence map, quiz correction packets
 with explanations. Blockers unchanged in kind: privileged DB access (quiz +
 dua), scholar-level source conflicts (10 surahs, 3 quiz), hadith chapter
 research incomplete. No approval claimed or guaranteed.
+
+---
+
+## Follow-up addendum — hadith chapter introductions (2026-09-28, 16:30 IST)
+
+### Hadith chapter re-research: complete
+- Coordinator delivered `research/hadith_chapter_reresearch.json` + `.md`:
+  97 chapters classified A=16 / B=23 / C=0 / D=58.
+- **Critical finding: 84/97 `hadith_chapters` DB titles do not match the
+  actual bundled hadith content** (titles appear shifted; only chapters
+  1–9, 14, 17, 25, 26 match). Title correction needs privileged DB access —
+  no write was made.
+
+### Independent source verification: 5 chapters publishable
+Of the 16 class-A drafts, only chapters **1, 2, 3, 14, 25** have app titles
+that match their actual hadith content. Every published claim in these five
+drafts was independently verified verbatim against 2+ reputable sources:
+- **Fath al-Bari** (Ibn Hajar) + **Umdat al-Qari** (al-Ayni) — classical
+  rival commentaries, verified via IslamWeb and Shamela (chapters 14, 25)
+- **Qari Muhammad Tayyib** 1977 Khatm-e-Bukhari lecture (English translation),
+  verified verbatim via Scribd (chapters 1, 2, 3)
+- **Mahmud Hasan Deobandi**, Al-Abwab wa al-Tarajim (ch. 1)
+- **Abdul Aziz al-Rajhi** Book of Faith foreword (ch. 1, 2)
+- **Yasir Qadhi / AlMaghrib** 2012 Sahih intro notes (ch. 1, 2, 3)
+The remaining 11 class-A drafts (19, 23, 24, 30, 59, 64, 68, 76, 78, 80,
+82) stay **unpublished** — their DB titles do not match their content, so
+publishing would mislabel the page (e.g. a Military Expeditions intro under
+an "Agriculture" title). The 23 class-B drafts need another independent
+source; 58 class-D drafts stay unpublished.
+
+### Implementation
+- New `src/data/hadith-chapter-intros.json` (5 chapters), copied with
+  fail-closed validation by `scripts/extract-tool-data.mjs`
+- Rendered in `BukhariLangPage.tsx` SPA chapter view and `api/prerender.js`
+  bot HTML with source attribution + "Source-verified research · Not
+  reviewed by a scholar" — unverified chapters render nothing, no placeholders
+- `vercel.json` includeFiles extended (string form preserved)
+
+### Validation & deployment
+- Build PASS · tsc 0 errors · quality-gates ALL PASS (12/12)
+- 8/8 targeted prerender assertions: intros on chapters 1/2/3/14/25 (en+bn),
+  no intro on 19 (mismatch) and 4 (unverified), no class-A draft leakage
+- Commit `9657bc1` pushed (7997235..9657bc1) to origin/main
+- Vercel deployment `dpl_BN8CdfASgrZwwzeon4TmbKxjVC6U` READY on **noorappold**
+  only; noorapp-ucmi untouched
+- Production verified live: intros on
+  /hadith/sahih-bukhari/english/chapter-1|25 and /bangla/chapter-1,
+  correctly absent on chapter-19; /quran/68 intact
+
+### Verdict remains **NOT YET READY** for AdSense review
+Blockers: privileged DB access (hadith title corrections, quiz, dua),
+10 surah + 3 quiz source conflicts. No AdSense review submitted, no approval
+claimed or guaranteed.
