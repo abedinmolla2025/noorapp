@@ -1,6 +1,19 @@
 /// <reference lib="deno.ns" />
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  authorizeDispatch,
+  type AdminVerdict,
+} from "../scheduler-dispatch/authz.ts";
+
+// P0-2 follow-up remediation: this mass-push endpoint was live and
+// unauthenticated (service-role key, all enabled preference rows). Gate it
+// behind the same shared SCHEDULER_CRON_SECRET as scheduler-dispatch.
+// It is inherently bulk, so only the cron-secret path authorizes it — an
+// admin JWT is deliberately NOT sufficient (wantsBulk: true). The
+// legitimate caller (scheduler cron) must send
+// `Authorization: Bearer <SCHEDULER_CRON_SECRET>`; without it the function
+// fails closed and sends nothing. Never logs tokens.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,6 +26,30 @@ function json(status: number, body: unknown) {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
+}
+
+/* P0-2 gate wiring: same getClaims + is_admin pattern as scheduler-dispatch.
+ * verifyAdminJwt is injected so the pure decision logic stays unit-testable;
+ * here it only matters for the deny path, since bulk requires the secret. */
+async function verifyAdminJwt(token: string): Promise<AdminVerdict> {
+  const url = Deno.env.get("SUPABASE_URL") ?? "";
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") ?? "";
+  if (!url || !anonKey) return "invalid"; // fail closed on misconfiguration
+  try {
+    const authed = createClient(url, anonKey, {
+      global: { headers: { Authorization: `Bearer ${token}` } },
+    });
+    const { data: claims, error: claimsErr } = await authed.auth.getClaims(token);
+    const sub = claimsErr ? "" : String(claims?.claims?.sub ?? "");
+    if (!sub) return "invalid";
+    const { data: isAdmin, error: isAdminErr } = await authed.rpc("is_admin", {
+      _user_id: sub,
+    });
+    if (isAdminErr) return "invalid"; // fail closed: cannot confirm admin
+    return isAdmin === true ? "admin" : "not-admin";
+  } catch {
+    return "invalid";
+  }
 }
 
 type PrayerTimes = {
@@ -113,6 +150,31 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
+    // P0-2 gate: runs BEFORE the service-role client is created. Only the
+    // cron shared secret may trigger this bulk push sender.
+    const cronSecret = (Deno.env.get("SCHEDULER_CRON_SECRET") ?? "").trim();
+    const decision = await authorizeDispatch({
+      method: req.method,
+      authHeader: req.headers.get("authorization"),
+      cronSecret,
+      wantsBulk: true,
+      verifyAdminJwt,
+    });
+    if (!decision.ok) {
+      console.warn(
+        "[send-prayer-notifications] denied",
+        JSON.stringify({
+          status: decision.status,
+          reason: decision.reason,
+          authPresent: req.headers.has("authorization"),
+        })
+      );
+      return json(decision.status, {
+        ok: false,
+        error: decision.status === 405 ? "Method not allowed" : "Unauthorized",
+      });
+    }
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const svc = createClient(supabaseUrl, serviceKey);
