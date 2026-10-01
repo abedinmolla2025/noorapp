@@ -40,7 +40,7 @@ const BASE_ROUTES = [
   "/hadith/sahih-bukhari/bangla", "/hadith/sahih-bukhari/english", "/hadith/sahih-bukhari/urdu",
   "/dua", "/prayer-times", "/prayer-guide", "/qibla", "/tasbih", "/99-names", "/baby-names",
   "/calendar", "/quiz", "/stories", "/about", "/contact", "/sources",
-  "/privacy-policy", "/terms", "/download", "/islamic-app", "/sitemap",
+  "/privacy-policy", "/terms", "/download", "/islamic-app",
 ];
 
 // All story slugs extracted from the database/assets

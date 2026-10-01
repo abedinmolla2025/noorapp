@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from "react";
 import { motion } from "framer-motion";
-import { Helmet } from "react-helmet-async";
 import { ArrowLeft, Moon, Sun, Bell, BellOff, Globe, Volume2, VolumeX, Palette, Info } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,12 +24,6 @@ const OFFSET_OPTIONS = [-20, -15, -10, -5, 0, 5, 10, 15, 20];
 const SettingsPage = () => {
   const navigate = useNavigate();
 
-  // Noindex: this is a utility/settings page, not public content
-  const noindexHelmet = (
-    <Helmet>
-      <meta name="robots" content="noindex,nofollow" />
-    </Helmet>
-  );
   const { toast } = useToast();
   const { theme, setTheme, language, setLanguage, themeColor, setThemeColor, fontSize, setFontSize, calculationMethod, setCalculationMethod, prayerOffsets, setPrayerOffsets } = useAppSettings();
   
@@ -367,7 +360,6 @@ const SettingsPage = () => {
 
   return (
     <>
-      {noindexHelmet}
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24 font-bangla">
       {/* Header */}
       <div className="sticky top-0 z-40 bg-background/80 backdrop-blur-lg border-b border-border">

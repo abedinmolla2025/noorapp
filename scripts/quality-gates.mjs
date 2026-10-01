@@ -44,10 +44,10 @@ async function get(path) {
 }
 
 // ---- Gate 1: sitemap integrity ----
-// Baseline 1003 minus quiz duplicate URLs excluded by the 2026-09-28
-// forensic consolidation (they canonicalize to their primary instead).
+// Baseline 1002 after removing the noindex /sitemap HTML page, minus quiz
+// duplicate URLs excluded by the 2026-09-28 forensic consolidation.
 const quizDupes = JSON.parse(fs.readFileSync("public/data/quiz-canonicals.json", "utf8"));
-const expectedSitemapCount = 1003 - Object.keys(quizDupes.map || {}).length;
+const expectedSitemapCount = 1002 - Object.keys(quizDupes.map || {}).length;
 const smRes = mockRes();
 await sitemapHandler({ headers: {} }, smRes);
 const sitemapUrls = [...smRes.body.matchAll(/<loc>([^<]+)<\/loc>/g)].map((x) => x[1]);
@@ -72,8 +72,8 @@ for (let i = 0; i < checkPaths.length; i += CONC) {
     if (r.statusCode !== 200) { badStatus.push(`${p} -> ${r.statusCode}`); continue; }
     ok200++;
     const robots = (r.body.match(/<meta name="robots" content="([^"]+)"/) || [])[1] || "";
-    // /sitemap is intentionally noindex (HTML navigation aid; XML sitemap is canonical)
-    const wantRobots = p === "/sitemap" ? "noindex,follow" : "index,follow";
+    // Every URL remaining in XML is intended to be indexable; /sitemap is excluded.
+    const wantRobots = "index,follow";
     if (robots !== wantRobots) badRobots.push(`${p} -> ${robots}`);
     const canon = (r.body.match(/<link rel="canonical" href="([^"]+)"/) || [])[1] || "";
     if (canon !== `https://noorapp.in${p}`) badCanon.push(`${p} -> ${canon}`);
@@ -99,7 +99,7 @@ const invalidCases = [
   ["/quran/999", 404], ["/quran/abc", 404],
   ["/dua/no-such-dua", 404], ["/stories/no-such-story", 404],
   ["/stories/test-story-manus", 410], ["/hadith/sahih-bukhari/bangla/9999", 404],
-  ["/quiz/not-a-real-id", 404], ["/totally-bogus-route", 404],
+  ["/quiz/not-a-real-id", 404], ["/search", 404], ["/totally-bogus-route", 404],
 ];
 for (const [p, want] of invalidCases) {
   const r = await get(p);

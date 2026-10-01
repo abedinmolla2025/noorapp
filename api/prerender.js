@@ -806,7 +806,7 @@ const getAppTemplate = () => {
 
 const getOgType = (canonical) => {
   const pathname = new URL(canonical || SITE_ORIGIN).pathname.replace(/\/$/, "") || "/";
-  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources"]);
+  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources", "/settings", "/notifications", "/sitemap"]);
   return websiteRoutes.has(pathname) ? "website" : "article";
 };
 
@@ -931,6 +931,7 @@ export default async function handler(req, res) {
     //   /hadith/bukhari -> /hadith/sahih-bukhari (vercel.json 301s this at the edge;
     //                      /hadith/sahih-bukhari is the real collection route)
     const CANONICAL_REDIRECTS = {
+      "/names": "/baby-names",
       "/support": "/contact",
       "/data-sources": "/sources",
       "/privacy": "/privacy-policy",
@@ -2342,7 +2343,19 @@ export default async function handler(req, res) {
     // /names (redirects to /baby-names), /settings, /notifications.
     // Anything else reaching this fallback is genuinely unknown and must
     // return 404 + noindex instead of an indexable 200 app shell.
-    const CLIENT_ONLY_ROUTES = new Set(["/names", "/settings", "/notifications"]);
+    const CLIENT_ONLY_METADATA = {
+      "/settings": {
+        title: "Settings — Noor Islamic App",
+        description: "Adjust local Noor app preferences for language, appearance, prayer reminders and other features.",
+        robots: "noindex,nofollow",
+      },
+      "/notifications": {
+        title: "Notifications — Noor Islamic App",
+        description: "View public announcements and important updates from Noor.",
+        robots: "noindex,nofollow",
+      },
+    };
+    const CLIENT_ONLY_ROUTES = new Set(Object.keys(CLIENT_ONLY_METADATA));
     if (!bodyContent) {
       if (!CLIENT_ONLY_ROUTES.has(routePath)) {
         statusCode = 404;
@@ -2356,6 +2369,10 @@ export default async function handler(req, res) {
             <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/">Go to homepage</a>
           </main>`;
       } else {
+        const metadata = CLIENT_ONLY_METADATA[routePath];
+        title = metadata.title;
+        description = metadata.description;
+        robotsDirective = metadata.robots;
         bodyContent = `
         <div class="min-h-screen flex items-center justify-center p-4 bg-background">
           <div class="text-center">

@@ -37,7 +37,7 @@ const features: FeatureItem[] = [
     emoji: "👶",
     label: "Names",
     labelBn: "নাম",
-    path: "/names",
+    path: "/baby-names",
     gradient: "from-pink-500/30 to-rose-600/40",
   },
   {

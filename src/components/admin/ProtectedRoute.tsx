@@ -11,12 +11,12 @@ interface ProtectedRouteProps {
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
   const { user, isAdmin, loading } = useAdmin();
 
-  // ONE SINGLE SOURCE OF TRUTH for admin unlock state
+  // UI inactivity marker only; authorization is enforced by the authenticated server role below.
   const unlocked = localStorage.getItem("noor_admin_unlocked") === "1";
 
   // Sliding inactivity timeout (30 min) for admin panel
   useEffect(() => {
-    if (!unlocked) return;
+    if (!unlocked || !user || !isAdmin) return;
 
     const bump = () => setLastAdminActivityNow();
     const events = ["mousedown", "keydown", "touchstart", "scroll"] as const;
@@ -34,9 +34,9 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       events.forEach((evt) => window.removeEventListener(evt, bump));
       window.clearInterval(timer);
     };
-  }, [unlocked]);
+  }, [unlocked, user, isAdmin]);
 
-  if (loading && !unlocked) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-background text-foreground">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -44,18 +44,13 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
     );
   }
 
-  // If unlocked locally, grant access immediately
-  if (unlocked) {
-    if (isAdminIdleExpired()) {
-      localStorage.removeItem("noor_admin_unlocked");
-      localStorage.removeItem("noor_admin_last_activity");
-      return <Navigate to="/" replace />;
-    }
-    return <>{children}</>;
+  if (!user || !isAdmin) {
+    return <Navigate to="/" replace />;
   }
 
-  // Fallback check
-  if (!user || !isAdmin) {
+  if (unlocked && isAdminIdleExpired()) {
+    localStorage.removeItem("noor_admin_unlocked");
+    localStorage.removeItem("noor_admin_last_activity");
     return <Navigate to="/" replace />;
   }
 

@@ -1,4 +1,3 @@
-import { Helmet } from "react-helmet-async";
 import BottomNavigation from "@/components/BottomNavigation";
 
 const sections = [
@@ -58,13 +57,6 @@ const sections = [
 export default function SitemapPage() {
   return (
     <>
-      <Helmet>
-        <title>Sitemap — Noor Islamic App</title>
-        <meta name="description" content="Browse all pages on Noor — Quran, Hadith, Dua, Prayer Times, Islamic Quiz, Baby Names and more." />
-        <link rel="canonical" href="https://noorapp.in/sitemap" />
-        <meta name="robots" content="noindex,follow" />
-      </Helmet>
-
       <main className="mx-auto max-w-3xl px-4 pt-8 pb-24">
         <h1 className="text-2xl font-bold text-foreground mb-6">Sitemap</h1>
 

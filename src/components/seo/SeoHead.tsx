@@ -245,17 +245,12 @@ function buildHomepageJsonLd(
   if (sameAs.length) org.sameAs = sameAs;
   schemas.push(org);
 
-  // 2️⃣ WebSite schema with SearchAction
+  // 2️⃣ WebSite schema. Noor has in-page filters, not a standalone /search route.
   schemas.push({
     "@context": "https://schema.org",
     "@type": "WebSite",
     name: "Noor Islamic App",
     url: origin,
-    potentialAction: {
-      "@type": "SearchAction",
-      target: `${origin}/search?q={search_term_string}`,
-      "query-input": "required name=search_term_string",
-    },
   });
 
   // 3️⃣ MobileApplication schema
@@ -289,8 +284,10 @@ export function SeoHead() {
   const { branding, seo: globalSeo, legal } = useGlobalConfig();
 
   const isAdmin = isAdminRoutePath(pathname);
-  const pageSeoQuery = usePageSeo(pathname, !isAdmin);
-  const pageSeo = pageSeoQuery.data;
+  const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
+  const isNoindexUtilityRoute = ["/settings", "/notifications", "/sitemap"].includes(normalizedPath);
+  const pageSeoQuery = usePageSeo(pathname, !isAdmin && !isNoindexUtilityRoute);
+  const pageSeo = isNoindexUtilityRoute ? undefined : pageSeoQuery.data;
   // Du'a category and detail pages own their route-specific Helmet output.
   // Do not emit a second generic head block from the global SEO component.
   const isDuaChildRoute = pathname.startsWith("/dua/");
@@ -318,8 +315,6 @@ export function SeoHead() {
   );
 
   const SITE_ORIGIN = "https://noorapp.in";
-  // Normalize: remove trailing slash (except root "/")
-  const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
   // Canonical consolidation: /names → /baby-names
   const canonicalPath = normalizedPath === "/names" ? "/baby-names" : normalizedPath;
   // IMPORTANT: We ignore pageSeo?.canonical_url if it points to the homepage while the current route is NOT the homepage.
@@ -339,7 +334,9 @@ export function SeoHead() {
     shouldUseDbCanonical ? rawDbCanonical : `${SITE_ORIGIN}${canonicalPath}`,
   );
 
-  const robots = pageSeo?.robots ?? "index,follow";
+  const robots = isNoindexUtilityRoute
+    ? normalizedPath === "/sitemap" ? "noindex,follow" : "noindex,nofollow"
+    : pageSeo?.robots ?? "index,follow";
 
   // Page-specific OG images
   const OG_IMAGES: Record<string, string> = {
@@ -394,7 +391,7 @@ export function SeoHead() {
 
   // Use page-specific JSON-LD if set, otherwise inject Organization+WebSite on homepage
   const isHomepage = pathname === "/";
-  const jsonLd = pageSeo?.json_ld ?? null;
+  const jsonLd = isNoindexUtilityRoute ? null : (pageSeo?.json_ld ?? null);
 
   // CollectionPage JSON-LD for /baby-names
   const isBabyNamesPage = normalizedPath === "/baby-names";
@@ -442,11 +439,11 @@ export function SeoHead() {
       : null;
 
   // BreadcrumbList for all non-homepage routes
-  const breadcrumbLd = !isHomepage ? buildBreadcrumbJsonLd(pathname) : null;
+  const breadcrumbLd = !isHomepage && !isNoindexUtilityRoute ? buildBreadcrumbJsonLd(pathname) : null;
   const breadcrumbString = breadcrumbLd ? JSON.stringify(breadcrumbLd) : null;
 
   // FAQPage for key pages
-  const faqLd = buildFaqJsonLd(pathname);
+  const faqLd = isNoindexUtilityRoute ? null : buildFaqJsonLd(pathname);
   const faqString = faqLd ? JSON.stringify(faqLd) : null;
 
   // Dynamic favicon from branding settings

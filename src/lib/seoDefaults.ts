@@ -142,12 +142,12 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/settings": {
     title: "Settings — সেটিংস | Noor",
     description:
-      "Customize your NOOR experience — ভাষা, থিম, নোটিফিকেশন, আযানের সেটিংস ও অন্যান্য পছন্দ অনুযায়ী কাস্টমাইজ করুন।",
+      "Adjust local Noor app preferences for language, appearance, prayer reminders and other features.",
   },
   "/notifications": {
     title: "Notifications — নোটিফিকেশন | Noor",
     description:
-      "Manage your notification preferences — নামাজের আযান, কুইজ রিমাইন্ডার ও গুরুত্বপূর্ণ আপডেট নোটিফিকেশন পরিচালনা করুন।",
+      "View public announcements and important updates from Noor. Notification content is not included in page metadata.",
   },
   "/download": {
     title: "Download Noor App — Install the Web App | Noor",

@@ -2,6 +2,11 @@
   "trailingSlash": false,
   "redirects": [
     {
+      "source": "/names",
+      "destination": "/baby-names",
+      "statusCode": 301
+    },
+    {
       "source": "/privacy",
       "destination": "/privacy-policy",
       "statusCode": 301

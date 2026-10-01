@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import { hasAdminAccess, hasSuperAdminAccess } from "@/lib/adminAccess";
 
 export type AppRole = "user" | "editor" | "admin" | "super_admin";
 
@@ -64,38 +65,22 @@ export const AdminProvider = ({ children }: { children: React.ReactNode }) => {
         .select('role')
         .eq('user_id', userId);
 
-      const unlocked = localStorage.getItem("noor_admin_unlocked") === "1";
-
-      if (error || !data || data.length === 0) {
+      if (error || !data) {
         console.warn('Warning fetching user roles or empty roles:', error);
-        // If unlocked in localStorage, always grant super_admin so admin panel never whites/locks out
-        if (unlocked) {
-          setRoles(['super_admin']);
-        } else {
-          setRoles(data?.map(r => r.role as AppRole) || []);
-        }
-      } else {
-        const mapped = data.map(r => r.role as AppRole);
-        if (unlocked && !mapped.includes('admin') && !mapped.includes('super_admin')) {
-          mapped.push('super_admin');
-        }
-        setRoles(mapped);
+        setRoles([]);
+        return;
       }
+      setRoles(data.map(r => r.role as AppRole));
     } catch (error) {
       console.error('Error fetching user roles:', error);
-      if (localStorage.getItem("noor_admin_unlocked") === "1") {
-        setRoles(['super_admin']);
-      } else {
-        setRoles([]);
-      }
+      setRoles([]);
     } finally {
       setLoading(false);
     }
   };
 
-  const unlocked = localStorage.getItem("noor_admin_unlocked") === "1";
-  const isAdmin = unlocked || roles.includes('admin') || roles.includes('super_admin');
-  const isSuperAdmin = unlocked || roles.includes('super_admin');
+  const isAdmin = hasAdminAccess(user?.id, roles);
+  const isSuperAdmin = hasSuperAdminAccess(user?.id, roles);
 
   return (
     <AdminContext.Provider
