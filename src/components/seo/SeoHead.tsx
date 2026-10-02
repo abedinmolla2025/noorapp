@@ -11,7 +11,15 @@ const BRAND_SUFFIX = " | Noor";
 const TITLE_MAX = 60;
 const DESC_MAX = 160;
 const DESC_MIN = 120;
-const DESC_FALLBACK = " Read authentic Islamic content in Bengali.";
+const DESC_FALLBACK_EN = " Read authentic Islamic content in Bengali.";
+// Phase 5 (2026-10-02): Bengali equivalent of the fallback sentence, used only
+// on Bengali-primary routes so short Bengali descriptions are not padded with English.
+const DESC_FALLBACK_BN = " বাংলায় নির্ভরযোগ্য ইসলামিক কন্টেন্ট পড়ুন।";
+
+/** Phase 5 (2026-10-02): Bengali-primary route patterns (mirrors api/prerender.js getHtmlLang). */
+function isBengaliPrimaryPath(pathname: string): boolean {
+  return pathname === "/dua" || pathname.startsWith("/hadith/sahih-bukhari/bangla");
+}
 
 /** Trim a string to a max length at the nearest word boundary (no ellipsis). */
 function trimAtWord(input: string, max: number): string {
@@ -37,12 +45,15 @@ function normalizeTitle(title?: string | null): string | undefined {
   return trimAtWord(base, TITLE_MAX);
 }
 
-function normalizeDescription(description?: string | null): string | undefined {
+function normalizeDescription(description?: string | null, pathname?: string): string | undefined {
   if (!description) return undefined;
   const s = description.trim().replace(/\s+/g, " ");
   if (s.length > DESC_MAX) return trimAtWord(s, DESC_MAX);
   if (s.length < DESC_MIN) {
-    const padded = (s + DESC_FALLBACK).trim();
+    // Phase 5 (2026-10-02): language-aware padding — Bengali-primary routes get
+    // the Bengali fallback; everything else keeps the existing English fallback.
+    const fallback = pathname && isBengaliPrimaryPath(pathname) ? DESC_FALLBACK_BN : DESC_FALLBACK_EN;
+    const padded = (s + fallback).trim();
     return padded.length > DESC_MAX ? trimAtWord(padded, DESC_MAX) : padded;
   }
   return s;
@@ -312,6 +323,7 @@ export function SeoHead() {
   );
   const description = normalizeDescription(
     approvedDownloadDefaults?.description ?? pageSeo?.description ?? bilingualDefaults?.description ?? globalSeo.description,
+    pathname,
   );
 
   const SITE_ORIGIN = "https://noorapp.in";

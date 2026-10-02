@@ -675,6 +675,33 @@ const normalizeHadithLang = (value) => {
   return null;
 };
 
+// Phase 5 (2026-10-02): route-aware <html lang> for crawler-visible markup.
+// Bengali-primary routes declare "bn"; Urdu hadith routes declare "ur";
+// everything else keeps the shell default "en". Deliberately NOT blanket:
+// /stories and /quiz stay "en" (mixed/EN-chrome templates; audit judgment call).
+// Must stay in sync with the client default in AppSettingsContext.tsx.
+const getHtmlLang = (routePath) => {
+  if (routePath === "/dua" || routePath.startsWith("/hadith/sahih-bukhari/bangla")) return "bn";
+  if (routePath.startsWith("/hadith/sahih-bukhari/urdu")) return "ur";
+  return "en";
+};
+
+// Phase 5 (2026-10-02): crawler-visible hreflang for hadith language variants.
+// Mirrors the client-side pattern in SeoHead.tsx (isHadithArticlePage):
+// /hadith/sahih-bukhari/{bangla|english|urdu}(/chapter-N)? — the 3 hubs + 291 chapter URLs.
+// Only emitted for HTTP 200 responses so alternates always exist.
+const getHreflangTags = (routePath, siteOrigin) => {
+  const m = routePath.match(/^\/hadith\/sahih-bukhari\/(bangla|english|urdu)(\/chapter-\d+)?$/);
+  if (!m) return "";
+  const suffix = m[2] || "";
+  return [
+    `<link rel="alternate" hreflang="bn" href="${siteOrigin}/hadith/sahih-bukhari/bangla${suffix}" />`,
+    `<link rel="alternate" hreflang="en" href="${siteOrigin}/hadith/sahih-bukhari/english${suffix}" />`,
+    `<link rel="alternate" hreflang="ur" href="${siteOrigin}/hadith/sahih-bukhari/urdu${suffix}" />`,
+    `<link rel="alternate" hreflang="x-default" href="${siteOrigin}/hadith/sahih-bukhari/english${suffix}" />`,
+  ].join("\n    ");
+};
+
 const flattenHadithBooks = (json) => Object.keys(json || {})
   .sort((a, b) => (parseInt(a.replace(/\D/g, ""), 10) || 0) - (parseInt(b.replace(/\D/g, ""), 10) || 0))
   .flatMap((key) => Array.isArray(json[key]) ? json[key] : []);
@@ -860,18 +887,24 @@ function quizStructuredData(record, canonical) {
   return `<script type="application/ld+json">${JSON.stringify(data).replace(/</g, "\\u003c")}</script>`;
 }
 
-function inject(html, { title, description, canonical, ogImage, body, extraStructuredData = "", robots = "index,follow" }) {
+function inject(html, { title, description, canonical, ogImage, body, extraStructuredData = "", robots = "index,follow", htmlLang = "en", hreflangTags = "" }) {
   // 1. Remove ALL existing meta/link/title tags that we want to override
   // We use a very broad match to ensure nothing is missed
   let cleanHtml = html
     .replace(/<title[^>]*>[\s\S]*?<\/title>/gi, "")
     .replace(/<meta\s+(name|property)=["'](description|og:type|og:title|og:description|og:url|og:image|og:image:secure_url|og:image:type|og:image:width|og:image:height|og:image:alt|twitter:title|twitter:description|twitter:image|twitter:card)["'][^>]*>/gi, "")
-    .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, "");
+    .replace(/<link\s+rel=["']canonical["'][^>]*>/gi, "")
+    .replace(/<link\s+rel=["']alternate["']\s+hreflang=[^>]*>/gi, "");
+
+  // 1b. Phase 5 (2026-10-02): route-aware <html lang> — replace the shell's
+  // hardcoded lang with the route-appropriate value.
+  cleanHtml = cleanHtml.replace(/<html(\s+[^>]*)?>/i, `<html lang="${htmlLang}">`);
 
   // 2. Define new tags with explicit values
   const newTags = [
     structuredData({ description }),
     extraStructuredData,
+    ...(hreflangTags ? [hreflangTags] : []),
     `<title>${esc(title)}</title>`,
     `<meta name="description" content="${esc(description)}" data-rh="true" />`,
     `<link rel="canonical" href="${esc(canonical)}" data-rh="true" />`,
@@ -2429,6 +2462,10 @@ export default async function handler(req, res) {
       body: bodyContent,
       extraStructuredData,
       robots: robotsDirective,
+      // Phase 5 (2026-10-02): route-aware <html lang> + crawler-visible hreflang.
+      // hreflang only on 200s so every alternate URL is real.
+      htmlLang: getHtmlLang(routePath),
+      hreflangTags: statusCode === 200 ? getHreflangTags(routePath, SITE_ORIGIN) : "",
     });
 
     // P1-1: error (404/410) and noindex pages must never carry ad-loading code.

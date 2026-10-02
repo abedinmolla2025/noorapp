@@ -39,6 +39,11 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
     description:
       "Authentic Islamic duas with Arabic, Bengali meaning & audio — দৈনন্দিন মাসনূন দোয়া, কুরআনের দোয়া ও হাদিসের দোয়া সংকলন।",
   },
+  "/stories": {
+    title: "ইসলামিক গল্প — Islamic Stories | Noor",
+    description:
+      "নবীদের জীবনী, সাহাবীদের গল্প ও ঈমানদীপ্ত শিক্ষণীয় ইসলামিক গল্প পড়ুন — Read inspiring Islamic stories of the Prophets, Sahaba and lessons of faith on Noor.",
+  },
   "/quiz": {
     title: "Daily Islamic Quiz — ইসলামিক কুইজ | Noor",
     description:
