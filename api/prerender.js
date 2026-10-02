@@ -1366,8 +1366,9 @@ export default async function handler(req, res) {
         const chapterList = chapterData || [];
         const chapterMap = new Map(chapterList.map((chapter) => [Number(chapter.chapter_number), chapter]));
         // Nonexistent chapter: real 404 + noindex so invented chapter URLs
-        // cannot become indexable thin pages.
-        if (chapterId && !chapterMap.has(chapterId)) {
+        // cannot become indexable thin pages. The guard uses `!== null`
+        // (not truthiness) because chapter-0 is falsy but equally nonexistent.
+        if (chapterId !== null && !chapterMap.has(chapterId)) {
           statusCode = 404;
           robotsDirective = "noindex,follow";
           title = "Hadith chapter not found | Noor";
