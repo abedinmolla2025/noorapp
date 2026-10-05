@@ -21,6 +21,7 @@ import CookieConsentBanner from "./components/CookieConsentBanner";
 // Lazy load non-critical routes
 const NotFound = lazy(() => import("./pages/NotFound"));
 const NamesPage = lazy(() => import("./pages/NamesPage"));
+const BabyNameDetailPage = lazy(() => import("./pages/BabyNameDetailPage"));
 const QiblaPage = lazy(() => import("./pages/QiblaPage"));
 const TasbihPage = lazy(() => import("./pages/TasbihPage"));
 const DuaPage = lazy(() => import("./pages/DuaPage"));
@@ -95,6 +96,7 @@ const AppRoutes = () => {
         <Routes>
           <Route path="/" element={<Index />} />
           <Route path="/baby-names" element={<NamesPage />} />
+          <Route path="/baby-names/:slug" element={<BabyNameDetailPage />} />
           <Route path="/names" element={<Navigate to="/baby-names" replace />} />
           <Route path="/qibla" element={<QiblaPage />} />
           <Route path="/tasbih" element={<TasbihPage />} />

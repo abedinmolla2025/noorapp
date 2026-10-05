@@ -2,6 +2,72 @@ const ORIGIN = "https://noorapp.in";
 
 import fs from "node:fs";
 import path from "node:path";
+import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/babyNameSlug.js";
+
+// Baby-name detail rollout (2026-10-05): verification-gated sitemap.
+// Only slugs listed in public/data/baby-name-sitemap-allowlist.json are emitted.
+// Missing file => empty list => no name URLs (fail-safe). This gate is the
+// rollout control: the representative batch first, mass rollout only after
+// verification passes.
+function getBabyNameAllowlist() {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", "baby-name-sitemap-allowlist.json"),
+    path.join(process.cwd(), "dist", "data", "baby-name-sitemap-allowlist.json"),
+    path.join("/var/task", "dist", "data", "baby-name-sitemap-allowlist.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (Array.isArray(doc)) return doc.filter((s) => isValidBabyNameSlugSegment(s));
+      }
+    } catch { /* try next candidate */ }
+  }
+  return [];
+}
+
+async function getVerifiedNameRoutes() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
+  const allowlist = getBabyNameAllowlist();
+  if (!supabaseKey || allowlist.length === 0) return [];
+  // Paginated: PostgREST clamps limit to 1000 rows.
+  const rows = [];
+  try {
+    for (let offset = 0; ; offset += 1000) {
+      const query = new URLSearchParams({
+        select: "id,title",
+        content_type: "eq.name",
+        is_published: "eq.true",
+        order: "created_at.asc",
+        limit: "1000",
+        offset: String(offset),
+      });
+      const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/admin_content?${query}`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (!response.ok) return [];
+      const batch = await response.json();
+      rows.push(...(batch || []));
+      if (!batch || batch.length < 1000) break;
+    }
+    const slugMap = assignBabyNameSlugs((rows || []).map((r) => ({ id: String(r.id), title: r.title })));
+    const idToSlug = new Map([...slugMap.entries()].map(([id, slug]) => [id, slug]));
+    const seen = new Set();
+    const routes = [];
+    for (const row of rows || []) {
+      const slug = idToSlug.get(String(row.id));
+      if (slug && allowlist.includes(slug) && !seen.has(slug)) {
+        seen.add(slug);
+        routes.push(`/baby-names/${encodeURIComponent(slug)}`);
+      }
+    }
+    // Safety: never emit more than the allowlist size.
+    return routes.filter((r) => allowlist.includes(decodeURIComponent(r.split("/")[2])));
+  } catch {
+    return [];
+  }
+}
 
 // Quiz duplicate IDs (2026-09-28 forensic consolidation): these URLs stay live
 // but canonicalize to their primary, so they are excluded from the sitemap.
@@ -169,6 +235,9 @@ export default async function handler(req, res) {
 
   // Only verified active quiz records are included in the indexable sitemap.
   routes.push(...await getVerifiedQuizRoutes());
+
+  // Baby-name detail pages: verification-gated allowlist only (2026-10-05).
+  routes.push(...await getVerifiedNameRoutes());
 
   const seenLocs = new Set();
   const uniqueRoutes = routes.filter((route) => {

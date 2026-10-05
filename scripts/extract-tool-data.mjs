@@ -144,6 +144,29 @@ console.log("[extract-tool-data] done");
   console.log(`[extract-tool-data] surah-intros.json: ${intros.length} items`);
 }
 
+// Baby-name sitemap allowlist (verification-gated rollout, 2026-10-05):
+// only these slugs exist as /baby-names/:slug pages and sitemap URLs.
+// Representative batch first; mass rollout only after verification passes.
+// Copied verbatim so api/prerender.js and api/sitemap.js share the gate.
+{
+  const srcFile = path.join(root, "src", "data", "baby-name-sitemap-allowlist.json");
+  const allowlist = JSON.parse(fs.readFileSync(srcFile, "utf8"));
+  if (!Array.isArray(allowlist) || allowlist.length === 0) {
+    throw new Error("[extract-tool-data] baby-name allowlist: expected non-empty array — refusing to write stale data");
+  }
+  for (const s of allowlist) {
+    if (typeof s !== "string" || !/^[a-z0-9-]{1,80}$/.test(s)) {
+      throw new Error("[extract-tool-data] baby-name allowlist: invalid slug entry — refusing");
+    }
+  }
+  if (new Set(allowlist).size !== allowlist.length) {
+    throw new Error("[extract-tool-data] baby-name allowlist: duplicate slugs — refusing");
+  }
+  const outFile = path.join(outDir, "baby-name-sitemap-allowlist.json");
+  fs.writeFileSync(outFile, JSON.stringify(allowlist));
+  console.log(`[extract-tool-data] baby-name-sitemap-allowlist.json: ${allowlist.length} slugs`);
+}
+
 // Hadith chapter introductions (evidence-first research, 2026-09-28):
 // only chapters whose every published claim reached VERIFIED (>=2
 // independent reputable sources) AND whose app title matches the actual

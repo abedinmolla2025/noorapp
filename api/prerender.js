@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
+import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/babyNameSlug.js";
 
 const SITE_ORIGIN = "https://noorapp.in";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
@@ -548,6 +549,47 @@ const loadToolData = (filename) => {
   }
   return null;
 };
+
+// Baby-name detail rollout (2026-10-05): verification-gated allowlist.
+// Only slugs listed in public/data/baby-name-sitemap-allowlist.json exist as
+// /baby-names/:slug pages. Everything else fails closed (404 + noindex).
+// Missing file => empty list => no name detail pages render (fail-safe).
+let babyNameAllowlist = null;
+const getBabyNameAllowlist = () => {
+  if (babyNameAllowlist === null) {
+    const data = loadToolData("baby-name-sitemap-allowlist.json");
+    babyNameAllowlist = Array.isArray(data) ? data.filter((s) => isValidBabyNameSlugSegment(s)) : [];
+  }
+  return babyNameAllowlist;
+};
+
+// Published baby-name records, cached per cold start. Fail-closed: on error
+// return [] so the detail branch 404s instead of rendering a broken page.
+// Paginated: PostgREST clamps limit to 1000 rows, so offset-loop to get all.
+let cachedBabyNames = null;
+async function fetchPublishedBabyNames() {
+  if (cachedBabyNames !== null) return cachedBabyNames;
+  try {
+    const all = [];
+    for (let offset = 0; ; offset += 1000) {
+      const { data, error } = await supabase
+        .from("admin_content")
+        .select("id,title,title_arabic,content,content_en,content_arabic,category")
+        .eq("content_type", "name")
+        .eq("is_published", true)
+        .order("created_at", { ascending: true })
+        .range(offset, offset + 999);
+      if (error) throw error;
+      all.push(...(data || []));
+      if (!data || data.length < 1000) break;
+    }
+    cachedBabyNames = all;
+  } catch (e) {
+    console.error("[SSR] baby-names fetch failed", e);
+    cachedBabyNames = [];
+  }
+  return cachedBabyNames;
+}
 
 // Quiz duplicate -> canonical-primary map (2026-09-28 forensic consolidation).
 // Render-layer only: exact-duplicate question URLs canonicalize to the
@@ -2303,6 +2345,44 @@ export default async function handler(req, res) {
         }
       } catch (e) { console.error("[SSR] quiz hub index failed", e); }
       bodyContent = renderStaticPage(page, indexHtml);
+    }
+
+    // --- Baby Name Detail Pages (/baby-names/:slug) ---
+    // Verification-gated rollout (2026-10-05): only allowlisted slugs render.
+    // Every field below comes from the admin_content name row — no invented
+    // content. Non-allowlisted or unknown slugs fail closed (404 + noindex).
+    else if (routePath.startsWith("/baby-names/") && routePath.split("/")[2]) {
+      const nameSlug = decodeURIComponent(routePath.split("/")[2]);
+      let nameRecord = null;
+      if (isValidBabyNameSlugSegment(nameSlug) && getBabyNameAllowlist().includes(nameSlug)) {
+        const nameRows = await fetchPublishedBabyNames();
+        const nameSlugMap = assignBabyNameSlugs(nameRows.map((r) => ({ id: String(r.id), title: r.title })));
+        nameRecord = nameRows.find((r) => nameSlugMap.get(String(r.id)) === nameSlug) || null;
+      }
+      if (!nameRecord) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Name not found | Noor";
+        description = "This baby name page does not exist.";
+        bodyContent = `<main class="min-h-screen bg-background p-8"><div class="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8"><h1 class="text-2xl font-bold">Name not found</h1><p class="mt-3 text-muted-foreground">This baby name page does not exist.</p><a class="mt-6 inline-block text-primary hover:underline" href="/baby-names">Browse baby names</a></div></main>`;
+      } else {
+        const nameGender = String(nameRecord.category || "").trim().toLowerCase() === "girl" ? "Girl" : "Boy";
+        canonicalUrl = `${SITE_ORIGIN}/baby-names/${encodeURIComponent(nameSlug)}`;
+        title = `${nameRecord.title} (${nameRecord.title_arabic}) — Meaning in Bengali & English | Noor`;
+        description = shortenMetaText(`The name ${nameRecord.title} (${nameRecord.title_arabic}) means "${nameRecord.content_en}" in English and "${nameRecord.content}" in Bengali. ${nameGender} Islamic baby name.`, 160);
+        robotsDirective = "index,follow";
+        const arabicMeaning = nameRecord.content_arabic && String(nameRecord.content_arabic).trim()
+          ? `<section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">المعنى — العربية</h2><p lang="ar" dir="rtl" class="mt-2 text-lg leading-relaxed">${esc(nameRecord.content_arabic)}</p></section>`
+          : "";
+        bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl"><nav aria-label="Breadcrumb" class="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground"><a href="/" class="hover:underline">Home</a><span aria-hidden="true">›</span><a href="/baby-names" class="hover:underline">Baby Names</a><span aria-hidden="true">›</span><span>${esc(nameRecord.title)}</span></nav><div class="rounded-2xl border border-border bg-card p-6 shadow-sm"><p class="text-sm font-semibold text-primary">${nameGender} name</p><h1 class="mt-2 text-3xl font-bold">${esc(nameRecord.title)} <span lang="ar" dir="rtl">(${esc(nameRecord.title_arabic)})</span></h1><div class="mt-6 grid gap-4"><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meaning — English</h2><p lang="en" class="mt-2 text-lg leading-relaxed">${esc(nameRecord.content_en)}</p></section><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">অর্থ — বাংলা</h2><p lang="bn" class="mt-2 text-lg leading-relaxed">${esc(nameRecord.content)}</p></section>${arabicMeaning}<section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Details</h2><p class="mt-2 text-sm">Gender: ${nameGender} · Category: ${esc(nameRecord.category || "")}</p></section></div><p class="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">Name meanings are provided for educational purposes. Families should verify spelling with trusted references before making a final choice.</p></div></article></main>`;
+        extraStructuredData = `<script type="application/ld+json">${JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "DefinedTerm",
+          name: nameRecord.title,
+          description: nameRecord.content_en,
+          inDefinedTermSet: { "@type": "DefinedTermSet", name: "Islamic Baby Names", url: `${SITE_ORIGIN}/baby-names` },
+        })}</script>`;
+      }
     }
 
     // --- Public Trust, Legal and Feature Pages ---
