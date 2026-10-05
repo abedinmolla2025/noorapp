@@ -86,7 +86,7 @@ for (const s of allowlist) {
 }
 ok(`all ${allowlist.length} allowlisted slugs resolve to exactly one record`);
 
-// --- known collision groups ---
+// --- known collision groups (must never regress) ---
 for (const base of ["zahra", "mina", "abdul-musawwir", "abdul-razzaq", "abrar"]) {
   const group = rows.filter((r) => slugMap.get(String(r.id)).startsWith(base));
   const got = group.map((r) => slugMap.get(String(r.id))).sort();
@@ -94,6 +94,49 @@ for (const base of ["zahra", "mina", "abdul-musawwir", "abdul-razzaq", "abrar"])
   if (JSON.stringify(got) !== JSON.stringify(want)) fail(`collision group ${base}: got ${got}`);
 }
 ok("collision groups verified (zahra, mina, abdul-musawwir, abdul-razzaq, abrar)");
+
+// --- generic collision safety: EVERY multi-record base follows the -2, -3 pattern ---
+{
+  const byBase = new Map();
+  for (const [id, s] of slugMap) {
+    const base = s.replace(/-\d+$/, "");
+    if (!byBase.has(base)) byBase.set(base, []);
+    byBase.get(base).push({ id, s });
+  }
+  let groups = 0;
+  for (const [base, members] of byBase) {
+    if (members.length < 2) continue;
+    groups++;
+    const ordered = [...members].sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
+    const want = ordered.map((m, i) => (i === 0 ? base : `${base}-${i + 1}`));
+    const got = ordered.map((m) => m.s);
+    if (JSON.stringify(got) !== JSON.stringify(want)) fail(`collision pattern broken for base ${base}: got ${got}`);
+  }
+  ok(`all ${groups} collision groups follow deterministic -2/-3 pattern`);
+}
+
+// --- explicit exclusions (must stay excluded; must still map deterministically) ---
+const EXCLUDED_SLUGS = ["abrar-2"];
+for (const s of EXCLUDED_SLUGS) {
+  if (allowlist.includes(s)) fail(`explicitly excluded slug /baby-names/${s} is in the allowlist`);
+  if (!slugToId.has(s)) fail(`excluded slug ${s} has no deterministic mapping (orphaned)`);
+}
+if (EXCLUDED_SLUGS.every((s) => !allowlist.includes(s) && slugToId.has(s)))
+  ok(`explicit exclusions preserved (${EXCLUDED_SLUGS.join(", ")} not exposed, still mapped)`);
+
+// --- no silent drops: every non-excluded mapped slug must be allowlisted ---
+{
+  const allowed = new Set(allowlist);
+  const dropped = [...slugMap.values()].filter((s) => !allowed.has(s) && !EXCLUDED_SLUGS.includes(s));
+  if (dropped.length > 0) fail(`silently dropped slugs: ${dropped.slice(0, 10).join(", ")}${dropped.length > 10 ? ` (+${dropped.length - 10} more)` : ""}`);
+  else ok(`no silent drops: all ${slugMap.size - EXCLUDED_SLUGS.length} eligible slugs allowlisted`);
+}
+
+// --- the original 13 must remain ---
+for (const s of ["rabia","ahmad","abdul-mutaali","abdul-alim","zahra","zahra-2","mina","mina-2","abdul-musawwir","abdul-musawwir-2","abdul-razzaq","abdul-razzaq-2","abrar"]) {
+  if (!allowlist.includes(s)) fail(`original approved slug /baby-names/${s} missing from allowlist`);
+}
+ok("original 13 approved URLs preserved");
 
 if (failures > 0) { console.error(`\n${failures} FAILURE(S)`); process.exit(1); }
 console.log("\nALL BABY-NAME SLUG CHECKS PASSED");
