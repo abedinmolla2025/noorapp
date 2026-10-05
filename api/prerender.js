@@ -598,6 +598,44 @@ async function fetchPublishedBabyNames() {
   return cachedBabyNames;
 }
 
+// Baby-names hub internal linking (2026-10-05): crawlable index of all
+// allowlisted detail pages, rendered into the hub prerender HTML.
+// Reuses the cached allowlist + cached published rows + the canonical
+// assignBabyNameSlugs mapping — the same inputs as api/sitemap.js and the
+// /baby-names/:slug detail branch, so hub links always agree with real URLs.
+// Exactly one anchor per allowlisted slug; excluded/invalid slugs are never
+// linked. Fail-closed: on any error return "" and the hub renders as before.
+async function buildBabyNameIndexHtml() {
+  try {
+    const allowlist = getBabyNameAllowlist();
+    if (!allowlist.length) return "";
+    const rows = await fetchPublishedBabyNames();
+    if (!rows.length) return "";
+    const slugMap = assignBabyNameSlugs(rows.map((r) => ({ id: String(r.id), title: r.title })));
+    const slugToTitle = new Map();
+    for (const r of rows) {
+      const slug = slugMap.get(String(r.id));
+      if (slug && allowlist.includes(slug) && !slugToTitle.has(slug)) {
+        slugToTitle.set(slug, r.title);
+      }
+    }
+    const items = allowlist
+      .filter((s) => slugToTitle.has(s))
+      .map((s) => `<li><a href="/baby-names/${encodeURIComponent(s)}" class="block truncate rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-foreground hover:border-primary/40 hover:text-primary">${esc(String(slugToTitle.get(s) || s))}</a></li>`)
+      .join("");
+    if (!items) return "";
+    return `
+      <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+        <h2 class="text-xl font-bold text-foreground">All baby names</h2>
+        <p class="mt-2 text-sm leading-7 text-muted-foreground">Browse every name in the collection.</p>
+        <nav aria-label="Baby names index" class="mt-4"><ul class="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">${items}</ul></nav>
+      </section>`;
+  } catch (e) {
+    console.error("[SSR] baby-name index failed", e);
+    return "";
+  }
+}
+
 // /99-names/:slug pages. Same fail-closed pattern as baby names.
 // Missing file => empty list => no detail pages render (fail-safe).
 let allahNameAllowlist = null;
@@ -2603,7 +2641,11 @@ export default async function handler(req, res) {
       const page = STATIC_PAGE_COPY[routePath];
       title = page.title;
       description = page.description;
-      bodyContent = renderStaticPage(page, await buildToolContent(routePath));
+      // Baby-names hub internal linking (2026-10-05): append a crawlable index
+      // of all allowlisted detail pages. Other static pages are unchanged.
+      let extraHtml = await buildToolContent(routePath);
+      if (routePath === "/baby-names") extraHtml += await buildBabyNameIndexHtml();
+      bodyContent = renderStaticPage(page, extraHtml);
       // Phase A (2026-10-05): FAQ JSON-LD parity with the SPA for /prayer-guide.
       if (routePath === "/prayer-guide") extraStructuredData += prayerGuideFaqJsonLd();
     }
