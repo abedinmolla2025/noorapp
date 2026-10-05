@@ -152,7 +152,7 @@ const PrivacyPolicyPage = () => {
             <a href="https://www.aboutads.info/choices/" target="_blank" rel="noreferrer" className="text-primary underline">
               www.aboutads.info
             </a>
-            . You can also withdraw or change consent any time from the cookie banner in this app.
+            . You can also withdraw or change consent from the cookie banner in this app, which is shown on your first visit before you save a choice.
           </p>
           <p className="text-muted-foreground">
             আপনি{" "}
