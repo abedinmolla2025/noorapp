@@ -1134,6 +1134,27 @@
   ]
  },
  {
+  "number": 55,
+  "intro_en": "Ar-Rahmaan (The Beneficent) is a surah consisting of 78 verses.",
+  "sources": [
+   {
+    "name": "Quran.com Chapters API",
+    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "type": "primary"
+   },
+   {
+    "name": "Tanzil Quran Metadata",
+    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "type": "primary"
+   },
+   {
+    "name": "QuranEnc Surah Index (Noor International Center)",
+    "url": "https://quranenc.com/en/browse/english_saheeh",
+    "type": "primary"
+   }
+  ]
+ },
+ {
   "number": 56,
   "intro_en": "Al-Waaqia (The Inevitable) is a Meccan surah consisting of 96 verses.",
   "sources": [
@@ -1538,6 +1559,32 @@
   ]
  },
  {
+  "number": 76,
+  "intro_en": "Al-Insaan (Man) consists of 31 verses. Its theme is to inform humankind of their true position in the world: those who adopt an attitude of gratefulness will meet a good end, while those who take the way of disbelief will meet an evil end.",
+  "sources": [
+   {
+    "name": "An Enlightening Commentary into the Light of the Holy Quran vol.19 (Makarem Shirazi, via al-islam.org)",
+    "url": "https://al-islam.org/es/node/29791",
+    "type": "secondary"
+   },
+   {
+    "name": "Wikipedia - Al-Insan",
+    "url": "https://en.wikipedia.org/wiki/Al-Insan",
+    "type": "secondary"
+   },
+   {
+    "name": "Maududi, Tafhim al-Qur'an intro (via IIUM)",
+    "url": "https://www.iium.edu.my/deed/quran/intro/i076.html",
+    "type": "secondary"
+   },
+   {
+    "name": "IslamReligion.com - Chapter 76, Al-Insan (Humankind)",
+    "url": "https://www.islamreligion.com/article/pdf/11379",
+    "type": "secondary"
+   }
+  ]
+ },
+ {
   "number": 77,
   "intro_en": "Al-Mursalaat (The Emissaries) is a Meccan surah consisting of 50 verses. Its theme is to affirm the Resurrection and the Hereafter, and to warn of the consequences that ultimately follow denial or affirmation of these truths.",
   "sources": [
@@ -1654,6 +1701,27 @@
    {
     "name": "AlQuran Cloud Surah Metadata",
     "url": "https://api.alquran.cloud/v1/surah",
+    "type": "primary"
+   }
+  ]
+ },
+ {
+  "number": 83,
+  "intro_en": "Al-Mutaffifin (The Defrauders) is the 83rd surah of the Quran, consisting of 36 verses.",
+  "sources": [
+   {
+    "name": "Wikipedia (Al-Mutaffifin)",
+    "url": "https://en.wikipedia.org/wiki/Al-Mutaffifin",
+    "type": "secondary"
+   },
+   {
+    "name": "Al-Islam.org (Enlightening Commentary into the Light of the Holy Qur'an, vol. 19)",
+    "url": "https://www.al-islam.org/enlightening-commentary-light-holy-quran-vol-19/surah-mutaffifin-chapter-83",
+    "type": "secondary"
+   },
+   {
+    "name": "NetQuran (QuranWeb English translation)",
+    "url": "http://netquran.com/quran/english-translation-of-holy-quran-by-quran-web/083-quran-english-al-mutatfifin-the-stinters.html",
     "type": "primary"
    }
   ]
@@ -1917,6 +1985,74 @@
    {
     "name": "Sahih al-Bukhari 3 (sunnah.com)",
     "url": "https://sunnah.com/bukhari:3",
+    "type": "primary"
+   }
+  ]
+ },
+ {
+  "number": 97,
+  "intro_en": "Al-Qadr (The Power) is a surah consisting of 5 verses.",
+  "sources": [
+   {
+    "name": "Quran.com",
+    "url": "https://quran.com/97",
+    "type": "primary"
+   },
+   {
+    "name": "Maududi (IIUM)",
+    "url": "https://www.iium.edu.my/deed/quran/intro/i097.html",
+    "type": "secondary"
+   },
+   {
+    "name": "IslamicStudies.info — Towards (Qur'an text)",
+    "url": "https://islamicstudies.info/quran/towards.php?sura=97",
+    "type": "primary"
+   }
+  ]
+ },
+ {
+  "number": 98,
+  "intro_en": "Al-Bayyinah (The Clear Proof) is a surah consisting of 8 verses. It explains why a Messenger was sent as the clear proof with the Book in pristine form: those who believe and do righteous deeds are the best of creatures, promised Gardens of Eternity, while those who persist in disbelief are the worst of creatures, warned of everlasting Hell.",
+  "sources": [
+   {
+    "name": "Quran.com",
+    "url": "https://quran.com/98",
+    "type": "primary"
+   },
+   {
+    "name": "Maududi (IIUM)",
+    "url": "https://www.iium.edu.my/deed/quran/intro/i098.html",
+    "type": "secondary"
+   },
+   {
+    "name": "IslamicStudies.info — Towards (Qur'an text)",
+    "url": "https://islamicstudies.info/quran/towards.php?sura=98",
+    "type": "primary"
+   },
+   {
+    "name": "IslamicStudies.info — The Clear Quran",
+    "url": "https://islamicstudies.info/quran/theclearquran.php?sura=98&verse=1&to=8",
+    "type": "secondary"
+   }
+  ]
+ },
+ {
+  "number": 99,
+  "intro_en": "Az-Zalzalah (The Earthquake) is a surah consisting of 8 verses.",
+  "sources": [
+   {
+    "name": "Quran.com",
+    "url": "https://quran.com/99",
+    "type": "primary"
+   },
+   {
+    "name": "Maududi (IIUM)",
+    "url": "https://www.iium.edu.my/deed/quran/intro/i099.html",
+    "type": "secondary"
+   },
+   {
+    "name": "IslamicStudies.info — Towards (Qur'an text)",
+    "url": "https://islamicstudies.info/quran/towards.php?sura=99",
     "type": "primary"
    }
   ]
