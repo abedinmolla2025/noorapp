@@ -56,7 +56,14 @@ const UI_STRINGS = {
 };
 
 // Niyah Data
-const NIYAH_DATA = [
+// Phase C (2026-10-05): optional madhhab/context note shown under the meaning.
+interface NiyahEntry {
+  id: string; name: string; nameBn: string; rakats: string; rakatsBn: string;
+  arabic: string; meaning: string; meaningBn: string;
+  transliteration: string; transliterationBn: string;
+  note?: string; noteBn?: string;
+}
+const NIYAH_DATA: NiyahEntry[] = [
   {
     id: "fajr",
     name: "Fajr",
@@ -123,6 +130,8 @@ const NIYAH_DATA = [
     nameBn: "বিতর",
     rakats: "3 Wajib",
     rakatsBn: "৩ রাকাত ওয়াজিব",
+    note: "(Wajib according to Hanafi fiqh; other schools: confirmed sunnah)",
+    noteBn: "(হানাফি ফিকহে ওয়াজিব; অন্যান্য মাযহাবে: সুন্নতে মুয়াক্কাদা)",
     arabic: "نَوَيْتُ أَنْ أُصَلِّيَ لِلَّهِ تَعَالَىٰ ثَلَاثَ رَكَعَاتِ صَلَاةِ الْوِتْرِ وَاجِبُ اللَّهِ تَعَالَىٰ مُتَوَجِّهًا إِلَىٰ جِهَةِ الْكَعْبَةِ الشَّرِيفَةِ اللَّهُ أَكْبَرُ",
     meaning: "I intend to pray three rakats of Witr Wajib prayer for Allah facing the Kaaba. Allahu Akbar.",
     meaningBn: "আমি কেবলামুখী হয়ে আল্লাহর ওয়াস্তে বিতরের তিন রাকাত ওয়াজিব নামাজ আদায় করার নিয়ত করছি। আল্লাহু আকবার।",
@@ -183,6 +192,8 @@ const NIYAH_DATA = [
     nameBn: "ঈদুল ফিতর",
     rakats: "2 Wajib",
     rakatsBn: "২ রাকাত ওয়াজিব",
+    note: "(Wajib and six additional takbirs according to Hanafi fiqh. Other schools: Eid prayer is a confirmed sunnah (Shafi'i/Maliki) or communal obligation (Hanbali), with 12 (7+5) or 11 (6+5) additional takbirs — counting conventions differ.)",
+    noteBn: "(হানাফি ফিকহে ওয়াজিব ও ছয় অতিরিক্ত তাকবির। অন্যান্য মাযহাবে: ঈদের নামাজ সুন্নতে মুয়াক্কাদা (শাফেয়ি/মালেকি) বা ফরজে কিফায়া (হাম্বলি); অতিরিক্ত তাকবির ১২ (৭+৫) বা ১১ (৬+৫) — গণনার পদ্ধতি ভিন্ন।)",
     arabic: "نَوَيْتُ أَنْ أُصَلِّيَ لِلَّهِ تَعَالَىٰ رَكْعَتَيْ صَلَاةِ عِيدِ الْفِطْرِ مَعَ سِتِّ تَكْبِيرَاتٍ وَاجِبُ اللَّهِ تَعَالَىٰ مُتَوَجِّهًا إِلَىٰ جِهَةِ الْكَعْبَةِ الشَّرِيفَةِ اللَّهُ أَكْبَرُ",
     meaning: "I intend to pray two rakats of Eid ul-Fitr Wajib prayer with six additional takbirs for Allah facing the Kaaba. Allahu Akbar.",
     meaningBn: "আমি কেবলামুখী হয়ে আল্লাহর ওয়াস্তে ছয় তাকবিরের সাথে ঈদুল ফিতরের দুই রাকাত ওয়াজিব নামাজ আদায় করার নিয়ত করছি। আল্লাহু আকবার।",
@@ -195,6 +206,8 @@ const NIYAH_DATA = [
     nameBn: "ঈদুল আযহা",
     rakats: "2 Wajib",
     rakatsBn: "২ রাকাত ওয়াজিব",
+    note: "(Wajib and six additional takbirs according to Hanafi fiqh. Other schools: Eid prayer is a confirmed sunnah (Shafi'i/Maliki) or communal obligation (Hanbali), with 12 (7+5) or 11 (6+5) additional takbirs — counting conventions differ.)",
+    noteBn: "(হানাফি ফিকহে ওয়াজিব ও ছয় অতিরিক্ত তাকবির। অন্যান্য মাযহাবে: ঈদের নামাজ সুন্নতে মুয়াক্কাদা (শাফেয়ি/মালেকি) বা ফরজে কিফায়া (হাম্বলি); অতিরিক্ত তাকবির ১২ (৭+৫) বা ১১ (৬+৫) — গণনার পদ্ধতি ভিন্ন।)",
     arabic: "نَوَيْتُ أَنْ أُصَلِّيَ لِلَّهِ تَعَالَىٰ رَكْعَتَيْ صَلَاةِ عِيدِ الْأَضْحَىٰ مَعَ سِتِّ تَكْبِيرَاتٍ وَاجِبُ اللَّهِ تَعَالَىٰ مُتَوَجِّهًا إِلَىٰ جِهَةِ الْكَعْبَةِ الشَّرِيفَةِ اللَّهُ أَكْبَرُ",
     meaning: "I intend to pray two rakats of Eid ul-Adha Wajib prayer with six additional takbirs for Allah facing the Kaaba. Allahu Akbar.",
     meaningBn: "আমি কেবলামুখী হয়ে আল্লাহর ওয়াস্তে ছয় তাকবিরের সাথে ঈদুল আযহার দুই রাকাত ওয়াজিব নামাজ আদায় করার নিয়ত করছি। আল্লাহু আকবার।",
@@ -219,6 +232,8 @@ const NIYAH_DATA = [
     nameBn: "লাইলাতুল কদর (শবে কদর)",
     rakats: "2-12 Nafl",
     rakatsBn: "২-১২ রাকাত নফল",
+    note: "(Voluntary night prayer on Laylat al-Qadr — there is no distinct prescribed prayer for the night itself.)",
+    noteBn: "(লাইলাতুল কদরের রাতে নফল নামাজ — এই রাতের জন্য কোনো পৃথক নির্ধারিত নামাজ নেই।)",
     arabic: "نَوَيْتُ أَنْ أُصَلِّيَ لِلَّهِ تَعَالَىٰ رَكْعَتَيْ صَلَاةِ لَيْلَةِ الْقَدْرِ مُتَوَجِّهًا إِلَىٰ جِهَةِ الْكَعْبَةِ الشَّرِيفَةِ اللَّهُ أَكْبَرُ",
     meaning: "I intend to pray two rakats of Lailatul Qadr Nafl prayer for Allah facing the Kaaba. Allahu Akbar.",
     meaningBn: "আমি কেবলামুখী হয়ে আল্লাহর ওয়াস্তে লাইলাতুল কদরের দুই রাকাত নফল নামাজ আদায় করার নিয়ত করছি। আল্লাহু আকবার।",
@@ -246,8 +261,8 @@ const PRAYER_LEARNING = {
     ],
   },
   farz: {
-    title: "Farz (Obligatory) of Prayer",
-    titleBn: "নামাজের ফরজসমূহ",
+    title: "Farz (Obligatory) of Prayer — Hanafi Fiqh",
+    titleBn: "নামাজের ফরজসমূহ — হানাফি ফিকহ",
     items: [
       "Takbir Tahrimah - Saying 'Allahu Akbar' to begin",
       "Qiyam - Standing position",
@@ -266,60 +281,60 @@ const PRAYER_LEARNING = {
     ],
   },
   wajib: {
-    title: "Wajib (Necessary) of Prayer",
-    titleBn: "নামাজের ওয়াজিবসমূহ",
+    title: "Wajib (Necessary) of Prayer — Hanafi Fiqh",
+    titleBn: "নামাজের ওয়াজিবসমূহ — হানাফি ফিকহ",
     items: [
-      "Reciting Surah Fatiha in every rakat",
+      "Reciting Surah Fatiha in every rakat (a pillar of prayer in other schools)",
       "Reciting a Surah after Fatiha in first two rakats",
       "Performing Ruku and Sujood in order",
       "Maintaining tranquility in each position",
       "Sitting for Tashahhud",
-      "Saying Salam to end the prayer",
+      "Saying Salam to end the prayer (one salam suffices in other schools)",
     ],
     itemsBn: [
-      "প্রতি রাকাতে সূরা ফাতিহা পড়া",
+      "প্রতি রাকাতে সূরা ফাতিহা পড়া (অন্যান্য মাযহাবে নামাজের রুকন)",
       "প্রথম দুই রাকাতে ফাতিহার পর একটি সূরা পড়া",
       "যথাক্রমে রুকু ও সিজদা করা",
       "প্রতিটি অবস্থানে স্থিরতা বজায় রাখা",
       "তাশাহুদের জন্য বসা",
-      "সালাম দিয়ে নামাজ শেষ করা",
+      "সালাম দিয়ে নামাজ শেষ করা (অন্যান্য মাযহাবে এক সালামই যথেষ্ট)",
     ],
   },
   sunnah: {
-    title: "Sunnah of Prayer",
-    titleBn: "নামাজের সুন্নতসমূহ",
+    title: "Sunnah of Prayer — Hanafi Fiqh",
+    titleBn: "নামাজের সুন্নতসমূহ — হানাফি ফিকহ",
     items: [
-      "Raising hands during Takbir",
-      "Placing right hand over left on chest",
-      "Looking at the place of prostration",
+      "Raising hands at the opening takbir (in Hanafi fiqh)",
+      "Placing the right hand over the left below the navel (for men); on the chest (for women)",
+      "Looking toward the place of prostration (as an etiquette of prayer; other schools differ)",
       "Reciting Sana (opening dua)",
-      "Saying 'Ameen' after Fatiha",
-      "Saying Takbir when changing positions",
+      "Saying 'Ameen' after Fatiha (silently, in Hanafi fiqh)",
+      "Saying Takbir when changing positions (obligatory in the Hanbali school)",
     ],
     itemsBn: [
-      "তাকবিরের সময় হাত তোলা",
-      "বুকের উপর ডান হাত বাম হাতের উপর রাখা",
-      "সিজদার স্থানে দৃষ্টি রাখা",
+      "প্রথম তাকবিরের সময় হাত তোলা (হানাফি ফিকহে)",
+      "ডান হাত বাম হাতের উপর রাখা — পুরুষরা নাভির নিচে, মহিলারা বুকের উপর",
+      "সিজদার স্থানের দিকে দৃষ্টি রাখা (নামাজের আদব হিসেবে; অন্যান্য মাযহাবে মতভেদ আছে)",
       "সানা (শুরুর দোয়া) পড়া",
-      "ফাতিহার পর 'আমীন' বলা",
-      "অবস্থান পরিবর্তনের সময় তাকবির বলা",
+      "ফাতিহার পর 'আমীন' বলা (হানাফি ফিকহে নীরবে)",
+      "অবস্থান পরিবর্তনের সময় তাকবির বলা (হাম্বলি মাযহাবে ওয়াজিব)",
     ],
   },
   breaks: {
     title: "What Breaks Prayer",
     titleBn: "যা নামাজ ভঙ্গ করে",
     items: [
-      "Speaking intentionally",
+      "Speaking intentionally (in Hanafi fiqh, even unintentional speech can break the prayer)",
       "Eating or drinking",
-      "Laughing loudly",
+      "Laughing loudly (smiling does not break the prayer; in Hanafi fiqh, loud laughter also breaks wudu, while most other scholars hold it breaks only the prayer)",
       "Turning away from Qibla",
       "Leaving out any Farz act",
       "Breaking Wudu during prayer",
     ],
     itemsBn: [
-      "ইচ্ছাকৃতভাবে কথা বলা",
+      "ইচ্ছাকৃতভাবে কথা বলা (হানাফি ফিকহে অনিচ্ছাকৃত কথাও নামাজ ভঙ্গ করতে পারে)",
       "খাওয়া বা পান করা",
-      "উচ্চস্বরে হাসা",
+      "উচ্চস্বরে হাসা (মুচকি হাসিতে নামাজ ভাঙে না; হানাফি ফিকহে উচ্চস্বরে হাসলে অজুও ভাঙে, তবে অধিকাংশ আলেমের মতে শুধু নামাজ ভাঙে)",
       "কিবলা থেকে ফিরে যাওয়া",
       "কোনো ফরজ কাজ ছেড়ে দেওয়া",
       "নামাজের মধ্যে অজু ভেঙে যাওয়া",
@@ -347,8 +362,8 @@ const PRAYER_STEPS = [
     name: "Qiyam (Standing)",
     nameBn: "কিয়াম",
     icon: "🧍",
-    action: "Place right hand over left on chest, look at the place of Sujood",
-    actionBn: "বুকের উপর ডান হাত বাম হাতের উপর রাখুন, সিজদার স্থানে দৃষ্টি রাখুন",
+    action: "Place the right hand over the left below the navel (men) or on the chest (women), and look at the place of Sujood",
+    actionBn: "পুরুষরা নাভির নিচে (মহিলারা বুকের উপর) ডান হাত বাম হাতের উপর রাখুন এবং সিজদার স্থানে দৃষ্টি রাখুন",
     recitation: "Recite Sana, then Surah Fatiha, then another Surah",
     recitationMeaning: "Begin with opening supplication, then Al-Fatiha, then any Surah",
     recitationMeaningBn: "শুরুতে সানা, তারপর সূরা ফাতিহা, তারপর যেকোনো সূরা পড়ুন",
@@ -449,7 +464,14 @@ const PRAYER_STEPS = [
 ];
 
 // Prayer Duas Data
-const PRAYER_DUAS = [
+// Phase C (2026-10-05): optional madhhab/context note shown under the meaning.
+interface DuaEntry {
+  id: string; name: string; nameBn: string; arabic: string;
+  transliteration: string; transliterationBn: string;
+  meaning: string; meaningBn: string;
+  note?: string; noteBn?: string;
+}
+const PRAYER_DUAS: DuaEntry[] = [
   {
     id: "sana",
     name: "Sana (Opening Dua)",
@@ -522,8 +544,10 @@ const PRAYER_DUAS = [
   },
   {
     id: "taraweeh-dua",
-    name: "Dua After 4 Rakats of Taraweeh",
-    nameBn: "তারাবীহর ৪ রাকাত পর দোয়া",
+    name: "Tasbih After 4 Rakats of Taraweeh (customary — optional)",
+    nameBn: "তারাবীহর ৪ রাকাত পর তাসবীহ (প্রচলিত — ঐচ্ছিক)",
+    note: "Quoted by Hanafi jurists (Radd al-Muhtar 2/46) as one suggested form of dhikr between sets of four rak'ats. It is not a Prophetic sunnah and is optional — any dhikr may be recited.",
+    noteBn: "হানাফি ফকিহগণ (রদ্দুল মুহতার ২/৪৬) চার রাকাতের মাঝে একটি প্রস্তাবিত জিকির হিসেবে এটি উল্লেখ করেছেন। এটি রাসূলুল্লাহ ﷺ-এর সুন্নত নয় এবং ঐচ্ছিক — যেকোনো জিকির পড়া যায়।",
     arabic: "سُبْحَانَ ذِي الْمُلْكِ وَالْمَلَكُوتِ سُبْحَانَ ذِي الْعِزَّةِ وَالْعَظَمَةِ وَالْهَيْبَةِ وَالْقُدْرَةِ وَالْكِبْرِيَاءِ وَالْجَبَرُوتِ سُبْحَانَ الْمَلِكِ الْحَيِّ الَّذِي لَا يَنَامُ وَلَا يَمُوتُ أَبَدًا سُبُّوحٌ قُدُّوسٌ رَبُّنَا وَرَبُّ الْمَلَائِكَةِ وَالرُّوحِ",
     transliteration: "Subhana dhil mulki wal malakuti, subhana dhil izzati wal azamati wal haibati wal qudrati wal kibriyai wal jabarut. Subhanal malikil hayyilladhi la yanamu wa la yamutu abadan. Subbuhun quddusun rabbuna wa rabbul malaikati war ruh.",
     transliterationBn: "সুবহানা যিল মুলকি ওয়াল মালাকুতি, সুবহানা যিল ইযযাতি ওয়াল আযামাতি ওয়াল হাইবাতি ওয়াল কুদরাতি ওয়াল কিবরিয়াই ওয়াল জাবারুতি। সুবহানাল মালিকিল হাইয়্যিল্লাযী লা ইয়ানামু ওয়া লা ইয়ামুতু আবাদান। সুব্বুহুন কুদ্দুসুন রব্বুনা ওয়া রব্বুল মালায়িকাতি ওয়ার রুহ।",
@@ -532,8 +556,10 @@ const PRAYER_DUAS = [
   },
   {
     id: "dua-qunut",
-    name: "Dua Qunut (Witr Prayer)",
-    nameBn: "দোয়া কুনুত (বিতর নামাজ)",
+    name: "Dua Qunut (Witr Prayer) — Hanafi wording",
+    nameBn: "দোয়া কুনুত (বিতর নামাজ) — হানাফি পাঠ",
+    note: "This is the qunut transmitted from 'Umar ibn al-Khattab (ra), used in the Hanafi school. The Shafi'i and Hanbali schools use the wording taught to al-Hasan ibn 'Ali (ra): 'Allahumma ihdini fiman hadayt…' (Abu Dawud 1425; Tirmidhi 464); the Maliki school has no qunut in Witr.",
+    noteBn: "এটি উমর ইবনুল খাত্তাব (রাঃ) থেকে বর্ণিত কুনুত, হানাফি মাযহাবে ব্যবহৃত। শাফেয়ি ও হাম্বলি মাযহাবে আল-হাসান ইবনে আলী (রাঃ)-কে শেখানো পাঠ ব্যবহৃত হয়: 'আল্লাহুম্মা ইহদিনী ফীমান হাদাইত…' (আবু দাউদ ১৪২৫; তিরমিযি ৪৬৪); মালেকি মাযহাবে বিতরে কুনুত নেই।",
     arabic: "اللَّهُمَّ إِنَّا نَسْتَعِينُكَ وَنَسْتَغْفِرُكَ وَنُؤْمِنُ بِكَ وَنَتَوَكَّلُ عَلَيْكَ وَنُثْنِي عَلَيْكَ الْخَيْرَ وَنَشْكُرُكَ وَلَا نَكْفُرُكَ وَنَخْلَعُ وَنَتْرُكُ مَنْ يَفْجُرُكَ اللَّهُمَّ إِيَّاكَ نَعْبُدُ وَلَكَ نُصَلِّي وَنَسْجُدُ وَإِلَيْكَ نَسْعَىٰ وَنَحْفِدُ وَنَرْجُو رَحْمَتَكَ وَنَخْشَىٰ عَذَابَكَ إِنَّ عَذَابَكَ بِالْكُفَّارِ مُلْحِقٌ",
     transliteration: "Allahumma inna nasta'inuka wa nastaghfiruka wa nu'minu bika wa natawakkalu 'alayka wa nuthni 'alaykal khayr. Wa nashkuruka wa la nakfuruka wa nakhla'u wa natruku man yafjuruk. Allahumma iyyaka na'budu wa laka nusalli wa nasjudu wa ilayka nas'a wa nahfidu wa narju rahmataka wa nakhsha 'adhabaka inna 'adhabaka bil kuffari mulhiq.",
     transliterationBn: "আল্লাহুম্মা ইন্না নাসতায়ীনুকা ওয়া নাসতাগফিরুকা ওয়া নু'মিনু বিকা ওয়া নাতাওয়াক্কালু আলাইকা ওয়া নুসনী আলাইকাল খাইর। ওয়া নাশকুরুকা ওয়া লা নাকফুরুকা ওয়া নাখলাউ ওয়া নাতরুকু মাই ইয়াফজুরুক। আল্লাহুম্মা ইয়্যাকা না'বুদু ওয়া লাকা নুসাল্লি ওয়া নাসজুদু ওয়া ইলাইকা নাস'আ ওয়া নাহফিদু ওয়া নারজু রাহমাতাকা ওয়া নাখশা আযাবাকা ইন্না আযাবাকা বিল কুফফারি মুলহিক।",
@@ -606,6 +632,15 @@ const NiyahCard = ({ niyah, isBengali }: NiyahCardProps) => (
           {isBengali ? niyah.meaningBn : niyah.meaning}
         </p>
       </div>
+
+      {/* Phase C: madhhab/context note */}
+      {niyah.note && (
+        <div className="mx-4 mb-5 rounded-2xl bg-white/5 border border-white/10 p-4">
+          <p className={`text-white/60 text-sm leading-[1.9] ${isBengali ? "font-bangla" : ""}`}>
+            {isBengali ? (niyah.noteBn || niyah.note) : niyah.note}
+          </p>
+        </div>
+      )}
     </div>
   </motion.div>
 );
@@ -669,6 +704,15 @@ const DuaCard = ({ dua, isBengali }: DuaCardProps) => (
           {isBengali ? dua.meaningBn : dua.meaning}
         </p>
       </div>
+
+      {/* Phase C: madhhab/context note */}
+      {dua.note && (
+        <div className="mx-4 mb-5 rounded-2xl bg-white/5 border border-white/10 p-4">
+          <p className={`text-white/60 text-sm leading-[1.9] ${isBengali ? "font-bangla" : ""}`}>
+            {isBengali ? (dua.noteBn || dua.note) : dua.note}
+          </p>
+        </div>
+      )}
     </div>
   </motion.div>
 );
@@ -889,6 +933,19 @@ export default function PrayerGuidePage() {
                 </motion.div>
               ) : (
                 <motion.div key="niyah-list" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                  {/* Phase C (PC-01): two-part niyyah disclaimer — heart intention vs. educational formulas */}
+                  <div className="mb-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+                    <p className={`text-sm text-white/70 leading-relaxed ${isBengali ? "font-bangla" : ""}`}>
+                      {isBengali
+                        ? "নিয়ত অন্তরে থাকে — মুখে কিছু না বললেও আন্তরিক নিয়তসহ আপনার নামাজ সহিহ হবে। এটিই ইসলামের ইমামগণের ঐকমত্যের অবস্থান।"
+                        : "Intention (niyyah) resides in the heart — your prayer is valid with a sincere intention even if you say nothing aloud. This is the agreed position of the imams of Islam."}
+                    </p>
+                    <p className={`text-sm text-white/70 leading-relaxed mt-2 ${isBengali ? "font-bangla" : ""}`}>
+                      {isBengali
+                        ? "নিচের আরবি বাক্যগুলো নিয়ত স্থির রাখতে সহায়তার জন্য হানাফি নামাজ-শিক্ষা বইয়ে শেখানো পরবর্তীকালের শিক্ষামূলক বাক্য। এগুলো রাসূলুল্লাহ ﷺ থেকে আসেনি। নিয়ত মুখে বলা নিয়ে আলেমগণ মতভেদ করেছেন: কেউ কেউ মনোযোগের সহায়ক হিসেবে এটিকে পছন্দনীয় বলেছেন, আবার কেউ কেউ এটিকে বিদআত বলেছেন। নামাজ সহিহ হওয়ার জন্য এগুলো বলা আবশ্যক নয়।"
+                        : "The Arabic wordings below are later educational formulas taught in Hanafi prayer guides to help you focus your intention. They are not from the Prophet ﷺ. Scholars have differed about saying the intention aloud: some later scholars considered it desirable as an aid to focus, while others considered it an innovation. Saying these wordings is not required for your prayer to be valid."}
+                    </p>
+                  </div>
                   <div className="relative mb-4">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400/50" />
                     <Input
@@ -937,6 +994,14 @@ export default function PrayerGuidePage() {
 
           {/* Learning Tab */}
           <TabsContent value="learning" className="mt-0">
+            {/* Phase C (PC-02): Hanafi scope note */}
+            <div className="mb-4 p-4 rounded-2xl bg-white/5 border border-white/10">
+              <p className={`text-sm text-white/70 leading-relaxed ${isBengali ? "font-bangla" : ""}`}>
+                {isBengali
+                  ? "নোট: এই গাইড হানাফি ফিকহ অনুসরণ করে। কিছু বিধানে অন্যান্য মাযহাবের মতভেদ থাকতে পারে।"
+                  : "Note: This guide follows Hanafi fiqh. Other schools of thought may differ on some rulings."}
+              </p>
+            </div>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}

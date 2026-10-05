@@ -684,10 +684,13 @@ const renderPrayerGuideNiyah = () => {
       ${n.arabic ? `<p class="mt-3 text-xl font-semibold text-foreground" lang="ar" dir="rtl">${esc(n.arabic)}</p>` : ""}
       ${n.transliteration ? `<p class="mt-2 text-sm text-muted-foreground">${esc(n.transliteration)}</p>` : ""}
       ${n.meaning ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(n.meaning)}</p>` : ""}
+      ${n.note ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(n.note)}</p>` : ""}
     </li>`).join("");
   return `
     <section>
       <h2 class="px-1 text-xl font-bold text-foreground">Niyah for each prayer</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">Intention (niyyah) resides in the heart — your prayer is valid with a sincere intention even if you say nothing aloud. This is the agreed position of the imams of Islam.</p>
+      <p class="mt-1 text-sm leading-7 text-muted-foreground">The Arabic wordings below are later educational formulas taught in Hanafi prayer guides to help you focus your intention. They are not from the Prophet ﷺ. Scholars have differed about saying the intention aloud: some later scholars considered it desirable as an aid to focus, while others considered it an innovation. Saying these wordings is not required for your prayer to be valid.</p>
       <ul class="mt-3 space-y-4">${items}</ul>
     </section>`;
 };
@@ -712,6 +715,7 @@ const renderPrayerGuideLearning = () => {
   return `
     <section>
       <h2 class="px-1 text-xl font-bold text-foreground">Learn about prayer</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">Note: This guide follows Hanafi fiqh. Other schools of thought may differ on some rulings.</p>
       <div class="mt-3 space-y-4">${blocks}</div>
     </section>`;
 };
@@ -727,6 +731,7 @@ const renderPrayerGuideDuas = () => {
       ${d.arabic ? `<p class="mt-3 text-xl font-semibold text-foreground" lang="ar" dir="rtl">${esc(d.arabic)}</p>` : ""}
       ${d.transliteration ? `<p class="mt-2 text-sm text-muted-foreground">${esc(d.transliteration)}</p>` : ""}
       ${d.meaning ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(d.meaning)}</p>` : ""}
+      ${d.note ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(d.note)}</p>` : ""}
     </li>`).join("");
   return `
     <section>
