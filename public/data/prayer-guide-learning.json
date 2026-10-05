@@ -1,0 +1,98 @@
+{
+  "whatIsPrayer": {
+    "title": "What is Salah (Prayer)?",
+    "titleBn": "সালাত (নামাজ) কী?",
+    "content": [
+      "Salah is the second pillar of Islam and the most important act of worship after Shahada.",
+      "It is a direct connection between the worshipper and Allah.",
+      "Muslims pray five times a day: Fajr, Dhuhr, Asr, Maghrib, and Isha.",
+      "Prayer purifies the soul and keeps believers away from evil."
+    ],
+    "contentBn": [
+      "সালাত ইসলামের দ্বিতীয় স্তম্ভ এবং শাহাদার পর সবচেয়ে গুরুত্বপূর্ণ ইবাদত।",
+      "এটি বান্দা এবং আল্লাহর মধ্যে সরাসরি সংযোগ।",
+      "মুসলমানরা দিনে পাঁচ ওয়াক্ত নামাজ পড়ে: ফজর, যোহর, আসর, মাগরিব এবং ইশা।",
+      "নামাজ আত্মাকে পবিত্র করে এবং মুমিনদের মন্দ কাজ থেকে দূরে রাখে।"
+    ]
+  },
+  "farz": {
+    "title": "Farz (Obligatory) of Prayer",
+    "titleBn": "নামাজের ফরজসমূহ",
+    "items": [
+      "Takbir Tahrimah - Saying 'Allahu Akbar' to begin",
+      "Qiyam - Standing position",
+      "Qira'at - Reciting from the Quran",
+      "Ruku - Bowing position",
+      "Sujood - Prostration (twice in each rakat)",
+      "Qa'dah Akhirah - Final sitting position"
+    ],
+    "itemsBn": [
+      "তাকবীরে তাহরীমা - 'আল্লাহু আকবার' বলে শুরু করা",
+      "কিয়াম - দাঁড়ানো অবস্থা",
+      "কিরাআত - কুরআন তেলাওয়াত",
+      "রুকু - ঝুঁকে যাওয়া",
+      "সিজদা - প্রতি রাকাতে দুইবার সিজদা করা",
+      "কাদাহ আখিরাহ - শেষ বৈঠক"
+    ]
+  },
+  "wajib": {
+    "title": "Wajib (Necessary) of Prayer",
+    "titleBn": "নামাজের ওয়াজিবসমূহ",
+    "items": [
+      "Reciting Surah Fatiha in every rakat",
+      "Reciting a Surah after Fatiha in first two rakats",
+      "Performing Ruku and Sujood in order",
+      "Maintaining tranquility in each position",
+      "Sitting for Tashahhud",
+      "Saying Salam to end the prayer"
+    ],
+    "itemsBn": [
+      "প্রতি রাকাতে সূরা ফাতিহা পড়া",
+      "প্রথম দুই রাকাতে ফাতিহার পর একটি সূরা পড়া",
+      "যথাক্রমে রুকু ও সিজদা করা",
+      "প্রতিটি অবস্থানে স্থিরতা বজায় রাখা",
+      "তাশাহুদের জন্য বসা",
+      "সালাম দিয়ে নামাজ শেষ করা"
+    ]
+  },
+  "sunnah": {
+    "title": "Sunnah of Prayer",
+    "titleBn": "নামাজের সুন্নতসমূহ",
+    "items": [
+      "Raising hands during Takbir",
+      "Placing right hand over left on chest",
+      "Looking at the place of prostration",
+      "Reciting Sana (opening dua)",
+      "Saying 'Ameen' after Fatiha",
+      "Saying Takbir when changing positions"
+    ],
+    "itemsBn": [
+      "তাকবিরের সময় হাত তোলা",
+      "বুকের উপর ডান হাত বাম হাতের উপর রাখা",
+      "সিজদার স্থানে দৃষ্টি রাখা",
+      "সানা (শুরুর দোয়া) পড়া",
+      "ফাতিহার পর 'আমীন' বলা",
+      "অবস্থান পরিবর্তনের সময় তাকবির বলা"
+    ]
+  },
+  "breaks": {
+    "title": "What Breaks Prayer",
+    "titleBn": "যা নামাজ ভঙ্গ করে",
+    "items": [
+      "Speaking intentionally",
+      "Eating or drinking",
+      "Laughing loudly",
+      "Turning away from Qibla",
+      "Leaving out any Farz act",
+      "Breaking Wudu during prayer"
+    ],
+    "itemsBn": [
+      "ইচ্ছাকৃতভাবে কথা বলা",
+      "খাওয়া বা পান করা",
+      "উচ্চস্বরে হাসা",
+      "কিবলা থেকে ফিরে যাওয়া",
+      "কোনো ফরজ কাজ ছেড়ে দেওয়া",
+      "নামাজের মধ্যে অজু ভেঙে যাওয়া"
+    ]
+  }
+}

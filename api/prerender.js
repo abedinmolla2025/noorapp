@@ -5,6 +5,12 @@ import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/baby
 import { assignAllahNameSlugs, isValidAllahNameSlugSegment } from "../src/lib/allahNameSlug.js";
 
 const SITE_ORIGIN = "https://noorapp.in";
+
+// Phase A (2026-10-05): route-specific OG images so prerender and SPA emit the
+// identical og:image. Only routes listed here override the default og-image.png.
+const TOOL_OG_IMAGES = {
+  "/prayer-guide": `${SITE_ORIGIN}/og-prayer-guide.png`,
+};
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
 const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
 const LOCAL_CANONICAL_OG_SLUGS = new Set([
@@ -432,8 +438,8 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/prayer-guide": {
-    title: "Prayer Guide | Salah and Wudu Guidance | Noor",
-    description: "Use Noor's prayer guide to review key Salah steps, Wudu guidance and daily prayer information in a clear format.",
+    title: "Prayer Guide | Step-by-Step Salah Guide | Noor",
+    description: "Use Noor's prayer guide to review key Salah steps, Niyah wordings, recitations and Duas in a clear English and Bengali format.",
     heading: "Prayer Guide",
     intro: "This guide is designed as a simple reference for reviewing the structure and essential considerations of daily prayer.",
     sections: [
@@ -666,6 +672,86 @@ const renderPrayerGuideSteps = () => {
     </section>`;
 };
 
+// Prayer Guide Phase A (2026-10-05): crawler parity for the Niyah tab.
+// Content mirrors src/pages/PrayerGuidePage.tsx NIYAH_DATA via prayer-guide-niyah.json.
+const renderPrayerGuideNiyah = () => {
+  const list = loadToolData("prayer-guide-niyah.json");
+  if (!Array.isArray(list) || list.length === 0) return "";
+  const items = list.map((n) => `
+    <li class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-foreground">${esc(n.name || "")}${n.nameBn ? ` <span class="font-normal text-muted-foreground">(${esc(n.nameBn)})</span>` : ""}</h3>
+      <p class="mt-1 text-sm font-semibold text-primary">${esc(n.rakats || "")}${n.rakatsBn ? ` <span class="font-normal text-muted-foreground">(${esc(n.rakatsBn)})</span>` : ""}</p>
+      ${n.arabic ? `<p class="mt-3 text-xl font-semibold text-foreground" lang="ar" dir="rtl">${esc(n.arabic)}</p>` : ""}
+      ${n.transliteration ? `<p class="mt-2 text-sm text-muted-foreground">${esc(n.transliteration)}</p>` : ""}
+      ${n.meaning ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(n.meaning)}</p>` : ""}
+    </li>`).join("");
+  return `
+    <section>
+      <h2 class="px-1 text-xl font-bold text-foreground">Niyah for each prayer</h2>
+      <ul class="mt-3 space-y-4">${items}</ul>
+    </section>`;
+};
+
+// Prayer Guide Phase A (2026-10-05): crawler parity for the Learn tab.
+// Content mirrors src/pages/PrayerGuidePage.tsx PRAYER_LEARNING via prayer-guide-learning.json.
+const renderPrayerGuideLearning = () => {
+  const data = loadToolData("prayer-guide-learning.json");
+  if (!data || typeof data !== "object" || Array.isArray(data)) return "";
+  const sections = Object.values(data);
+  if (sections.length === 0) return "";
+  const blocks = sections.map((s) => {
+    const bullets = s.content || s.items || [];
+    if (!Array.isArray(bullets) || bullets.length === 0) return "";
+    return `
+    <div class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-foreground">${esc(s.title || "")}${s.titleBn ? ` <span class="font-normal text-muted-foreground">(${esc(s.titleBn)})</span>` : ""}</h3>
+      <ul class="mt-2 space-y-2">${bullets.map((b) => `<li class="text-sm leading-7 text-muted-foreground">✦ ${esc(b)}</li>`).join("")}</ul>
+    </div>`;
+  }).join("");
+  if (!blocks) return "";
+  return `
+    <section>
+      <h2 class="px-1 text-xl font-bold text-foreground">Learn about prayer</h2>
+      <div class="mt-3 space-y-4">${blocks}</div>
+    </section>`;
+};
+
+// Prayer Guide Phase A (2026-10-05): crawler parity for the Duas tab.
+// Content mirrors src/pages/PrayerGuidePage.tsx PRAYER_DUAS via prayer-guide-duas.json.
+const renderPrayerGuideDuas = () => {
+  const list = loadToolData("prayer-guide-duas.json");
+  if (!Array.isArray(list) || list.length === 0) return "";
+  const items = list.map((d) => `
+    <li class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h3 class="text-lg font-bold text-foreground">${esc(d.name || "")}${d.nameBn ? ` <span class="font-normal text-muted-foreground">(${esc(d.nameBn)})</span>` : ""}</h3>
+      ${d.arabic ? `<p class="mt-3 text-xl font-semibold text-foreground" lang="ar" dir="rtl">${esc(d.arabic)}</p>` : ""}
+      ${d.transliteration ? `<p class="mt-2 text-sm text-muted-foreground">${esc(d.transliteration)}</p>` : ""}
+      ${d.meaning ? `<p class="mt-1 text-sm leading-7 text-muted-foreground">${esc(d.meaning)}</p>` : ""}
+    </li>`).join("");
+  return `
+    <section>
+      <h2 class="px-1 text-xl font-bold text-foreground">Duas recited during prayer</h2>
+      <ul class="mt-3 space-y-4">${items}</ul>
+    </section>`;
+};
+
+// Prayer Guide Phase A (2026-10-05): FAQ JSON-LD parity with the SPA (SeoHead).
+// Uses only the FAQ entries defined for /prayer-guide in src/components/seo/SeoHead.tsx.
+const prayerGuideFaqJsonLd = () => {
+  const faqs = [
+    { q: "Can beginners learn Salah on Noor?", a: "Absolutely. The prayer guide is designed for beginners with clear Bengali and English instructions for every step of Salah." },
+  ];
+  return `<script type="application/ld+json">${JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqs.map((f) => ({
+      "@type": "Question",
+      name: f.q,
+      acceptedAnswer: { "@type": "Answer", text: f.a },
+    })),
+  })}</script>`;
+};
+
 const renderDhikrList = () => {
   const list = loadToolData("dhikr-list.json");
   if (!Array.isArray(list) || list.length === 0) return "";
@@ -716,7 +802,7 @@ const renderHijriCalendar = () => {
 const buildToolContent = async (routePath) => {
   switch (routePath) {
     case "/99-names": return renderNamesOfAllah();
-    case "/prayer-guide": return renderPrayerGuideSteps();
+    case "/prayer-guide": return renderPrayerGuideSteps() + renderPrayerGuideNiyah() + renderPrayerGuideLearning() + renderPrayerGuideDuas();
     case "/tasbih": return renderDhikrList();
     case "/calendar": return renderHijriCalendar();
     default: return "";
@@ -2462,6 +2548,8 @@ export default async function handler(req, res) {
       title = page.title;
       description = page.description;
       bodyContent = renderStaticPage(page, await buildToolContent(routePath));
+      // Phase A (2026-10-05): FAQ JSON-LD parity with the SPA for /prayer-guide.
+      if (routePath === "/prayer-guide") extraStructuredData += prayerGuideFaqJsonLd();
     }
 
     // --- Contact Page ---
@@ -2610,7 +2698,7 @@ export default async function handler(req, res) {
       title,
       description,
       canonical: canonicalUrl,
-      ogImage: req.storyOgImage || `${SITE_ORIGIN}/og-image.png`,
+      ogImage: req.storyOgImage || TOOL_OG_IMAGES[routePath] || `${SITE_ORIGIN}/og-image.png`,
       body: bodyContent,
       extraStructuredData,
       robots: robotsDirective,

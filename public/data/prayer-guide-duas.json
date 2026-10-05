@@ -1,0 +1,92 @@
+[
+  {
+    "id": "sana",
+    "name": "Sana (Opening Dua)",
+    "nameBn": "সানা",
+    "arabic": "سُبْحَانَكَ اللَّهُمَّ وَبِحَمْدِكَ وَتَبَارَكَ اسْمُكَ وَتَعَالَىٰ جَدُّكَ وَلَا إِلَٰهَ غَيْرُكَ",
+    "transliteration": "Subhanaka Allahumma wa bihamdika wa tabarakasmuka wa ta'ala jadduka wa la ilaha ghairuk",
+    "transliterationBn": "সুবহানাকা আল্লাহুম্মা ওয়া বিহামদিকা ওয়া তাবারাকাসমুকা ওয়া তা'আলা জাদ্দুকা ওয়া লা ইলাহা গাইরুক",
+    "meaning": "Glory be to You, O Allah, and praise be to You. Blessed is Your name and exalted is Your majesty. There is no god but You.",
+    "meaningBn": "হে আল্লাহ! আপনার পবিত্রতা ও প্রশংসা ঘোষণা করছি। আপনার নাম বরকতময়, আপনার মর্যাদা সুউচ্চ। আপনি ছাড়া কোনো উপাস্য নেই।"
+  },
+  {
+    "id": "ruku",
+    "name": "Ruku Tasbih",
+    "nameBn": "রুকুর তাসবীহ",
+    "arabic": "سُبْحَانَ رَبِّيَ الْعَظِيمِ",
+    "transliteration": "Subhana Rabbiyal Azeem",
+    "transliterationBn": "সুবহানা রব্বিয়াল আযীম",
+    "meaning": "Glory be to my Lord, the Magnificent. (Recite 3 times)",
+    "meaningBn": "আমার মহান রবের পবিত্রতা ঘোষণা করছি। (৩ বার পড়ুন)"
+  },
+  {
+    "id": "sujood",
+    "name": "Sujood Tasbih",
+    "nameBn": "সিজদার তাসবীহ",
+    "arabic": "سُبْحَانَ رَبِّيَ الْأَعْلَىٰ",
+    "transliteration": "Subhana Rabbiyal A'la",
+    "transliterationBn": "সুবহানা রব্বিয়াল আ'লা",
+    "meaning": "Glory be to my Lord, the Most High. (Recite 3 times)",
+    "meaningBn": "আমার সর্বোচ্চ রবের পবিত্রতা ঘোষণা করছি। (৩ বার পড়ুন)"
+  },
+  {
+    "id": "tashahhud",
+    "name": "Tashahhud (At-Tahiyyat)",
+    "nameBn": "তাশাহুদ",
+    "arabic": "التَّحِيَّاتُ لِلَّهِ وَالصَّلَوَاتُ وَالطَّيِّبَاتُ السَّلَامُ عَلَيْكَ أَيُّهَا النَّبِيُّ وَرَحْمَةُ اللَّهِ وَبَرَكَاتُهُ السَّلَامُ عَلَيْنَا وَعَلَىٰ عِبَادِ اللَّهِ الصَّالِحِينَ أَشْهَدُ أَنْ لَا إِلَٰهَ إِلَّا اللَّهُ وَأَشْهَدُ أَنَّ مُحَمَّدًا عَبْدُهُ وَرَسُولُهُ",
+    "transliteration": "At-tahiyyatu lillahi was-salawatu wat-tayyibat. Assalamu 'alayka ayyuhan-nabiyyu wa rahmatullahi wa barakatuh. Assalamu 'alayna wa 'ala 'ibadillahis-salihin. Ash-hadu alla ilaha illallah wa ash-hadu anna Muhammadan 'abduhu wa rasuluh.",
+    "transliterationBn": "আত্তাহিয়্যাতু লিল্লাহি ওয়াস্‌সালাওয়াতু ওয়াত্তায়্যিবাতু। আস্‌সালামু আলাইকা আইয়্যুহান্নাবিয়্যু ওয়া রাহমাতুল্লাহি ওয়া বারাকাতুহু। আস্‌সালামু আলাইনা ওয়া আলা ইবাদিল্লাহিস্ সালিহীন। আশহাদু আল্লা ইলাহা ইল্লাল্লাহু ওয়া আশহাদু আন্না মুহাম্মাদান আবদুহু ওয়া রাসূলুহু।",
+    "meaning": "All greetings, prayers, and good things are for Allah. Peace be upon you, O Prophet, and the mercy of Allah and His blessings. Peace be upon us and upon the righteous servants of Allah. I bear witness that there is no god but Allah, and I bear witness that Muhammad is His servant and messenger.",
+    "meaningBn": "সকল সম্মান, নামাজ ও পবিত্র কথা আল্লাহর জন্য। হে নবী! আপনার উপর শান্তি, আল্লাহর রহমত ও বরকত বর্ষিত হোক। আমাদের ও আল্লাহর নেক বান্দাদের উপর শান্তি বর্ষিত হোক। আমি সাক্ষ্য দিচ্ছি, আল্লাহ ছাড়া কোনো উপাস্য নেই এবং মুহাম্মদ (সাঃ) তাঁর বান্দা ও রাসূল।"
+  },
+  {
+    "id": "durood",
+    "name": "Durood Ibrahim",
+    "nameBn": "দুরুদ ইব্রাহীম",
+    "arabic": "اللَّهُمَّ صَلِّ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ كَمَا صَلَّيْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ مَجِيدٌ اللَّهُمَّ بَارِكْ عَلَىٰ مُحَمَّدٍ وَعَلَىٰ آلِ مُحَمَّدٍ كَمَا بَارَكْتَ عَلَىٰ إِبْرَاهِيمَ وَعَلَىٰ آلِ إِبْرَاهِيمَ إِنَّكَ حَمِيدٌ مَجِيدٌ",
+    "transliteration": "Allahumma salli 'ala Muhammadin wa 'ala ali Muhammadin kama sallayta 'ala Ibrahima wa 'ala ali Ibrahima innaka Hamidum Majid. Allahumma barik 'ala Muhammadin wa 'ala ali Muhammadin kama barakta 'ala Ibrahima wa 'ala ali Ibrahima innaka Hamidum Majid.",
+    "transliterationBn": "আল্লাহুম্মা সাল্লি আলা মুহাম্মাদিন ওয়া আলা আলি মুহাম্মাদিন কামা সাল্লাইতা আলা ইব্রাহীমা ওয়া আলা আলি ইব্রাহীমা ইন্নাকা হামীদুম মাজীদ। আল্লাহুম্মা বারিক আলা মুহাম্মাদিন ওয়া আলা আলি মুহাম্মাদিন কামা বারাকতা আলা ইব্রাহীমা ওয়া আলা আলি ইব্রাহীমা ইন্নাকা হামীদুম মাজীদ।",
+    "meaning": "O Allah, send blessings upon Muhammad and upon the family of Muhammad, as You sent blessings upon Ibrahim and the family of Ibrahim. You are indeed Praiseworthy, Glorious. O Allah, bless Muhammad and the family of Muhammad as You blessed Ibrahim and the family of Ibrahim. You are indeed Praiseworthy, Glorious.",
+    "meaningBn": "হে আল্লাহ! মুহাম্মদ ও তাঁর বংশধরদের উপর রহমত বর্ষণ করুন যেমন ইব্রাহীম ও তাঁর বংশধরদের উপর করেছেন। নিশ্চয়ই আপনি প্রশংসিত, মহিমান্বিত। হে আল্লাহ! মুহাম্মদ ও তাঁর বংশধরদের উপর বরকত দিন যেমন ইব্রাহীম ও তাঁর বংশধরদের উপর দিয়েছেন। নিশ্চয়ই আপনি প্রশংসিত, মহিমান্বিত।"
+  },
+  {
+    "id": "dua-masura",
+    "name": "Dua Masura (Final Dua)",
+    "nameBn": "দোয়া মাসুরা",
+    "arabic": "رَبَّنَا آتِنَا فِي الدُّنْيَا حَسَنَةً وَفِي الْآخِرَةِ حَسَنَةً وَقِنَا عَذَابَ النَّارِ",
+    "transliteration": "Rabbana atina fid-dunya hasanatan wa fil-akhirati hasanatan wa qina 'adhaban-nar",
+    "transliterationBn": "রব্বানা আতিনা ফিদ্দুনইয়া হাসানাতাও ওয়া ফিল আখিরাতি হাসানাতাও ওয়া ক্বিনা আযাবান্নার",
+    "meaning": "Our Lord, give us good in this world and good in the Hereafter, and save us from the punishment of the Fire.",
+    "meaningBn": "হে আমাদের রব! আমাদের দুনিয়াতে কল্যাণ দিন, আখেরাতেও কল্যাণ দিন এবং আমাদের জাহান্নামের আগুন থেকে রক্ষা করুন।"
+  },
+  {
+    "id": "lailatul-qadr-dua",
+    "name": "Dua for Lailatul Qadr",
+    "nameBn": "লাইলাতুল কদরের দোয়া",
+    "arabic": "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي",
+    "transliteration": "Allahumma innaka 'afuwwun tuhibbul 'afwa fa'fu 'anni",
+    "transliterationBn": "আল্লাহুম্মা ইন্নাকা আফুউউন তুহিব্বুল আফওয়া ফা'ফু আন্নি",
+    "meaning": "O Allah, You are the One Who pardons greatly, and You love to pardon, so pardon me.",
+    "meaningBn": "হে আল্লাহ! নিশ্চয়ই আপনি ক্ষমাশীল, আপনি ক্ষমা করতে ভালোবাসেন, তাই আমাকে ক্ষমা করুন।"
+  },
+  {
+    "id": "taraweeh-dua",
+    "name": "Dua After 4 Rakats of Taraweeh",
+    "nameBn": "তারাবীহর ৪ রাকাত পর দোয়া",
+    "arabic": "سُبْحَانَ ذِي الْمُلْكِ وَالْمَلَكُوتِ سُبْحَانَ ذِي الْعِزَّةِ وَالْعَظَمَةِ وَالْهَيْبَةِ وَالْقُدْرَةِ وَالْكِبْرِيَاءِ وَالْجَبَرُوتِ سُبْحَانَ الْمَلِكِ الْحَيِّ الَّذِي لَا يَنَامُ وَلَا يَمُوتُ أَبَدًا سُبُّوحٌ قُدُّوسٌ رَبُّنَا وَرَبُّ الْمَلَائِكَةِ وَالرُّوحِ",
+    "transliteration": "Subhana dhil mulki wal malakuti, subhana dhil izzati wal azamati wal haibati wal qudrati wal kibriyai wal jabarut. Subhanal malikil hayyilladhi la yanamu wa la yamutu abadan. Subbuhun quddusun rabbuna wa rabbul malaikati war ruh.",
+    "transliterationBn": "সুবহানা যিল মুলকি ওয়াল মালাকুতি, সুবহানা যিল ইযযাতি ওয়াল আযামাতি ওয়াল হাইবাতি ওয়াল কুদরাতি ওয়াল কিবরিয়াই ওয়াল জাবারুতি। সুবহানাল মালিকিল হাইয়্যিল্লাযী লা ইয়ানামু ওয়া লা ইয়ামুতু আবাদান। সুব্বুহুন কুদ্দুসুন রব্বুনা ওয়া রব্বুল মালায়িকাতি ওয়ার রুহ।",
+    "meaning": "Glory be to the Owner of Kingdom and Dominion. Glory be to the Owner of Honour, Greatness, Awe, Power, Pride and Majesty. Glory be to the Sovereign, the Living, Who neither sleeps nor dies. Most Holy, Most Pure, our Lord and Lord of the angels and the Spirit.",
+    "meaningBn": "পবিত্র তিনি যিনি রাজত্ব ও মহিমার অধিকারী। পবিত্র তিনি যিনি সম্মান, মহত্ত্ব, প্রতাপ, শক্তি, বড়ত্ব ও প্রভুত্বের অধিকারী। পবিত্র তিনি যিনি চিরঞ্জীব, যিনি ঘুমান না এবং কখনো মৃত্যুবরণ করেন না। তিনি পবিত্র, মহাপবিত্র, আমাদের রব এবং ফেরেশতাদের ও রূহের রব।"
+  },
+  {
+    "id": "dua-qunut",
+    "name": "Dua Qunut (Witr Prayer)",
+    "nameBn": "দোয়া কুনুত (বিতর নামাজ)",
+    "arabic": "اللَّهُمَّ إِنَّا نَسْتَعِينُكَ وَنَسْتَغْفِرُكَ وَنُؤْمِنُ بِكَ وَنَتَوَكَّلُ عَلَيْكَ وَنُثْنِي عَلَيْكَ الْخَيْرَ وَنَشْكُرُكَ وَلَا نَكْفُرُكَ وَنَخْلَعُ وَنَتْرُكُ مَنْ يَفْجُرُكَ اللَّهُمَّ إِيَّاكَ نَعْبُدُ وَلَكَ نُصَلِّي وَنَسْجُدُ وَإِلَيْكَ نَسْعَىٰ وَنَحْفِدُ وَنَرْجُو رَحْمَتَكَ وَنَخْشَىٰ عَذَابَكَ إِنَّ عَذَابَكَ بِالْكُفَّارِ مُلْحِقٌ",
+    "transliteration": "Allahumma inna nasta'inuka wa nastaghfiruka wa nu'minu bika wa natawakkalu 'alayka wa nuthni 'alaykal khayr. Wa nashkuruka wa la nakfuruka wa nakhla'u wa natruku man yafjuruk. Allahumma iyyaka na'budu wa laka nusalli wa nasjudu wa ilayka nas'a wa nahfidu wa narju rahmataka wa nakhsha 'adhabaka inna 'adhabaka bil kuffari mulhiq.",
+    "transliterationBn": "আল্লাহুম্মা ইন্না নাসতায়ীনুকা ওয়া নাসতাগফিরুকা ওয়া নু'মিনু বিকা ওয়া নাতাওয়াক্কালু আলাইকা ওয়া নুসনী আলাইকাল খাইর। ওয়া নাশকুরুকা ওয়া লা নাকফুরুকা ওয়া নাখলাউ ওয়া নাতরুকু মাই ইয়াফজুরুক। আল্লাহুম্মা ইয়্যাকা না'বুদু ওয়া লাকা নুসাল্লি ওয়া নাসজুদু ওয়া ইলাইকা নাস'আ ওয়া নাহফিদু ওয়া নারজু রাহমাতাকা ওয়া নাখশা আযাবাকা ইন্না আযাবাকা বিল কুফফারি মুলহিক।",
+    "meaning": "O Allah! We seek Your help, we ask Your forgiveness, we believe in You, we rely on You, and we praise You for all goodness. We thank You and we are not ungrateful. We reject and abandon anyone who disobeys You. O Allah! You alone we worship, to You we pray and prostrate, and to You we hasten. We hope for Your mercy and fear Your punishment, for surely Your punishment will overtake the disbelievers.",
+    "meaningBn": "হে আল্লাহ! আমরা আপনার সাহায্য চাই, আপনার কাছে ক্ষমা প্রার্থনা করি, আপনার প্রতি ঈমান রাখি, আপনার উপর ভরসা করি এবং সকল কল্যাণে আপনার প্রশংসা করি। আমরা আপনার শুকরিয়া আদায় করি, অকৃতজ্ঞ হই না। আপনার অবাধ্যদের সাথে সম্পর্ক ত্যাগ করি। হে আল্লাহ! একমাত্র আপনারই ইবাদত করি, আপনার জন্যই নামাজ পড়ি ও সিজদা করি, আপনার দিকেই ছুটে যাই, আপনার রহমতের আশা করি ও শাস্তিকে ভয় করি। নিশ্চয়ই আপনার শাস্তি কাফেরদের উপর পতিত হবে।"
+  }
+]

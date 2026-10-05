@@ -189,7 +189,6 @@ const PAGE_FAQS: Record<string, { q: string; a: string }[]> = {
     { q: "Does Noor show prayer countdown?", a: "Yes, Noor displays a live countdown timer to the next prayer, helping you prepare for Salah on time." },
   ],
   "/prayer-guide": [
-    { q: "Does Noor have a step-by-step prayer guide?", a: "Yes, Noor provides a complete Namaz tutorial with illustrations covering Wudu, Takbir, Qiyam, Ruku, Sujud, and Tashahhud." },
     { q: "Can beginners learn Salah on Noor?", a: "Absolutely. The prayer guide is designed for beginners with clear Bengali and English instructions for every step of Salah." },
   ],
   "/tasbih": [

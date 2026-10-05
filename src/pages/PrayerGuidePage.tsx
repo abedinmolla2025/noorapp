@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Volume2, BookOpen, Heart, Footprints, HandHeart, Sparkles, ChevronRight, ArrowLeft } from "lucide-react";
+import { Search, BookOpen, Heart, Footprints, HandHeart, Sparkles, ChevronRight, ArrowLeft } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Helmet } from "react-helmet-async";
@@ -560,16 +560,13 @@ const NiyahCard = ({ niyah, isBengali }: NiyahCardProps) => (
       {/* Header */}
       <div className="flex justify-between items-center px-6 pt-5 pb-3">
         <div>
-          <h3 className={`text-lg font-semibold text-white ${isBengali ? "font-bangla" : ""}`}>
+          <h2 className={`text-lg font-semibold text-white ${isBengali ? "font-bangla" : ""}`}>
             {isBengali ? niyah.nameBn : niyah.name}
-          </h3>
+          </h2>
           <p className={`text-sm text-white/60 ${isBengali ? "font-bangla" : ""}`}>
             {isBengali ? niyah.rakatsBn : niyah.rakats}
           </p>
         </div>
-        <button className="p-2 rounded-full bg-white/10 text-[hsl(45,93%,58%)] hover:bg-white/20 transition">
-          <Volume2 className="w-4 h-4" />
-        </button>
       </div>
 
       {/* Arabic Section */}
@@ -630,12 +627,9 @@ const DuaCard = ({ dua, isBengali }: DuaCardProps) => (
     <div className="relative">
       {/* Header */}
       <div className="flex justify-between items-center px-6 pt-5 pb-3">
-        <h3 className={`text-lg font-semibold text-white ${isBengali ? "font-bangla" : ""}`}>
+        <h2 className={`text-lg font-semibold text-white ${isBengali ? "font-bangla" : ""}`}>
           {isBengali ? dua.nameBn : dua.name}
-        </h3>
-        <button className="p-2 rounded-full bg-white/10 text-[hsl(45,93%,58%)] hover:bg-white/20 transition">
-          <Volume2 className="w-4 h-4" />
-        </button>
+        </h2>
       </div>
 
       {/* Arabic Section */}
@@ -707,9 +701,9 @@ const StepCard = ({ step, index, isBengali, strings }: StepCardProps) => (
               {strings.step} {step.id}
             </span>
           </div>
-           <h3 className={`text-lg font-semibold text-white ${isBengali ? "font-bangla" : ""}`}>
+           <h2 className={`text-lg font-semibold text-white ${isBengali ? "font-bangla" : ""}`}>
              {isBengali ? step.nameBn : step.name}
-           </h3>
+           </h2>
            
            <p className={`text-sm text-white/70 mb-3 ${isBengali ? "font-bangla leading-[1.8]" : ""}`}>
              <strong className="text-[hsl(45,93%,58%)]">{strings.action}:</strong> {isBengali ? step.actionBn : step.action}
@@ -763,7 +757,7 @@ const LearningSection = ({ title, items }: LearningSectionProps) => (
     <div className="absolute top-0 right-0 w-32 h-32 bg-[hsl(45,93%,58%)]/10 rounded-full blur-2xl" />
     <div className="absolute bottom-0 left-0 w-24 h-24 bg-[hsl(158,64%,30%)]/30 rounded-full blur-xl" />
     <div className="relative p-6">
-      <h3 className="text-base font-semibold text-white mb-4">{title}</h3>
+      <h2 className="text-base font-semibold text-white mb-4">{title}</h2>
       <ul className="space-y-2.5">
         {items.map((item, i) => (
           <li key={i} className="flex items-start gap-2.5 text-sm text-white/80">
@@ -827,8 +821,8 @@ export default function PrayerGuidePage() {
   const canonicalUrl = `${SITE_ORIGIN}/prayer-guide`;
   const pageTitle = isBengali ? "নামাজ শিক্ষা — ধাপে ধাপে নামাজ শিখুন | Noor" : "Prayer Guide — Learn How to Pray Step by Step | Noor";
   const pageDescription = isBengali 
-    ? "ওযু, নামাজের নিয়ম, সূরা, দোয়া ও তাশাহহুদ সহ সম্পূর্ণ নামাজ শিক্ষা গাইড। ধাপে ধাপে নামাজ শিখুন।" 
-    : "Step-by-step Salah tutorial with illustrations covering Wudu, prayer steps, Surahs, and Duas.";
+    ? "নামাজের নিয়ম, নিয়ত, দোয়া ও তাশাহহুদ সহ সম্পূর্ণ নামাজ শিক্ষা গাইড। ধাপে ধাপে নামাজ শিখুন।" 
+    : "Step-by-step Salah guide covering prayer steps, Niyah wordings, recitations and Duas in English and Bengali.";
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-[#0a1f1c] via-[#0f2922] to-[#071510] pb-24">
@@ -899,6 +893,7 @@ export default function PrayerGuidePage() {
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400/50" />
                     <Input
                       placeholder={strings.searchPlaceholder}
+                      aria-label={strings.searchPlaceholder}
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
                       className="pl-10 bg-emerald-950/50 border-emerald-800/30 text-emerald-100 placeholder:text-emerald-500/50"
@@ -950,9 +945,9 @@ export default function PrayerGuidePage() {
               <div className="absolute top-0 right-0 w-32 h-32 bg-[hsl(45,93%,58%)]/10 rounded-full blur-2xl" />
               <div className="absolute bottom-0 left-0 w-24 h-24 bg-[hsl(158,64%,30%)]/30 rounded-full blur-xl" />
               <div className="relative p-6">
-                <h3 className="text-base font-semibold text-white flex items-center gap-2 mb-4">
+                <h2 className="text-base font-semibold text-white flex items-center gap-2 mb-4">
                   🕌 {isBengali ? PRAYER_LEARNING.whatIsPrayer.titleBn : PRAYER_LEARNING.whatIsPrayer.title}
-                </h3>
+                </h2>
                 <ul className="space-y-2.5">
                   {(isBengali ? PRAYER_LEARNING.whatIsPrayer.contentBn : PRAYER_LEARNING.whatIsPrayer.content).map((item, i) => (
                     <li key={i} className="flex items-start gap-2.5 text-sm text-white/80">

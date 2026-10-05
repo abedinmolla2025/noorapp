@@ -43,11 +43,12 @@ function extractLiteral(source, marker) {
   throw new Error(`unbalanced literal after marker: ${marker}`);
 }
 
-function evalLiteral(literal, label) {
+function evalLiteral(literal, label, allowObject = false) {
   // Source is our own trusted TSX; the extracted literal is plain data
   // (verified: no backticks, template placeholders or JSX inside).
   const value = new Function(`"use strict"; return (${literal});`)();
-  if (!Array.isArray(value)) throw new Error(`${label}: expected array`);
+  if (!Array.isArray(value) && !(allowObject && value && typeof value === "object"))
+    throw new Error(`${label}: expected array`);
   return value;
 }
 
@@ -65,6 +66,28 @@ const jobs = [
     out: "prayer-guide-steps.json",
     expect: 9,
     label: "prayer guide steps",
+  },
+  {
+    src: "src/pages/PrayerGuidePage.tsx",
+    marker: "const NIYAH_DATA",
+    out: "prayer-guide-niyah.json",
+    expect: 14,
+    label: "prayer guide niyah",
+  },
+  {
+    src: "src/pages/PrayerGuidePage.tsx",
+    marker: "const PRAYER_LEARNING",
+    out: "prayer-guide-learning.json",
+    expect: 5, // object with 5 sections; counted via Object.keys
+    label: "prayer guide learning",
+    allowObject: true,
+  },
+  {
+    src: "src/pages/PrayerGuidePage.tsx",
+    marker: "const PRAYER_DUAS",
+    out: "prayer-guide-duas.json",
+    expect: 9,
+    label: "prayer guide duas",
   },
   {
     src: "src/pages/TasbihPage.tsx",
@@ -93,17 +116,18 @@ const jobs = [
 fs.mkdirSync(outDir, { recursive: true });
 for (const job of jobs) {
   const source = fs.readFileSync(path.join(root, job.src), "utf8");
-  const value = evalLiteral(extractLiteral(source, job.marker), job.label);
-  if (job.expect !== null && value.length !== job.expect) {
+  const value = evalLiteral(extractLiteral(source, job.marker), job.label, job.allowObject);
+  const count = Array.isArray(value) ? value.length : Object.keys(value).length;
+  if (job.expect !== null && count !== job.expect) {
     throw new Error(
-      `[extract-tool-data] ${job.label}: expected ${job.expect} items, got ${value.length} — refusing to write stale data`
+      `[extract-tool-data] ${job.label}: expected ${job.expect} items, got ${count} — refusing to write stale data`
     );
   }
-  if (job.min && value.length < job.min) {
+  if (job.min && count < job.min) {
     throw new Error(`[extract-tool-data] ${job.label}: expected at least ${job.min} items`);
   }
   fs.writeFileSync(path.join(outDir, job.out), JSON.stringify(value, null, 2) + "\n");
-  console.log(`[extract-tool-data] ${job.out}: ${value.length} items`);
+  console.log(`[extract-tool-data] ${job.out}: ${count} items`);
 }
 console.log("[extract-tool-data] done");
 
