@@ -25,6 +25,49 @@ function getAllahNameAllowlist() {
   return [];
 }
 
+// Hadith narration sitemap expansion (2026-10-05): verification-gated by DB slug existence.
+// Each /hadith/h/:slug URL maps to exactly one row in the public hadiths table.
+// Query failure => empty list => no hadith URLs (fail-safe: never a partial set).
+async function getVerifiedHadithRoutes() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
+  // This is the public anon key already used by the browser app and prerenderer;
+  // RLS still limits this request to rows public users may read.
+  const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
+  if (!supabaseKey) return [];
+  // Paginated: PostgREST clamps limit to 1000 rows.
+  const rows = [];
+  try {
+    for (let offset = 0; ; offset += 1000) {
+      const query = new URLSearchParams({
+        select: "id,slug",
+        book_key: "eq.bukhari",
+        order: "hadith_number.asc",
+        limit: "1000",
+        offset: String(offset),
+      });
+      const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/hadiths?${query}`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (!response.ok) return []; // fail safe: no partial sitemap set
+      const batch = await response.json();
+      rows.push(...(batch || []));
+      if (!batch || batch.length < 1000) break;
+    }
+    const seen = new Set();
+    const routes = [];
+    for (const row of rows) {
+      const slug = typeof row?.slug === "string" ? row.slug.trim() : "";
+      // Defensive: non-empty, URL-safe slugs only; duplicates dropped.
+      if (!slug || !/^[a-z0-9-]+$/.test(slug) || seen.has(slug)) continue;
+      seen.add(slug);
+      routes.push(`/hadith/h/${slug}`);
+    }
+    return routes;
+  } catch {
+    return []; // fail safe: never publish a partial set
+  }
+}
+
 function getAllahNamesData() {
   const candidates = [
     path.join(process.cwd(), "public", "data", "names-of-allah.json"),
@@ -297,6 +340,9 @@ export default async function handler(req, res) {
 
   // 99 Names of Allah detail pages: verification-gated allowlist only.
   routes.push(...await getVerifiedAllahNameRoutes());
+
+  // Individual hadith narration pages: verification-gated by DB slug existence (2026-10-05).
+  routes.push(...await getVerifiedHadithRoutes());
 
   const seenLocs = new Set();
   const uniqueRoutes = routes.filter((route) => {
