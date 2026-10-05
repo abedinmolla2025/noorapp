@@ -29,6 +29,7 @@ const DuaDetailPage = lazy(() => import("./pages/dua/DuaDetailPage"));
 const DuaCategoryPage = lazy(() => import("./pages/dua/DuaCategoryPage"));
 const QuranPage = lazy(() => import("./pages/QuranPage"));
 const NamesOfAllahPage = lazy(() => import("./pages/NamesOfAllahPage"));
+const AllahNameDetailPage = lazy(() => import("./pages/AllahNameDetailPage"));
 const PrayerTimesPage = lazy(() => import("./pages/PrayerTimesPage"));
 const BukhariLanguageSelectPage = lazy(() => import("./pages/bukhari/BukhariLanguageSelectPage"));
 const BukhariLangPage = lazy(() => import("./pages/bukhari/BukhariLangPage"));
@@ -107,6 +108,7 @@ const AppRoutes = () => {
           <Route path="/quran/:surahId" element={<QuranPage />} />
           <Route path="/quran/:surahId/:ayahId" element={<QuranPage />} />
           <Route path="/99-names" element={<NamesOfAllahPage />} />
+          <Route path="/99-names/:slug" element={<AllahNameDetailPage />} />
           <Route path="/prayer-times" element={<PrayerTimesPage />} />
 
           {/* Hadith routes */}

@@ -167,6 +167,28 @@ console.log("[extract-tool-data] done");
   console.log(`[extract-tool-data] baby-name-sitemap-allowlist.json: ${allowlist.length} slugs`);
 }
 
+// 99 Names of Allah sitemap allowlist (verification-gated rollout):
+// only these slugs exist as /99-names/:slug pages and sitemap URLs.
+// Copied verbatim so api/prerender.js and api/sitemap.js share the gate.
+{
+  const srcFile = path.join(root, "src", "data", "allah-name-sitemap-allowlist.json");
+  const allowlist = JSON.parse(fs.readFileSync(srcFile, "utf8"));
+  if (!Array.isArray(allowlist) || allowlist.length === 0) {
+    throw new Error("[extract-tool-data] allah-name allowlist: expected non-empty array — refusing to write stale data");
+  }
+  for (const s of allowlist) {
+    if (typeof s !== "string" || !/^[a-z0-9-]{1,80}$/.test(s)) {
+      throw new Error("[extract-tool-data] allah-name allowlist: invalid slug entry — refusing");
+    }
+  }
+  if (new Set(allowlist).size !== allowlist.length) {
+    throw new Error("[extract-tool-data] allah-name allowlist: duplicate slugs — refusing");
+  }
+  const outFile = path.join(outDir, "allah-name-sitemap-allowlist.json");
+  fs.writeFileSync(outFile, JSON.stringify(allowlist));
+  console.log(`[extract-tool-data] allah-name-sitemap-allowlist.json: ${allowlist.length} slugs`);
+}
+
 // Hadith chapter introductions (evidence-first research, 2026-09-28):
 // only chapters whose every published claim reached VERIFIED (>=2
 // independent reputable sources) AND whose app title matches the actual

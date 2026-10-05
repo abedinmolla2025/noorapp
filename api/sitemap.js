@@ -3,6 +3,62 @@ const ORIGIN = "https://noorapp.in";
 import fs from "node:fs";
 import path from "node:path";
 import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/babyNameSlug.js";
+import { assignAllahNameSlugs, isValidAllahNameSlugSegment } from "../src/lib/allahNameSlug.js";
+
+// 99 Names of Allah detail rollout: verification-gated sitemap.
+// Only slugs listed in public/data/allah-name-sitemap-allowlist.json are emitted.
+// Missing file => empty list => no Allah-name URLs (fail-safe).
+function getAllahNameAllowlist() {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", "allah-name-sitemap-allowlist.json"),
+    path.join(process.cwd(), "dist", "data", "allah-name-sitemap-allowlist.json"),
+    path.join("/var/task", "dist", "data", "allah-name-sitemap-allowlist.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (Array.isArray(doc)) return doc.filter((s) => isValidAllahNameSlugSegment(s));
+      }
+    } catch { /* try next candidate */ }
+  }
+  return [];
+}
+
+function getAllahNamesData() {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", "names-of-allah.json"),
+    path.join(process.cwd(), "dist", "data", "names-of-allah.json"),
+    path.join("/var/task", "dist", "data", "names-of-allah.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (Array.isArray(doc)) return doc;
+      }
+    } catch { /* try next candidate */ }
+  }
+  return [];
+}
+
+async function getVerifiedAllahNameRoutes() {
+  const allowlist = getAllahNameAllowlist();
+  const names = getAllahNamesData();
+  if (allowlist.length === 0 || names.length === 0) return [];
+  const slugMap = assignAllahNameSlugs(names.map((n) => ({ id: n.id, transliteration: n.transliteration })));
+  const seen = new Set();
+  const routes = [];
+  for (const n of names) {
+    const slug = slugMap.get(n.id);
+    if (slug && allowlist.includes(slug) && !seen.has(slug)) {
+      seen.add(slug);
+      routes.push(`/99-names/${encodeURIComponent(slug)}`);
+    }
+  }
+  // Safety: never emit more than the allowlist size.
+  return routes.filter((r) => allowlist.includes(decodeURIComponent(r.split("/")[2])));
+}
 
 // Baby-name detail rollout (2026-10-05): verification-gated sitemap.
 // Only slugs listed in public/data/baby-name-sitemap-allowlist.json are emitted.
@@ -238,6 +294,9 @@ export default async function handler(req, res) {
 
   // Baby-name detail pages: verification-gated allowlist only (2026-10-05).
   routes.push(...await getVerifiedNameRoutes());
+
+  // 99 Names of Allah detail pages: verification-gated allowlist only.
+  routes.push(...await getVerifiedAllahNameRoutes());
 
   const seenLocs = new Set();
   const uniqueRoutes = routes.filter((route) => {

@@ -2,6 +2,7 @@ import { createClient } from "@supabase/supabase-js";
 import fs from "fs";
 import path from "path";
 import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/babyNameSlug.js";
+import { assignAllahNameSlugs, isValidAllahNameSlugSegment } from "../src/lib/allahNameSlug.js";
 
 const SITE_ORIGIN = "https://noorapp.in";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
@@ -589,6 +590,28 @@ async function fetchPublishedBabyNames() {
     cachedBabyNames = [];
   }
   return cachedBabyNames;
+}
+
+// /99-names/:slug pages. Same fail-closed pattern as baby names.
+// Missing file => empty list => no detail pages render (fail-safe).
+let allahNameAllowlist = null;
+const getAllahNameAllowlist = () => {
+  if (allahNameAllowlist === null) {
+    const data = loadToolData("allah-name-sitemap-allowlist.json");
+    allahNameAllowlist = Array.isArray(data) ? data.filter((s) => isValidAllahNameSlugSegment(s)) : [];
+  }
+  return allahNameAllowlist;
+};
+
+// 99 Names records, cached per cold start. Fail-closed: on error return []
+// so the detail branch 404s instead of rendering a broken page.
+let cachedAllahNames = null;
+function getAllahNames() {
+  if (cachedAllahNames === null) {
+    const data = loadToolData("names-of-allah.json");
+    cachedAllahNames = Array.isArray(data) ? data : [];
+  }
+  return cachedAllahNames;
 }
 
 // Quiz duplicate -> canonical-primary map (2026-09-28 forensic consolidation).
@@ -2381,6 +2404,54 @@ export default async function handler(req, res) {
           name: nameRecord.title,
           description: nameRecord.content_en,
           inDefinedTermSet: { "@type": "DefinedTermSet", name: "Islamic Baby Names", url: `${SITE_ORIGIN}/baby-names` },
+        })}</script>`;
+      }
+    }
+
+    // --- 99 Names of Allah Detail Pages (/99-names/:slug) ---
+    // Verification-gated rollout: only allowlisted slugs render.
+    // Every field below comes from the names-of-allah.json record — no invented
+    // content. Non-allowlisted or unknown slugs fail closed (404 + noindex).
+    else if (routePath.startsWith("/99-names/") && routePath.split("/")[2]) {
+      const allahSlug = decodeURIComponent(routePath.split("/")[2]);
+      let allahRecord = null;
+      let allahPrev = null;
+      let allahNext = null;
+      if (isValidAllahNameSlugSegment(allahSlug) && getAllahNameAllowlist().includes(allahSlug)) {
+        const allahRows = getAllahNames();
+        const allahSlugMap = assignAllahNameSlugs(allahRows.map((r) => ({ id: r.id, transliteration: r.transliteration })));
+        allahRecord = allahRows.find((r) => allahSlugMap.get(r.id) === allahSlug) || null;
+        if (allahRecord) {
+          const ordered = [...allahRows].sort((a, b) => a.id - b.id);
+          const idx = ordered.findIndex((r) => r.id === allahRecord.id);
+          if (idx > 0) allahPrev = { ...ordered[idx - 1], _slug: allahSlugMap.get(ordered[idx - 1].id) };
+          if (idx < ordered.length - 1) allahNext = { ...ordered[idx + 1], _slug: allahSlugMap.get(ordered[idx + 1].id) };
+        }
+      }
+      if (!allahRecord) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Name not found | Noor";
+        description = "This page does not exist.";
+        bodyContent = `<main class="min-h-screen bg-background p-8"><div class="mx-auto max-w-2xl rounded-2xl border border-border bg-card p-8"><h1 class="text-2xl font-bold">Name not found</h1><p class="mt-3 text-muted-foreground">This page does not exist.</p><a class="mt-6 inline-block text-primary hover:underline" href="/99-names">Browse the 99 names</a></div></main>`;
+      } else {
+        const prevLink = allahPrev && allahPrev._slug
+          ? `<a href="/99-names/${allahPrev._slug}" class="text-sm text-primary hover:underline">← ${esc(allahPrev.transliteration)}</a>`
+          : `<span></span>`;
+        const nextLink = allahNext && allahNext._slug
+          ? `<a href="/99-names/${allahNext._slug}" class="text-sm text-primary hover:underline">${esc(allahNext.transliteration)} →</a>`
+          : `<span></span>`;
+        canonicalUrl = `${SITE_ORIGIN}/99-names/${encodeURIComponent(allahSlug)}`;
+        title = `${allahRecord.transliteration} (${allahRecord.arabic}) — Meaning in English & Bengali | Noor`;
+        description = shortenMetaText(`Allah's name ${allahRecord.transliteration} (${allahRecord.arabic}) means "${allahRecord.meaning}" in English and "${allahRecord.bengaliMeaning}" in Bengali.`, 160);
+        robotsDirective = "index,follow";
+        bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl"><nav aria-label="Breadcrumb" class="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground"><a href="/" class="hover:underline">Home</a><span aria-hidden="true">›</span><a href="/99-names" class="hover:underline">99 Names of Allah</a><span aria-hidden="true">›</span><span>${esc(allahRecord.transliteration)}</span></nav><div class="rounded-2xl border border-border bg-card p-6 shadow-sm"><p class="text-sm font-semibold text-primary">Name ${allahRecord.id} of 99</p><h1 class="mt-2 text-3xl font-bold">${esc(allahRecord.transliteration)} <span lang="ar" dir="rtl">(${esc(allahRecord.arabic)})</span></h1><div class="mt-6 grid gap-4"><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meaning — English</h2><p lang="en" class="mt-2 text-lg leading-relaxed">${esc(allahRecord.meaning)}</p></section><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">অর্থ — বাংলা</h2><p lang="bn" class="mt-2 text-lg leading-relaxed">${esc(allahRecord.bengaliMeaning)}</p></section><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Details</h2><p class="mt-2 text-sm">Transliteration: ${esc(allahRecord.transliteration)} · Position: ${allahRecord.id} of 99</p></section></div><nav aria-label="More names" class="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4">${prevLink}${nextLink}</nav><p class="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">Meanings are provided for educational purposes.</p></div></article></main>`;
+        extraStructuredData = `<script type="application/ld+json">${JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "DefinedTerm",
+          name: allahRecord.transliteration,
+          description: allahRecord.meaning,
+          inDefinedTermSet: { "@type": "DefinedTermSet", name: "99 Names of Allah", url: `${SITE_ORIGIN}/99-names` },
         })}</script>`;
       }
     }
