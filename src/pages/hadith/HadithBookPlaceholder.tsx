@@ -95,10 +95,8 @@ const bookMeta: Record<string, BookMeta> = {
           (শরহ) রচিত হয়েছে।
         </p>
         <p>
-          On the Noor app, you can browse the complete Sahih Muslim collection, search by keyword or
-          chapter, and read each hadith with its Arabic text, full narrator chain, and Bengali
-          translation. Our goal is to make this timeless treasury of prophetic wisdom accessible to
-          every Bengali-speaking Muslim. <strong>সহীহ মুসলিম পড়ুন — বাংলা অনুবাদ সহ — সম্পূর্ণ বিনামূল্যে।</strong>
+          Sahih Muslim is planned for a future release on Noor and is not yet available. Learn about
+          the collection, or read Sahih al-Bukhari now.
         </p>
 
         <h2 className="text-[14px] font-semibold text-foreground">
@@ -279,8 +277,8 @@ const bookMeta: Record<string, BookMeta> = {
           মাদ্রাসাগুলোতে সুনানে আবু দাউদ একটি অপরিহার্য পাঠ্যগ্রন্থ।
         </p>
         <p>
-          On Noor, you can read Sunan Abu Dawud with clear Arabic text and Bengali translation,
-          browse by chapter, and search across thousands of narrations. <strong>সুনানে আবু দাউদ পড়ুন — বাংলা অনুবাদ সহ — সম্পূর্ণ বিনামূল্যে।</strong>
+          Sunan Abu Dawud is planned for a future release on Noor and is not yet available. Learn
+          about the collection, or read Sahih al-Bukhari now.
         </p>
 
         <h2 className="text-[14px] font-semibold text-foreground">

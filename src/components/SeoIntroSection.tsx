@@ -275,11 +275,7 @@ export default function SeoIntroSection() {
               <Link to="/hadith/sahih-bukhari" className="font-medium text-primary hover:underline">
                 Sahih Bukhari
               </Link>{" "}
-              with Arabic text and Bengali translation. You can also read{" "}
-              <Link to="/hadith" className="font-medium text-primary hover:underline">
-                Sahih Muslim
-              </Link>
-              , Jami at-Tirmidhi, and Sunan Abu Dawud from the Hadith section.
+              with Arabic text and Bengali translation. More collections (Sahih Muslim, Jami at-Tirmidhi, Sunan Abu Dawud) are planned for a future release and are not yet available.
             </p>
           </div>
 

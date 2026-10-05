@@ -362,6 +362,7 @@ const STATIC_PAGE_COPY = {
       ["Our mission", "We bring Quran reading, authentic Hadith, prayer times, Dua, Qibla, Islamic stories and learning tools together in one calm and accessible experience."],
       ["Built for daily use", "Noor focuses on practical tools that people return to every day: prayer reminders, Quran reading, supplications, Islamic calendar information and gentle learning activities."],
       ["Trust and responsibility", "We aim to present Islamic content with clear references, respectful language and transparent source information. If you find an error, please contact the Noor team so it can be reviewed."],
+      ["About the developer", "Noor is developed and maintained by ABEDIN MOLLA from India."],
     ],
   },
   "/sources": {

@@ -149,12 +149,6 @@ export const DailyQuizCard = ({ cardClassName, cardCss }: Props) => {
           </Button>
         )}
 
-        {/* Pro hook */}
-        <div className="pt-2 border-t border-white/10 text-center">
-          <p className="text-[11px] text-white/40 font-medium tracking-wide">
-            🔒 Double XP for PRO users
-          </p>
-        </div>
       </div>
     </div>
   );

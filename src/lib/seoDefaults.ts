@@ -77,17 +77,17 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/hadith/muslim": {
     title: "Sahih Muslim — সহীহ মুসলিম হাদিস | Noor",
     description:
-      "Read Sahih Muslim Hadith with Arabic text, Bengali translation, chapter navigation and collection references on Noor App.",
+      "Sahih Muslim is planned for a future release on Noor and is not yet available. Learn about the collection, or read Sahih al-Bukhari now.",
   },
   "/hadith/tirmidhi": {
     title: "Jami at-Tirmidhi — জামে তিরমিযী হাদিস | Noor",
     description:
-      "Explore Jami at-Tirmidhi with Arabic text, Bengali translation, chapter navigation and available hadith grading on Noor App.",
+      "Jami at-Tirmidhi is planned for a future release on Noor and is not yet available. Learn about the collection, or read Sahih al-Bukhari now.",
   },
   "/hadith/abu-dawud": {
     title: "Sunan Abu Dawud — সুনানে আবু দাউদ হাদিস | Noor",
     description:
-      "Read Sunan Abu Dawud with Arabic text, Bengali translation, chapter navigation and collection references on Noor App.",
+      "Sunan Abu Dawud is planned for a future release on Noor and is not yet available. Learn about the collection, or read Sahih al-Bukhari now.",
   },
   "/prayer-guide": {
     title: "Prayer Guide — নামাজ শিক্ষা | Noor",

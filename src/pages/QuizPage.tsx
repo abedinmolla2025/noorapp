@@ -1742,7 +1742,7 @@ const QuizPage = () => {
         </p>
         <h3 className="text-base font-medium text-foreground">কুইজের বৈশিষ্ট্য — Quiz Features</h3>
         <ul className="list-disc list-inside space-y-1">
-          <li>প্রতিদিন ৫টি নতুন প্রশ্ন — 5 fresh questions every day from a verified pool of 315 unique questions</li>
+          <li>প্রতিদিন ৫টি নতুন প্রশ্ন — 5 fresh questions every day from a verified pool of 281 unique questions</li>
           <li>বাংলা ও ইংরেজি উভয় ভাষায় — Bilingual Bengali & English support</li>
           <li>সঠিক উত্তরে ১০ XP — Earn 10 XP per correct answer</li>
           <li>ব্যাজ ও সার্টিফিকেট অর্জন — Unlock badges and generate certificates</li>
