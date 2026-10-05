@@ -40,6 +40,11 @@
       "source": "/sahih-al-bukhari/:lang",
       "destination": "/hadith/sahih-bukhari/:lang",
       "statusCode": 301
+    },
+    {
+      "source": "/dua/surah-an-naas",
+      "destination": "/dua/surah-an-nas",
+      "statusCode": 301
     }
   ],
   "headers": [
