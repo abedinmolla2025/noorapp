@@ -1387,6 +1387,28 @@ export default async function handler(req, res) {
             <a class="mt-6 inline-block rounded-lg bg-[hsl(45,93%,58%)] px-5 py-3 font-semibold text-[hsl(158,64%,15%)]" href="/hadith">Browse hadith collections</a>
           </main>`;
       } else {
+        // Internal linking (2026-10-05): crawlable prev/next anchors mirroring the
+        // SPA HadithDetailPage semantics exactly (same book_key, hadith_number
+        // ordering, slug IS NOT NULL). Bounded single-row queries; first/last
+        // narration omits the missing side; neighbors without a valid slug are
+        // omitted. Plain <a href> only.
+        let prevNextNav = "";
+        try {
+          const [prevRes, nextRes] = await Promise.all([
+            supabase.from("hadiths").select("slug, hadith_number").eq("book_key", hadith.book_key).lt("hadith_number", hadith.hadith_number).not("slug", "is", null).order("hadith_number", { ascending: false }).limit(1).maybeSingle(),
+            supabase.from("hadiths").select("slug, hadith_number").eq("book_key", hadith.book_key).gt("hadith_number", hadith.hadith_number).not("slug", "is", null).order("hadith_number", { ascending: true }).limit(1).maybeSingle(),
+          ]);
+          const validSlug = (r) => (r && typeof r.slug === "string" && /^[a-z0-9-]+$/.test(r.slug.trim()) ? r.slug.trim() : null);
+          const prevSlug = validSlug(prevRes.data);
+          const nextSlug = validSlug(nextRes.data);
+          if (prevSlug || nextSlug) {
+            prevNextNav = `
+              <nav aria-label="Hadith navigation" class="grid grid-cols-2 gap-3">
+                ${prevSlug ? `<a href="/hadith/h/${prevSlug}" class="rounded-2xl bg-white/5 border border-white/10 p-4 hover:border-[hsl(45,93%,58%)]/40"><span class="block text-[10px] uppercase tracking-wide text-white/60">← আগের হাদিস</span><span class="block text-sm font-medium text-white mt-1">হাদিস ${Number(prevRes.data.hadith_number)}</span></a>` : `<span></span>`}
+                ${nextSlug ? `<a href="/hadith/h/${nextSlug}" class="rounded-2xl bg-white/5 border border-white/10 p-4 text-right hover:border-[hsl(45,93%,58%)]/40"><span class="block text-[10px] uppercase tracking-wide text-white/60">পরবর্তী হাদিস →</span><span class="block text-sm font-medium text-white mt-1">হাদিস ${Number(nextRes.data.hadith_number)}</span></a>` : `<span></span>`}
+              </nav>`;
+          }
+        } catch (e) { prevNextNav = ""; }
         const bookLabel = hadith.book_key === "bukhari" ? "Sahih Al-Bukhari" : String(hadith.book_key || "Hadith");
         const heading = `${bookLabel} — Hadith ${hadith.hadith_number}`;
         title = shortenMetaText(`${heading} | অর্থ ও ব্যাখ্যা | Noor`, 70);
@@ -1432,6 +1454,7 @@ export default async function handler(req, res) {
               ${translations}
               ${hadith.explanation_bn ? `<div class="rounded-2xl bg-amber-400/10 border border-amber-400/20 p-5"><h2 class="text-amber-400 font-bold mb-2">ব্যাখ্যা</h2><p class="leading-relaxed text-white/85 whitespace-pre-line">${esc(hadith.explanation_bn)}</p></div>` : ""}
               <p class="text-xs leading-relaxed text-white/50">বাংলা অনুবাদে বন্ধনীতে আধুনিক প্রকাশনী ও ইসলামিক ফাউন্ডেশন বাংলাদেশ সংস্করণের নম্বর দেওয়া আছে। English ও اردو অনুবাদের অনুবাদকের নাম উৎস-ডেটায় সংরক্ষিত নেই।</p>
+              ${prevNextNav}
               <a href="/hadith/sahih-bukhari" class="inline-block rounded-xl bg-white/10 px-5 py-3 font-semibold hover:bg-white/15">← সকল হাদিস</a>
             </main>
           </div>
@@ -1618,6 +1641,33 @@ export default async function handler(req, res) {
           </a>
         `).join("");
         const cardRows = detail ? [detail] : rows;
+        // Internal linking (2026-10-05): compact crawlable index of EVERY narration
+        // in this chapter. Chapter listing pages only (chapterId && !detail);
+        // numeric single-hadith URLs keep their frozen P0 behavior (no index).
+        // Minimal columns, one bounded query, no pagination URLs.
+        let chapterNarrationIndex = "";
+        if (chapterId && !detail) {
+          try {
+            const { data: idxRows } = await supabase
+              .from("hadiths")
+              .select("slug, hadith_number")
+              .eq("book_key", "bukhari")
+              .eq("chapter_id", chapterId)
+              .not("slug", "is", null)
+              .order("hadith_number", { ascending: true });
+            const idxLinks = (idxRows || [])
+              .filter((r) => typeof r.slug === "string" && /^[a-z0-9-]+$/.test(r.slug.trim()))
+              .map((r) => `<a href="/hadith/h/${r.slug.trim()}" class="inline-block rounded-lg bg-white/5 border border-white/10 px-3 py-1.5 text-sm text-white/85 hover:border-[hsl(45,93%,58%)]/50 hover:text-[hsl(45,93%,58%)]">${lang === "bangla" ? "হাদিস" : lang === "urdu" ? "حدیث" : "Hadith"} ${Number(r.hadith_number)}</a>`)
+              .join("");
+            if (idxLinks) {
+              chapterNarrationIndex = `
+              <section>
+                <h2 class="text-lg font-bold mb-3">${lang === "bangla" ? "এই অধ্যায়ের সকল হাদিস" : lang === "urdu" ? "اس باب کی تمام احادیث" : "All hadiths in this chapter"}</h2>
+                <nav aria-label="${lang === "bangla" ? "অধ্যায়ের হাদিস সূচি" : lang === "urdu" ? "باب کی احادیث کی فہرست" : "Chapter hadith index"}" class="flex flex-wrap gap-2">${idxLinks}</nav>
+              </section>`;
+            }
+          } catch (e) { chapterNarrationIndex = ""; }
+        }
         const listMarkup = cardRows.length ? cardRows.map((row) => hadithCardMarkup(row, lang, meta, chapterMap, !!detail)).join("") : `<div class="rounded-3xl border border-dashed border-white/10 bg-white/5 p-8 text-center text-white/75"><p class="font-semibold">${lang === "bangla" ? "এই অধ্যায়ের হাদিস এখন পাওয়া যাচ্ছে না" : lang === "urdu" ? "اس باب کی احادیث اس وقت دستیاب نہیں" : "The hadith text is temporarily unavailable"}</p><p class="mt-2 text-sm text-white/55">${lang === "bangla" ? "অনুগ্রহ করে আবার চেষ্টা করুন অথবা অন্য একটি কিতাব নির্বাচন করুন।" : lang === "urdu" ? "براہ کرم دوبارہ کوشش کریں یا دوسرا باب منتخب کریں۔" : "Please try again or choose another book."}</p></div>`;
 
         bodyContent = `
@@ -1642,6 +1692,7 @@ export default async function handler(req, res) {
                 ${detail ? `<h2 class="text-lg font-bold">${lang === "bangla" ? "হাদিসের বিস্তারিত" : lang === "urdu" ? "حدیث کی تفصیل" : "Hadith details"}</h2>` : `<h2 class="text-lg font-bold">${currentChapter ? esc(getHadithChapterName(currentChapter, lang)) : (lang === "bangla" ? "সকল হাদিস" : lang === "urdu" ? "تمام احادیث" : "All Hadiths")}</h2>`}
                 ${listMarkup}
               </section>
+              ${chapterNarrationIndex}
               ${chapterId && !detail ? `
               <nav aria-label="Chapter navigation" class="flex items-stretch justify-between gap-3 pb-2">
                 ${chapterMap.has(chapterId - 1) ? `<a href="/hadith/sahih-bukhari/${lang}/chapter-${chapterId - 1}" class="flex-1 rounded-2xl border border-white/10 bg-white/5 px-4 py-3 text-left hover:border-[hsl(45,93%,58%)]/50"><span class="block text-[10px] font-bold uppercase tracking-wider text-white/50">← ${lang === "bangla" ? "পূর্ববর্তী অধ্যায়" : lang === "urdu" ? "پچھلا باب" : "Previous"}</span><span class="mt-1 block truncate font-semibold text-white/90">${esc(getHadithChapterName(chapterMap.get(chapterId - 1), lang))}</span></a>` : `<span class="flex-1"></span>`}
