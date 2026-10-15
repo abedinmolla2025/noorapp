@@ -5,7 +5,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -26,7 +26,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -36,7 +36,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -47,7 +47,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -57,7 +57,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -68,7 +68,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -78,7 +78,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -89,7 +89,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -99,7 +99,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -110,7 +110,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -120,7 +120,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -131,7 +131,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -141,7 +141,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -152,7 +152,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -162,7 +162,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -173,7 +173,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -183,7 +183,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -194,7 +194,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -204,7 +204,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -215,7 +215,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -225,7 +225,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -236,7 +236,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -246,7 +246,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -257,7 +257,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -267,7 +267,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -278,7 +278,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -288,7 +288,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -299,7 +299,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -309,7 +309,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -320,7 +320,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -330,7 +330,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -341,7 +341,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -351,7 +351,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -362,7 +362,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -372,7 +372,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -383,7 +383,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -393,7 +393,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -404,7 +404,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -414,7 +414,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -425,7 +425,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -435,7 +435,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -446,7 +446,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -456,7 +456,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -467,7 +467,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -477,7 +477,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -488,7 +488,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -498,7 +498,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -509,7 +509,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -519,7 +519,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -530,7 +530,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -540,7 +540,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -551,7 +551,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -561,7 +561,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -572,7 +572,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -582,7 +582,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -593,7 +593,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -603,7 +603,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -614,7 +614,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -624,7 +624,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -635,7 +635,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -645,7 +645,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -656,7 +656,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -666,7 +666,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -677,7 +677,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -687,7 +687,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -698,7 +698,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -708,7 +708,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -719,7 +719,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -729,7 +729,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -740,7 +740,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -750,7 +750,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -761,7 +761,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -771,7 +771,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -782,7 +782,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -792,7 +792,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -803,7 +803,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -813,7 +813,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -824,7 +824,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -834,7 +834,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -845,7 +845,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -855,7 +855,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -866,7 +866,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -876,7 +876,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -887,7 +887,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -897,7 +897,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -908,7 +908,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -918,7 +918,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -929,7 +929,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -939,7 +939,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -950,7 +950,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -960,7 +960,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -971,7 +971,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -981,7 +981,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -992,7 +992,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1002,7 +1002,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1013,7 +1013,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1023,7 +1023,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1034,7 +1034,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1044,7 +1044,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1055,7 +1055,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1065,7 +1065,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1076,7 +1076,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1086,7 +1086,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1097,7 +1097,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1107,7 +1107,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1118,7 +1118,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1128,7 +1128,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1139,7 +1139,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1149,7 +1149,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1160,7 +1160,7 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
@@ -1170,7 +1170,7 @@
    },
    {
     "name": "Tanzil Quran Metadata",
-    "url": "https://tanzil.net/res/text/metadata/quran-data.js",
+    "url": "https://tanzil.net/",
     "type": "primary"
    }
   ]
@@ -1265,12 +1265,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1318,12 +1318,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1344,12 +1344,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1396,12 +1396,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1422,12 +1422,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1448,12 +1448,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1464,12 +1464,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1480,12 +1480,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1506,12 +1506,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1543,12 +1543,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1569,12 +1569,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -1616,12 +1616,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1632,12 +1632,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1648,12 +1648,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1664,12 +1664,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1680,12 +1680,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1696,12 +1696,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1712,12 +1712,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1728,12 +1728,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1744,12 +1744,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1760,12 +1760,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -1906,12 +1906,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    },
    {
@@ -2005,12 +2005,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2021,12 +2021,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2037,12 +2037,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2053,12 +2053,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2069,12 +2069,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2085,12 +2085,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2101,12 +2101,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2117,12 +2117,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]
@@ -2133,12 +2133,12 @@
   "sources": [
    {
     "name": "Quran.com Chapters API",
-    "url": "https://api.quran.com/api/v4/chapters?language=en",
+    "url": "https://quran.com/",
     "type": "primary"
    },
    {
     "name": "AlQuran Cloud Surah Metadata",
-    "url": "https://api.alquran.cloud/v1/surah",
+    "url": "https://alquran.cloud/",
     "type": "primary"
    }
   ]

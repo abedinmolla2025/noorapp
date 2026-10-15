@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { motion, AnimatePresence } from "framer-motion";
 import { Helmet } from "react-helmet-async";
 import BottomNavigation from "@/components/BottomNavigation";
+import ReviewerNote from "@/components/ReviewerNote";
 import hadithChapterIntros from "@/data/hadith-chapter-intros.json";
 import { selectHadithChapterTitle } from "@/lib/hadithChapterTitle";
 
@@ -699,9 +700,7 @@ export default function BukhariLangPage() {
                   </span>
                 ))}
               </p>
-              <p className="mt-1 text-[10px] italic text-white/35">
-                Source-verified research · Not reviewed by a scholar.
-              </p>
+              <ReviewerNote className="mt-1 text-[10px] italic text-white/35" />
             </div>
           );
         })()}

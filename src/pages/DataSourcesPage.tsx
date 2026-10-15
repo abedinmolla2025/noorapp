@@ -103,7 +103,7 @@ const DataSourcesPage = () => {
             years. It is the primary and highest source of Islamic knowledge.
           </p>
           <ul className="mt-3 list-disc list-inside space-y-1 text-muted-foreground">
-            <li>Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus.</li>
+            <li>Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus. Source: the <a href="https://tanzil.net/" target="_blank" rel="noreferrer" className="text-primary underline">Tanzil project</a> (text kept unmodified).</li>
             <li>Bengali translation: Muhiuddin Khan, served via the AlQuran Cloud API.</li>
             <li>English translation: Saheeh International, served via the AlQuran Cloud API.</li>
             <li>Urdu translation: Ahmed Ali, served via the AlQuran Cloud API.</li>
@@ -162,6 +162,11 @@ const DataSourcesPage = () => {
             classical rulings of Imam al-Bukhari, Imam Muslim, Imam at-Tirmidhi
             and later authorities such as Ibn Hajar al-ʿAsqalani and Shaykh
             Muhammad Nasir ad-Din al-Albani.
+          </p>
+          <p className="mt-3 text-muted-foreground">
+            <span className="font-semibold text-foreground">Bengali translation of Sahih al-Bukhari</span> —
+            translator / publisher: <span className="italic">[নাম দরকার — to be provided by the Noor App team]</span>.
+            English and Urdu translations likewise await translator/publisher attribution.
           </p>
         </section>
 

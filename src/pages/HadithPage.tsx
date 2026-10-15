@@ -16,6 +16,11 @@ const fallbackBooks = [
 export default function HadithPage() {
   const navigate = useNavigate();
 
+  // AdSense review (2026-10-15): planned collections (Muslim, Tirmidhi,
+  // Abu Dawud) are hidden until they launch. Feature flag — set to true to
+  // show them again. No code was deleted.
+  const SHOW_PLANNED_COLLECTIONS = false;
+
   const { data: books } = useQuery({
     queryKey: ["hadith-books"],
     queryFn: async () => {
@@ -30,6 +35,9 @@ export default function HadithPage() {
   });
 
   const hadithBooks = books ?? fallbackBooks;
+  const visibleBooks = SHOW_PLANNED_COLLECTIONS
+    ? hadithBooks
+    : hadithBooks.filter((b) => b.id === "bukhari");
 
   // Counts vary by edition and must not be shown until each book has been verified.
   // Only Sahih al-Bukhari is browsable on Noor; other collections are planned
@@ -151,7 +159,7 @@ export default function HadithPage() {
 
       {/* Book cards */}
       <div className="mx-auto max-w-lg px-4 flex flex-col gap-[14px]">
-        {hadithBooks.map((book, i) => {
+        {visibleBooks.map((book, i) => {
           const isLive = book.id === "bukhari";
           const cardInner = (
             <>

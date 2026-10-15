@@ -5,6 +5,7 @@ import { Helmet } from "react-helmet-async";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuranData, Surah } from "@/hooks/useQuranData";
 import SurahReader from "@/components/SurahReader";
+import ReviewerNote from "@/components/ReviewerNote";
 import surahIntros from "@/data/surah-intros.json";
 
 interface SurahIntro {
@@ -180,9 +181,7 @@ const QuranPage = () => {
                       </span>
                     ))}
                   </p>
-                  <p className="mt-1 text-[10px] italic text-white/35">
-                    Source-verified research · Not reviewed by a scholar
-                  </p>
+                  <ReviewerNote className="mt-1 text-[10px] italic text-white/35" />
                 </div>
               );
             })()}

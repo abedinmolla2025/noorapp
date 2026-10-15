@@ -7,7 +7,7 @@ const PrivacyPolicyPage = () => {
   const { legal, branding } = useGlobalConfig();
 
   const appName = branding.appName || "NOOR";
-  const lastUpdated = legal.privacyPolicyLastUpdated || "2026-08-09";
+  const lastUpdated = legal.privacyPolicyLastUpdated || "2026-10-15";
   const version = legal.legalVersionNumber || "";
   const regionNote = legal.regionComplianceNote || "";
 
@@ -35,7 +35,7 @@ const PrivacyPolicyPage = () => {
         </div>
 
         <section className="bg-primary/5 border border-primary/20 rounded-2xl p-4 text-xs text-muted-foreground">
-          This policy explains local storage, analytics, advertising cookies, third-party processors, data retention, children’s privacy, and how to request deletion or contact us about privacy.
+          This policy explains local storage, analytics, advertising cookies, third-party processors, location data handling, data retention, children’s privacy, and how to request deletion or contact us about privacy.
         </section>
 
         {regionNote && (
@@ -74,16 +74,23 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
-          <h2 className="text-lg font-semibold">3. Usage information / ব্যবহারের তথ্য</h2>
+          <h2 className="text-lg font-semibold">3. Usage information & analytics / ব্যবহারের তথ্য ও অ্যানালিটিক্স</h2>
           <p className="text-muted-foreground">
             The app may collect anonymous usage information (such as which screens are visited
             most) to understand how features are used. This information is aggregated and does
             not identify you personally.
           </p>
           <p className="text-muted-foreground">
+            Analytics tool: <strong className="text-foreground">[name to be provided by the Noor App team]</strong>.
+            Once configured, the tool's name and its data practices will be listed here.
+          </p>
+          <p className="text-muted-foreground">
             অ্যাপের কোন পেজ বেশি ব্যবহার হচ্ছে, কোন ফিচার বেশি দেখা হচ্ছে – এমন কিছু সামগ্রিক
             (anonymous) তথ্য বিশ্লেষণের জন্য ব্যবহার করা হতে পারে, যা কখনই কোনো ব্যবহারকারীকে
             আলাদা করে শনাক্ত করার জন্য ব্যবহৃত হয় না।
+          </p>
+          <p className="text-muted-foreground">
+            অ্যানালিটিক্স টুল: <strong className="text-foreground">[নাম পরে জানানো হবে]</strong>।
           </p>
         </section>
 
@@ -102,7 +109,61 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
-          <h2 className="text-lg font-semibold">5. Advertising & Cookies / বিজ্ঞাপন ও কুকিজ</h2>
+          <h2 className="text-lg font-semibold">5. Data retention / ডেটা সংরক্ষণকাল</h2>
+          <p className="text-muted-foreground">
+            Preferences stored on your device (theme, language, quiz progress, prayer settings)
+            are kept until you clear them yourself — {appName} does not delete them on a schedule,
+            and they never leave your device except through your own platform backups. Anonymous,
+            aggregated usage statistics, if collected, are retained only for as long as needed to
+            improve the app and are then deleted or further anonymized.
+          </p>
+          <p className="text-muted-foreground">
+            আপনার ডিভাইসে সেভ থাকা পছন্দসমূহ (থিম, ভাষা, কুইজ প্রগ্রেস, নামাজের সেটিংস) আপনি নিজে
+            না মুছা পর্যন্ত থেকে যায় — {appName} এগুলো নির্দিষ্ট সময় পর নিজে মুছে দেয় না। সামগ্রিক
+            (anonymous) ব্যবহার-পরিসংখ্যান, যদি সংগ্রহ করা হয়, শুধু অ্যাপ উন্নত করার জন্য যতদিন
+            প্রয়োজন ততদিন রাখা হয়, তারপর মুছে ফেলা হয়।
+          </p>
+        </section>
+
+        <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
+          <h2 className="text-lg font-semibold">6. Children’s privacy / শিশুদের গোপনীয়তা</h2>
+          <p className="text-muted-foreground">
+            {appName} is a general-audience religious app and does not knowingly collect personal
+            information from children under 13. The app has no accounts, no sign-in, and no way for
+            a child to submit personal information to us. If you believe a child has provided us
+            with personal information, contact us through the <a href="/contact" className="text-primary hover:underline">Contact page</a> and
+            we will delete it promptly.
+          </p>
+          <p className="text-muted-foreground">
+            {appName} একটি সাধারণ ধর্মীয় অ্যাপ; ১৩ বছরের কম বয়সী শিশুদের কাছ থেকে আমরা জেনেশুনে
+            কোনো ব্যক্তিগত তথ্য সংগ্রহ করি না। অ্যাপে কোনো অ্যাকাউন্ট বা সাইন-ইন নেই, তাই শিশুর
+            পক্ষে আমাদের কাছে ব্যক্তিগত তথ্য পাঠানোর কোনো উপায় নেই। কোনো শিশু তথ্য দিয়ে থাকলে
+            <a href="/contact" className="text-primary hover:underline">যোগাযোগ পাতার</a> মাধ্যমে জানান — আমরা তা দ্রুত মুছে দেবো।
+          </p>
+        </section>
+
+        <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
+          <h2 className="text-lg font-semibold">7. Deletion requests / ডেটা মুছে ফেলার অনুরোধ</h2>
+          <p className="text-muted-foreground">
+            Because {appName} keeps no accounts and stores your preferences only on your own
+            device, there is usually nothing on our servers to delete. To remove everything:
+          </p>
+          <ul className="list-disc list-inside text-muted-foreground space-y-1 pl-1">
+            <li>Clear the app's local data from your browser or device settings (this removes theme, language, quiz progress and prayer settings).</li>
+            <li>For anything else — for example, if you contacted us and want that correspondence deleted — send a deletion request through the <a href="/contact" className="text-primary hover:underline">Contact page</a>. We respond to deletion requests within 30 days.</li>
+          </ul>
+          <p className="text-muted-foreground">
+            {appName}-এ কোনো অ্যাকাউন্ট নেই এবং আপনার পছন্দ শুধু আপনার ডিভাইসে থাকে, তাই আমাদের
+            সার্ভারে সাধারণত মুছার মতো কিছু থাকে না। সব মুছতে চাইলে:
+          </p>
+          <ul className="list-disc list-inside text-muted-foreground space-y-1 pl-1">
+            <li>ব্রাউজার বা ডিভাইসের সেটিংস থেকে অ্যাপের local data মুছে ফেলুন।</li>
+            <li>অন্য কিছুর জন্য (যেমন যোগাযোগের বার্তা মুছতে চাইলে) <a href="/contact" className="text-primary hover:underline">যোগাযোগ পাতার</a> মাধ্যমে ডিলিশন রিকোয়েস্ট পাঠান — ৩০ দিনের মধ্যে জবাব দেওয়া হয়।</li>
+          </ul>
+        </section>
+
+        <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
+          <h2 className="text-lg font-semibold">8. Advertising & Cookies / বিজ্ঞাপন ও কুকিজ</h2>
           <p className="text-muted-foreground">
             {appName} may display advertisements provided by third-party advertising networks,
             including Google AdSense. These services may use cookies and similar tracking technologies
@@ -164,36 +225,37 @@ const PrivacyPolicyPage = () => {
         </section>
 
         <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
-          <h2 className="text-lg font-semibold">6. Third-party services / তৃতীয় পক্ষের সেবা</h2>
+          <h2 className="text-lg font-semibold">9. Third-party services / তৃতীয় পক্ষের সেবা</h2>
           <p className="text-muted-foreground">
             {appName} uses the following third-party services that may collect data:
           </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-1 pl-1">
-            <li><strong className="text-foreground">Aladhan API</strong> — for accurate prayer time calculations based on your location</li>
-            <li><strong className="text-foreground">OpenStreetMap / Nominatim</strong> — for reverse geocoding your location to display city names</li>
-            <li><strong className="text-foreground">Google AdSense</strong> — for displaying relevant advertisements</li>
+            <li><strong className="text-foreground">Aladhan API</strong> — for prayer time calculations. When you enable location-based prayer times, your <strong className="text-foreground">coordinates (latitude and longitude)</strong> are sent to the Aladhan API to compute the times.</li>
+            <li><strong className="text-foreground">OpenStreetMap / Nominatim</strong> — for reverse geocoding. Your <strong className="text-foreground">coordinates</strong> are sent to Nominatim to display your city name. Coordinates are coarsened before sending and are not stored by {appName}.</li>
+            <li><strong className="text-foreground">Google AdSense</strong> — for displaying relevant advertisements.</li>
+            <li><strong className="text-foreground">Cloudflare</strong> — for content delivery, security and DDoS protection. Cloudflare may process your IP address and request metadata as traffic passes through its network.</li>
           </ul>
           <p className="text-muted-foreground">
             {appName} নিম্নলিখিত তৃতীয় পক্ষের সেবা ব্যবহার করে:
           </p>
           <ul className="list-disc list-inside text-muted-foreground space-y-1 pl-1">
-            <li><strong className="text-foreground">Aladhan API</strong> — নামাজের সঠিক সময় গণনার জন্য</li>
-            <li><strong className="text-foreground">OpenStreetMap</strong> — আপনার অবস্থানের নাম প্রদর্শনের জন্য</li>
-            <li><strong className="text-foreground">Google AdSense</strong> — প্রাসঙ্গিক বিজ্ঞাপন প্রদর্শনের জন্য</li>
+            <li><strong className="text-foreground">Aladhan API</strong> — নামাজের সময় গণনার জন্য। লোকেশনভিত্তিক সময় চালু করলে আপনার <strong className="text-foreground">কোঅর্ডিনেট (অক্ষাংশ ও দ্রাঘিমাংশ)</strong> Aladhan API-তে পাঠানো হয়।</li>
+            <li><strong className="text-foreground">OpenStreetMap / Nominatim</strong> — শহরের নাম দেখানোর জন্য আপনার <strong className="text-foreground">কোঅর্ডিনেট</strong> Nominatim-এ পাঠানো হয়। {appName} কোঅর্ডিনেট সংরক্ষণ করে না।</li>
+            <li><strong className="text-foreground">Google AdSense</strong> — প্রাসঙ্গিক বিজ্ঞাপন প্রদর্শনের জন্য।</li>
+            <li><strong className="text-foreground">Cloudflare</strong> — কনটেন্ট ডেলিভারি, নিরাপত্তা ও DDoS সুরক্ষার জন্য।</li>
           </ul>
         </section>
 
         <section className="bg-card/70 border border-border/60 rounded-2xl shadow-soft p-5 space-y-2">
-          <h2 className="text-lg font-semibold">7. Changes & contact / নীতি পরিবর্তন ও যোগাযোগ</h2>
+          <h2 className="text-lg font-semibold">10. Changes & contact / নীতি পরিবর্তন ও যোগাযোগ</h2>
           <p className="text-muted-foreground">
             This privacy policy may be updated as the app evolves. If you have questions or
-            concerns, you may reach out to the {appName} team through the <a href="/contact" className="text-primary hover:underline">Contact page</a> or via the store page
-            where the app is published.
+            concerns, you may reach out to the {appName} team through the <a href="/contact" className="text-primary hover:underline">Contact page</a>.
           </p>
           <p className="text-muted-foreground">
             ভবিষ্যতে অ্যাপের উন্নয়নের সাথে সাথে এই প্রাইভেসি নীতিমালায় পরিবর্তন আসতে পারে। কোনো
-            প্রশ্ন বা উদ্বেগ থাকলে <a href="/contact" className="text-primary hover:underline">যোগাযোগ পাতার</a> মাধ্যমে কিংবা যেখান থেকে অ্যাপটি ডাউনলোড করেছেন,
-            সেখানকার মাধ্যমে ডেভেলপার টিমের সাথে যোগাযোগ করতে পারবেন।
+            প্রশ্ন বা উদ্বেগ থাকলে <a href="/contact" className="text-primary hover:underline">যোগাযোগ পাতার</a> মাধ্যমে
+            ডেভেলপার টিমের সাথে যোগাযোগ করতে পারবেন।
           </p>
         </section>
       </main>
