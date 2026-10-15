@@ -28,7 +28,7 @@ const DataSourcesPage = () => {
         name: "Where do the Qur'anic translations come from?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Qur'an text and translations are served from the AlQuran Cloud API. The Bengali translation is by Muhiuddin Khan, the English translation is by Saheeh International, and the Urdu translation is by Ahmed Ali. The active translator is shown in the Qur'an reader under the language selector.",
+          text: "Qur'an text and translations are served from Noor App's static dataset (sourced from the AlQuran Cloud API — see the license note in public/data/quran/ATTRIBUTION.md). The Bengali translation is by Muhiuddin Khan, the English translation is by Saheeh International, and the Urdu translation is by Ahmed Ali. The active translator is shown in the Qur'an reader under the language selector.",
         },
       },
       {
@@ -104,9 +104,9 @@ const DataSourcesPage = () => {
           </p>
           <ul className="mt-3 list-disc list-inside space-y-1 text-muted-foreground">
             <li>Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus.</li>
-            <li>Bengali translation: Muhiuddin Khan, served via the AlQuran Cloud API.</li>
-            <li>English translation: Saheeh International, served via the AlQuran Cloud API.</li>
-            <li>Urdu translation: Ahmed Ali, served via the AlQuran Cloud API.</li>
+            <li>Bengali translation: Muhiuddin Khan — static dataset (sourced from AlQuran Cloud).</li>
+            <li>English translation: Saheeh International — static dataset (sourced from AlQuran Cloud).</li>
+            <li>Urdu translation: Ahmed Ali — static dataset (sourced from AlQuran Cloud).</li>
             <li>Verse numbering follows the standard Kufan system.</li>
             <li>The active translator is also shown in the Qur&apos;an reader under the language selector.</li>
           </ul>

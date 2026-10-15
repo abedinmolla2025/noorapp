@@ -549,6 +549,24 @@ const loadToolData = (filename) => {
   return null;
 };
 
+// Quran dataset: static per-surah JSON vendored in public/data/quran/
+// (downloaded once via scripts/download-quran-editions.mjs). Same files the
+// SPA reads — no request-time call to api.alquran.cloud.
+const loadQuranSurah = (edition, surahNum) => {
+  const rel = ["data", "quran", edition, `surah-${surahNum}.json`].join("/");
+  const candidates = [
+    path.join(process.cwd(), "public", rel),
+    path.join(process.cwd(), "dist", rel),
+    path.join("/var/task", "dist", rel),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) return JSON.parse(fs.readFileSync(file, "utf8"));
+    } catch (e) { /* try next candidate */ }
+  }
+  return null;
+};
+
 // Quiz duplicate -> canonical-primary map (2026-09-28 forensic consolidation).
 // Render-layer only: exact-duplicate question URLs canonicalize to the
 // strongest verified record (see QUIZ_FORENSIC_AUDIT_2026-09-28.md and
@@ -1063,14 +1081,10 @@ export default async function handler(req, res) {
       description = "Read all 114 Surahs of the Holy Quran with Arabic text and Bengali translation.";
       
       let surahHtml = "";
-      let surahs = FALLBACK_SURAHS;
-      
-      try {
-        const response = await fetch("https://api.alquran.cloud/v1/surah", { signal: AbortSignal.timeout(5000) });
-        const json = await response.json();
-        if (json.code === 200) surahs = json.data;
-      } catch (e) {
-        console.error("[SSR] Quran API failed, using fallback/DB");
+      // Static dataset (public/data/quran + quran-surahs.json via loadToolData).
+      // No request-time call to api.alquran.cloud.
+      let surahs = loadToolData("quran-surahs.json") || FALLBACK_SURAHS;
+      if (!Array.isArray(surahs) || surahs.length !== 114) {
         try {
           const { data } = await supabase.from("quran_surahs").select("number, english_name, name, number_of_ayahs, english_name_translation").order("number");
           if (data && data.length > 0) surahs = data.map(s => ({
@@ -1138,24 +1152,26 @@ export default async function handler(req, res) {
           canonicalUrl = `${SITE_ORIGIN}/quran/${surahNum}`;
         }
         try {
-          const response = await fetch(`https://api.alquran.cloud/v1/surah/${surahNum}/editions/quran-uthmani,bn.bengali`, { signal: AbortSignal.timeout(8000) });
-          const json = await response.json();
-          if (json.code === 200) {
-            const ar = json.data[0];
-            const bn = json.data[1];
-            title = shortenMetaText(`Surah ${ar.englishName} (${ar.name}) — বাংলা অর্থ ও আরবি | Noor`, 70);
+          // Static dataset: quran-uthmani (Arabic) + bn.bengali (Muhiuddin Khan).
+          // Same single Arabic edition the SPA uses. No request-time API call.
+          const ar = loadQuranSurah("quran-uthmani", surahNum);
+          const bn = loadQuranSurah("bn.bengali", surahNum);
+          if (ar && bn && Array.isArray(ar.ayahs) && Array.isArray(bn.ayahs)) {
+            const meta0 = (loadToolData("quran-surahs.json") || []).find((s) => Number(s.number) === surahNum) || {};
+            const arMeta = { englishName: meta0.englishName, name: meta0.name, englishNameTranslation: meta0.englishNameTranslation, numberOfAyahs: ar.ayahs.length };
+            title = shortenMetaText(`Surah ${arMeta.englishName} (${arMeta.name}) — বাংলা অর্থ ও আরবি | Noor`, 70);
             description = shortenMetaText(
-              `Read Surah ${ar.englishName}, the ${ar.numberOfAyahs}-verse chapter of the Holy Quran, with Arabic text and Bengali translation on Noor.`,
+              `Read Surah ${arMeta.englishName}, the ${arMeta.numberOfAyahs}-verse chapter of the Holy Quran, with Arabic text and Bengali translation on Noor.`,
               160,
             );
-            
+
             const ayahs = ar.ayahs.map((a, i) => `
               <div class="p-6 border-b border-border last:border-0 hover:bg-muted/30 transition-colors">
                 <div class="flex justify-between items-start mb-4">
                   <span class="w-8 h-8 rounded-full bg-primary/10 text-primary flex items-center justify-center text-xs font-bold">${a.numberInSurah}</span>
                 </div>
                 <p dir="rtl" class="text-3xl md:text-4xl font-arabic leading-[2.5] text-right mb-4">${esc(a.text)}</p>
-                <p class="text-lg text-muted-foreground leading-relaxed">${esc(bn.ayahs[i].text)}</p>
+                <p class="text-lg text-muted-foreground leading-relaxed">${esc(bn.ayahs[i] ? bn.ayahs[i].text : "")}</p>
               </div>
             `).join("");
 
@@ -1209,11 +1225,11 @@ export default async function handler(req, res) {
                   <div class="max-w-3xl mx-auto flex items-center justify-between">
                     <a href="/quran" class="p-2 bg-white/10 rounded-full">←</a>
                     <div class="text-center">
-                      <h1 class="text-xl font-bold">${esc(ar.englishName)}</h1>
-                      <p class="text-xs opacity-80">${esc(ar.englishNameTranslation)} • ${ar.numberOfAyahs} Ayahs</p>
-                      <div class="mt-1.5 flex items-center justify-center gap-2">${revelationBadge}<span class="text-[10px] opacity-75">Bengali translation: Muhiuddin Khan · via AlQuran Cloud API</span></div>
+                      <h1 class="text-xl font-bold">${esc(arMeta.englishName)}</h1>
+                      <p class="text-xs opacity-80">${esc(arMeta.englishNameTranslation)} • ${arMeta.numberOfAyahs} Ayahs</p>
+                      <div class="mt-1.5 flex items-center justify-center gap-2">${revelationBadge}<span class="text-[10px] opacity-75">Bengali translation: Muhiuddin Khan · static dataset</span></div>
                     </div>
-                    <span class="text-2xl font-arabic">${esc(ar.name)}</span>
+                    <span class="text-2xl font-arabic">${esc(arMeta.name)}</span>
                   </div>
                 </header>
                 ${surahIntroHtml}

@@ -1,0 +1,22 @@
+{
+ "edition": "quran-uthmani",
+ "surah": 108,
+ "ayahCount": 3,
+ "ayahs": [
+  {
+   "number": 6205,
+   "numberInSurah": 1,
+   "text": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ إِنَّآ أَعْطَيْنَٰكَ ٱلْكَوْثَرَ"
+  },
+  {
+   "number": 6206,
+   "numberInSurah": 2,
+   "text": "فَصَلِّ لِرَبِّكَ وَٱنْحَرْ"
+  },
+  {
+   "number": 6207,
+   "numberInSurah": 3,
+   "text": "إِنَّ شَانِئَكَ هُوَ ٱلْأَبْتَرُ"
+  }
+ ]
+}

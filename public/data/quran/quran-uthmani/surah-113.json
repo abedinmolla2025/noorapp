@@ -1,0 +1,32 @@
+{
+ "edition": "quran-uthmani",
+ "surah": 113,
+ "ayahCount": 5,
+ "ayahs": [
+  {
+   "number": 6226,
+   "numberInSurah": 1,
+   "text": "بِسْمِ ٱللَّهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ قُلْ أَعُوذُ بِرَبِّ ٱلْفَلَقِ"
+  },
+  {
+   "number": 6227,
+   "numberInSurah": 2,
+   "text": "مِن شَرِّ مَا خَلَقَ"
+  },
+  {
+   "number": 6228,
+   "numberInSurah": 3,
+   "text": "وَمِن شَرِّ غَاسِقٍ إِذَا وَقَبَ"
+  },
+  {
+   "number": 6229,
+   "numberInSurah": 4,
+   "text": "وَمِن شَرِّ ٱلنَّفَّٰثَٰتِ فِى ٱلْعُقَدِ"
+  },
+  {
+   "number": 6230,
+   "numberInSurah": 5,
+   "text": "وَمِن شَرِّ حَاسِدٍ إِذَا حَسَدَ"
+  }
+ ]
+}

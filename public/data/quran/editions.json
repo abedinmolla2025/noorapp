@@ -1,0 +1,48 @@
+{
+  "downloadedAt": "2026-10-15T18:23:26.933Z",
+  "source": "https://api.alquran.cloud/v1/quran/{edition}",
+  "arabicEdition": "quran-uthmani",
+  "audioEdition": "ar.alafasy",
+  "editions": {
+    "quran-uthmani": {
+      "language": "arabic",
+      "ayahs": 6236,
+      "leadingBomStripped": 1,
+      "normalized": false
+    },
+    "ar.alafasy": {
+      "role": "audio-urls-only",
+      "urls": 6236
+    },
+    "bn.bengali": {
+      "language": "bengali",
+      "translator": "Muhiuddin Khan",
+      "ayahs": 6236,
+      "invisibleCharsStripped": 0
+    },
+    "en.sahih": {
+      "language": "english",
+      "translator": "Saheeh International",
+      "ayahs": 6236,
+      "invisibleCharsStripped": 0
+    },
+    "ur.ahmedali": {
+      "language": "urdu",
+      "translator": "Ahmed Ali",
+      "ayahs": 6236,
+      "invisibleCharsStripped": 0
+    },
+    "hi.hindi": {
+      "language": "hindi",
+      "translator": "Suhel Farooq Khan and Saifur Rahman Nadwi",
+      "ayahs": 6236,
+      "invisibleCharsStripped": 0
+    },
+    "id.indonesian": {
+      "language": "indonesian",
+      "translator": "Translator not named by the source API",
+      "ayahs": 6236,
+      "invisibleCharsStripped": 0
+    }
+  }
+}

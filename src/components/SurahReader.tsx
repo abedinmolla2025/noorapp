@@ -117,7 +117,7 @@ const SurahReader = ({ surahNumber, surahName, arabicName, initialAyah }: SurahR
           ))}
         </div>
         <p className="mt-2 text-[11px] text-white/50">
-          {TRANSLATION_ATTRIBUTION[language].note}: {TRANSLATION_ATTRIBUTION[language].translator} · via AlQuran Cloud API
+          {TRANSLATION_ATTRIBUTION[language].note}: {TRANSLATION_ATTRIBUTION[language].translator} · static dataset, sourced from AlQuran Cloud (see Data Sources)
         </p>
       </div>
 
