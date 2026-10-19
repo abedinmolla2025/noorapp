@@ -208,6 +208,13 @@ const BASE_ROUTES = [
   "/privacy-policy", "/terms", "/download", "/islamic-app",
 ];
 
+// D1 (2026-10-19, owner-approved limited scope): Baby Names + 99 Names detail
+// pages are noindex until enriched, so their detail URLs are excluded from the
+// sitemap (a sitemap must not list noindexed URLs — conflicting signals).
+// Hub pages (/baby-names, /99-names in BASE_ROUTES above) stay indexed.
+// Reversal: set D1_DETAIL_NOINDEX back to false.
+const D1_DETAIL_NOINDEX = true;
+
 // All story slugs extracted from the database/assets
 const STORY_SLUGS = [
   "abdullah-ibn-abbas-knowledge-islam", "abu-bakr-siddiq-companion-cave-islam",
@@ -336,10 +343,18 @@ export default async function handler(req, res) {
   routes.push(...await getVerifiedQuizRoutes());
 
   // Baby-name detail pages: verification-gated allowlist only (2026-10-05).
-  routes.push(...await getVerifiedNameRoutes());
+  // D1: excluded while detail pages are noindex (reversible via D1_DETAIL_NOINDEX).
+  // NOTE: the allowlist is intentionally left intact — it also gates render
+  // (non-allowlisted slugs 404), so emptying it would break pages.
+  if (!D1_DETAIL_NOINDEX) {
+    routes.push(...await getVerifiedNameRoutes());
+  }
 
   // 99 Names of Allah detail pages: verification-gated allowlist only.
-  routes.push(...await getVerifiedAllahNameRoutes());
+  // D1: excluded while detail pages are noindex (reversible via D1_DETAIL_NOINDEX).
+  if (!D1_DETAIL_NOINDEX) {
+    routes.push(...await getVerifiedAllahNameRoutes());
+  }
 
   // Individual hadith narration pages: verification-gated by DB slug existence (2026-10-05).
   routes.push(...await getVerifiedHadithRoutes());
