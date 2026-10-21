@@ -6,24 +6,10 @@
  "excluded_needs_review": [
   {
    "pair": [
-    "4a1fb4fe-8ffb-4051-80dd-c7876def2847",
-    "6b730819-30d8-4172-b096-c81c108fbe8a"
-   ],
-   "reason": "correct-answer text differs ('before eid prayer' vs 'before eid ulfitr'); forensic audit called it redundant — needs human review"
-  },
-  {
-   "pair": [
-    "30d24f16-b843-44c3-a0e9-e7770b522c1d",
-    "218548e4-e6a9-406a-ba96-0cbd31870d02"
-   ],
-   "reason": "correct-answer text differs ('10th dhul hijjah' vs '10 dhul hijjah'); forensic audit called it redundant — needs human review"
-  },
-  {
-   "pair": [
     "30fecbf8-5fa7-49bf-9938-816a45cde439",
     "30d473e5-4f5b-4d7c-8f51-981b6303b6c0"
    ],
-   "reason": "correct-answer text differs ('provision and nature' vs 'mikail'); forensic audit called it redundant — needs human review"
+   "reason": "DECIDED 2026-10-21 (owner): keep both - different/complementary questions (inverse: duty vs angel), not duplicates. Option C. Do not re-flag without new evidence."
   }
  ],
  "map": {
@@ -57,6 +43,10 @@
   "fdc6963f-3100-4935-94bd-d94e49ec3628": "e30b5847-3b42-4cb3-8037-85a589e5cca5",
   "6d56bfe7-3673-4257-ba28-47b5e06980d7": "608b5612-b389-43eb-8caa-83ef9217c433",
   "92ceba14-09bc-454e-9348-87df5a1d0d76": "1b2bfc00-a70f-42fa-ba73-19ba7337eea7",
-  "e97e91a8-a1d8-45e3-9bc4-602c296ed497": "b6dde8f3-11a0-4fe9-8bfd-3ccf2a68f225"
+  "e97e91a8-a1d8-45e3-9bc4-602c296ed497": "b6dde8f3-11a0-4fe9-8bfd-3ccf2a68f225",
+  "dbaf94d7-c956-476d-b04c-740b12bf98db": "cb669489-b332-4da8-9558-a000f215471d",
+  "79b5109a-17c7-4de2-a538-dee67e631215": "7f596085-398f-4565-a6d8-42c37635fe1d",
+  "4a1fb4fe-8ffb-4051-80dd-c7876def2847": "6b730819-30d8-4172-b096-c81c108fbe8a",
+  "30d24f16-b843-44c3-a0e9-e7770b522c1d": "218548e4-e6a9-406a-ba96-0cbd31870d02"
  }
 }
