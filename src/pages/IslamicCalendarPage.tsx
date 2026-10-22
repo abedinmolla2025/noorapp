@@ -6,6 +6,8 @@ import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import BottomNavigation from "@/components/BottomNavigation";
+import IslamicEducationalSection from "@/components/seo/IslamicEducationalSection";
+import { calendarContent } from "@/lib/pageContent/utilityPages";
 
 // Hijri month names in Bengali
 const hijriMonths = [
@@ -330,6 +332,10 @@ const IslamicCalendarPage = () => {
             </div>
           </TabsContent>
         </Tabs>
+      </div>
+
+      <div className="px-4 pb-10">
+        <IslamicEducationalSection {...calendarContent} />
       </div>
 
       <BottomNavigation />

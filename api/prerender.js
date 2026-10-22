@@ -842,13 +842,41 @@ const renderHijriCalendar = () => {
   return html;
 };
 
+// P1 (2026-10-22): Bengali technical explanations for the four tool pages.
+// Static, code-verified text mirroring src/lib/pageContent/utilityPages.ts.
+const renderPrayerTimesExplanation = () => `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">প্রযুক্তিগত ব্যাখ্যা: নামাজের সময় যেভাবে হিসাব হয়</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">এই পেজের সময় Noor App নিজে হিসাব করে না — আপনার অবস্থানের অক্ষাংশ ও দ্রাঘিমাংশ পাঠিয়ে Aladhan (aladhan.com) নামাজ-সময় API থেকে দিনের সময়গুলো আনা হয়। হিসাবের ভিত্তি সূর্যের অবস্থান: ফজর শুরু হয় যখন সূর্য দিগন্তের নিচে একটি নির্দিষ্ট কোণে থাকে, সূর্যোদয় ও মাগরিব হলো সূর্যোদয় ও সূর্যাস্তের মুহূর্ত, যোহর শুরু হয় সূর্য মধ্যগগন অতিক্রম করার পর, আর আসর নির্ধারিত হয় বস্তুর ছায়ার দৈর্ঘ্য দিয়ে। কোন কোণ ব্যবহার হবে তা নির্ভর করে নির্বাচিত হিসাব-পদ্ধতির ওপর। অ্যাপের default পদ্ধতি University of Islamic Sciences, Karachi (ফজর ১৮°, এশা ১৮°); Settings থেকে ISNA (১৫°/১৫°), Muslim World League (১৮°/১৭°), Umm Al-Qura, Makkah (১৮.৫°, এশা মাগরিবের ৯০ মিনিট পর) ও Egyptian (১৯.৫°/১৭.৫°) পদ্ধতিও বেছে নেওয়া যায়। পদ্ধতি বদলালে ফজর ও এশায় কয়েক মিনিটের পার্থক্য আসতে পারে।</p>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">আসরের ক্ষেত্রে অ্যাপ আলাদা কোনো মাযহাব-ভিত্তিক প্যারামিটার পাঠায় না, ফলে সেবাটির default 'Standard' ছায়া-অনুপাত প্রযোজ্য হয়; হানাফি অনুপাত ব্যবহার করে এমন স্থানীয় সময়সূচির সঙ্গে আসরে পার্থক্য দেখা যেতে পারে — এটি পদ্ধতির পার্থক্য, ত্রুটি নয়। অবস্থান নির্ধারিত হয় সংরক্ষিত আগের অবস্থান, IP-ভিত্তিক আনুমানিক অবস্থান (ipapi.co) অথবা ডিভাইসের GPS দিয়ে; GPS যত নির্ভুল, সময় তত নির্ভুল। Settings থেকে প্রতিটি নামাজে মিনিটের offset যোগ-বিয়োগ করে স্থানীয় মসজিদের সময়সূচির সঙ্গে মেলানো যায়। এই সময়গুলো হিসাবভিত্তিক — জামাতের জন্য স্থানীয় মসজিদের ঘোষিত সময়সূচিই চূড়ান্ত।</p>
+    </section>`;
+const renderQiblaExplanation = () => `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">প্রযুক্তিগত ব্যাখ্যা: কিবলার দিক যেভাবে হিসাব হয়</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">পৃথিবীকে গোলক ধরে আপনার অবস্থান থেকে কাবা শরীফ (অক্ষাংশ ২১.৪২২৫° উত্তর, দ্রাঘিমাংশ ৩৯.৮২৬২° পূর্ব) পর্যন্ত সবচেয়ে ছোট পথটি হলো মহাবৃত্তের (great circle) চাপ; কিবলার দিক হলো সেই মহাবৃত্তের প্রাথমিক বিয়ারিং — সঠিক উত্তর থেকে ঘড়ির কাঁটার দিকে মাপা কোণ। হিসাবটি হয় ত্রিকোণমিতিক সূত্রে: Δλ = কাবার দ্রাঘিমাংশ − আপনার দ্রাঘিমাংশ হলে x = sin(Δλ), y = cos(আপনার অক্ষাংশ) × tan(কাবার অক্ষাংশ) − sin(আপনার অক্ষাংশ) × cos(Δλ), এবং বিয়ারিং = atan2(x, y)। একই সঙ্গে Haversine সূত্রে কাবা থেকে আপনার মহাবৃত্ত-দূরত্বও দেখানো হয়। সমতল মানচিত্রে সোজা রেখার দিক থেকে মহাবৃত্তের দিক আলাদা হতে পারে — অ্যাপ মহাবৃত্তের দিকটিই ব্যবহার করে।</p>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">কম্পাসের তির ঠিক রাখতে ফোনের magnetometer থেকে পাওয়া ডিভাইসের মুখের দিক বিয়ারিং থেকে বিয়োগ করা হয়, ফলে ফোন ঘোরালেও তির কাবার দিকেই থাকে। নির্ভুলতা নির্ভর করে GPS অবস্থান ও magnetometer-এর ওপর: ধাতব বস্তু, চুম্বকীয় কভার, গাড়ি বা ইস্পাতের কাঠামোর কাছে কাঁটা কয়েক ডিগ্রি সরে যেতে পারে — খোলা জায়গায় ফোনটিকে 8-আকৃতিতে ঘুরিয়ে calibrate করলে ফল ভালো হয়।</p>
+    </section>`;
+const renderTasbihExplanation = () => `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">প্রযুক্তিগত ব্যাখ্যা: ডিজিটাল তাসবিহ কাউন্টার যেভাবে কাজ করে</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">বড় বোতামে প্রতিটি ট্যাপে নির্বাচিত যিকিরের গণনা ১ করে বাড়ে। ছয়টি প্রিসেট যিকিরের লক্ষ্য যথাক্রমে ৩৩, ৩৩, ৩৪, ১০০, ১০০ ও ১০০ বার; বৃত্তাকার বলয়টি লক্ষ্যের অগ্রগতি দেখায় এবং লক্ষ্য পূর্ণ হলে অ্যাপ জানিয়ে দেয়। প্রতিটি ট্যাপে Web Audio প্রযুক্তিতে ক্লিক শব্দ ও সমর্থিত ডিভাইসে হালকা কম্পন হয় — দুটিই বন্ধ করা যায়। 'আজকের মোট' গণনা ব্রাউজারের local storage-এ সংরক্ষিত হয় বলে পেজ আবার খুললেও তা থেকে যায়, তবে তারিখ বদলে গেলে নতুন দিনে মোট আবার ০ থেকে শুরু হয়। বর্তমান যিকিরের চলমান গণনা মেমোরিতেই থাকে — যিকির বদলালে, Reset চাপলে বা পেজ রিলোড করলে তা আবার শুরু থেকে গুনতে হয়। কোনো গণনাই সার্ভারে পাঠানো হয় না।</p>
+    </section>`;
+const renderCalendarExplanation = () => `
+    <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
+      <h2 class="text-xl font-bold text-foreground">হিজরি ক্যালেন্ডার যেভাবে হিসাব করা হয়</h2>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">এই পেজে গ্রেগরীয় তারিখ থেকে হিজরি তারিখ বের করা হয় একটি গাণিতিক (tabular) পদ্ধতিতে — সরাসরি চাঁদ দেখার ওপর ভিত্তি করে নয়। পদ্ধতিটির ভিত্তি ৩০ বছরের চক্র, যেখানে মোট দিন ১০,৬৩১: বিজোড় মাস ৩০ দিনের, জোড় মাস ২৯ দিনের, আর চক্রের ১১টি অধিবর্ষে শেষ মাস জিলহজ ৩০ দিনের হয়। ফলে গড় মাসের দৈর্ঘ্য প্রায় ২৯.৫৩ দিন। অ্যাপ প্রথমে গ্রেগরীয় তারিখকে Julian Day Number-এ রূপান্তর করে, তারপর হিজরি যুগের শুরু থেকে অতিক্রান্ত দিন গুনে বছর, মাস ও দিন বের করে — হিসাবটি সম্পূর্ণ আপনার ডিভাইসেই হয় এবং একই তারিখে ফল সবসময় একই।</p>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">গাণিতিক ক্যালেন্ডার চাঁদের প্রকৃত অবস্থান দেখে না বলে রমজান বা ঈদের ঘোষিত তারিখ (চাঁদ দেখা বা Umm al-Qura-এর মতো সরকারি ক্যালেন্ডার অনুযায়ী) এই পেজের তারিখের চেয়ে ১-২ দিন আগে-পরে হতে পারে। ধর্মীয় পালনে স্থানীয় ঘোষণাই অনুসরণ করুন; পেজের হিজরি বছর ৩৫৪ বা ৩৫৫ দিনের হয় বলে তারিখগুলো গ্রেগরীয় ক্যালেন্ডারে প্রতি বছর প্রায় ১১ দিন করে এগিয়ে আসে।</p>
+    </section>`;
+
 // Route → server-rendered tool content. Returns "" for routes without any.
 const buildToolContent = async (routePath) => {
   switch (routePath) {
     case "/99-names": return renderNamesOfAllah();
     case "/prayer-guide": return renderPrayerGuideSteps() + renderPrayerGuideNiyah() + renderPrayerGuideLearning() + renderPrayerGuideDuas();
-    case "/tasbih": return renderDhikrList();
-    case "/calendar": return renderHijriCalendar();
+    case "/tasbih": return renderDhikrList() + renderTasbihExplanation();
+    case "/calendar": return renderHijriCalendar() + renderCalendarExplanation();
+    case "/qibla": return renderQiblaExplanation();
+    case "/prayer-times": return renderPrayerTimesExplanation();
     default: return "";
   }
 };

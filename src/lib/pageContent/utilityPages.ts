@@ -31,8 +31,8 @@ export const prayerTimesContent: IslamicEducationalSectionProps = {
       heading: "How Prayer Times Are Calculated",
       paragraphs: [
         "Prayer times are determined by the sun's altitude relative to the horizon at your latitude and longitude on a given date. Fajr begins when the sun is a set angle below the horizon at dawn, and Isha begins when it reaches a similar angle at dusk.",
-        "Different Islamic authorities use slightly different angles (called Fajr/Isha angles), producing small variations. Noor uses the ISNA method (Islamic Society of North America) by default: 15° for Fajr and 15° for Isha, which is widely accepted in South Asia and North America.",
-        "Dhuhr is derived from solar noon, Asr from the Shafi'i shadow-length formula, and Maghrib from sunset. Times shift by a few minutes each day as the Earth orbits the sun.",
+        "Different Islamic authorities use slightly different angles (called Fajr/Isha angles), producing small variations. Noor's default method is the University of Islamic Sciences, Karachi method (Fajr 18°, Isha 18°); ISNA, Muslim World League, Umm Al-Qura and Egyptian methods can be selected instead in Settings. Times are computed for your coordinates by the Aladhan calculation service.",
+        "Dhuhr is derived from solar noon, Asr from a shadow-length factor, and Maghrib from sunset. Times shift by a few minutes each day as the Earth orbits the sun.",
       ],
     },
     {
@@ -42,11 +42,27 @@ export const prayerTimesContent: IslamicEducationalSectionProps = {
         "If you miss a prayer, offer it as soon as you remember (qada). Combining or shortening prayers is only permitted while traveling under specific conditions.",
       ],
     },
+    {
+      heading: "প্রযুক্তিগত ব্যাখ্যা: সময়গুলো ঠিক যেভাবে আসে",
+      paragraphs: [
+        "এই পেজের সময় Noor App নিজে হিসাব করে না — আপনার অবস্থানের অক্ষাংশ ও দ্রাঘিমাংশ পাঠিয়ে Aladhan (aladhan.com) নামাজ-সময় API থেকে দিনের সময়গুলো আনা হয়। হিসাবের ভিত্তি সূর্যের অবস্থান: ফজর শুরু হয় যখন সূর্য দিগন্তের নিচে একটি নির্দিষ্ট কোণে থাকে, সূর্যোদয় ও মাগরিব হলো সূর্যোদয় ও সূর্যাস্তের মুহূর্ত, যোহর শুরু হয় সূর্য মধ্যগগন অতিক্রম করার পর, আর আসর নির্ধারিত হয় বস্তুর ছায়ার দৈর্ঘ্য দিয়ে। ঠিক কোন কোণ ব্যবহার হবে, তা নির্ভর করে নির্বাচিত হিসাব-পদ্ধতির (calculation method) ওপর।",
+        "অবস্থান যেভাবে নির্ধারিত হয়: প্রথমে ব্রাউজারে সংরক্ষিত আগের অবস্থান ব্যবহার হয়; তা না থাকলে IP-ভিত্তিক আনুমানিক অবস্থান (ipapi.co সেবা) নেওয়া হয়। ডিভাইসের GPS অবস্থান দিলে শহরের নাম বের করা হয় OpenStreetMap-এর Nominatim সেবা দিয়ে। GPS অবস্থান যত নির্ভুল, সময় তত নির্ভুল — IP-ভিত্তিক অবস্থান কয়েক কিলোমিটার পর্যন্ত ভুল হতে পারে, তাতে সময়ে কয়েক মিনিটের হেরফের সম্ভব।",
+        "আসরের ক্ষেত্রে অ্যাপ API-তে আলাদা কোনো মাযহাব-ভিত্তিক প্যারামিটার পাঠায় না, ফলে সেবাটির default 'Standard' ছায়া-অনুপাত (ছায়া বস্তুর দৈর্ঘ্যের সমান হলে আসর) প্রযোজ্য হয়। হানাফি অনুপাত (ছায়া দ্বিগুণ) ব্যবহার করে এমন স্থানীয় সময়সূচির সঙ্গে আসরের সময়ে পার্থক্য দেখা যেতে পারে — এটি হিসাব-পদ্ধতির পার্থক্য, ত্রুটি নয়।",
+        "Settings পেজ থেকে প্রতিটি নামাজের সময়ে নিজে মিনিট যোগ-বিয়োগ (offset) করে স্থানীয় মসজিদের সময়সূচির সঙ্গে মেলানো যায়; এই offset শুধু আপনার ডিভাইসেই সংরক্ষিত থাকে। মনে রাখবেন, এই সময়গুলো হিসাবভিত্তিক — সরকারি বা স্থানীয় মসজিদের ঘোষিত জামাতের সময়ের জন্য তাদের সময়সূচিই চূড়ান্ত।",
+      ],
+      list: [
+        "University of Islamic Sciences, Karachi — ফজর ১৮°, এশা ১৮° (এই অ্যাপের default; Settings থেকে বদলানো যায়)",
+        "Islamic Society of North America (ISNA) — ফজর ১৫°, এশা ১৫°",
+        "Muslim World League — ফজর ১৮°, এশা ১৭°",
+        "Umm Al-Qura University, Makkah — ফজর ১৮.৫°, এশা মাগরিবের ৯০ মিনিট পর",
+        "Egyptian General Authority of Survey — ফজর ১৯.৫°, এশা ১৭.৫°",
+      ],
+    },
   ],
   faqs: [
     {
       q: "How accurate are the prayer times shown in Noor?",
-      a: "Noor uses your device GPS or IP location with the ISNA calculation method. Times match Aladhan.com and most South Asian mosque timetables within 1-2 minutes. For precise times, cross-check with your local mosque.",
+      a: "Noor uses your device GPS or IP location with the University of Islamic Sciences, Karachi calculation method by default (changeable in Settings), computed by the Aladhan service. Calculated times can differ from printed local mosque timetables by a few minutes, so cross-check with your local mosque for exact jama'ah times.",
     },
     {
       q: "Why do different apps show slightly different prayer times?",
@@ -120,6 +136,15 @@ export const qiblaContent: IslamicEducationalSectionProps = {
       heading: "If You Cannot Determine the Qibla",
       paragraphs: [
         "If you have made your best effort and cannot verify the direction (e.g. at sea, in an unfamiliar city, or when the compass fails), the scholars agree your prayer is valid in the direction you sincerely judge to be correct (Sahih Bukhari 401).",
+      ],
+    },
+    {
+      heading: "প্রযুক্তিগত ব্যাখ্যা: দিকটি যেভাবে হিসাব হয়",
+      paragraphs: [
+        "পৃথিবীকে গোলক ধরে আপনার অবস্থান থেকে কাবা শরীফ (অক্ষাংশ ২১.৪২২৫° উত্তর, দ্রাঘিমাংশ ৩৯.৮২৬২° পূর্ব) পর্যন্ত সবচেয়ে ছোট পথটি হলো মহাবৃত্তের (great circle) চাপ। কিবলার দিক হলো সেই মহাবৃত্তের প্রাথমিক বিয়ারিং (initial bearing) — যাত্রা শুরুর মুহূর্তে সঠিক উত্তর দিক থেকে ঘড়ির কাঁটার দিকে মাপা কোণ। সমতল মানচিত্রে সোজা রেখা টানলে যে দিক পাওয়া যায়, তা থেকে এই দিক আলাদা হতে পারে — বিশেষ করে দূরের মহাদেশ থেকে; অ্যাপ মহাবৃত্তের দিকটিই ব্যবহার করে।",
+        "হিসাবটি হয় ত্রিকোণমিতিক সূত্রে। Δλ = কাবার দ্রাঘিমাংশ − আপনার দ্রাঘিমাংশ হলে: x = sin(Δλ), এবং y = cos(আপনার অক্ষাংশ) × tan(কাবার অক্ষাংশ) − sin(আপনার অক্ষাংশ) × cos(Δλ)। তারপর বিয়ারিং = atan2(x, y), যাকে ০–৩৬০° পরিসরে রূপান্তর করা হয়। একই সঙ্গে Haversine সূত্রে কাবা থেকে আপনার মহাবৃত্ত-দূরত্বও (কিলোমিটারে) দেখানো হয়।",
+        "কম্পাসের তির ঠিক রাখতে অ্যাপ ফোনের magnetometer থেকে পাওয়া ডিভাইসের মুখের দিক (heading) বিয়ারিং থেকে বিয়োগ করে — ফলে ফোন ঘোরালেও তিরটি কাবার দিকেই ইশারা করে। iOS ডিভাইসে কম্পাস ব্যবহারের জন্য আলাদা অনুমতি চাওয়া হতে পারে।",
+        "নির্ভুলতা দুটি বিষয়ের ওপর নির্ভর করে। এক, GPS অবস্থান: অবস্থান ভুল হলে বিয়ারিংও ভুল হবে, এবং মক্কার যত কাছে থাকবেন, একই অবস্থান-ভুলের প্রভাব তত বেশি পড়বে। দুই, magnetometer: ধাতব বস্তু, চুম্বকীয় ফোন-কভার, গাড়ি বা ইস্পাতের কাঠামোর কাছে কাঁটা কয়েক ডিগ্রি পর্যন্ত সরে যেতে পারে — এসব থেকে দূরে, খোলা জায়গায় ফোনটিকে 8-আকৃতিতে ঘুরিয়ে calibrate করে নিলে ফল ভালো হয়।",
       ],
     },
   ],
@@ -204,6 +229,13 @@ export const tasbihContent: IslamicEducationalSectionProps = {
       heading: "Using the Digital Tasbih",
       paragraphs: [
         "A phone tasbih is a valid tool for counting — the reward is in the dhikr itself, not the counter. Choose a dhikr, tap to count, and reset when you complete the target. Sound and vibration feedback can be toggled off to preserve khushuʿ.",
+      ],
+    },
+    {
+      heading: "প্রযুক্তিগত ব্যাখ্যা: এই কাউন্টার যেভাবে কাজ করে",
+      paragraphs: [
+        "বড় বোতামটিতে প্রতিটি ট্যাপে নির্বাচিত যিকিরের গণনা ১ করে বাড়ে। ছয়টি প্রিসেট যিকির আছে — সুবহানাল্লাহ (লক্ষ্য ৩৩), আলহামদুলিল্লাহ (লক্ষ্য ৩৩), আল্লাহু আকবার (লক্ষ্য ৩৪), লা ইলাহা ইল্লাল্লাহ (লক্ষ্য ১০০), আস্তাগফিরুল্লাহ (লক্ষ্য ১০০) এবং সুবহানাল্লাহি ওয়া বিহামদিহি (লক্ষ্য ১০০)। বৃত্তাকার অগ্রগতির বলয়টি দেখায় লক্ষ্যের কত অংশ শেষ হলো; লক্ষ্য পূর্ণ হলে অ্যাপ জানিয়ে দেয়। প্রতিটি ট্যাপে Web Audio প্রযুক্তিতে ছোট্ট ক্লিক শব্দ হয় এবং সমর্থিত ডিভাইসে ৩০ মিলিসেকেন্ডের হালকা কম্পন হয় — দুটিই টগল দিয়ে বন্ধ করা যায়।",
+        "কী সংরক্ষিত থাকে আর কী থাকে না: 'আজকের মোট' গণনা আপনার ব্রাউজারের local storage-এ সংরক্ষিত হয়, তাই পেজ বন্ধ করে আবার এলেও আজকের মোট থেকে যায়; তারিখ বদলে গেলে নতুন দিনে প্রথম খোলার সময় মোট আবার ০ থেকে শুরু হয়। তবে বর্তমান যিকিরের চলমান গণনা শুধু মেমোরিতে থাকে — যিকির বদলালে বা Reset চাপলে তা ০ হয়ে যায়, আর পেজ রিলোড করলেও চলমান গণনা আবার শুরু থেকে গুনতে হয়। কোনো গণনাই সার্ভারে পাঠানো হয় না; সব হিসাব আপনার ডিভাইসেই থাকে।",
       ],
     },
   ],
@@ -330,6 +362,62 @@ export const quizContent: IslamicEducationalSectionProps = {
     { label: "Hadith Collections", to: "/hadith" },
     { label: "Islamic Stories", to: "/stories" },
     { label: "99 Names of Allah", to: "/99-names" },
+    { label: "Daily Duas", to: "/dua" },
+  ],
+  variant: "light",
+};
+
+export const calendarContent: IslamicEducationalSectionProps = {
+  title: "হিজরি ক্যালেন্ডার যেভাবে হিসাব করা হয়",
+  intro: [
+    "এই পেজে গ্রেগরীয় তারিখ থেকে হিজরি তারিখ বের করা হয় একটি গাণিতিক (arithmetic) পদ্ধতিতে — সরাসরি চাঁদ দেখার ওপর ভিত্তি করে নয়। ফলে এটি একটি নির্ভরযোগ্য আনুমানিক রূপান্তর, যার সঙ্গে স্থানীয়ভাবে ঘোষিত হিজরি তারিখের ১-২ দিনের পার্থক্য হতে পারে।",
+  ],
+  sections: [
+    {
+      heading: "গাণিতিক হিজরি ক্যালেন্ডার (Tabular Islamic Calendar)",
+      paragraphs: [
+        "পদ্ধতিটির ভিত্তি ৩০ বছরের একটি চক্র, যেখানে মোট দিন ১০,৬৩১। প্রতি বছরে ১২টি মাস থাকে; বিজোড় মাসগুলো ৩০ দিনের ও জোড় মাসগুলো ২৯ দিনের হয়, আর চক্রের ১১টি অধিবর্ষে শেষ মাস (জিলহজ) ২৯-এর বদলে ৩০ দিনের হয়। এভাবে গড় মাসের দৈর্ঘ্য দাঁড়ায় প্রায় ২৯.৫৩ দিন, যা চাঁদের প্রকৃত আবর্তনকালের খুব কাছাকাছি। এই নিয়মভিত্তিক পদ্ধতিটি মধ্যযুগের মুসলিম জ্যোতির্বিজ্ঞানীদের তৈরি, যাতে পর্যবেক্ষণ ছাড়াই যেকোনো তারিখ আগাম হিসাব করা যায়।",
+        "অ্যাপের হিসাবের ধাপ তিনটি: প্রথমে গ্রেগরীয় তারিখকে Julian Day Number-এ রূপান্তর করা হয়, তারপর হিজরি যুগের শুরু (১ মুহাররম, ১ হিজরি) থেকে অতিক্রান্ত দিন গুনে ৩০-বছরের চক্রের সূত্রে বছর, মাস ও দিন বের করা হয়। প্রতিটি ধাপ পূর্ণসংখ্যার গাণিতিক সূত্রে হয়, তাই একই গ্রেগরীয় তারিখের জন্য ফল প্রতিবার একই আসে (reproducible) — কোনো সার্ভার বা ইন্টারনেট ছাড়াই হিসাবটি আপনার ডিভাইসেই সম্পন্ন হয়।",
+      ],
+    },
+    {
+      heading: "হিসাবি তারিখ বনাম চাঁদ দেখার তারিখ",
+      paragraphs: [
+        "বেশিরভাগ দেশে ধর্মীয় অনুষ্ঠানের তারিখ নির্ধারিত হয় চাঁদ দেখা কিংবা সরকারি ঘোষণা অনুযায়ী — যেমন সৌদি আরবের Umm al-Qura ক্যালেন্ডার, যা চাঁদের প্রকৃত গতিবিধি বিবেচনা করে তৈরি। গাণিতিক ক্যালেন্ডার চাঁদের প্রকৃত অবস্থান দেখে না বলে রমজান, ঈদুল ফিতর বা ঈদুল আযহার ঘোষিত তারিখ এই পেজের তারিখের চেয়ে ১-২ দিন আগে-পরে হতে পারে। ধর্মীয় পালনের ক্ষেত্রে স্থানীয় ঘোষণাই অনুসরণ করুন; এই পেজের তারিখ পরিকল্পনা ও আনুমানিক ধারণার জন্য ব্যবহার করুন।",
+      ],
+    },
+    {
+      heading: "এই পেজে যা যা পাবেন",
+      paragraphs: [],
+      list: [
+        "আজকের হিজরি তারিখ — বাংলা সংখ্যায়, মাস ও বছরসহ",
+        "১২টি হিজরি মাসের তালিকা — বর্তমান মাসটি চিহ্নিত অবস্থায়",
+        "গুরুত্বপূর্ণ ইসলামি তারিখের তালিকা (আশুরা, ঈদুল ফিতর, আরাফাতের দিন, ঈদুল আযহা প্রভৃতি) — সবই একই গাণিতিক পদ্ধতিতে হিসাব করা",
+      ],
+    },
+  ],
+  faqs: [
+    {
+      q: "এই হিজরি তারিখ কি সবসময় হুবহু সঠিক?",
+      a: "এটি গাণিতিক হিসাব — সাধারণত নির্ভুল, তবে চাঁদ দেখার ভিত্তিতে ঘোষিত তারিখের সঙ্গে ১-২ দিনের পার্থক্য হতে পারে। ধর্মীয় পালনে স্থানীয় ঘোষণা অনুসরণ করুন।",
+    },
+    {
+      q: "হিজরি বছর গ্রেগরীয় বছরের চেয়ে ছোট কেন?",
+      a: "হিজরি বছর চান্দ্র — ৩৫৪ বা ৩৫৫ দিন; গ্রেগরীয় বছর সৌর — ৩৬৫ বা ৩৬৬ দিন। পার্থক্য প্রায় ১১ দিন, তাই প্রতি বছর হিজরি তারিখগুলো গ্রেগরীয় ক্যালেন্ডারে প্রায় ১১ দিন করে এগিয়ে আসে।",
+    },
+    {
+      q: "অধিবর্ষে কোন মাসে দিন বাড়ে?",
+      a: "শেষ মাস জিলহজে — ২৯-এর বদলে ৩০ দিন হয়। ৩০ বছরের চক্রে এমন অধিবর্ষ থাকে ১১টি।",
+    },
+  ],
+  sources: [
+    { label: "Tabular Islamic calendar", detail: "Arithmetic Hijri calendar: 30-year cycle, 10,631 days, 11 leap years; tabular dates can differ 1-2 days from observation-based calendars (Wikipedia, accessed 2026-10-22)" },
+    { label: "Noor App implementation", detail: "Gregorian -> Julian Day Number -> Hijri conversion performed locally in IslamicCalendarPage" },
+  ],
+  related: [
+    { label: "Prayer Times", to: "/prayer-times" },
+    { label: "Qibla Finder", to: "/qibla" },
+    { label: "Tasbih & Dhikr", to: "/tasbih" },
     { label: "Daily Duas", to: "/dua" },
   ],
   variant: "light",
