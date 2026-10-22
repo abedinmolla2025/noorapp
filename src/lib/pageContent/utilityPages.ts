@@ -115,7 +115,7 @@ export const qiblaContent: IslamicEducationalSectionProps = {
     {
       heading: "How the Qibla Compass Works",
       paragraphs: [
-        "The app reads your GPS coordinates, computes the initial bearing from you to Makkah (21.4225°N, 39.8262°E) using the spherical law of cosines, then subtracts your device heading to point the arrow at the Kaʿbah in real time.",
+        "The app reads your GPS coordinates, computes the initial bearing from you to Makkah (21.4225°N, 39.8262°E) using the initial-bearing formula from spherical trigonometry, then subtracts your device heading to point the arrow at the Kaʿbah in real time.",
         "Rotate your phone slowly on a flat surface. When the arrow aligns with the marker at the top, you are facing the Qibla.",
       ],
     },
