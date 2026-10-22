@@ -15,6 +15,7 @@ import { usePageTracking } from "@/hooks/usePageTracking";
 import { useQuizReminder } from "@/hooks/useQuizReminder";
 import { useMobileAdsInit } from "@/hooks/useMobileAds";
 import AnnouncementTicker from "@/components/AnnouncementTicker";
+import { CITY_PAGES_ENABLED } from "@/lib/cityPages";
 import PageSkeleton from "@/components/PageSkeleton";
 import CookieConsentBanner from "./components/CookieConsentBanner";
 
@@ -31,6 +32,7 @@ const QuranPage = lazy(() => import("./pages/QuranPage"));
 const NamesOfAllahPage = lazy(() => import("./pages/NamesOfAllahPage"));
 const AllahNameDetailPage = lazy(() => import("./pages/AllahNameDetailPage"));
 const PrayerTimesPage = lazy(() => import("./pages/PrayerTimesPage"));
+const CityPrayerTimesPage = lazy(() => import("./pages/CityPrayerTimesPage"));
 const BukhariLanguageSelectPage = lazy(() => import("./pages/bukhari/BukhariLanguageSelectPage"));
 const BukhariLangPage = lazy(() => import("./pages/bukhari/BukhariLangPage"));
 const HadithPage = lazy(() => import("./pages/HadithPage"));
@@ -110,6 +112,10 @@ const AppRoutes = () => {
           <Route path="/99-names" element={<NamesOfAllahPage />} />
           <Route path="/99-names/:slug" element={<AllahNameDetailPage />} />
           <Route path="/prayer-times" element={<PrayerTimesPage />} />
+          {/* P2 city pilot: route exists only while CITY_PAGES_ENABLED (ships OFF). */}
+          {CITY_PAGES_ENABLED && (
+            <Route path="/prayer-times/kolkata" element={<CityPrayerTimesPage />} />
+          )}
 
           {/* Hadith routes */}
           <Route path="/hadith" element={<HadithPage />} />

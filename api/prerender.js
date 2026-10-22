@@ -6,6 +6,39 @@ import { assignAllahNameSlugs, isValidAllahNameSlugSegment } from "../src/lib/al
 
 const SITE_ORIGIN = "https://noorapp.in";
 
+// P2 city prayer-time pilot (2026-10-22): flag ships OFF. While disabled (or
+// for an unknown city slug) city paths fail closed with 404 + noindex, the
+// same pattern used for invalid detail slugs. When enabled, the Kolkata page
+// is server-rendered from the `adhan` library (MIT) — Karachi method +
+// Hanafi Asr — mirroring src/lib/cityPages.ts + src/lib/cityPrayerTimes.ts.
+const CITY_PAGES_ENABLED = false;
+const CITY_PILOT_CITIES = {
+  kolkata: {
+    nameEn: "Kolkata",
+    nameBn: "কলকাতা",
+    region: "West Bengal",
+    country: "India",
+    latitude: 22.5744,
+    longitude: 88.3629,
+    timeZone: "Asia/Kolkata",
+  },
+};
+const HIJRI_MONTHS_BN_PR = ["মুহাররম", "সফর", "রবিউল আউয়াল", "রবিউস সানি", "জমাদিউল আউয়াল", "জমাদিউস সানি", "রজব", "শাবান", "রমজান", "শাওয়াল", "জিলকদ", "জিলহজ"];
+const gregorianToHijriPr = (year, month, day) => {
+  const a = Math.floor((14 - month) / 12);
+  const y = year + 4800 - a;
+  const m = month + 12 * a - 3;
+  const jdn = day + Math.floor((153 * m + 2) / 5) + 365 * y + Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
+  const l = jdn - 1948440 + 10632;
+  const n = Math.floor((l - 1) / 10631);
+  const l2 = l - 10631 * n + 354;
+  const j = Math.floor((10985 - l2) / 5316) * Math.floor((50 * l2) / 17719) + Math.floor(l2 / 5670) * Math.floor((43 * l2) / 15238);
+  const l3 = l2 - Math.floor((30 - j) / 15) * Math.floor((17719 * j) / 50) - Math.floor(j / 16) * Math.floor((15238 * j) / 43) + 29;
+  const hijriMonth = Math.floor((24 * l3) / 709);
+  const hijriDay = l3 - Math.floor((709 * hijriMonth) / 24);
+  return { year: 30 * n + j - 30, month: hijriMonth, day: hijriDay };
+};
+
 // Phase A (2026-10-05): route-specific OG images so prerender and SPA emit the
 // identical og:image. Only routes listed here override the default og-image.png.
 const TOOL_OG_IMAGES = {
@@ -2638,6 +2671,64 @@ export default async function handler(req, res) {
     }
 
     // --- Public Trust, Legal and Feature Pages ---
+    else if (routePath.startsWith("/prayer-times/") && routePath.split("/")[2]) {
+      // P2 city pilot — see CITY_PAGES_ENABLED note at the top of this file.
+      const citySlug = routePath.split("/")[2];
+      const cityDef = CITY_PILOT_CITIES[citySlug];
+      if (!CITY_PAGES_ENABLED || !cityDef) {
+        statusCode = 404;
+        robotsDirective = "noindex,follow";
+        title = "Page Not Found | Noor";
+        description = "The page you are looking for could not be found on Noor.";
+        bodyContent = `<main class="min-h-screen bg-background px-4 py-16"><div class="mx-auto max-w-xl text-center"><h1 class="text-3xl font-bold text-foreground">Page not found</h1><p class="mt-3 text-muted-foreground">This page is not available. Explore <a class="text-primary hover:underline" href="/prayer-times">Prayer Times</a> instead.</p></div></main>`;
+      } else {
+        const { Coordinates, PrayerTimes, CalculationMethod, Madhab } = await import("adhan");
+        const calcParams = CalculationMethod.Karachi();
+        calcParams.madhab = Madhab.Hanafi;
+        const coords = new Coordinates(cityDef.latitude, cityDef.longitude);
+        const fmt = new Intl.DateTimeFormat("en-GB", { timeZone: cityDef.timeZone, hour: "2-digit", minute: "2-digit", hour12: false });
+        const parts = new Intl.DateTimeFormat("en-CA", { timeZone: cityDef.timeZone, year: "numeric", month: "2-digit", day: "2-digit" }).formatToParts(new Date());
+        const gp = (t) => Number(parts.find((p) => p.type === t)?.value);
+        const ty = gp("year"), tm = gp("month"), td = gp("day");
+        const dayTimes = (yy, mm, dd) => {
+          const pt = new PrayerTimes(coords, new Date(yy, mm - 1, dd, 12, 0, 0), calcParams);
+          const hj = gregorianToHijriPr(yy, mm, dd);
+          return { dd, hj, fajr: fmt.format(pt.fajr), sunrise: fmt.format(pt.sunrise), dhuhr: fmt.format(pt.dhuhr), asr: fmt.format(pt.asr), maghrib: fmt.format(pt.maghrib), isha: fmt.format(pt.isha) };
+        };
+        const todayT = dayTimes(ty, tm, td);
+        const daysInMonth = new Date(ty, tm, 0).getDate();
+        let rows = "";
+        for (let d = 1; d <= daysInMonth; d++) {
+          const r = dayTimes(ty, tm, d);
+          rows += `<tr${d === td ? ' class="bg-primary/10 font-semibold"' : ""}><td>${d}</td><td>${r.hj.day} ${HIJRI_MONTHS_BN_PR[r.hj.month - 1]}</td><td>${r.fajr}</td><td>${r.sunrise}</td><td>${r.dhuhr}</td><td>${r.asr}</td><td>${r.maghrib}</td><td>${r.isha}</td></tr>`;
+        }
+        title = "কলকাতার নামাজের সময় — Kolkata Prayer Times | Noor";
+        description = "কলকাতা (পশ্চিমবঙ্গ) এর জন্য প্রতিদিনের নামাজের সময় ও পুরো মাসের সময়সূচি — ফজর, সূর্যোদয়, যোহর, আসর (হানাফি), মাগরিব, এশা। হিসাব পদ্ধতি: University of Islamic Sciences, Karachi।";
+        bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl">
+          <h1 class="text-3xl font-bold text-foreground">কলকাতার নামাজের সময়</h1>
+          <p class="mt-2 text-muted-foreground">${td}/${tm}/${ty} · ${todayT.hj.day} ${HIJRI_MONTHS_BN_PR[todayT.hj.month - 1]} ${todayT.hj.year} হিজরি · ${esc(cityDef.nameEn)}, ${esc(cityDef.region)}, ${esc(cityDef.country)}</p>
+          <section class="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <h2 class="text-xl font-bold text-foreground">আজকের সময়সূচি</h2>
+            <ul class="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-3">
+              <li class="rounded-xl border border-border p-4 text-center"><p class="text-sm text-muted-foreground">ফজর</p><p class="mt-1 text-2xl font-bold">${todayT.fajr}</p></li>
+              <li class="rounded-xl border border-border p-4 text-center"><p class="text-sm text-muted-foreground">সূর্যোদয়</p><p class="mt-1 text-2xl font-bold">${todayT.sunrise}</p></li>
+              <li class="rounded-xl border border-border p-4 text-center"><p class="text-sm text-muted-foreground">যোহর</p><p class="mt-1 text-2xl font-bold">${todayT.dhuhr}</p></li>
+              <li class="rounded-xl border border-border p-4 text-center"><p class="text-sm text-muted-foreground">আসর (হানাফি)</p><p class="mt-1 text-2xl font-bold">${todayT.asr}</p></li>
+              <li class="rounded-xl border border-border p-4 text-center"><p class="text-sm text-muted-foreground">মাগরিব</p><p class="mt-1 text-2xl font-bold">${todayT.maghrib}</p></li>
+              <li class="rounded-xl border border-border p-4 text-center"><p class="text-sm text-muted-foreground">এশা</p><p class="mt-1 text-2xl font-bold">${todayT.isha}</p></li>
+            </ul>
+          </section>
+          <section class="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <h2 class="text-xl font-bold text-foreground">পুরো মাসের সময়সূচি</h2>
+            <div class="mt-3 overflow-x-auto"><table class="w-full text-sm"><thead><tr><th>তারিখ</th><th>হিজরি</th><th>ফজর</th><th>সূর্যোদয়</th><th>যোহর</th><th>আসর (হানাফি)</th><th>মাগরিব</th><th>এশা</th></tr></thead><tbody>${rows}</tbody></table></div>
+          </section>
+          <section class="mt-6 rounded-2xl border border-border bg-card p-5 shadow-sm">
+            <h2 class="text-xl font-bold text-foreground">হিসাব পদ্ধতি ও স্বচ্ছতা</h2>
+            <p class="mt-2 text-sm leading-7 text-muted-foreground">সময়গুলো কলকাতার স্থানাঙ্ক (অক্ষাংশ 22.5744, দ্রাঘিমাংশ 88.3629) ও Asia/Kolkata সময় অঞ্চল অনুযায়ী ওপেন-সোর্স adhan লাইব্রেরি (MIT license) দিয়ে হিসাব করা: পদ্ধতি University of Islamic Sciences, Karachi (ফজর ১৮°, এশা ১৮°), আসর হানাফি পদ্ধতিতে। এগুলো জ্যোতির্বিজ্ঞান-ভিত্তিক হিসাব — কোনো নির্দিষ্ট মসজিদের আনুষ্ঠানিক সময়সূচি নয়; জামাতের জন্য স্থানীয় মসজিদের ঘোষণা অনুসরণ করুন। হিজরি তারিখ গাণিতিক (tabular) পদ্ধতির, তাই ঘোষিত তারিখের সঙ্গে ১-২ দিনের পার্থক্য হতে পারে।</p>
+          </section>
+        </article></main>`;
+      }
+    }
     else if (STATIC_PAGE_COPY[routePath]) {
       const page = STATIC_PAGE_COPY[routePath];
       title = page.title;
