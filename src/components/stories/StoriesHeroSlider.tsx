@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Sparkles } from "lucide-react";
 import { useStories } from "@/lib/stories";
+import ogStoriesDefault from "@/assets/stories/og-stories-default.jpg";
 
 export type HeroSlide = {
   slug: string;
@@ -34,7 +35,7 @@ export default function StoriesHeroSlider() {
         slug: s.slug,
         title: s.title_bn || s.title_en,
         description: s.seo?.meta_description || "",
-        image: s.og_image_url || "/assets/stories/og-stories-default.jpg",
+        image: s.og_image_url || ogStoriesDefault,
         alt: s.title_en || "",
       }));
   }, [stories]);

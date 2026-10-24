@@ -29,6 +29,7 @@ import {
   type Story,
 } from "@/lib/stories";
 import bundledStoriesData from "@/data/stories.json";
+import ogStoriesDefault from "@/assets/stories/og-stories-default.jpg";
 
 const PAGE_SIZE = 9;
 const SITE = "https://noorapp.in";
@@ -371,7 +372,7 @@ function CategoryChip({
 }
 
 function StoryListCard({ story }: { story: Story }) {
-  const thumbnail = story.og_image_url || "/assets/stories/og-stories-default.jpg";
+  const thumbnail = story.og_image_url || ogStoriesDefault;
   
   return (
     <Card className="group h-full flex flex-col border-none bg-card hover:bg-emerald-50/30 dark:hover:bg-emerald-950/10 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden rounded-2xl ring-1 ring-border hover:ring-emerald-200 dark:hover:ring-emerald-800">
