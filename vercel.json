@@ -127,11 +127,11 @@
       "destination": "/api/sitemap"
     },
     {
-      "source": "/sitemap-(.*).xml",
-      "destination": "/api/sitemap"
+      "source": "/sitemap-index.xml",
+      "destination": "/api/sitemap-index"
     },
     {
-      "source": "/sitemap-index.xml",
+      "source": "/sitemap-(.*).xml",
       "destination": "/api/sitemap"
     },
     {
