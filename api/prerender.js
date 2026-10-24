@@ -1163,15 +1163,29 @@ export default async function handler(req, res) {
     //   /privacy       -> /privacy-policy (vercel.json 301s this at the edge)
     //   /hadith/bukhari -> /hadith/sahih-bukhari (vercel.json 301s this at the edge;
     //                      /hadith/sahih-bukhari is the real collection route)
+    //   /bukhari, /sahih-al-bukhari, /sahih-al-bukhari/:lang and
+    //   /dua/surah-an-naas mirror their vercel.json edge redirects too
+    //   (M-20): without them, direct-to-function requests for these legacy
+    //   paths fell through to 404 instead of redirecting.
     const CANONICAL_REDIRECTS = {
       "/names": "/baby-names",
       "/support": "/contact",
       "/data-sources": "/sources",
       "/privacy": "/privacy-policy",
       "/hadith/bukhari": "/hadith/sahih-bukhari",
+      "/bukhari": "/hadith/sahih-bukhari",
+      "/sahih-al-bukhari": "/hadith/sahih-bukhari",
+      "/dua/surah-an-naas": "/dua/surah-an-nas",
     };
-    if (CANONICAL_REDIRECTS[routePath]) {
-      const target = `${SITE_ORIGIN}${CANONICAL_REDIRECTS[routePath]}`;
+    // Single-segment /sahih-al-bukhari/:lang mirrors the vercel.json pattern
+    // exactly: deeper paths do not match at the edge either, so they keep
+    // falling through to the 404 branch below.
+    const sahihLangMatch = routePath.match(/^\/sahih-al-bukhari\/([^/]+)$/);
+    const redirectTarget =
+      CANONICAL_REDIRECTS[routePath] ||
+      (sahihLangMatch ? `/hadith/sahih-bukhari/${sahihLangMatch[1]}` : null);
+    if (redirectTarget) {
+      const target = `${SITE_ORIGIN}${redirectTarget}`;
       res.setHeader("Location", target);
       res.setHeader("Cache-Control", "public, max-age=0, s-maxage=300, stale-while-revalidate=300");
       res.setHeader("X-Noor-Prerender", "v101");
