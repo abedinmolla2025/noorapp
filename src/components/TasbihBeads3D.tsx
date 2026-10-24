@@ -1,5 +1,6 @@
 import { useRef, useMemo, useEffect } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
+import { Component, type ErrorInfo, type ReactNode } from "react";
 import { OrbitControls, Environment, Float } from "@react-three/drei";
 import * as THREE from "three";
 
@@ -175,7 +176,43 @@ interface TasbihBeads3DProps {
   totalBeads?: number;
 }
 
-const TasbihBeads3D = ({ count, totalBeads = 33 }: TasbihBeads3DProps) => {
+/**
+ * M-12: scoped fail-soft boundary for the decorative 3D mala only.
+ *
+ * <Environment preset="city" /> fetches its HDR from a third-party CDN at
+ * runtime; when that fetch fails, drei throws during render. The page used
+ * to wrap this component only in <Suspense> (which handles loading, not
+ * errors), so the failure propagated to the app-global error boundary and
+ * took the whole counter page down. The mala is purely decorative
+ * (pointer-events: none, behind the counter button), so on error we render
+ * nothing and the counter keeps working. This deliberately does NOT reuse
+ * the shared ErrorBoundary: that one renders a full-screen error page and
+ * logs to Supabase, which is wrong for a decorative element.
+ */
+class BeadsErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean }
+> {
+  public state = { hasError: false };
+
+  public static getDerivedStateFromError(): { hasError: boolean } {
+    return { hasError: true };
+  }
+
+  public componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error(
+      "Tasbih 3D failed to render (decorative only, counter unaffected):",
+      error,
+      errorInfo,
+    );
+  }
+
+  public render() {
+    return this.state.hasError ? null : this.props.children;
+  }
+}
+
+const TasbihBeads3DInner = ({ count, totalBeads = 33 }: TasbihBeads3DProps) => {
   return (
     <div className="absolute inset-0 pointer-events-none" style={{ width: '100%', height: '100%' }}>
       <Canvas
@@ -203,5 +240,11 @@ const TasbihBeads3D = ({ count, totalBeads = 33 }: TasbihBeads3DProps) => {
     </div>
   );
 };
+
+const TasbihBeads3D = (props: TasbihBeads3DProps) => (
+  <BeadsErrorBoundary>
+    <TasbihBeads3DInner {...props} />
+  </BeadsErrorBoundary>
+);
 
 export default TasbihBeads3D;
