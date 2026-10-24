@@ -5,6 +5,15 @@ import path from "node:path";
 import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/babyNameSlug.js";
 import { assignAllahNameSlugs, isValidAllahNameSlugSegment } from "../src/lib/allahNameSlug.js";
 
+// M-06 logging-only: sitemap getters fail silently by design (they return []
+// so a DB/file failure degrades the sitemap instead of breaking the response).
+// These log lines make that degradation observable in the server log.
+// Logging ONLY: no status, body, or URL-set change. Any status/body behavior
+// change belongs to the M-01 sitemap-error-semantics decision, not to this task.
+function logSitemapFailure(family, detail) {
+  console.error(`[sitemap] ${family}: ${detail}`);
+}
+
 // 99 Names of Allah detail rollout: verification-gated sitemap.
 // Only slugs listed in public/data/allah-name-sitemap-allowlist.json are emitted.
 // Missing file => empty list => no Allah-name URLs (fail-safe).
@@ -22,6 +31,7 @@ function getAllahNameAllowlist() {
       }
     } catch { /* try next candidate */ }
   }
+  logSitemapFailure("allah-name-allowlist", "no readable allowlist file");
   return [];
 }
 
@@ -34,7 +44,7 @@ async function getVerifiedHadithRoutes() {
   // closed via the !supabaseKey guards below. RLS still limits this request
   // to rows public users may read.
   const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!supabaseKey) return [];
+  if (!supabaseKey) { logSitemapFailure("hadith-routes", "missing SUPABASE_ANON_KEY env"); return []; }
   // Paginated: PostgREST clamps limit to 1000 rows.
   const rows = [];
   try {
@@ -49,7 +59,7 @@ async function getVerifiedHadithRoutes() {
       const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/hadiths?${query}`, {
         headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
       });
-      if (!response.ok) return []; // fail safe: no partial sitemap set
+      if (!response.ok) { logSitemapFailure("hadith-routes", `HTTP ${response.status}`); return []; } // fail safe: no partial sitemap set
       const batch = await response.json();
       rows.push(...(batch || []));
       if (!batch || batch.length < 1000) break;
@@ -64,7 +74,8 @@ async function getVerifiedHadithRoutes() {
       routes.push(`/hadith/h/${slug}`);
     }
     return routes;
-  } catch {
+  } catch (err) {
+    logSitemapFailure("hadith-routes", `fetch error: ${err instanceof Error ? err.message : "unknown error"}`);
     return []; // fail safe: never publish a partial set
   }
 }
@@ -83,13 +94,14 @@ function getAllahNamesData() {
       }
     } catch { /* try next candidate */ }
   }
+  logSitemapFailure("allah-names-data", "no readable names data file");
   return [];
 }
 
 async function getVerifiedAllahNameRoutes() {
   const allowlist = getAllahNameAllowlist();
   const names = getAllahNamesData();
-  if (allowlist.length === 0 || names.length === 0) return [];
+  if (allowlist.length === 0 || names.length === 0) { logSitemapFailure("allah-name-routes", "allowlist or names data empty"); return []; }
   const slugMap = assignAllahNameSlugs(names.map((n) => ({ id: n.id, transliteration: n.transliteration })));
   const seen = new Set();
   const routes = [];
@@ -123,6 +135,7 @@ function getBabyNameAllowlist() {
       }
     } catch { /* try next candidate */ }
   }
+  logSitemapFailure("baby-name-allowlist", "no readable allowlist file");
   return [];
 }
 
@@ -130,7 +143,7 @@ async function getVerifiedNameRoutes() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
   const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   const allowlist = getBabyNameAllowlist();
-  if (!supabaseKey || allowlist.length === 0) return [];
+  if (!supabaseKey || allowlist.length === 0) { logSitemapFailure("baby-name-routes", "missing SUPABASE_ANON_KEY env or empty allowlist"); return []; }
   // Paginated: PostgREST clamps limit to 1000 rows.
   const rows = [];
   try {
@@ -146,7 +159,7 @@ async function getVerifiedNameRoutes() {
       const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/admin_content?${query}`, {
         headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
       });
-      if (!response.ok) return [];
+      if (!response.ok) { logSitemapFailure("baby-name-routes", `HTTP ${response.status}`); return []; }
       const batch = await response.json();
       rows.push(...(batch || []));
       if (!batch || batch.length < 1000) break;
@@ -164,7 +177,8 @@ async function getVerifiedNameRoutes() {
     }
     // Safety: never emit more than the allowlist size.
     return routes.filter((r) => allowlist.includes(decodeURIComponent(r.split("/")[2])));
-  } catch {
+  } catch (err) {
+    logSitemapFailure("baby-name-routes", `fetch error: ${err instanceof Error ? err.message : "unknown error"}`);
     return [];
   }
 }
@@ -189,6 +203,7 @@ function getQuizDuplicateIds() {
       }
     } catch { /* try next candidate */ }
   }
+  logSitemapFailure("quiz-duplicates", "canonicals file missing or unparseable; excluding nothing");
   return new Set();
 }
 
@@ -260,7 +275,7 @@ async function getVerifiedQuizRoutes() {
   // closed via the !supabaseKey guards below. RLS still limits this request
   // to rows public users may read.
   const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return [];
+  if (!supabaseUrl || !supabaseKey) { logSitemapFailure("quiz-routes", "missing SUPABASE_URL or SUPABASE_ANON_KEY env"); return []; }
   const query = new URLSearchParams({
     select: "id",
     is_active: "eq.true",
@@ -272,13 +287,14 @@ async function getVerifiedQuizRoutes() {
     const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/quiz_questions?${query}`, {
       headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
     });
-    if (!response.ok) return [];
+    if (!response.ok) { logSitemapFailure("quiz-routes", `HTTP ${response.status}`); return []; }
     const rows = await response.json();
     const duplicateIds = getQuizDuplicateIds();
     return rows
       .filter((row) => row.id && !duplicateIds.has(row.id))
       .map((row) => `/quiz/${encodeURIComponent(row.id)}`);
-  } catch {
+  } catch (err) {
+    logSitemapFailure("quiz-routes", `fetch error: ${err instanceof Error ? err.message : "unknown error"}`);
     return [];
   }
 }
@@ -286,7 +302,7 @@ async function getVerifiedQuizRoutes() {
 async function getPublishedDuaRoutes() {
   const supabaseUrl = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
   const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
-  if (!supabaseUrl || !supabaseKey) return [];
+  if (!supabaseUrl || !supabaseKey) { logSitemapFailure("dua-routes", "missing SUPABASE_URL or SUPABASE_ANON_KEY env"); return []; }
 
   const query = new URLSearchParams({
     select: "slug",
@@ -301,7 +317,7 @@ async function getPublishedDuaRoutes() {
     const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/admin_content?${query}`, {
       headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
     });
-    if (!response.ok) return [];
+    if (!response.ok) { logSitemapFailure("dua-routes", `HTTP ${response.status}`); return []; }
     const rows = await response.json();
     const uuidOnly = /^[0-9a-f]{8}-[0-9a-f-]{27,36}$/iu;
     const validSlug = (value) => {
@@ -312,7 +328,8 @@ async function getPublishedDuaRoutes() {
       const slug = validSlug(row?.slug);
       return slug ? [`/dua/${encodeURIComponent(slug)}`] : [];
     });
-  } catch {
+  } catch (err) {
+    logSitemapFailure("dua-routes", `fetch error: ${err instanceof Error ? err.message : "unknown error"}`);
     return [];
   }
 }
