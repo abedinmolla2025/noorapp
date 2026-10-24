@@ -38,6 +38,10 @@ run_migrations2.py
 .lovable/
 .vercel
 .env*
+# The .env.example exception must come AFTER .env* (last match wins);
+# otherwise the earlier !.env.example on line 7 is overridden and the
+# example file itself would be ignored.
+!.env.example
 src/data/audio/
 
 # Local audit/import working files
