@@ -771,22 +771,12 @@ const renderPrayerGuideDuas = () => {
     </section>`;
 };
 
-// Prayer Guide Phase A (2026-10-05): FAQ JSON-LD parity with the SPA (SeoHead).
-// Uses only the FAQ entries defined for /prayer-guide in src/components/seo/SeoHead.tsx.
-const prayerGuideFaqJsonLd = () => {
-  const faqs = [
-    { q: "Can beginners learn Salah on Noor?", a: "Absolutely. The prayer guide is designed for beginners with clear Bengali and English instructions for every step of Salah." },
-  ];
-  return `<script type="application/ld+json">${JSON.stringify({
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    mainEntity: faqs.map((f) => ({
-      "@type": "Question",
-      name: f.q,
-      acceptedAnswer: { "@type": "Answer", text: f.a },
-    })),
-  })}</script>`;
-};
+// BD-03/D-03 head-only removal (2026-10-24): the /prayer-guide FAQPage block
+// (formerly prayerGuideFaqJsonLd, Phase A parity with the SPA) is removed:
+// /prayer-guide has no visible FAQ section, so the block was invisible
+// structured data. The SPA side emits no FAQPage for /prayer-guide either
+// after the SeoHead gate, so parity is preserved (both emit nothing). No
+// visible content or religious wording is touched.
 
 const renderDhikrList = () => {
   const list = loadToolData("dhikr-list.json");
@@ -2708,8 +2698,6 @@ export default async function handler(req, res) {
       let extraHtml = await buildToolContent(routePath);
       if (routePath === "/baby-names") extraHtml += await buildBabyNameIndexHtml();
       bodyContent = renderStaticPage(page, extraHtml);
-      // Phase A (2026-10-05): FAQ JSON-LD parity with the SPA for /prayer-guide.
-      if (routePath === "/prayer-guide") extraStructuredData += prayerGuideFaqJsonLd();
     }
 
     // --- Contact Page ---

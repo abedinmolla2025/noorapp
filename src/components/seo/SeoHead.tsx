@@ -479,8 +479,19 @@ export function SeoHead() {
   const breadcrumbLd = !isHomepage && !isNoindexUtilityRoute ? buildBreadcrumbJsonLd(pathname) : null;
   const breadcrumbString = breadcrumbLd ? JSON.stringify(breadcrumbLd) : null;
 
-  // FAQPage for key pages
-  const faqLd = isNoindexUtilityRoute ? null : buildFaqJsonLd(pathname);
+  // FAQPage for key pages — BD-03/D-03 head-only removal (2026-10-24).
+  // SeoHead's PAGE_FAQS blocks were invisible structured data on every key
+  // except the 4 section pages (whose visible <details> FAQs carry their own
+  // matching FAQPage block from IslamicEducationalSection). Emission is now
+  // retained ONLY for the frozen-family routes below, preserving their frozen
+  // output byte-for-byte; all other routes emit no SeoHead FAQPage block.
+  // PAGE_FAQS data is intentionally retained (inert) so a future
+  // render-visibly decision can reuse the questions without re-authoring.
+  const FAQ_PAGE_RETAINED_ROUTES = ["/baby-names", "/99-names"];
+  const faqLd =
+    isNoindexUtilityRoute || !FAQ_PAGE_RETAINED_ROUTES.includes(pathname)
+      ? null
+      : buildFaqJsonLd(pathname);
   const faqString = faqLd ? JSON.stringify(faqLd) : null;
 
   // Dynamic favicon from branding settings

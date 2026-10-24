@@ -36,17 +36,9 @@ const AboutPage = () => {
         <meta name="description" content="Learn about Noor, a free Islamic app offering Quran reading, Hadith collections, daily Duas, accurate Prayer Times, Islamic Quiz, 99 Names of Allah, and more." />
         <link rel="canonical" href={`${origin}/about`} />
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
-        <script type="application/ld+json">{JSON.stringify({
-          "@context": "https://schema.org",
-          "@type": "FAQPage",
-          mainEntity: [
-            { "@type": "Question", name: "What is Noor Islamic App?", acceptedAnswer: { "@type": "Answer", text: "Noor is a comprehensive, free Islamic companion app that provides the complete Quran with translations, the Sahih al-Bukhari Hadith collection (additional collections planned), daily Duas, accurate GPS-based Prayer Times, an Islamic Quiz, 99 Names of Allah, Baby Names, Qibla Finder, and Hijri Calendar — all in one beautifully designed application." } },
-            { "@type": "Question", name: "Is Noor completely free to use?", acceptedAnswer: { "@type": "Answer", text: "Yes, Noor is 100% free. Every feature — including Quran reading, Hadith browsing, Dua collections, Prayer Times, and the Daily Quiz — is available without any premium paywall or subscription. Islamic knowledge should be accessible to everyone." } },
-            { "@type": "Question", name: "Who developed Noor?", acceptedAnswer: { "@type": "Answer", text: "Noor was created and is maintained by Abedin Molla from India. As a solo developer and practicing Muslim, he built Noor with the vision of creating the most useful, beautiful, and authentic Islamic app — offered completely free to the global Muslim community." } },
-            { "@type": "Question", name: "What Islamic resources are available in Noor?", acceptedAnswer: { "@type": "Answer", text: "Noor offers the complete Quran with Arabic text, English, Urdu and Bengali translations, and audio recitation. It includes the Sahih Bukhari Hadith collection (additional collections planned for a future release), curated Dua collections, a daily Islamic quiz, 99 Names of Allah, Islamic baby names, a prayer guide, Tasbih counter, Qibla compass, and Hijri calendar." } },
-            { "@type": "Question", name: "Is the content in Noor authentic?", acceptedAnswer: { "@type": "Answer", text: "Noor presents Islamic content with available source and reference details, including collection or chapter information where provided. Quran translations come from established translators named in the app. We encourage users to verify critical religious matters with qualified local scholars and Imams." } },
-          ],
-        })}</script>
+        {/* BD-03/D-03 head-only removal (2026-10-24): /about has no visible FAQ
+            section, so its page-owned FAQPage block was invisible structured
+            data and is removed. The Organization block above is unchanged. */}
       </Helmet>
 
       <div className="min-h-screen bg-gradient-to-b from-background via-background to-primary/5 pb-24">
