@@ -1250,7 +1250,18 @@ export default async function handler(req, res) {
       description = "Read all 114 Surahs of the Holy Quran with Arabic text and Bengali translation.";
       
       let surahHtml = "";
-      let surahs = FALLBACK_SURAHS;
+      // M-14(i): normalize the hardcoded fallback to the render's camelCase
+      // shape, mirroring the DB-path mapping below. The fallback entries are
+      // stored in snake_case (like the DB rows); without this mapping the
+      // double-failure path rendered empty names and "undefined Ayahs".
+      // Mapping only: same 5 surahs, no text added, altered, or removed.
+      let surahs = FALLBACK_SURAHS.map((s) => ({
+        number: s.number,
+        englishName: s.english_name,
+        name: s.name,
+        numberOfAyahs: s.number_of_ayahs,
+        englishNameTranslation: s.english_name_translation,
+      }));
       
       try {
         const response = await fetch("https://api.alquran.cloud/v1/surah", { signal: AbortSignal.timeout(5000) });
