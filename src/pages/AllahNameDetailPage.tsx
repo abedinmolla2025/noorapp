@@ -114,7 +114,8 @@ export default function AllahNameDetailPage() {
         <title>{title}</title>
         <meta name="description" content={description} />
         <link rel="canonical" href={canonical} />
-        <meta name="robots" content="index,follow" />
+        {/* D1 (2026-10-19, owner-approved limited scope): detail pages noindex until enriched. Reversal: restore "index,follow". */}
+        <meta name="robots" content="noindex,follow" />
         <meta property="og:type" content="article" />
         <meta property="og:title" content={title} />
         <meta property="og:description" content={description} />

@@ -2631,7 +2631,9 @@ export default async function handler(req, res) {
         canonicalUrl = `${SITE_ORIGIN}/baby-names/${encodeURIComponent(nameSlug)}`;
         title = `${nameRecord.title} (${nameRecord.title_arabic}) — Meaning in Bengali & English | Noor`;
         description = shortenMetaText(`The name ${nameRecord.title} (${nameRecord.title_arabic}) means "${nameRecord.content_en}" in English and "${nameRecord.content}" in Bengali. ${nameGender} Islamic baby name.`, 160);
-        robotsDirective = "index,follow";
+        // D1 (2026-10-19, owner-approved limited scope): detail pages noindex
+        // until enriched. Reversal: restore "index,follow".
+        robotsDirective = "noindex,follow";
         const arabicMeaning = nameRecord.content_arabic && String(nameRecord.content_arabic).trim()
           ? `<section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">المعنى — العربية</h2><p lang="ar" dir="rtl" class="mt-2 text-lg leading-relaxed">${esc(nameRecord.content_arabic)}</p></section>`
           : "";
@@ -2682,7 +2684,9 @@ export default async function handler(req, res) {
         canonicalUrl = `${SITE_ORIGIN}/99-names/${encodeURIComponent(allahSlug)}`;
         title = `${allahRecord.transliteration} (${allahRecord.arabic}) — Meaning in English & Bengali | Noor`;
         description = shortenMetaText(`Allah's name ${allahRecord.transliteration} (${allahRecord.arabic}) means "${allahRecord.meaning}" in English and "${allahRecord.bengaliMeaning}" in Bengali.`, 160);
-        robotsDirective = "index,follow";
+        // D1 (2026-10-19, owner-approved limited scope): detail pages noindex
+        // until enriched. Reversal: restore "index,follow".
+        robotsDirective = "noindex,follow";
         bodyContent = `<main class="min-h-screen bg-background px-4 py-8"><article class="mx-auto max-w-3xl"><nav aria-label="Breadcrumb" class="mb-2 flex flex-wrap items-center gap-1 text-xs text-muted-foreground"><a href="/" class="hover:underline">Home</a><span aria-hidden="true">›</span><a href="/99-names" class="hover:underline">99 Names of Allah</a><span aria-hidden="true">›</span><span>${esc(allahRecord.transliteration)}</span></nav><div class="rounded-2xl border border-border bg-card p-6 shadow-sm"><p class="text-sm font-semibold text-primary">Name ${allahRecord.id} of 99</p><h1 class="mt-2 text-3xl font-bold">${esc(allahRecord.transliteration)} <span lang="ar" dir="rtl">(${esc(allahRecord.arabic)})</span></h1><div class="mt-6 grid gap-4"><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Meaning — English</h2><p lang="en" class="mt-2 text-lg leading-relaxed">${esc(allahRecord.meaning)}</p></section><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">অর্থ — বাংলা</h2><p lang="bn" class="mt-2 text-lg leading-relaxed">${esc(allahRecord.bengaliMeaning)}</p></section><section class="rounded-xl border border-border p-4"><h2 class="text-xs font-bold uppercase tracking-widest text-muted-foreground">Details</h2><p class="mt-2 text-sm">Transliteration: ${esc(allahRecord.transliteration)} · Position: ${allahRecord.id} of 99</p></section></div><nav aria-label="More names" class="mt-6 flex items-center justify-between gap-3 rounded-2xl border border-border bg-muted/40 p-4">${prevLink}${nextLink}</nav><p class="mt-6 border-t border-border pt-4 text-xs text-muted-foreground">Meanings are provided for educational purposes.</p></div></article></main>`;
         extraStructuredData = `<script type="application/ld+json">${JSON.stringify({
           "@context": "https://schema.org",
