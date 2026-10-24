@@ -3,6 +3,7 @@ import fs from "fs";
 import path from "path";
 import { assignBabyNameSlugs, isValidBabyNameSlugSegment } from "../src/lib/babyNameSlug.js";
 import { assignAllahNameSlugs, isValidAllahNameSlugSegment } from "../src/lib/allahNameSlug.js";
+import { SEO_STATIC_COPY } from "../src/lib/seoStaticCopy.js";
 
 const SITE_ORIGIN = "https://noorapp.in";
 
@@ -359,8 +360,7 @@ const BUNDLED_STORIES = loadBundledStories();
 
 const STATIC_PAGE_COPY = {
   "/about": {
-    title: "About Noor | Free Islamic App",
-    description: "Learn about Noor's mission to make Quran, Hadith, prayer times, Dua and Islamic learning tools accessible and trustworthy.",
+    ...SEO_STATIC_COPY["/about"],
     heading: "About Noor",
     intro: "Noor is a free Islamic app designed to make everyday worship, learning and reflection simpler for Muslims in India, Bangladesh and around the world.",
     sections: [
@@ -371,8 +371,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/sources": {
-    title: "Islamic Sources | Noor",
-    description: "Understand the Quran, Hadith and editorial sources used across Noor's Islamic content.",
+    ...SEO_STATIC_COPY["/sources"],
     heading: "Authentic Islamic Sources",
     intro: "Because trustworthiness is central to Islamic knowledge, you deserve to know exactly where Noor's content comes from and how it is verified. This page lists every classical source Noor draws from, the scholars behind them, and our editorial process.",
     sections: [
@@ -383,8 +382,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/privacy-policy": {
-    title: "Privacy Policy | Noor",
-    description: "Read Noor's privacy policy covering local preferences, analytics, advertising cookies, third-party services and user rights.",
+    ...SEO_STATIC_COPY["/privacy-policy"],
     heading: "Privacy Policy",
     intro: "How Noor handles your data. Noor is designed to help you with prayer times, Quran, duas and other Islamic content, collecting only the minimum information needed to keep the app working smoothly and improve your experience. This policy explains local storage, analytics, advertising cookies, third-party processors, data retention, children's privacy, and how to request deletion or contact us about privacy.",
     sections: [
@@ -397,8 +395,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/terms": {
-    title: "Terms & Conditions | Noor",
-    description: "Read Noor's terms, acceptable-use guidelines and content limitations for using the free Islamic app.",
+    ...SEO_STATIC_COPY["/terms"],
     heading: "Terms & Conditions",
     intro: "Guidelines for using Noor. These terms describe acceptable use, service availability limits, content disclaimers, intellectual-property expectations, updates, and how to contact the developer about a dispute or correction. Noor is developed and maintained by ABEDIN MOLLA from India — a humble effort to bring daily Islamic reminders, prayer times, Quran and duas together in one beautiful place.",
     sections: [
@@ -411,8 +408,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/download": {
-    title: "Download Noor App — Install the Web App | Noor",
-    description: "Learn how to install Noor as a Progressive Web App on supported devices, with access to Quran, Hadith, prayer times, Dua and Islamic learning tools.",
+    ...SEO_STATIC_COPY["/download"],
     heading: "Download Noor",
     intro: "Noor is available as a fast web experience and can be installed as a Progressive Web App on supported devices.",
     sections: [
@@ -422,8 +418,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/islamic-app": {
-    title: "Noor Islamic App | Quran, Hadith, Dua and Prayer Times",
-    description: "Explore Noor, a free Islamic app with Quran, authentic Hadith, prayer times, Dua, Qibla, Islamic stories and more.",
+    ...SEO_STATIC_COPY["/islamic-app"],
     heading: "Noor Islamic App",
     intro: "Noor brings essential Islamic reading, prayer and learning tools together in one clean, free app.",
     sections: [
@@ -433,8 +428,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/prayer-times": {
-    title: "Prayer Times | Accurate Salah Times | Noor",
-    description: "Find Fajr, Sunrise, Dhuhr, Asr, Maghrib and Isha prayer times with a live countdown and location-based calculation on Noor.",
+    ...SEO_STATIC_COPY["/prayer-times"],
     heading: "Prayer Times",
     intro: "Noor helps you view the five daily Salah times, the next-prayer countdown and relevant location information in one place.",
     sections: [
@@ -444,8 +438,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/prayer-guide": {
-    title: "Prayer Guide | Step-by-Step Salah Guide | Noor",
-    description: "Use Noor's prayer guide to review key Salah steps, Niyah wordings, recitations and Duas in a clear English and Bengali format.",
+    ...SEO_STATIC_COPY["/prayer-guide"],
     heading: "Prayer Guide",
     intro: "This guide is designed as a simple reference for reviewing the structure and essential considerations of daily prayer.",
     sections: [
@@ -455,8 +448,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/qibla": {
-    title: "Qibla Finder | Find the Direction of Makkah | Noor",
-    description: "Use Noor's Qibla finder to estimate the direction of the Kaaba from your current location.",
+    ...SEO_STATIC_COPY["/qibla"],
     heading: "Qibla Finder",
     intro: "The Qibla finder helps you estimate the direction of the Kaaba using your device location and compass support where available.",
     sections: [
@@ -466,8 +458,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/tasbih": {
-    title: "Digital Tasbih | Dhikr Counter | Noor",
-    description: "Use Noor's digital Tasbih to count dhikr with a simple, respectful and customizable counter.",
+    ...SEO_STATIC_COPY["/tasbih"],
     heading: "Digital Tasbih",
     intro: "Noor's Tasbih counter is a simple tool for keeping track of dhikr without distracting from remembrance.",
     sections: [
@@ -477,8 +468,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/99-names": {
-    title: "99 Names of Allah | Asma ul Husna | Noor",
-    description: "Explore the 99 Names of Allah with Arabic names, transliteration, Bengali meanings and reflective explanations on Noor.",
+    ...SEO_STATIC_COPY["/99-names"],
     heading: "99 Names of Allah",
     intro: "Explore Asma ul Husna with Arabic names, pronunciation support and meanings intended for reflection and learning.",
     sections: [
@@ -488,8 +478,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/baby-names": {
-    title: "Islamic Baby Names | Muslim Names and Meanings | Noor",
-    description: "Browse meaningful Islamic baby names with Arabic origins, Bengali meanings and information for boys and girls.",
+    ...SEO_STATIC_COPY["/baby-names"],
     heading: "Islamic Baby Names",
     intro: "Explore a collection of Muslim baby names with meanings and origin information to help families begin their search.",
     sections: [
@@ -499,8 +488,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/calendar": {
-    title: "Islamic Calendar | Hijri Dates and Events | Noor",
-    description: "View Hijri and Gregorian dates, Ramadan information and important Islamic occasions with Noor's calendar.",
+    ...SEO_STATIC_COPY["/calendar"],
     heading: "Islamic Calendar",
     intro: "Use Noor's calendar to understand the relationship between Hijri and Gregorian dates and to review important Islamic occasions.",
     sections: [
@@ -510,8 +498,7 @@ const STATIC_PAGE_COPY = {
     ],
   },
   "/quiz": {
-    title: "Daily Islamic Quiz | Learn Quran and Hadith | Noor",
-    description: "Test and grow your Islamic knowledge with Noor's daily quiz covering Quran, Hadith, history and the lives of the Prophets.",
+    ...SEO_STATIC_COPY["/quiz"],
     heading: "Daily Islamic Quiz",
     intro: "Noor's quiz turns short daily learning sessions into an opportunity to review Islamic knowledge and discover new topics.",
     sections: [

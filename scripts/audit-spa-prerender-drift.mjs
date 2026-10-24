@@ -13,16 +13,30 @@
  * canonical overrides (M-04) are out of scope for Tier 1 and are listed as
  * known-uncompared routes.
  *
- * Self-validation (baseline c88656a, 2026-10-24):
- *   - STATIC_PAGE_COPY parses to exactly 14 routes.
- *   - seoDefaults DEFAULTS parses to 30 entries.
- *   - Exactly 1 static title MATCHES: /download; the other 13 DRIFT
- *     (including /sources, which has no SPA entry).
+ * Architecture since M-05 (Option C, 2026-10-24): the 14 Tier 1 static
+ * routes' title/description live in ONE shared plain-JS module,
+ * src/lib/seoStaticCopy.js (SEO_STATIC_COPY). The SPA DEFAULTS literal holds
+ * only the 17 non-Tier-1 entries and spreads SEO_STATIC_COPY; each
+ * STATIC_PAGE_COPY entry spreads SEO_STATIC_COPY[route] for title/description
+ * and keeps its literal heading/intro/sections.
+ *
+ * Why the Tier 1 equality check is NOT vacuous: both effective maps derive
+ * from the shared module, but the script first proves the WIRING — the SPA
+ * import + spread, the disjointness of literal vs shared keys, the per-route
+ * prerender spread, and the ABSENCE of any literal title/description left in
+ * a STATIC_PAGE_COPY entry (a literal after the spread would shadow the
+ * shared value). If any wiring check fails, the script throws instead of
+ * reporting a match. The comparison then verifies the wiring claims.
+ *
+ * Self-validation (post-M-05 expectation):
+ *   - STATIC_PAGE_COPY route keys == 14 (the Tier 1 set).
+ *   - seoDefaults DEFAULTS literal == 17 entries; SEO_STATIC_COPY == 14.
+ *   - Effective SPA entries == 31 (17 literal + 14 shared; /sources arrives
+ *     via the shared module, which is the approved M-05 gap-fill).
+ *   - Tier 1 title MATCH == 14 and description MATCH == 14.
  * Run with --strict-baseline to exit non-zero when that pattern is NOT
- * reproduced (use this for the baseline self-check). Without the flag, a
- * changed drift pattern is reported as information (the script is meant to be
- * re-run AFTER drift fixes to show the delta), and the exit code is 0 as long
- * as parsing succeeded.
+ * reproduced. Without the flag, a differing pattern is reported as
+ * information, and the exit code is 0 as long as parsing succeeded.
  *
  * Usage: node scripts/audit-spa-prerender-drift.mjs [--strict-baseline]
  */
@@ -101,12 +115,82 @@ function extractObjectBody(src, constName) {
 const seoSrc = readFileSync(join(ROOT, "src/lib/seoDefaults.ts"), "utf8");
 const prerenderSrc = readFileSync(join(ROOT, "api/prerender.js"), "utf8");
 const seoHeadSrc = readFileSync(join(ROOT, "src/components/seo/SeoHead.tsx"), "utf8");
+const sharedSrc = readFileSync(join(ROOT, "src/lib/seoStaticCopy.js"), "utf8");
 
-const spa = parseFlatObject(extractObjectBody(seoSrc, "DEFAULTS"), "seoDefaults.ts DEFAULTS");
-const prerenderStatic = parseFlatObject(
-  extractObjectBody(prerenderSrc, "STATIC_PAGE_COPY"),
-  "api/prerender.js STATIC_PAGE_COPY",
+// ------------------------------------------------------- wiring checks ----
+// These checks prove each layer's EFFECTIVE Tier 1 value is the shared value.
+// Any failure throws: a match must never be reported on broken wiring.
+function fail(msg) {
+  throw new Error(`WIRING CHECK FAILED: ${msg}`);
+}
+
+const spaLiteral = parseFlatObject(extractObjectBody(seoSrc, "DEFAULTS"), "seoDefaults.ts DEFAULTS");
+const shared = parseFlatObject(
+  extractObjectBody(sharedSrc, "SEO_STATIC_COPY"),
+  "src/lib/seoStaticCopy.js SEO_STATIC_COPY",
 );
+if (!/from "\.\/seoStaticCopy\.js"/.test(seoSrc)) {
+  fail("seoDefaults.ts does not import ./seoStaticCopy.js");
+}
+if (!/\.\.\.SEO_STATIC_COPY,/.test(extractObjectBody(seoSrc, "DEFAULTS"))) {
+  fail("DEFAULTS does not spread SEO_STATIC_COPY");
+}
+for (const r of spaLiteral.keys()) {
+  if (shared.has(r)) fail(`route ${r} defined in BOTH DEFAULTS literal and SEO_STATIC_COPY`);
+}
+// Effective SPA map: 17 literals + 14 shared (spread last, so shared wins).
+const spa = new Map([...spaLiteral, ...shared]);
+
+/** Slice one `  "route": { ... }` entry block out of an object body. */
+function extractEntryBlock(body, route) {
+  const start = body.indexOf(`  "${route}": {`);
+  if (start === -1) return null;
+  let i = body.indexOf("{", start);
+  let depth = 0;
+  let inStr = null;
+  for (; i < body.length; i++) {
+    const ch = body[i];
+    if (inStr) {
+      if (ch === "\\") i++;
+      else if (ch === inStr) inStr = null;
+      continue;
+    }
+    if (ch === '"' || ch === "'" || ch === "`") inStr = ch;
+    else if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return body.slice(start, i + 1);
+    }
+  }
+  return null;
+}
+
+if (!/from "\.\.\/src\/lib\/seoStaticCopy\.js"/.test(prerenderSrc)) {
+  fail("api/prerender.js does not import ../src/lib/seoStaticCopy.js");
+}
+const staticBody = extractObjectBody(prerenderSrc, "STATIC_PAGE_COPY");
+const staticRoutes = [...staticBody.matchAll(/^  "([^"]+)": \{/gm)].map((m) => m[1]);
+const prerenderStatic = new Map();
+for (const route of staticRoutes) {
+  const block = extractEntryBlock(staticBody, route);
+  if (!block) fail(`STATIC_PAGE_COPY entry ${route} could not be extracted`);
+  if (!block.includes(`...SEO_STATIC_COPY[${JSON.stringify(route)}]`)) {
+    fail(`STATIC_PAGE_COPY entry ${route} does not spread SEO_STATIC_COPY`);
+  }
+  // A literal title:/description: AFTER the spread would shadow the shared
+  // value, so its absence is part of the wiring proof (field-position match
+  // only; section body text cannot match a 4-space field indent at line start).
+  if (/^    title\s*:/m.test(block) || /^    description\s*:/m.test(block)) {
+    fail(`literal title/description left in STATIC_PAGE_COPY entry ${route}`);
+  }
+  const h = block.match(/^    heading:\s*"((?:[^"\\]|\\.)*)"/m);
+  const intro = block.match(/^    intro:\s*"((?:[^"\\]|\\.)*)"/m);
+  if (!h || !unescape(h[1])) fail(`missing/empty heading in STATIC_PAGE_COPY entry ${route}`);
+  if (!intro || !unescape(intro[1])) fail(`missing/empty intro in STATIC_PAGE_COPY entry ${route}`);
+  const s = shared.get(route);
+  if (!s) fail(`STATIC_PAGE_COPY route ${route} has no SEO_STATIC_COPY entry`);
+  prerenderStatic.set(route, s);
+}
 
 // ------------------------------------------------- Tier 2: hub branches -----
 
@@ -167,11 +251,11 @@ function verdict(a, b) {
 const pad = (s, n) => (s.length > n ? s.slice(0, n - 1) + "…" : s.padEnd(n));
 
 console.log("SPA vs PRERENDER SEO DRIFT AUDIT (read-only)");
-console.log(`SPA source: src/lib/seoDefaults.ts (${spa.size} entries)`);
-console.log(`Prerender source: api/prerender.js STATIC_PAGE_COPY (${prerenderStatic.size} routes)`);
+console.log(`SPA source: src/lib/seoDefaults.ts literal (${spaLiteral.size}) + shared module (${shared.size}) = effective ${spa.size} entries`);
+console.log(`Prerender source: api/prerender.js STATIC_PAGE_COPY (${prerenderStatic.size} routes, title/description via shared module)`);
 console.log("");
 
-console.log("TIER 1 — STATIC_PAGE_COPY routes (title / description, exact match)");
+console.log("TIER 1 — STATIC_PAGE_COPY routes (title / description, exact match; wiring proven above)");
 console.log(
   `${"route".padEnd(16)} ${"title".padEnd(8)} ${"description".padEnd(12)} notes`,
 );
@@ -199,7 +283,7 @@ for (const [route, pre] of [...prerenderStatic.entries()].sort()) {
 }
 console.log(
   `Tier 1 summary: titles ${titleMatch} MATCH / ${titleDrift} DRIFT; ` +
-    `descriptions ${descMatch} MATCH / ${descDrift} DRIFT (incl. SPA-MISSING).`,
+    `descriptions ${descMatch} MATCH / ${descDrift} DRIFT.`,
 );
 console.log("");
 
@@ -241,19 +325,22 @@ console.log("");
 
 const selfChecks = [
   ["STATIC_PAGE_COPY routes == 14", prerenderStatic.size === 14],
-  ["seoDefaults entries == 30", spa.size === 30],
-  ["static title MATCH count == 1", titleMatch === 1],
-  ["static title MATCH route is /download", verdict(spa.get("/download")?.title, prerenderStatic.get("/download")?.title) === "MATCH"],
+  ["DEFAULTS literal entries == 17", spaLiteral.size === 17],
+  ["SEO_STATIC_COPY entries == 14", shared.size === 14],
+  ["effective SPA entries == 31", spa.size === 31],
+  ["Tier 1 title MATCH count == 14", titleMatch === 14],
+  ["Tier 1 description MATCH count == 14", descMatch === 14],
+  ["/sources has an effective SPA entry", spa.has("/sources")],
 ];
-console.log("SELF-CHECK (baseline c88656a expectation: 14 static routes, 30 SPA entries, 1 title match on /download)");
+console.log("SELF-CHECK (post-M-05 expectation: shared module wired on both layers, 14/14 Tier 1 MATCH)");
 let selfOk = true;
 for (const [label, ok] of selfChecks) {
   console.log(`  [${ok ? "PASS" : "FAIL"}] ${label}`);
   if (!ok) selfOk = false;
 }
 console.log(selfOk
-  ? "SELF-CHECK: baseline drift pattern reproduced."
-  : "SELF-CHECK: drift pattern differs from baseline — expected after a drift fix; see rows above.");
+  ? "SELF-CHECK: post-M-05 pattern confirmed (shared module wired, 14/14 Tier 1 MATCH)."
+  : "SELF-CHECK: pattern differs from the post-M-05 expectation — see rows above.");
 if (STRICT && !selfOk) {
   console.error("ERROR: --strict-baseline failed.");
   process.exit(1);
