@@ -13,6 +13,22 @@ const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 const SUPPORT_EMAIL = "support@noorapp.in";
 const SUPPORT_FROM = "NoorApp Support <support@noorapp.in>";
 
+// M-08: abuse controls that need no shared store or third-party keys.
+// Generous caps (far above any legitimate contact-form input) plus a
+// payload-size rejection, so one POST cannot smuggle megabytes into the
+// two Resend sends this endpoint triggers. Rate limiting / CAPTCHA remain
+// out of scope (no shared store / keys available).
+const MAX_PAYLOAD_BYTES = 65536;
+const FIELD_LIMITS: Record<string, number> = {
+  name: 100,
+  email: 254,
+  subject: 200,
+  message: 5000,
+  page: 200,
+  issueType: 100,
+  attachmentUrl: 2048,
+};
+
 const sendResendEmail = async (apiKey: string, payload: Record<string, unknown>) => {
   const response = await fetch("https://api.resend.com/emails", {
     method: "POST",
@@ -71,6 +87,12 @@ export default async function handler(req: Request) {
   }
 
   try {
+    // Reject obviously oversized payloads before parsing a huge body.
+    const contentLength = Number(req.headers?.get?.("content-length"));
+    if (Number.isFinite(contentLength) && contentLength > MAX_PAYLOAD_BYTES) {
+      return new Response(JSON.stringify({ error: "Request payload is too large" }), { status: 413, headers });
+    }
+
     const body = await req.json();
     const {
       name,
@@ -84,6 +106,14 @@ export default async function handler(req: Request) {
 
     if (!message) {
       return new Response(JSON.stringify({ error: "Message is required" }), { status: 400, headers });
+    }
+
+    // Field length caps, checked on the same coerced values the handler uses.
+    for (const [field, limit] of Object.entries(FIELD_LIMITS)) {
+      const value = body[field];
+      if (value !== undefined && value !== null && String(value).length > limit) {
+        return new Response(JSON.stringify({ error: `${field} is too long (max ${limit} characters)` }), { status: 400, headers });
+      }
     }
 
     const resendApiKey = process.env.RESEND_API_KEY;
