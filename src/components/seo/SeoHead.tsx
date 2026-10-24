@@ -446,6 +446,16 @@ export function SeoHead() {
 
   // Article JSON-LD for hadith language/chapter pages
   const isHadithArticlePage = normalizedPath.match(/^\/hadith\/sahih-bukhari\/(bangla|english|urdu)(\/chapter-\d+)?$/);
+
+  // og:type alignment with api/prerender.js getOgType (detail pages are
+  // "article", hubs are "website"): covers the verified disagreements on
+  // /quiz/:id and /quran/:surahId (ayah views follow the same rule).
+  // The quiz hub (/quiz) and quran hub (/quran) stay "website".
+  const isArticleOgType = Boolean(
+    isHadithArticlePage ||
+    normalizedPath.match(/^\/quiz\/[^/]+$/) ||
+    normalizedPath.match(/^\/quran\/[^/]+(\/[^/]+)?$/),
+  );
   const articleLdString = !jsonLd && isHadithArticlePage
     ? JSON.stringify({
         "@context": "https://schema.org",
@@ -508,7 +518,7 @@ export function SeoHead() {
       {description ? <meta property="og:description" content={description} /> : null}
       <meta property="og:image" content={ogImage} />
       <meta property="og:url" content={canonical} />
-      <meta property="og:type" content={isHadithArticlePage ? "article" : "website"} />
+      <meta property="og:type" content={isArticleOgType ? "article" : "website"} />
 
       {/* Twitter Card */}
       <meta name="twitter:card" content="summary_large_image" />
