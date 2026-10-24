@@ -12,7 +12,12 @@ const TOOL_OG_IMAGES = {
   "/prayer-guide": `${SITE_ORIGIN}/og-prayer-guide.png`,
 };
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
-const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
+// M-07: no committed key literal — the anon key comes from env only, so a
+// rotated key cannot be silently defeated by a stale copy in source. When
+// env is absent the client is null: DB-dependent branches then fail inside
+// the handler's try/catch (clean 500 + noindex), while static-copy routes
+// never touch the client and keep rendering.
+const SUPABASE_ANON_KEY = process.env.VITE_SUPABASE_ANON_KEY || process.env.SUPABASE_ANON_KEY;
 const LOCAL_CANONICAL_OG_SLUGS = new Set([
   "al-baqarah-2-285", "al-baqarah-2-286", "ayatul-kursi", "dua-after-wudu",
   "dua-before-entering-toilet", "dua-before-sleeping", "dua-for-parents",
@@ -23,7 +28,7 @@ const LOCAL_CANONICAL_OG_SLUGS = new Set([
   "surah-an-nas", "ইসমে-আযমের-দোয়া-অত্যন্ত-ফজিলতপূর্ণ",
 ]);
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+const supabase = SUPABASE_ANON_KEY ? createClient(SUPABASE_URL, SUPABASE_ANON_KEY) : null;
 
 const CATEGORY_MAP = {
   "Balanced Life": "ভারসাম্যপূর্ণ জীবন",

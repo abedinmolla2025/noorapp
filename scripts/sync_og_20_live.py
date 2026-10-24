@@ -1,10 +1,13 @@
 import json
 from pathlib import Path
+import os
 import requests
 
 ROOT=Path('/home/ubuntu/noorapp')
 SUPABASE_URL='https://llicfiepatzgllmjhzbw.supabase.co'
-SUPABASE_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0'
+SUPABASE_KEY = os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY")
+if not SUPABASE_KEY:
+    raise SystemExit("Missing SUPABASE_ANON_KEY env var (M-07: no committed key literal)")
 headers={'apikey':SUPABASE_KEY,'Authorization':f'Bearer {SUPABASE_KEY}','Content-Type':'application/json','Prefer':'return=representation'}
 rows=json.loads((ROOT/'public/data/duas.json').read_text())
 selected=[]

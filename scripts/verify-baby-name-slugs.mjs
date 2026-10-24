@@ -23,8 +23,8 @@ const SUPABASE_URL =
   process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL || "https://llicfiepatzgllmjhzbw.supabase.co";
 const SUPABASE_KEY =
   process.env.SUPABASE_ANON_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0";
+  process.env.VITE_SUPABASE_ANON_KEY;
+if (!SUPABASE_KEY) throw new Error("Missing SUPABASE_ANON_KEY env var (M-07: no committed key literal)");
 
 let failures = 0;
 const fail = (msg) => { failures++; console.error(`FAIL: ${msg}`); };

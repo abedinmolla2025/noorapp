@@ -1,9 +1,12 @@
 from pathlib import Path
+import os
 import requests
 
 ROOT=Path('/home/ubuntu/noorapp')
 BASE='https://llicfiepatzgllmjhzbw.supabase.co'
-KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxsaWNmaWVwYXR6Z2xsbWpoemJ3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3Njg0ODA4MDksImV4cCI6MjA4NDA1NjgwOX0.T7xnXRSM2jx92gVH8Of1dePj609C7WKKflv2I_VZpy0'
+KEY = os.environ.get("SUPABASE_ANON_KEY") or os.environ.get("VITE_SUPABASE_ANON_KEY")
+if not KEY:
+    raise SystemExit("Missing SUPABASE_ANON_KEY env var (M-07: no committed key literal)")
 headers={'apikey':KEY,'Authorization':f'Bearer {KEY}','Content-Type':'image/webp','x-upsert':'true','cache-control':'public,max-age=31536000,immutable'}
 files=sorted((ROOT/'public/assets/dua-og').glob('*.webp'))
 assert len(files)==21, len(files)
