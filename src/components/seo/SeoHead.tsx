@@ -327,8 +327,23 @@ export function SeoHead() {
   );
 
   const SITE_ORIGIN = "https://noorapp.in";
-  // Canonical consolidation: /names → /baby-names
-  const canonicalPath = normalizedPath === "/names" ? "/baby-names" : normalizedPath;
+  // Canonical consolidation: /names → /baby-names, plus deep-URL targets
+  // that mirror api/prerender.js so the SPA canonical agrees with the
+  // bot-served prerender canonical:
+  // - /quran/:surah/:ayah → /quran/:surah (ayah renders the full surah)
+  // - /stories/:slug/trailer → /stories/:slug (trailer renders the story body;
+  //   the trailer view emits no page-level canonical, so this is the only fix)
+  // - /hadith/sahih-bukhari/:lang/(chapter-)N/M → .../chapter-N
+  const canonicalPath = (() => {
+    if (normalizedPath === "/names") return "/baby-names";
+    const quranAyah = normalizedPath.match(/^\/quran\/([^/]+)\/[^/]+$/);
+    if (quranAyah) return `/quran/${quranAyah[1]}`;
+    const storyTrailer = normalizedPath.match(/^\/stories\/([^/]+)\/trailer$/);
+    if (storyTrailer) return `/stories/${storyTrailer[1]}`;
+    const deepHadith = normalizedPath.match(/^\/hadith\/sahih-bukhari\/([^/]+)\/(?:chapter-)?(\d+)\/\d+$/);
+    if (deepHadith) return `/hadith/sahih-bukhari/${deepHadith[1]}/chapter-${deepHadith[2]}`;
+    return normalizedPath;
+  })();
   // IMPORTANT: We ignore pageSeo?.canonical_url if it points to the homepage while the current route is NOT the homepage.
   // This prevents the "Crawled - currently not indexed" issue caused by stale DB overrides.
   const rawDbCanonical = pageSeo?.canonical_url?.trim();

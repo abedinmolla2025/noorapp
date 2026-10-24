@@ -205,7 +205,10 @@ function buildSeoDesc(slug: LangSlug, chapterId?: number, hadithNumber?: number)
 function buildCanonical(slug: string, chapterId?: number, hadithNumber?: number): string {
   const base = `https://noorapp.in/hadith/sahih-bukhari/${slug}`;
   if (hadithNumber != null && chapterId != null) {
-    return `${base}/${chapterId}/${hadithNumber}`;
+    // Prerender consolidates single-hadith URLs into the chapter URL
+    // (duplicate-content fix 2026-09-27); mirror that target here so the
+    // SPA canonical agrees with the bot-served prerender canonical.
+    return `${base}/chapter-${chapterId}`;
   }
   if (chapterId != null) {
     return `${base}/chapter-${chapterId}`;
