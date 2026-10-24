@@ -283,19 +283,29 @@ async function getVerifiedQuizRoutes() {
   // to rows public users may read.
   const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) { logSitemapFailure("quiz-routes", "missing SUPABASE_URL or SUPABASE_ANON_KEY env"); return []; }
-  const query = new URLSearchParams({
-    select: "id",
-    is_active: "eq.true",
-    verification_status: "in.(verified,verified_primary,verified_secondary)",
-    order: "created_at.asc",
-    limit: "500",
-  });
+  // Paginated (D-04, mirror of getVerifiedHadithRoutes): the old single fetch
+  // with limit=500 silently dropped quiz questions beyond 500. Page with
+  // offset at PostgREST's 1000-row clamp; fail safe on any error (no partial
+  // set). Live behavior today is unchanged (quiz count is below the old cap).
+  const rows = [];
   try {
-    const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/quiz_questions?${query}`, {
-      headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-    });
-    if (!response.ok) { logSitemapFailure("quiz-routes", `HTTP ${response.status}`); return []; }
-    const rows = await response.json();
+    for (let offset = 0; ; offset += 1000) {
+      const query = new URLSearchParams({
+        select: "id",
+        is_active: "eq.true",
+        verification_status: "in.(verified,verified_primary,verified_secondary)",
+        order: "created_at.asc",
+        limit: "1000",
+        offset: String(offset),
+      });
+      const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/quiz_questions?${query}`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (!response.ok) { logSitemapFailure("quiz-routes", `HTTP ${response.status}`); return []; }
+      const batch = await response.json();
+      rows.push(...(batch || []));
+      if (!batch || batch.length < 1000) break;
+    }
     const duplicateIds = getQuizDuplicateIds();
     return rows
       .filter((row) => row.id && !duplicateIds.has(row.id))
@@ -311,21 +321,32 @@ async function getPublishedDuaRoutes() {
   const supabaseKey = process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_ANON_KEY;
   if (!supabaseUrl || !supabaseKey) { logSitemapFailure("dua-routes", "missing SUPABASE_URL or SUPABASE_ANON_KEY env"); return []; }
 
-  const query = new URLSearchParams({
-    select: "slug",
-    content_type: "in.(dua,Dua)",
-    is_published: "eq.true",
-    status: "eq.published",
-    slug: "not.is.null",
-    order: "created_at.asc",
-    limit: "5000",
-  });
+  // Paginated (D-04, mirror of getVerifiedHadithRoutes): the old single fetch
+  // with limit=5000 exceeded PostgREST's 1000-row clamp, so duas beyond 1000
+  // were silently dropped. Page with offset at the clamp; fail safe on any
+  // error (no partial set). Live behavior today is unchanged (dua count is
+  // well below the clamp).
+  const rows = [];
   try {
-    const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/admin_content?${query}`, {
-      headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
-    });
-    if (!response.ok) { logSitemapFailure("dua-routes", `HTTP ${response.status}`); return []; }
-    const rows = await response.json();
+    for (let offset = 0; ; offset += 1000) {
+      const query = new URLSearchParams({
+        select: "slug",
+        content_type: "in.(dua,Dua)",
+        is_published: "eq.true",
+        status: "eq.published",
+        slug: "not.is.null",
+        order: "created_at.asc",
+        limit: "1000",
+        offset: String(offset),
+      });
+      const response = await fetch(`${supabaseUrl.replace(/\/$/, "")}/rest/v1/admin_content?${query}`, {
+        headers: { apikey: supabaseKey, Authorization: `Bearer ${supabaseKey}` },
+      });
+      if (!response.ok) { logSitemapFailure("dua-routes", `HTTP ${response.status}`); return []; }
+      const batch = await response.json();
+      rows.push(...(batch || []));
+      if (!batch || batch.length < 1000) break;
+    }
     const uuidOnly = /^[0-9a-f]{8}-[0-9a-f-]{27,36}$/iu;
     const validSlug = (value) => {
       const slug = typeof value === "string" ? value.trim() : "";
