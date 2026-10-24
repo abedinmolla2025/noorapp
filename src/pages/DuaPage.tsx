@@ -502,7 +502,12 @@ const DuaPage = () => {
       try {
         const { data, error } = await supabase
           .from("admin_content")
-          .select("*")
+          // M-09: explicit columns only — exactly the fields the mapper
+          // below reads (AdminContentDuaRow). Do NOT add "*" back: the table
+          // carries internal columns the public page never renders. If the
+          // mapper gains a field, add its column here too. No row limit:
+          // this page renders the complete published set client-side.
+          .select("id,slug,title,title_en,title_hi,title_ur,content,content_arabic,content_en,content_hi,content_ur,content_pronunciation,content_pronunciation_en,content_pronunciation_hi,content_pronunciation_ur,category")
           .eq("status", "published")
           .in("content_type", ["dua", "Dua"])
           .order("published_at", { ascending: false });

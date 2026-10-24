@@ -213,7 +213,12 @@ async function loadStoriesFromDb(): Promise<Story[]> {
   const { supabase } = await import("@/integrations/supabase/client");
   const request = supabase
     .from("admin_content")
-    .select("*")
+    // M-09: explicit columns only — exactly the fields rowToStory reads
+    // (plus metadata, which backs the meta.* fallbacks). Do NOT add "*"
+    // back: the table carries internal columns the public pages never
+    // render. If rowToStory gains a field, add its column here too.
+    // No row limit: loadStories serves the complete published set.
+    .select("slug,category,title,title_en,title_ur,content,content_en,content_ur,moral_bn,moral_en,moral_ur,applications_bn,takeaways_bn,related_source_links,source_name,source_detail,reference,seo,navigation,engagement,growth,tags,author,reading_time_minutes,is_featured,image_url,og_image_url,audio_url,audio_trailer_url,updated_at,metadata")
     .eq("content_type", "story")
     .eq("status", "published")
     .order("created_at", { ascending: true });
