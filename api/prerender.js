@@ -1249,6 +1249,46 @@ export default async function handler(req, res) {
         numberOfAyahs: s.number_of_ayahs,
         englishNameTranslation: s.english_name_translation,
       }));
+      // M-14(ii): extend the double-failure fallback from 5 to all 114
+      // surahs using the repo's own vendored metadata
+      // (src/data/quran_surahs.json, copied verbatim to
+      // public/data/quran-surahs.json by scripts/extract-tool-data.mjs
+      // with a 114-item assertion, and already loaded at runtime for
+      // navigation badges). Names/counts only — that file contains no
+      // ayah text. The first 5 cards are kept EXACTLY as the hardcoded
+      // FALLBACK above (preserving current failure-path display,
+      // including its transliterations); entries 6-114 come from the
+      // vendored file. All-or-nothing: if the file is missing, not
+      // 114 items, or any of entries 6-114 lacks a valid name,
+      // translation, or integer ayah count, keep the 5-only fallback
+      // and log. API/DB success paths below overwrite `surahs`
+      // wholesale, so they are unaffected.
+      try {
+        const meta = loadToolData("quran-surahs.json");
+        if (Array.isArray(meta) && meta.length === 114) {
+          const byNumber = new Map(meta.map((m) => [m.number, m]));
+          const extra = [];
+          for (let n = 6; n <= 114; n++) {
+            const m = byNumber.get(n);
+            if (m && m.englishName && m.englishNameTranslation
+              && Number.isInteger(m.numberOfAyahs) && m.numberOfAyahs > 0) {
+              extra.push({
+                number: m.number,
+                englishName: m.englishName,
+                name: m.name,
+                numberOfAyahs: m.numberOfAyahs,
+                englishNameTranslation: m.englishNameTranslation,
+              });
+            }
+          }
+          if (extra.length === 109) surahs = surahs.concat(extra);
+          else console.error("[SSR] Quran fallback extension skipped: incomplete entries 6-114");
+        } else {
+          console.error("[SSR] Quran fallback extension skipped: vendored metadata not 114 items");
+        }
+      } catch (e) {
+        console.error("[SSR] Quran fallback extension skipped:", e instanceof Error ? e.message : "unknown error");
+      }
       
       try {
         const response = await fetch("https://api.alquran.cloud/v1/surah", { signal: AbortSignal.timeout(5000) });
