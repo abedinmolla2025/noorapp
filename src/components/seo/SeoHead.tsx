@@ -6,6 +6,7 @@ import { usePageSeo } from "@/hooks/usePageSeo";
 import { getPageSeoDefaults } from "@/lib/seoDefaults";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery } from "@tanstack/react-query";
+import ogStoriesDefault from "@/assets/stories/og-stories-default.jpg";
 
 const BRAND_SUFFIX = " | Noor";
 const TITLE_MAX = 60;
@@ -394,7 +395,7 @@ export function SeoHead() {
     if (dbOgUrl && !dbOgUrl.includes("yourwebsite.com")) {
       ogImage = dbOgUrl;
     } else {
-      ogImage = `${SITE_ORIGIN}/og-stories-default.jpg`;
+      ogImage = `${SITE_ORIGIN}${ogStoriesDefault}`;
     }
   } else {
     ogImage = `${SITE_ORIGIN}/og-image.png`;
