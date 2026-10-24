@@ -39,12 +39,49 @@ export default async function handler(req, res) {
   const headers = {};
   if (req.headers.range) headers.Range = req.headers.range;
 
+  // M-10: never let fetch follow redirects blindly. The allow-list above is
+  // checked only against the initial URL, so a "follow" redirect from an
+  // allowed host to any other host would have been proxied (and cached for a
+  // year). Follow redirects manually, re-validating protocol + allow-list on
+  // every hop, and refuse anything that leaves the allow-list.
+  const MAX_REDIRECTS = 5;
+  function isAllowedAudioUrl(url) {
+    return url.protocol === "https:" && ALLOWED_AUDIO_HOSTS.has(url.hostname);
+  }
+
   try {
-    const upstream = await fetch(target, {
-      method: req.method,
-      headers,
-      redirect: "follow",
-    });
+    let upstream;
+    let current = target;
+    for (let hop = 0; ; hop++) {
+      const response = await fetch(current, {
+        method: req.method,
+        headers,
+        redirect: "manual",
+      });
+      const location = response.headers.get("location");
+      const isRedirect = response.status >= 300 && response.status < 400 && location;
+      if (!isRedirect) {
+        upstream = response;
+        break;
+      }
+      if (hop >= MAX_REDIRECTS) {
+        res.status(502).end("Unable to fetch audio");
+        return;
+      }
+      let next;
+      try {
+        next = new URL(location, current);
+      } catch {
+        res.status(502).end("Unable to fetch audio");
+        return;
+      }
+      if (!isAllowedAudioUrl(next)) {
+        // Cross-host (or protocol-downgrade) redirect: refuse to proxy it.
+        res.status(502).end("Unable to fetch audio");
+        return;
+      }
+      current = next;
+    }
 
     res.statusCode = upstream.status;
     res.setHeader("Access-Control-Allow-Origin", "*");
