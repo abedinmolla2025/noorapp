@@ -217,8 +217,22 @@ async function loadStoriesFromDb(): Promise<Story[]> {
     // (plus metadata, which backs the meta.* fallbacks). Do NOT add "*"
     // back: the table carries internal columns the public pages never
     // render. If rowToStory gains a field, add its column here too.
+    // 2026-10-25 ROOT-CAUSE FIX: 16 names formerly listed here do NOT
+    // exist as flat columns in the live admin_content table — they live
+    // only inside the metadata JSONB (moral_bn/moral_en/moral_ur,
+    // applications_bn, takeaways_bn, related_source_links, source_name,
+    // source_detail, navigation, engagement, growth, tags, author,
+    // reading_time_minutes, is_featured, og_image_url). Naming any of
+    // them made PostgREST reject the WHOLE query (42703), so every
+    // useStories consumer (homepage slider, stories hub, categories,
+    // related stories) failed and fell back to empty — the live slider
+    // never rendered cards. rowToStory already reads all 16 from
+    // metadata, so the select lists only flat columns that exist plus
+    // metadata. Never re-add a flat name without verifying it exists
+    // in the live table (a per-column REST probe), or the slider breaks
+    // again silently.
     // No row limit: loadStories serves the complete published set.
-    .select("slug,category,title,title_en,title_ur,content,content_en,content_ur,moral_bn,moral_en,moral_ur,applications_bn,takeaways_bn,related_source_links,source_name,source_detail,reference,seo,navigation,engagement,growth,tags,author,reading_time_minutes,is_featured,image_url,og_image_url,audio_url,audio_trailer_url,updated_at,metadata")
+    .select("slug,category,title,title_en,title_ur,content,content_en,content_ur,reference,seo,image_url,audio_url,audio_trailer_url,updated_at,metadata")
     .eq("content_type", "story")
     .eq("status", "published")
     .order("created_at", { ascending: true });
