@@ -1010,7 +1010,7 @@ const getAppTemplate = () => {
 
 const getOgType = (canonical) => {
   const pathname = new URL(canonical || SITE_ORIGIN).pathname.replace(/\/$/, "") || "/";
-  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources", "/settings", "/notifications", "/sitemap"]);
+  const websiteRoutes = new Set(["/", "/quran", "/hadith", "/dua", "/stories", "/quiz", "/about", "/sources", "/settings", "/notifications", "/sitemap", "/calendar", "/download", "/islamic-app", "/prayer-guide", "/prayer-times", "/privacy-policy", "/qibla", "/tasbih", "/terms", "/contact"]);
   return websiteRoutes.has(pathname) ? "website" : "article";
 };
 
@@ -1794,7 +1794,7 @@ export default async function handler(req, res) {
     // --- Hadith Root Page ---
     else if (routePath === "/hadith") {
       title = "Hadith Collections — হাদিস সংকলন | Noor";
-      description = "Read Sahih Al-Bukhari with Arabic text and Bengali, English and Urdu translations on Noor. More Hadith collections are planned for a future release.";
+      description = "Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned.";
       // Book metadata mirrors the client HadithPage (hadith_books table with
       // the same fallback values). Total hadith counts are deliberately NOT
       // exposed: the app carries an editorial caution that counts vary by
@@ -1886,7 +1886,7 @@ export default async function handler(req, res) {
 
     // --- Dua Root Page ---
     else if (routePath === "/dua") {
-      title = "Daily Duas & Supplications — দোয়া সমূহ | Noor";
+      title = "Duas & Supplications — দোয়া সমূহ | Noor";
       description = "দৈনন্দিন জীবনের প্রয়োজনীয় দোয়া ও জিকিরসমূহ আরবি, বাংলা উচ্চারণ ও অর্থসহ পড়ুন।";
       extraStructuredData = collectionJsonLd({
         name: title,
@@ -2142,8 +2142,8 @@ export default async function handler(req, res) {
 
     // --- Stories Root Page ---
     else if (routePath === "/stories") {
-      title = "Islamic Stories | Noor";
-      description = "Read Islamic stories of the Prophets, Sahaba and inspiring lessons of faith, character and mercy on Noor.";
+      title = "ইসলামিক গল্প — Islamic Stories | Noor";
+      description = "নবীদের জীবনী, সাহাবীদের গল্প ও ঈমানদীপ্ত শিক্ষণীয় ইসলামিক গল্প পড়ুন — Read inspiring Islamic stories of the Prophets, Sahaba and lessons of faith on Noor.";
       extraStructuredData = collectionJsonLd({
         name: title,
         description,
@@ -2702,8 +2702,8 @@ export default async function handler(req, res) {
 
     // --- Contact Page ---
     else if (routePath === "/contact") {
-      title = "Contact Us | Noor";
-      description = "Contact Noor support for help with Quran, Hadith, Dua, prayer times, account questions and feedback about the Islamic app.";
+      title = "Contact Us — যোগাযোগ | Noor";
+      description = "Get in touch with the NOOR team — প্রশ্ন, পরামর্শ, বাগ রিপোর্ট বা সহযোগিতার জন্য আমাদের সাথে সরাসরি যোগাযোগ করুন।";
       // Contact channels come from the same app_settings legal config the
       // React ContactPage reads via GlobalConfig. Email is configured;
       // Facebook/WhatsApp render only when actually configured (no placeholders).
