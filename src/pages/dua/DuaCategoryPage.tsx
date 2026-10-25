@@ -53,10 +53,10 @@ const UI_LABELS = {
     urdu: (n: string) => `${n} دعائیں`,
   },
   countLine: {
-    bengali: (c: number) => `${c} টি দোয়া — আরবি, বাংলা অর্থ ও ফজিলতসহ`,
-    english: (c: number) => `${c} duas — with Arabic, meaning & benefits`,
-    hindi: (c: number) => `${c} दुआएं — अरबी, अर्थ और फ़ज़ीलत के साथ`,
-    urdu: (c: number) => `${c} دعائیں — عربی، معنی اور فضائل کے ساتھ`,
+    bengali: (c: number) => `${c} টি দোয়া — আরবি ও বাংলা অর্থসহ`,
+    english: (c: number) => `${c} duas — with Arabic and meaning`,
+    hindi: (c: number) => `${c} दुआएं — अरबी और अर्थ के साथ`,
+    urdu: (c: number) => `${c} دعائیں — عربی اور معنی کے ساتھ`,
   },
   loading: {
     bengali: "Preparing Duas...",
@@ -187,9 +187,9 @@ const DuaCategoryPage = () => {
 
   const seo = useMemo(() => {
     const name = categoryName || slug || "দোয়া";
-    const title = truncate(`${name} সম্পর্কিত দোয়া — অর্থ ও ফজিলত | Noor`, 60);
+    const title = truncate(`${name} সম্পর্কিত দোয়া — অর্থসহ | Noor`, 60);
     const description = truncate(
-      `${name} সম্পর্কিত সকল দোয়ার আরবি, বাংলা উচ্চারণ, অর্থ ও ফজিলত পড়ুন। সহীহ হাদিস ভিত্তিক ${name} দোয়ার সম্পূর্ণ সংকলন।`,
+      `${name} সম্পর্কিত সকল দোয়ার আরবি, বাংলা উচ্চারণ ও অর্থ পড়ুন। ${name} দোয়ার সংকলন।`,
       155
     );
     return {

@@ -208,7 +208,7 @@ const enrichStoryDescription = (value, title) => {
   const base = String(value || "").trim().replace(/\s+/g, " ");
   const expanded = base.length >= 90
     ? base
-    : `${base || title} — read this Islamic story, its authentic lesson and reflection on Noor.`;
+    : `${base || title} — read this Islamic story, its lesson and reflection on Noor.`;
   return shortenMetaText(expanded, 160);
 };
 
@@ -502,7 +502,7 @@ const STATIC_PAGE_COPY = {
     heading: "Daily Islamic Quiz",
     intro: "Noor's quiz turns short daily learning sessions into an opportunity to review Islamic knowledge and discover new topics.",
     sections: [
-      ["What the quiz covers", "Questions may cover the Quran, authentic Hadith, Islamic history, Fiqh basics and the lives of the Prophets."],
+      ["What the quiz covers", "Questions may cover the Quran, Hadith, Islamic history, Fiqh basics and the lives of the Prophets."],
       ["Learn from every answer", "Use explanations and references where available to review the answer instead of treating the score as the goal."],
       ["A respectful learning tool", "The quiz is educational and should be complemented with reading, qualified teaching and careful study."],
     ],
@@ -1123,7 +1123,7 @@ export default async function handler(req, res) {
   console.log("[PRERENDER] Processing Path:", routePath);
   
   let title = "Noor – Prayer Times, Quran & More";
-  let description = "Read authentic Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.";
+  let description = "Read Quran, Hadith, Dua, Prayer Times, Qibla, Islamic Stories and Baby Names in Bengali with a fast and beautiful Islamic app.";
   let bodyContent = "";
   let extraStructuredData = "";
   let robotsDirective = "index,follow";
@@ -1684,8 +1684,8 @@ export default async function handler(req, res) {
         );
         description = shortenMetaText(
           chapterId
-            ? `Read ${chapterName}, chapter ${chapterId} of Sahih Al-Bukhari in ${meta.label}, with authentic Arabic Hadith and translation on Noor.`
-            : `${meta.title} ${meta.subtitle}. Browse authentic Hadith chapters with Arabic text and translation on Noor.`,
+            ? `Read ${chapterName}, chapter ${chapterId} of Sahih Al-Bukhari in ${meta.label}, with Arabic Hadith and translation on Noor.`
+            : `${meta.title} ${meta.subtitle}. Browse Hadith chapters with Arabic text and translation on Noor.`,
           160,
         );
         // P0 duplicate-content fix (2026-09-27): numeric single-hadith URLs
@@ -1833,7 +1833,7 @@ export default async function handler(req, res) {
             <p class="text-white/80">সহীহ হাদিসের নির্ভরযোগ্য ভাণ্ডার</p>
           </header>
           <div class="p-4 max-w-2xl mx-auto -mt-6">
-            <p class="text-muted-foreground text-center mb-6">Read authentic Hadith with Arabic text and trusted translations. Start with Sahih Al-Bukhari in your language.</p>
+            <p class="text-muted-foreground text-center mb-6">Read Hadith with Arabic text and trusted translations. Start with Sahih Al-Bukhari in your language.</p>
             <div class="grid grid-cols-1 gap-4">
               ${bookCards}
             </div>
@@ -2234,7 +2234,7 @@ export default async function handler(req, res) {
           </main>`;
       } else {
         title = uniqueStoryTitle(`${catLabel} — Islamic Stories | Noor`);
-        description = `Read authentic ${catLabel.toLowerCase()} on Noor.`;
+        description = `Read ${catLabel.toLowerCase()} on Noor.`;
         canonicalUrl = `${SITE_ORIGIN}/stories/category/${catSlug}`;
         const storyCards = items.map((s) => {
           const t = s.title_bn || s.title || "Islamic Story";

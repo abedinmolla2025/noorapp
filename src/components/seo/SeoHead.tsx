@@ -12,7 +12,7 @@ const BRAND_SUFFIX = " | Noor";
 const TITLE_MAX = 60;
 const DESC_MAX = 160;
 const DESC_MIN = 120;
-const DESC_FALLBACK_EN = " Read authentic Islamic content in Bengali.";
+const DESC_FALLBACK_EN = " Read Islamic content in Bengali.";
 // Phase 5 (2026-10-02): Bengali equivalent of the fallback sentence, used only
 // on Bengali-primary routes so short Bengali descriptions are not padded with English.
 const DESC_FALLBACK_BN = " বাংলায় নির্ভরযোগ্য ইসলামিক কন্টেন্ট পড়ুন।";

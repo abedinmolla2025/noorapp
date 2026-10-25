@@ -60,6 +60,15 @@ interface DuaRow {
 
 const SITE_ORIGIN = "https://noorapp.in";
 const FALLBACK_OG = `${SITE_ORIGIN}/og-dua.png`;
+// Path R (AdSense trust fix): the Benefits section stays HIDDEN until benefit
+// texts are source-backed. Benefit strings render with no reference, grade,
+// or source (218/218 rows in the local snapshot), and the prerender dua-detail
+// branch intentionally does not render this section either (same suppression
+// as the 2026-09-27 virtue fix). Data fetching is left intact, so a
+// source-backed restoration only flips this flag. This gate covers the
+// benefits array only — the per-dua `authenticity` grade display below is a
+// separate decision and is untouched.
+const BENEFITS_SECTION_ENABLED = false;
 const LOCAL_CANONICAL_OG_SLUGS = new Set([
   "al-baqarah-2-285", "al-baqarah-2-286", "ayatul-kursi", "dua-after-wudu",
   "dua-before-entering-toilet", "dua-before-sleeping", "dua-for-parents",
@@ -777,8 +786,8 @@ const DuaDetailPage = () => {
           </section>
         )}
 
-        {/* Benefits */}
-        {rich.benefits && rich.benefits.length > 0 && (
+        {/* Benefits — gated by BENEFITS_SECTION_ENABLED (Path R, see top of file). */}
+        {BENEFITS_SECTION_ENABLED && rich.benefits && rich.benefits.length > 0 && (
           <section className="bg-white/5 rounded-2xl p-5 border border-white/10">
             <h2 className="flex items-center gap-2 text-base font-semibold text-white mb-3">
               <Star className="w-5 h-5 text-[hsl(45,93%,58%)]" /> {RICH_LABELS.benefits[language]}
