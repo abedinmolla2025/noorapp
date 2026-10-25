@@ -422,6 +422,9 @@ export default function BukhariLangPage() {
   // ── Load data ──────────────────────────────────────────────
   useEffect(() => {
     let cancelled = false;
+    // Set once the load settles (success or failure). The watchdog below
+    // checks it so it never fires after a settled load.
+    let settled = false;
     
     setLoading(true);
     setError(null);
@@ -433,6 +436,7 @@ export default function BukhariLangPage() {
 
     const processHadiths = (mapped: Hadith[]) => {
       if (cancelled) return;
+      settled = true;
       setAllHadiths(mapped);
       
       let chapArr: Chapter[] = [];
@@ -458,6 +462,7 @@ export default function BukhariLangPage() {
             .then(processHadiths)
             .catch((err) => {
               if (cancelled) return;
+              settled = true;
               console.error("Chapter load failed:", err);
               setError(t.error);
               setLoading(false);
@@ -467,6 +472,7 @@ export default function BukhariLangPage() {
             .then(processHadiths)
             .catch((err) => {
               if (cancelled) return;
+              settled = true;
               console.error("DB load failed:", err);
               setError(t.error);
               setLoading(false);
@@ -496,6 +502,7 @@ export default function BukhariLangPage() {
           })
           .catch((err) => {
             if (cancelled) return;
+            settled = true;
             console.error("Fetch failed:", err);
             setError(t.error);
             setLoading(false);
@@ -503,9 +510,23 @@ export default function BukhariLangPage() {
       }
     }, 400);
 
+    // Hang protection: the DB query / JSON fetch above has no timeout, so a
+    // request that never settles used to leave "Preparing Hadiths..." on
+    // screen forever. After 20 s (generous for the large EN/UR JSON payloads
+    // on slow networks), fall into the existing error + Retry branch. A late
+    // response still renders via processHadiths (self-healing).
+    const watchdog = setTimeout(() => {
+      if (!cancelled && !settled) {
+        console.error("Bukhari load timed out");
+        setError(t.error);
+        setLoading(false);
+      }
+    }, 20000);
+
     return () => {
       cancelled = true;
       clearTimeout(timer);
+      clearTimeout(watchdog);
     };
   }, [normalizedLang, cfg, selectedChapter, searchQuery, kitabData, t.error]);
 

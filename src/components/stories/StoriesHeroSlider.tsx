@@ -18,7 +18,7 @@ export type HeroSlide = {
 const AUTOPLAY_MS = 6000;
 
 export default function StoriesHeroSlider() {
-  const { stories, loading } = useStories();
+  const { stories, loading, retry } = useStories();
   const [index, setIndex] = useState(0);
   const [paused, setPaused] = useState(false);
   const touchStartX = useRef<number | null>(null);
@@ -67,7 +67,7 @@ export default function StoriesHeroSlider() {
     touchStartX.current = null;
   };
 
-  if (loading || slides.length === 0) {
+  if (loading) {
     return (
       <div className="relative w-full aspect-[3/4] sm:aspect-[16/10] md:aspect-[21/9] max-h-[620px] rounded-2xl bg-emerald-950/5 overflow-hidden border border-emerald-900/10">
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-4 z-20">
@@ -88,6 +88,25 @@ export default function StoriesHeroSlider() {
         
         {/* Shimmer overlay */}
         <div className="absolute inset-0 bg-gradient-to-r from-transparent via-emerald-600/5 to-transparent -translate-x-full animate-[shimmer_3s_infinite] pointer-events-none" />
+      </div>
+    );
+  }
+
+  // Settled but empty: the stories fetch failed (useStories resolves a
+  // failure to []) or the published set is empty. Never render the pulsing
+  // "Preparing Feature Slider..." placeholder as final content — it used to
+  // stay forever in exactly this state. Show a compact fallback with a retry
+  // instead. Retry clears the shared stories cache, so the hub grid (same
+  // source) recovers together with the hero.
+  if (slides.length === 0) {
+    return (
+      <div className="relative w-full rounded-2xl border border-emerald-900/10 bg-emerald-950/5 p-8 text-center">
+        <p className="font-medium text-emerald-900">No featured stories available right now.</p>
+        <p className="mt-1 text-sm text-emerald-800/70">Check your connection and try again, or browse all stories.</p>
+        <div className="mt-4 flex items-center justify-center gap-3">
+          <Button onClick={retry}>Try again</Button>
+          <Link to="/stories" className="text-sm font-medium text-emerald-700 underline underline-offset-4">Browse all stories</Link>
+        </div>
       </div>
     );
   }

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import bundledStoriesData from "@/data/stories.json";
 
 export type StoryNavRef = { title: string; slug: string };
@@ -265,6 +265,8 @@ export function clearStoriesCache() {
 export function useStories() {
   const [stories, setStories] = useState<Story[] | null>(cache);
   const [loading, setLoading] = useState(!cache);
+  // Bumped by retry() to re-run the load effect after the cache is cleared.
+  const [attempt, setAttempt] = useState(0);
   useEffect(() => {
     if (cache) return;
     let active = true;
@@ -283,8 +285,15 @@ export function useStories() {
     return () => {
       active = false;
     };
+  }, [attempt]);
+  // Retry a failed/empty load: drop the (empty) module cache and re-fetch.
+  // Callers that only destructure { stories, loading } are unaffected.
+  const retry = useCallback(() => {
+    clearStoriesCache();
+    setLoading(true);
+    setAttempt((a) => a + 1);
   }, []);
-  return { stories: stories ?? [], loading };
+  return { stories: stories ?? [], loading, retry };
 }
 
 export function estimateReadingMinutes(text: string): number {
