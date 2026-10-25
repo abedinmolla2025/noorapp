@@ -126,7 +126,7 @@ export default function StoriesPage() {
     name: "Islamic Stories — Prophets, Sahaba & History",
     url: `${SITE}/stories`,
     description:
-      "Authentic Islamic stories of the Prophets, the Sahaba, and key events in Islamic history — read in Bengali and English on NoorApp.",
+      "Islamic stories of the Prophets, the Sahaba, and key events in Islamic history — read in Bengali and English on NoorApp.",
     hasPart: stories.slice(0, 25).map((s) => ({
       "@type": "Article",
       headline: s.title_en,
@@ -140,13 +140,13 @@ export default function StoriesPage() {
         <title>Islamic Stories — Prophets, Sahaba & History | NoorApp</title>
         <meta
           name="description"
-          content="Read authentic Islamic stories: Prophets (peace be upon them), the Sahaba, and key events of Islamic history — in Bengali and English."
+          content="Read Islamic stories: Prophets (peace be upon them), the Sahaba, and key events of Islamic history — in Bengali and English."
         />
         <link rel="canonical" href={`${SITE}/stories`} />
         <meta property="og:title" content="Islamic Stories — Prophets, Sahaba & History" />
         <meta
           property="og:description"
-          content="Authentic Islamic stories of the Prophets, the Sahaba and Islamic history, in Bengali and English."
+          content="Islamic stories of the Prophets, the Sahaba and Islamic history, in Bengali and English."
         />
         <meta property="og:type" content="website" />
         <meta property="og:url" content={`${SITE}/stories`} />
@@ -166,7 +166,7 @@ export default function StoriesPage() {
             <BookOpen className="h-8 w-8" /> Islamic Stories
           </h1>
           <p className="mt-3 max-w-2xl text-emerald-50/90">
-            Authentic stories of the Prophets (peace be upon them), the noble Sahaba, and pivotal events from
+            Stories of the Prophets (peace be upon them), the noble Sahaba, and pivotal events from
             Islamic history — sourced from the Quran, Sahih Hadith and classical works such as <em>Stories of
             the Prophets</em> by Ibn Kathir.
           </p>

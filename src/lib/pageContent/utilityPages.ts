@@ -170,7 +170,7 @@ export const tasbihContent: IslamicEducationalSectionProps = {
     {
       heading: "The Meaning of Common Adhkar",
       paragraphs: [
-        "The tasbihat recited after every obligatory prayer come from an authentic tradition of the Prophet ﷺ.",
+        "The tasbihat recited after every obligatory prayer come from a tradition of the Prophet ﷺ.",
       ],
       list: [
         "SubhanAllah (33x) — \"Glory be to Allah\" — declares Allah's perfection.",
@@ -255,7 +255,7 @@ export const quizContent: IslamicEducationalSectionProps = {
     {
       heading: "Educational Purpose",
       paragraphs: [
-        "The quiz is designed as an aid — not a substitute — for authentic study under qualified teachers. Every question is drawn from well-known Islamic sources (Qur'an, Sahih Bukhari, Sahih Muslim, Seerah of Ibn Hisham and Ibn Kathir's Tafsir).",
+        "The quiz is designed as an aid — not a substitute — for study under qualified teachers. Every question is drawn from well-known Islamic sources (Qur'an, Sahih Bukhari, Sahih Muslim, Seerah of Ibn Hisham and Ibn Kathir's Tafsir).",
         "Regular short quizzes are proven to strengthen long-term retention far better than passive reading — a technique known as \"retrieval practice\" in educational research.",
       ],
     },

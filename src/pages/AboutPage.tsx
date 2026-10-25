@@ -65,7 +65,7 @@ const AboutPage = () => {
               <Smartphone className="h-5 w-5 text-primary" /> What is {appName}?
             </h2>
             <p className="text-muted-foreground">
-              {appName} is a comprehensive, free Islamic companion app designed to serve Muslims across the world — particularly in India and Bangladesh. Whether you are looking to read the <a href="/quran" className="text-primary hover:underline">Holy Quran</a>, study authentic <a href="/hadith" className="text-primary hover:underline">Hadith</a> collections, recite daily <a href="/dua" className="text-primary hover:underline">Duas</a>, find accurate <a href="/prayer-times" className="text-primary hover:underline">Prayer Times</a>, or test your Islamic knowledge with our <a href="/quiz" className="text-primary hover:underline">Daily Quiz</a>, {appName} brings everything together in one beautiful, fast, and reliable application.
+              {appName} is a comprehensive, free Islamic companion app designed to serve Muslims across the world — particularly in India and Bangladesh. Whether you are looking to read the <a href="/quran" className="text-primary hover:underline">Holy Quran</a>, study <a href="/hadith" className="text-primary hover:underline">Hadith</a> collections, recite daily <a href="/dua" className="text-primary hover:underline">Duas</a>, find accurate <a href="/prayer-times" className="text-primary hover:underline">Prayer Times</a>, or test your Islamic knowledge with our <a href="/quiz" className="text-primary hover:underline">Daily Quiz</a>, {appName} brings everything together in one beautiful, fast, and reliable application.
             </p>
             <p className="text-muted-foreground">
               Built with modern technology and deep respect for Islamic scholarship, {appName} is not just another religious app — it is an independent digital companion built to make Islamic learning easier. From the moment you open the app to check Fajr time, to the quiet evening when you read a few pages of the Quran before sleep, {appName} is there to support your spiritual journey.
@@ -78,7 +78,7 @@ const AboutPage = () => {
               <Heart className="h-5 w-5 text-primary" /> Our Mission
             </h2>
             <p className="text-muted-foreground">
-              Our mission is simple yet profound: to make authentic Islamic knowledge freely accessible to every Muslim, regardless of their language, location, or economic background. We believe that access to the Quran, Hadith, and essential Islamic teachings should never be restricted by paywalls, language barriers, or poor design.
+              Our mission is simple yet profound: to make Islamic knowledge freely accessible to every Muslim, regardless of their language, location, or economic background. We believe that access to the Quran, Hadith, and essential Islamic teachings should never be restricted by paywalls, language barriers, or poor design.
             </p>
             <p className="text-muted-foreground">
               {appName} is built on the principle that technology should serve faith. Every feature we develop, every piece of content we curate, and every design decision we make is guided by this principle. We aim to bridge the gap between traditional Islamic scholarship and the digital-first generation — providing tools that are both academically rigorous and delightfully easy to use.
@@ -91,7 +91,7 @@ const AboutPage = () => {
               <Moon className="h-5 w-5 text-primary" /> Our Islamic Vision
             </h2>
             <p className="text-muted-foreground">
-              In a world where distractions are endless and authentic Islamic resources are scattered across dozens of websites and apps, {appName} was created to be a practical resource that Muslims can use throughout the day. We envision a world where every Muslim — from a teenager in Dhaka to a professional in Mumbai — can open one app and instantly access the Quran, check prayer times, read a Hadith, or learn a new Dua.
+              In a world where distractions are endless and Islamic resources are scattered across dozens of websites and apps, {appName} was created to be a practical resource that Muslims can use throughout the day. We envision a world where every Muslim — from a teenager in Dhaka to a professional in Mumbai — can open one app and instantly access the Quran, check prayer times, read a Hadith, or learn a new Dua.
             </p>
             <p className="text-muted-foreground">
               We believe Islamic learning should be a lifelong journey, not a chore. That is why {appName} includes features like the <a href="/quiz" className="text-primary hover:underline">Daily Islamic Quiz</a> — turning knowledge acquisition into an engaging, rewarding experience. Our <a href="/99-names" className="text-primary hover:underline">99 Names of Allah</a> section helps users deepen their connection with the Creator, while the <a href="/prayer-guide" className="text-primary hover:underline">Prayer Guide</a> ensures even new Muslims can learn to pray with confidence.

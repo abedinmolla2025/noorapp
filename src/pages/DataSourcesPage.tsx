@@ -17,14 +17,6 @@ const DataSourcesPage = () => {
     mainEntity: [
       {
         "@type": "Question",
-        name: "Are the hadiths in Noor authentic?",
-        acceptedAnswer: {
-          "@type": "Answer",
-          text: "Noor currently publishes Sahih al-Bukhari — one of the two most rigorously authenticated hadith collections in Sunni Islam. Additional collections (Sahih Muslim and the four Sunan: Abu Dawud, Tirmidhi, Nasa'i, Ibn Majah) are planned for future release and are not yet available on Noor. Grades (Sahih/Hasan/Da'if) follow classical scholarship.",
-        },
-      },
-      {
-        "@type": "Question",
         name: "Where do the Qur'anic translations come from?",
         acceptedAnswer: {
           "@type": "Answer",
@@ -45,13 +37,13 @@ const DataSourcesPage = () => {
   return (
     <div className="min-h-screen bg-background pb-24">
       <Helmet>
-        <title>Authentic Islamic Sources | Noor</title>
+        <title>Islamic Sources | Noor</title>
         <meta
           name="description"
           content="Learn where Noor's Islamic content comes from — Qur'an translations, Sahih al-Bukhari, and our editorial process."
         />
         <link rel="canonical" href="https://noorapp.in/sources" />
-        <meta property="og:title" content="Authentic Islamic Sources | Noor" />
+        <meta property="og:title" content="Islamic Sources | Noor" />
         <meta
           property="og:description"
           content="Learn where Noor's Islamic content comes from — Qur'an translations, Sahih al-Bukhari and classical scholars."
@@ -70,7 +62,7 @@ const DataSourcesPage = () => {
           >
             <ArrowLeft className="w-5 h-5" />
           </button>
-          <h1 className="text-lg font-bold">Authentic Islamic Sources</h1>
+          <h1 className="text-lg font-bold">Islamic Sources</h1>
         </div>
       </header>
 
@@ -128,7 +120,6 @@ const DataSourcesPage = () => {
             <li>
               <span className="font-semibold text-foreground">Sahih al-Bukhari</span> —
               compiled by Imam Muhammad ibn Ismaʿil al-Bukhari (d. 256 AH / 870 CE).
-              widely regarded in Sunni scholarship as one of the most rigorously authenticated Hadith collections; exact rankings and numbering should be understood within their scholarly and edition context.
               <span className="font-semibold text-emerald-600"> Available now on Noor.</span>
             </li>
             <li>

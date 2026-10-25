@@ -131,7 +131,7 @@ export default function IslamicEducationalSection({
       {sources && sources.length > 0 && (
         <div className="mt-6">
           <h3 className={`text-lg font-semibold mb-2 ${heading}`}>
-            Authentic Sources
+            Sources
           </h3>
           <ul className={`list-disc list-inside space-y-1 text-[14px] ${muted}`}>
             {sources.map((s, i) => (
@@ -144,7 +144,7 @@ export default function IslamicEducationalSection({
           <p className={`mt-2 text-[13px] ${muted}`}>
             See our{" "}
             <Link to="/sources" className={linkCls}>
-              Authentic Islamic Sources
+              Islamic Sources
             </Link>{" "}
             page for full references and methodology.
           </p>

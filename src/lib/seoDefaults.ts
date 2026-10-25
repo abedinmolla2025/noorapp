@@ -29,7 +29,7 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
   "/dua": {
     title: "Duas & Supplications — দোয়া সমূহ | Noor",
     description:
-      "Authentic Islamic duas with Arabic, Bengali meaning & audio — দৈনন্দিন মাসনূন দোয়া, কুরআনের দোয়া ও হাদিসের দোয়া সংকলন।",
+      "Islamic duas with Arabic, Bengali meaning & audio — দৈনন্দিন মাসনূন দোয়া, কুরআনের দোয়া ও হাদিসের দোয়া সংকলন।",
   },
   "/stories": {
     title: "ইসলামিক গল্প — Islamic Stories | Noor",
@@ -37,7 +37,7 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
       "নবীদের জীবনী, সাহাবীদের গল্প ও ঈমানদীপ্ত শিক্ষণীয় ইসলামিক গল্প পড়ুন — Read inspiring Islamic stories of the Prophets, Sahaba and lessons of faith on Noor.",
   },
   "/hadith": {
-    title: "Authentic Hadith Collections | Noor",
+    title: "Hadith Collections | Noor",
     description:
       "Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned.",
   },
@@ -52,7 +52,7 @@ const DEFAULTS: Record<string, PageSeoDefaults> = {
       "সহীহ বুখারী শরীফের সম্পূর্ণ হাদিস আরবি ও বাংলা অনুবাদ সহ পড়ুন। Read Sahih Bukhari Bangla with Arabic text & translation on Noor App.",
   },
   "/hadith/sahih-bukhari/english": {
-    title: "Sahih Bukhari English – Authentic Hadith Collection | Noor",
+    title: "Sahih Bukhari English – Hadith Collection | Noor",
     description:
       "Read Sahih Bukhari in English with Arabic text, translation, chapter navigation and collection references on Noor App.",
   },

@@ -66,9 +66,22 @@ const FALLBACK_OG = `${SITE_ORIGIN}/og-dua.png`;
 // branch intentionally does not render this section either (same suppression
 // as the 2026-09-27 virtue fix). Data fetching is left intact, so a
 // source-backed restoration only flips this flag. This gate covers the
-// benefits array only — the per-dua `authenticity` grade display below is a
-// separate decision and is untouched.
+// benefits array only. The per-dua `authenticity` grade display below is
+// gated separately by AUTHENTICITY_GRADE_DISPLAY_ENABLED.
 const BENEFITS_SECTION_ENABLED = false;
+// Grade gate (AdSense trust fix, same rationale as Path R): per-dua
+// `authenticity` grade words render with no named grader and no verifiable
+// grade evidence anywhere in code, docs, or data. Live counts (verified
+// read-only against live admin_content, filtered as this page does):
+// Sahih 216 + Hasan 3 across all 219 published dua rows — every live row
+// carries a grade. The local duas.json snapshot is stale (Sahih 65 + Hasan 3
+// + 150 null over 218 rows); the live figures above govern. The `reference`
+// field cites the dua's textual source (e.g. "Sahih al-Bukhari 6306"), not
+// its grade, so it is not grade evidence. The grade display stays HIDDEN
+// until a grader + evidence are supplied; data fetching and stored values
+// are left intact, so a sourced restoration only flips this flag.
+// Subtitles are unaffected by this gate.
+const AUTHENTICITY_GRADE_DISPLAY_ENABLED = false;
 const LOCAL_CANONICAL_OG_SLUGS = new Set([
   "al-baqarah-2-285", "al-baqarah-2-286", "ayatul-kursi", "dua-after-wudu",
   "dua-before-entering-toilet", "dua-before-sleeping", "dua-for-parents",
@@ -848,10 +861,10 @@ const DuaDetailPage = () => {
             (NOOR_DUA_VIRTUE_FORENSIC_AUDIT.md): 158/218 rows share 8 generic
             templated virtue sentences, 0 backed by a specific virtue narration.
             See api/prerender.js for the matching suppression. */}
-        {(dua.authenticity || dua.subtitle) && (
+        {((AUTHENTICITY_GRADE_DISPLAY_ENABLED && dua.authenticity) || dua.subtitle) && (
           <section className="bg-[hsl(158,55%,25%)]/70 rounded-2xl p-5 border border-[hsl(45,93%,58%)]/20 space-y-4">
             {dua.subtitle && <p className="text-white/90 text-base leading-relaxed">{dua.subtitle}</p>}
-            {dua.authenticity && dua.source_type !== "Quran" && (
+            {AUTHENTICITY_GRADE_DISPLAY_ENABLED && dua.authenticity && dua.source_type !== "Quran" && (
               <div>
                 <h2 className="text-xs font-semibold text-[hsl(45,93%,58%)] uppercase tracking-wide mb-2">বিশুদ্ধতা ও সম্পাদনা নোট</h2>
                 <p className="text-white/85 leading-relaxed">{dua.authenticity}</p>

@@ -69,11 +69,11 @@ export default function HadithPage() {
       style={{ background: "linear-gradient(170deg, #0F766E 0%, #064E3B 40%, #022c22 100%)" }}
     >
       <Helmet>
-        <title>Authentic Hadith Collections | Noor</title>
+        <title>Hadith Collections | Noor</title>
         <meta name="description" content="Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned." />
         <link rel="canonical" href="https://noorapp.in/hadith" />
         <meta name="robots" content="index,follow" />
-        <meta property="og:title" content="Authentic Hadith Collections | Noor" />
+        <meta property="og:title" content="Hadith Collections | Noor" />
         <meta property="og:description" content="Read Sahih al-Bukhari online with Arabic text and translations in Bangla, English & Urdu on Noor. More Hadith collections planned." />
         <meta property="og:url" content="https://noorapp.in/hadith" />
         <meta property="og:image" content="https://noorapp.in/og-bukhari.png" />
@@ -126,7 +126,7 @@ export default function HadithPage() {
           className="mt-3 text-[13px] leading-relaxed max-w-xs mx-auto"
           style={{ color: "rgba(255,255,255,0.55)" }}
         >
-          Browse authentic collections from the most trusted scholars of Islam.
+          Browse collections from the most trusted scholars of Islam.
         </motion.p>
       </div>
 

@@ -75,7 +75,7 @@ export default function IslamicAppPage() {
 
         <section>
           <h2 className="text-[16px] font-bold text-foreground mb-3">
-            📚 Hadith App – Authentic Collections Free
+            📚 Hadith App – Collections Free
           </h2>
           <p>
             Noor provides a free <Link to="/hadith" className="text-primary font-medium hover:underline">Hadith library</Link> for browsing and study. Browse selected narrations from major collections and check the available collection, chapter and reference details:
@@ -108,7 +108,7 @@ export default function IslamicAppPage() {
           </p>
           <ul className="mt-3 ml-4 list-disc space-y-1">
             <li>Live countdown to the next prayer</li>
-            <li>Beautiful Athan alert with authentic call to prayer audio</li>
+            <li>Beautiful Athan alert with call to prayer audio</li>
             <li>Customizable calculation methods (ISNA, Karachi, MWL, etc.)</li>
             <li>Support for all cities in India and Bangladesh</li>
           </ul>

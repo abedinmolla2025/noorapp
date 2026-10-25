@@ -778,7 +778,7 @@ const uiText = {
   },
   en: {
     title: "Sahih Al-Bukhari",
-    subtitle: "The Most Authentic Hadith Collection",
+    subtitle: "The Hadith Collection",
     searchPlaceholder: "Search hadiths...",
     chapters: "Chapters",
     allHadiths: "All Hadiths",
