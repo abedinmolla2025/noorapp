@@ -1894,7 +1894,7 @@ export default async function handler(req, res) {
         url: `${SITE_ORIGIN}/dua`,
       });
       
-      const { data: duas } = await supabase
+      const { data: duas, error: duasError } = await supabase
         .from("admin_content")
         .select("category")
         .eq("content_type", "dua")
@@ -1912,6 +1912,24 @@ export default async function handler(req, res) {
         </a>
       `).join("");
 
+      // Truthful category-strip states (P1-5): the old fallback rendered a
+      // "loading..." message as FINAL bot content whenever the list was
+      // empty — including on DB failure, where it was false. The Supabase
+      // error field cleanly separates the cases: error -> 503 (crawlers
+      // retry; the >=400 rule at the final send also strips ad scripts)
+      // + failure message; no error + empty -> truthful empty message.
+      let categoryStrip;
+      if (duasError) {
+        statusCode = 503;
+        title = "দোয়া সাময়িকভাবে অনুপলব্ধ | Noor";
+        description = "দোয়া বিভাগগুলো এখন লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।";
+        extraStructuredData = "";
+        res.setHeader("Retry-After", "300");
+        categoryStrip = '<p class="text-center p-8 text-white/70 w-full">দোয়া বিভাগগুলো এখন লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।</p>';
+      } else {
+        categoryStrip = categoryList || '<p class="text-center p-8 text-white/50 w-full">এখনো কোনো দোয়া বিভাগ পাওয়া যায়নি।</p>';
+      }
+
       bodyContent = `
         <div class="min-h-screen bg-[hsl(158,64%,18%)]">
           <header class="bg-gradient-to-br from-[hsl(158,55%,22%)] to-[hsl(158,64%,15%)] p-10 text-white text-center border-b border-white/10 relative overflow-hidden" style="background-image: ${ISLAMIC_PATTERN}, linear-gradient(to bottom right, hsl(158,55%,22%), hsl(158,64%,15%))">
@@ -1922,7 +1940,7 @@ export default async function handler(req, res) {
           </header>
           <div class="p-4 max-w-4xl mx-auto">
             <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-              ${categoryList || '<p class="text-center p-8 text-white/50 w-full">দোয়া লোড হচ্ছে...</p>'}
+              ${categoryStrip}
             </div>
           </div>
         </div>
