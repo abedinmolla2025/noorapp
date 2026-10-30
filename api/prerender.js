@@ -364,7 +364,7 @@ const STATIC_PAGE_COPY = {
     heading: "About Noor",
     intro: "Noor is a free Islamic app designed to make everyday worship, learning and reflection simpler for Muslims in India, Bangladesh and around the world.",
     sections: [
-      ["Our mission", "We bring Quran reading, authentic Hadith, prayer times, Dua, Qibla, Islamic stories and learning tools together in one calm and accessible experience."],
+      ["Our mission", "We bring Quran reading, Hadith, prayer times, Dua, Qibla, Islamic stories and learning tools together in one calm and accessible experience."],
       ["Built for daily use", "Noor focuses on practical tools that people return to every day: prayer reminders, Quran reading, supplications, Islamic calendar information and gentle learning activities."],
       ["Trust and responsibility", "We aim to present Islamic content with clear references, respectful language and transparent source information. If you find an error, please contact the Noor team so it can be reviewed."],
       ["About the developer", "Noor is developed and maintained by ABEDIN MOLLA from India."],
@@ -372,11 +372,11 @@ const STATIC_PAGE_COPY = {
   },
   "/sources": {
     ...SEO_STATIC_COPY["/sources"],
-    heading: "Authentic Islamic Sources",
+    heading: "Islamic Sources",
     intro: "Because trustworthiness is central to Islamic knowledge, you deserve to know exactly where Noor's content comes from and how it is verified. This page lists every classical source Noor draws from, the scholars behind them, and our editorial process.",
     sections: [
       ["The Qur'an", "The Qur'an is the literal word of Allah, revealed to the Prophet Muhammad ﷺ over 23 years and preserved unchanged for over 1,400 years. Arabic text: Uthmani Mus-haf (Madinah script), consonantal text agreed by consensus. Translations are served from the AlQuran Cloud API — Bengali by Muhiuddin Khan, English by Saheeh International, Urdu by Ahmed Ali — and the active translator is shown in the Qur'an reader under the language selector. Verse numbering follows the standard Kufan system."],
-      ["Hadith collections", "Hadith are the sayings, actions and tacit approvals of the Prophet Muhammad ﷺ, transmitted through rigorously verified chains of narrators. Noor currently publishes Sahih al-Bukhari — compiled by Imam Muhammad ibn Isma'il al-Bukhari (d. 256 AH / 870 CE), widely regarded in Sunni scholarship as one of the most rigorously authenticated hadith collections. Further collections from the six major Sunni collections (Kutub as-Sittah) — Sahih Muslim (Imam Muslim ibn al-Hajjaj, d. 261 AH / 875 CE), Sunan Abu Dawud (Imam Abu Dawud as-Sijistani, d. 275 AH), Jami' at-Tirmidhi (Imam Muhammad at-Tirmidhi, d. 279 AH, known for grading each hadith), Sunan an-Nasa'i (Imam Ahmad an-Nasa'i, d. 303 AH), and Sunan Ibn Majah (Imam Ibn Majah, d. 273 AH) — are planned for future release and are not yet available on Noor."],
+      ["Hadith collections", "Hadith are the sayings, actions and tacit approvals of the Prophet Muhammad ﷺ, transmitted through rigorously verified chains of narrators. Noor currently publishes Sahih al-Bukhari — compiled by Imam Muhammad ibn Isma'il al-Bukhari (d. 256 AH / 870 CE). Further collections from the six major Sunni collections (Kutub as-Sittah) — Sahih Muslim (Imam Muslim ibn al-Hajjaj, d. 261 AH / 875 CE), Sunan Abu Dawud (Imam Abu Dawud as-Sijistani, d. 275 AH), Jami' at-Tirmidhi (Imam Muhammad at-Tirmidhi, d. 279 AH, known for grading each hadith), Sunan an-Nasa'i (Imam Ahmad an-Nasa'i, d. 303 AH), and Sunan Ibn Majah (Imam Ibn Majah, d. 273 AH) — are planned for future release and are not yet available on Noor."],
       ["Grading and methodology", "Where a hadith is graded (Sahih, Hasan, Da'if) we follow the classical rulings of Imam al-Bukhari, Imam Muslim, Imam at-Tirmidhi and later authorities such as Ibn Hajar al-'Asqalani and Shaykh Muhammad Nasir ad-Din al-Albani."],
       ["Editorial review", "Individual hadith, dua and story entries should identify the collection or Qur'an reference, book/chapter or verse where available, translation/edition information, and the date of the latest editorial review. If a source or translation edition is not yet available in the record, it is marked for editorial follow-up rather than presented as independently verified. Found an inaccurate reference or a translation issue? Please report it through the Contact page."],
     ],
@@ -791,7 +791,7 @@ const renderDhikrList = () => {
   return `
     <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <h2 class="text-xl font-bold text-foreground">Dhikr for your Tasbih</h2>
-      <p class="mt-2 text-sm leading-7 text-muted-foreground">Authentic remembrances you can count with the Tasbih counter, with their recommended counts.</p>
+      <p class="mt-2 text-sm leading-7 text-muted-foreground">Remembrances you can count with the Tasbih counter, with their recommended counts.</p>
       <ul class="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">${items}</ul>
     </section>`;
 };
@@ -1894,7 +1894,7 @@ export default async function handler(req, res) {
         url: `${SITE_ORIGIN}/dua`,
       });
       
-      const { data: duas } = await supabase
+      const { data: duas, error: duasError } = await supabase
         .from("admin_content")
         .select("category")
         .eq("content_type", "dua")
@@ -1912,6 +1912,24 @@ export default async function handler(req, res) {
         </a>
       `).join("");
 
+      // Truthful category-strip states (P1-5): the old fallback rendered a
+      // "loading..." message as FINAL bot content whenever the list was
+      // empty — including on DB failure, where it was false. The Supabase
+      // error field cleanly separates the cases: error -> 503 (crawlers
+      // retry; the >=400 rule at the final send also strips ad scripts)
+      // + failure message; no error + empty -> truthful empty message.
+      let categoryStrip;
+      if (duasError) {
+        statusCode = 503;
+        title = "দোয়া সাময়িকভাবে অনুপলব্ধ | Noor";
+        description = "দোয়া বিভাগগুলো এখন লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।";
+        extraStructuredData = "";
+        res.setHeader("Retry-After", "300");
+        categoryStrip = '<p class="text-center p-8 text-white/70 w-full">দোয়া বিভাগগুলো এখন লোড করা যাচ্ছে না। কিছুক্ষণ পর আবার চেষ্টা করুন।</p>';
+      } else {
+        categoryStrip = categoryList || '<p class="text-center p-8 text-white/50 w-full">এখনো কোনো দোয়া বিভাগ পাওয়া যায়নি।</p>';
+      }
+
       bodyContent = `
         <div class="min-h-screen bg-[hsl(158,64%,18%)]">
           <header class="bg-gradient-to-br from-[hsl(158,55%,22%)] to-[hsl(158,64%,15%)] p-10 text-white text-center border-b border-white/10 relative overflow-hidden" style="background-image: ${ISLAMIC_PATTERN}, linear-gradient(to bottom right, hsl(158,55%,22%), hsl(158,64%,15%))">
@@ -1922,7 +1940,7 @@ export default async function handler(req, res) {
           </header>
           <div class="p-4 max-w-4xl mx-auto">
             <div class="flex gap-3 overflow-x-auto pb-4 scrollbar-hide">
-              ${categoryList || '<p class="text-center p-8 text-white/50 w-full">দোয়া লোড হচ্ছে...</p>'}
+              ${categoryStrip}
             </div>
           </div>
         </div>
@@ -2181,7 +2199,7 @@ export default async function handler(req, res) {
         <div class="min-h-screen bg-background pb-24">
           <section class="bg-emerald-800 text-white p-10">
             <h1 class="text-3xl font-bold">Islamic Stories</h1>
-            <p class="mt-2">Authentic stories of the Prophets and Sahaba.</p>
+            <p class="mt-2">Stories of the Prophets and Sahaba.</p>
           </section>
           <div class="p-4 max-w-4xl mx-auto">
             ${storyList || '<p class="text-center text-muted-foreground">No stories found.</p>'}

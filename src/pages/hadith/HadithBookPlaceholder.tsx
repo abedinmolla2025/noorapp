@@ -33,8 +33,7 @@ const bookMeta: Record<string, BookMeta> = {
         </h2>
         <p>
           <strong>Sahih Muslim</strong> (সহীহ মুসলিম) is one of the six major hadith collections
-          (<em>Kutub al-Sittah</em>) in Sunni Islam and is universally regarded as the second most
-          authentic book of hadith after Sahih Bukhari. It was compiled by the great Islamic scholar{" "}
+          (<em>Kutub al-Sittah</em>) in Sunni Islam. It was compiled by the great Islamic scholar{" "}
           <strong>Imam Muslim ibn al-Hajjaj</strong> (ইমাম মুসলিম ইবনুল হাজ্জাজ রহ.), born in
           202 AH / 815 CE in Nishapur, in the Khorasan region of Persia (modern-day Iran). From a
           young age, Imam Muslim showed extraordinary dedication to the science of hadith, travelling

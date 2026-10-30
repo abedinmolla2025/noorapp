@@ -33,7 +33,7 @@ export default function StoryCategoryPage() {
     "@type": "CollectionPage",
     name: `${label} — Islamic Stories`,
     url,
-    description: meta?.description || `Authentic Islamic stories in the ${label} category.`,
+    description: meta?.description || `Islamic stories in the ${label} category.`,
     hasPart: items.map((s) => ({
       "@type": "Article",
       headline: s.title_en,
@@ -45,7 +45,7 @@ export default function StoryCategoryPage() {
     <div className="min-h-screen bg-background pb-24">
       <Helmet>
         <title>{label} — Islamic Stories | NoorApp</title>
-        <meta name="description" content={meta?.description || `Read authentic ${label.toLowerCase()} on NoorApp.`} />
+        <meta name="description" content={meta?.description || `Read ${label.toLowerCase()} on NoorApp.`} />
         <link rel="canonical" href={url} />
         <meta property="og:title" content={`${label} — Islamic Stories`} />
         <meta property="og:description" content={meta?.description || ""} />

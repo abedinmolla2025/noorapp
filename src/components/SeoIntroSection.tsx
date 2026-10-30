@@ -83,7 +83,7 @@ export default function SeoIntroSection() {
           <Link to="/quran" className="font-medium text-primary underline-offset-2 hover:underline">
             Holy Quran
           </Link>{" "}
-          with Bengali translation, explore authentic{" "}
+          with Bengali translation, explore{" "}
           <Link to="/hadith" className="font-medium text-primary underline-offset-2 hover:underline">
             Hadith collections
           </Link>
@@ -115,7 +115,7 @@ export default function SeoIntroSection() {
 
         {/* Hadith */}
         <h2 className="mb-2 mt-5 text-[14px] font-semibold text-foreground">
-          📚 Hadith App — Authentic Collections Free
+          📚 Hadith App — Collections Free
         </h2>
         <p className="mb-3">
           Noor offers a curated selection of free{" "}
@@ -146,7 +146,7 @@ export default function SeoIntroSection() {
           </Link>{" "}
           feature. Using your GPS location, the app calculates exact Fajr, Dhuhr, Asr, Maghrib, and
           Isha times for every city in India and Bangladesh. A live countdown timer shows exactly how
-          much time remains until the next Salah. Noor also supports authentic Athan alerts with
+          much time remains until the next Salah. Noor also supports Athan alerts with
           beautiful call-to-prayer audio, so you are always reminded even when the screen is off.
           সঠিক নামাজের সময়সূচী — ফজর থেকে এশা পর্যন্ত — সারা ভারত ও বাংলাদেশে।
         </p>
@@ -163,7 +163,7 @@ export default function SeoIntroSection() {
           covers every aspect of a Muslim's day — morning and evening adhkar, duas for eating,
           sleeping, entering the home, travelling, seeking forgiveness, and much more. Every dua
           includes the original Arabic text, a pronunciation guide (transliteration), and a clear
-          Bengali meaning sourced from the Quran and authentic Hadith. প্রতিটি মুহূর্তের জন্য সঠিক
+          Bengali meaning sourced from the Quran and Hadith. প্রতিটি মুহূর্তের জন্য সঠিক
           দোয়া — আরবি ও বাংলা অনুবাদ সহ।
         </p>
 

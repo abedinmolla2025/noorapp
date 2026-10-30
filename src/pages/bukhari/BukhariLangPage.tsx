@@ -162,13 +162,13 @@ function getChapterName(chapterId: number, lang: LangSlug, kitabMap: Map<number,
 const langSeoMeta: Record<LangSlug, { rootTitle: string; rootDesc: string; titleLang: string; descLang: string }> = {
   bangla: {
     rootTitle: "Sahih Bukhari Bangla Hadith – সহীহ বুখারী বাংলা হাদিস | Noor App",
-    rootDesc: "Read Sahih Bukhari Bangla Hadith with Arabic text and authentic Bangla translation.",
+    rootDesc: "Read Sahih Bukhari Bangla Hadith with Arabic text and Bangla translation.",
     titleLang: "Bangla",
     descLang: "Bangla",
   },
   english: {
     rootTitle: "Sahih Bukhari English Hadith Collection | Noor App",
-    rootDesc: "Read authentic Sahih Bukhari hadith collection with Arabic and English translation.",
+    rootDesc: "Read Sahih Bukhari hadith collection with Arabic and English translation.",
     titleLang: "English",
     descLang: "English",
   },
