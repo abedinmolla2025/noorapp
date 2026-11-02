@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet-async";
+import { NOINDEX_STORY_SLUGS } from "@/lib/noindexSlugs";
 import { Link, useNavigate, useParams, useLocation } from "react-router-dom";
 import {
   ArrowLeft,
@@ -277,6 +278,10 @@ export default function StoryDetailPage() {
         <Helmet>
           <title>🎧 {storyTitle} — Full Audio | Noor</title>
           <meta name="description" content="এই ইসলামিক গল্পটির সম্পূর্ণ অডিও শুনুন ও শেয়ার করুন।" />
+          {/* D3 (2026-11-02, owner-approved): trailer view of a listed story is noindex,follow too. */}
+          {slug && NOINDEX_STORY_SLUGS.has(slug) && (
+            <meta name="robots" content="noindex,follow" />
+          )}
           <meta property="og:title" content={`🎧 ${storyTitle} (Full Audio)`} />
           <meta property="og:description" content="এই ইসলামিক গল্পটির সম্পূর্ণ অডিও শুনুন ও শেয়ার করুন।" />
           <meta property="og:image" content={ogImage} />
@@ -470,6 +475,10 @@ export default function StoryDetailPage() {
           />
         )}
         <link rel="canonical" href={story.seo.canonical_url || url} />
+        {/* D3 (2026-11-02, owner-approved): listed stories render noindex,follow in the SPA too (prerender is the crawler authority). */}
+        {slug && NOINDEX_STORY_SLUGS.has(slug) && (
+          <meta name="robots" content="noindex,follow" />
+        )}
         <meta property="og:type" content="article" />
         <meta property="og:site_name" content="NoorApp" />
         <meta property="og:locale" content="bn_BD" />

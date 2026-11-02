@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
+import { NOINDEX_DUA_SLUGS } from "@/lib/noindexSlugs";
 import { ArrowLeft, BookOpen, Sparkles, Heart, Star, Clock, ScrollText, ChevronRight, ChevronLeft, Share2, Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { motion } from "framer-motion";
@@ -606,6 +607,10 @@ const DuaDetailPage = () => {
           <title>{seo.title}</title>
           <meta name="description" content={seo.description} />
           <link rel="canonical" href={seo.url} />
+          {/* D3 (2026-11-02, owner-approved): listed duas render noindex,follow in the SPA too (prerender is the crawler authority). */}
+          {slug && NOINDEX_DUA_SLUGS.has(slug) && (
+            <meta name="robots" content="noindex,follow" />
+          )}
           <meta property="og:type" content="article" />
           <meta property="og:title" content={seo.title} />
           <meta property="og:description" content={seo.description} />
