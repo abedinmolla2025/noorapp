@@ -385,6 +385,22 @@ const loadStoryBodyAllowlist = () => {
 
 const STORY_BODY_ALLOWLIST = loadStoryBodyAllowlist();
 
+// D3 noindex lists (2026-11-02, owner-approved, local only).
+// Cached reader for public/data/noindex-slugs.json (same loadToolData
+// candidates as the other tool-data files). Missing/malformed file =>
+// empty sets => behavior unchanged (fail-safe: a missing list must not
+// noindex anything). SPA mirror: src/lib/noindexSlugs.ts.
+let cachedNoindexSlugs = null;
+const getNoindexSlugs = () => {
+  if (cachedNoindexSlugs === null) {
+    const doc = loadToolData("noindex-slugs.json");
+    const stories = doc && Array.isArray(doc.stories) ? doc.stories.filter((s) => typeof s === "string") : [];
+    const duas = doc && Array.isArray(doc.duas) ? doc.duas.filter((s) => typeof s === "string") : [];
+    cachedNoindexSlugs = { stories: new Set(stories), duas: new Set(duas) };
+  }
+  return cachedNoindexSlugs;
+};
+
 const STATIC_PAGE_COPY = {
   "/about": {
     ...SEO_STATIC_COPY["/about"],
@@ -2049,6 +2065,9 @@ export default async function handler(req, res) {
         .maybeSingle();
 
       if (dua) {
+        // D3 (2026-11-02, owner-approved): listed duas render
+        // noindex,follow (content still served, 200; only robots changes).
+        if (getNoindexSlugs().duas.has(slug)) robotsDirective = "noindex,follow";
         // Disambiguate same-titled duas (several authentic duas can share a
         // common name, e.g. for waking up) with the row's own reference.
         // Redundant title prefixes inside the reference are stripped.
@@ -2366,6 +2385,9 @@ export default async function handler(req, res) {
             <a class="mt-6 inline-block rounded-lg bg-primary px-5 py-3 font-semibold text-primary-foreground" href="/stories">Browse published stories</a>
           </main>`;
       } else if (story) {
+        // D3 (2026-11-02, owner-approved): listed stories render
+        // noindex,follow (content still served, 200; only robots changes).
+        if (getNoindexSlugs().stories.has(slug)) robotsDirective = "noindex,follow";
         const storyTitle = story.title_bn || story.title || story.title_en || "Islamic Story";
         const storyContent = story.content_bn || story.content || story.content_en || "Read this beautiful Islamic story on NoorApp.";
         const storedStoryDescription = story.seo?.meta_description || story.seo?.open_graph?.["og:description"] || "";
