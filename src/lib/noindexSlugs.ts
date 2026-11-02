@@ -35,7 +35,7 @@ export const NOINDEX_STORY_SLUGS = new Set([
   "hijri-new-year-spirit-migration",
   "laylat-al-miraj-divine-journey",
   "ghadir-khumm-declaration-leadership",
-  "maulid-al-nabi-birth-mercy",
+  "mawlid-al-nabi-birth-mercy",
 ]);
 
 export const NOINDEX_DUA_SLUGS = new Set([
