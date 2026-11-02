@@ -358,6 +358,33 @@ const loadBundledStories = () => {
 
 const BUNDLED_STORIES = loadBundledStories();
 
+// D1 story-body allowlist (2026-11-02): slugs whose full DB telling the
+// prerender serves when ENABLE_FULL_STORY_BODY=true. Default: [] (empty),
+// so with the flag off (default) behavior is exactly unchanged. Loaded from
+// public/data/story-body-allowlist.json (dev), dist/data (build output), or
+// /var/task/dist/data (Vercel). Never throws: unreadable/malformed => [].
+const loadStoryBodyAllowlist = () => {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", "story-body-allowlist.json"),
+    path.join(process.cwd(), "dist", "data", "story-body-allowlist.json"),
+    path.join("/var/task", "dist", "data", "story-body-allowlist.json"),
+  ];
+
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const parsed = JSON.parse(fs.readFileSync(file, "utf8"));
+        if (Array.isArray(parsed)) return parsed.filter((s) => typeof s === "string");
+      }
+    } catch (error) {
+      console.error("[SSR] Story body allowlist read failed", error);
+    }
+  }
+  return [];
+};
+
+const STORY_BODY_ALLOWLIST = loadStoryBodyAllowlist();
+
 const STATIC_PAGE_COPY = {
   "/about": {
     ...SEO_STATIC_COPY["/about"],
@@ -2296,9 +2323,13 @@ export default async function handler(req, res) {
       const isTestStorySlug = slug === "test-story-manus" || slug.startsWith("test-");
       let story = null;
       if (!isTestStorySlug) {
-        story = findBundledStory(slug);
-
-        if (!story) {
+        // D1 story-body (2026-11-02): when ENABLE_FULL_STORY_BODY=true and
+        // the slug is allowlisted, prefer the full DB telling so prerender
+        // and SPA show the same text. Otherwise (flag off by default,
+        // allowlist empty by default) the original bundled-first order runs
+        // exactly as before. DB miss falls back to bundled (never 404s a
+        // previously-200 URL).
+        if (process.env.ENABLE_FULL_STORY_BODY === "true" && STORY_BODY_ALLOWLIST.includes(slug)) {
           const { data } = await supabase
             .from("admin_content")
             .select("*")
@@ -2306,7 +2337,20 @@ export default async function handler(req, res) {
             .eq("content_type", "story")
             .eq("status", "published")
             .maybeSingle();
-          story = data;
+          story = data || findBundledStory(slug);
+        } else {
+          story = findBundledStory(slug);
+
+          if (!story) {
+            const { data } = await supabase
+              .from("admin_content")
+              .select("*")
+              .eq("slug", slug)
+              .eq("content_type", "story")
+              .eq("status", "published")
+              .maybeSingle();
+            story = data;
+          }
         }
       }
 
