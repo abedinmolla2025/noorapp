@@ -35,6 +35,31 @@ function getAllahNameAllowlist() {
   return [];
 }
 
+// D3/D4 noindex lists (2026-11-02, owner-approved, local only).
+// Same file candidates as the other sitemap allowlists. Missing/malformed
+// file => empty sets => sitemap unchanged (fail-safe). SPA mirror:
+// src/lib/noindexSlugs.ts; prerender mirror: api/prerender.js.
+function getNoindexSlugs() {
+  const candidates = [
+    path.join(process.cwd(), "public", "data", "noindex-slugs.json"),
+    path.join(process.cwd(), "dist", "data", "noindex-slugs.json"),
+    path.join("/var/task", "dist", "data", "noindex-slugs.json"),
+  ];
+  for (const file of candidates) {
+    try {
+      if (fs.existsSync(file)) {
+        const doc = JSON.parse(fs.readFileSync(file, "utf8"));
+        return {
+          stories: new Set(Array.isArray(doc.stories) ? doc.stories.filter((s) => typeof s === "string") : []),
+          duas: new Set(Array.isArray(doc.duas) ? doc.duas.filter((s) => typeof s === "string") : []),
+        };
+      }
+    } catch { /* try next candidate */ }
+  }
+  logSitemapFailure("noindex-slugs", "no readable noindex file");
+  return { stories: new Set(), duas: new Set() };
+}
+
 // Hadith narration sitemap expansion (2026-10-05): verification-gated by DB slug existence.
 // Each /hadith/h/:slug URL maps to exactly one row in the public hadiths table.
 // Query failure => empty list => no hadith URLs (fail-safe: never a partial set).
@@ -366,10 +391,13 @@ export default async function handler(req, res) {
   const routes = [...BASE_ROUTES];
 
   // Include only published Du'a rows with valid canonical slugs.
-  routes.push(...await getPublishedDuaRoutes());
+  // D3/D4 (2026-11-02, owner-approved): exclude noindex duas from the sitemap.
+  const noindexSlugs = getNoindexSlugs();
+  routes.push(...(await getPublishedDuaRoutes()).filter((r) => !noindexSlugs.duas.has(decodeURIComponent(r.slice(5)))));
   
   // Add stories
-  STORY_SLUGS.forEach(slug => routes.push(`/stories/${slug}`));
+  // D3/D4 (2026-11-02, owner-approved): exclude noindex stories from the sitemap.
+  STORY_SLUGS.forEach(slug => { if (!noindexSlugs.stories.has(slug)) routes.push(`/stories/${slug}`); });
   
   // Add Quran surahs
   for (let i = 1; i <= 114; i++) routes.push(`/quran/${i}`);
