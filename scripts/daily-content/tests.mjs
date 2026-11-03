@@ -100,6 +100,14 @@ t("card copies fields verbatim and links canonically", () => {
   assert.match(card.caption, /https:\/\/noorapp\.in\/dua\/dua-x/);
   assert.doesNotMatch(card.caption, /virtue|benefit|grade/i);
 });
+t("hadith card copies matn, translation and source verbatim", () => {
+  const card = cards.buildHadithCard(cards.hadithPick(H()));
+  assert.equal(card.kind, "hadith");
+  assert.equal(card.arabic, "ARABIC-TEST");
+  assert.equal(card.bengali, "BENGALI-TEST");
+  assert.equal(card.sourceLine, "Sahih al-Bukhari, Hadith 1");
+  assert.equal(bg.badgeLabelForCard(card), "HADITH");
+});
 t("hadith source line: bukhari mapped, unknown key verbatim", () => {
   assert.equal(cards.hadithSourceLine(H()), "Sahih al-Bukhari, Hadith 1");
   assert.equal(cards.hadithSourceLine(H({ book_key: "tirmidhi" })), "tirmidhi, Hadith 1");

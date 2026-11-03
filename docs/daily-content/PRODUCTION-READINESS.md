@@ -176,6 +176,8 @@ language as a DOM component, with NO fixed theme count:
   Sahih Bukhari with no number — the app's own entry carries none),
   Dua (forgiveness, Al-A'raaf 7:23, rain leaf), plus a square
   forgiveness card. All 4 visually QC'd PASS at exact export sizes.
+  Later additions: a Hadith square (1080×1080) and a 390px phone-width
+  rendering check of the Hadith card, both QC'd PASS.
 - **Existing OG images untouched**: `public/assets/dua-og/` and
   `public/assets/og-images/` are byte-identical (git status clean);
   `DuaDetailPage` og:image metadata and the canvas OG generator are

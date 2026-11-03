@@ -71,13 +71,11 @@ function divider() {
   </div>`;
 }
 
-function page(card, format) {
+function stage(card, format) {
   const portrait = format === "portrait";
   const W = portrait ? 540 : 540;
   const H = portrait ? 675 : 540;
-  return `<!doctype html><html lang="bn"><head><meta charset="utf-8">
-<style>html,body{margin:0;padding:0;background:#0b1526}*{box-sizing:border-box}</style></head>
-<body><div style="position:relative;width:${W}px;height:${H}px;overflow:hidden;font-family:system-ui,sans-serif;background:#0b1526">
+  return `<div style="position:relative;width:${W}px;height:${H}px;overflow:hidden;font-family:system-ui,sans-serif;background:#0b1526">
 <img src="${card.background}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
 <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(4,10,20,0.62) 0%, rgba(4,10,20,0.28) 38%, rgba(4,10,20,0.30) 62%, rgba(4,10,20,0.74) 100%)"></div>
 <div style="position:relative;height:100%;display:flex;flex-direction:column;padding:${portrait ? "28px 28px 30px" : "24px 26px 26px"}">
@@ -96,12 +94,28 @@ ${divider()}
 <div style="width:100%;background:rgba(6,15,28,0.66);border:1px solid ${GOLD_BORDER};border-radius:18px;padding:${portrait ? "16px 20px" : "13px 18px"}">
 <div dir="rtl" lang="ar" style="color:#fff;font-size:${portrait ? 30 : 25}px;line-height:1.9;font-family:'Noto Naskh Arabic','Amiri',serif;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${card.arabic}</div></div>
 <div style="color:#fff;font-size:${portrait ? 22 : 19}px;line-height:1.65;font-family:'Noto Sans Bengali','Noto Serif Bengali',system-ui,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,0.65)"><span style="color:${GOLD};font-size:${portrait ? 26 : 22}px;font-weight:700">“</span>${card.bengali}<span style="color:${GOLD};font-size:${portrait ? 26 : 22}px;font-weight:700">”</span></div>
-</div></div></div></body></html>`;
+</div></div></div>`;
+}
+
+function page(card, format) {
+  return `<!doctype html><html lang="bn"><head><meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#0b1526}*{box-sizing:border-box}</style></head>
+<body>${stage(card, format)}</body></html>`;
+}
+
+// Phone-width rendering check: the portrait card scaled to a 390px-wide
+// phone viewport (iPhone logical width), so readability at real device
+// size is inspected, not just at export size.
+function mobilePage(card) {
+  const scale = 390 / 540;
+  return `<!doctype html><html lang="bn"><head><meta charset="utf-8">
+<style>html,body{margin:0;padding:0;background:#0b1526}*{box-sizing:border-box}</style></head>
+<body><div style="width:390px;height:844px;display:flex;align-items:center;justify-content:center;background:#0b1526"><div style="width:540px;height:675px;transform:scale(${scale});flex-shrink:0">${stage(card, "portrait")}</div></div></body></html>`;
 }
 
 const jobs = [];
 for (const card of CARDS) {
-  for (const format of card.file === "og-dua-forgiveness" ? ["portrait", "square"] : ["portrait"]) {
+  for (const format of ["og-dua-forgiveness", "og-hadith-intentions"].includes(card.file) ? ["portrait", "square"] : ["portrait"]) {
     const name = format === "portrait" ? card.file : `${card.file}-square`;
     const html = page(card, format);
     // Verbatim check: every religious string must appear exactly in the page.
@@ -116,6 +130,14 @@ for (const card of CARDS) {
   }
   fs.copyFileSync(path.join(root, "public/assets/card-backgrounds", card.background), path.join(outDir, card.background));
 }
+const hadithCard = CARDS.find((c) => c.file === "og-hadith-intentions");
+const mobileHtml = mobilePage(hadithCard);
+for (const field of ["title", "arabic", "bengali", "sourceLine"]) {
+  if (!mobileHtml.includes(hadithCard[field])) throw new Error(`verbatim check failed: hadith mobile ${field}`);
+}
+fs.writeFileSync(path.join(outDir, "og-hadith-intentions-mobile.html"), mobileHtml);
+jobs.push({ page: "og-hadith-intentions-mobile.html", out: "og-hadith-intentions-mobile.png", width: 390, height: 844, role: "Hadith", background: hadithCard.backgroundScene });
+console.log("page ok - og-hadith-intentions-mobile.html (390x844, Hadith, phone width)");
 fs.copyFileSync(path.join(root, "public/assets/logos/logo-1-emerald-gold.svg"), path.join(outDir, "logo-1-emerald-gold.svg"));
 fs.writeFileSync(path.join(outDir, "jobs.json"), JSON.stringify(jobs, null, 2));
 console.log(`jobs: ${jobs.length} pages in ${outDir}`);
