@@ -483,7 +483,7 @@ export default function StoryDetailPage() {
         <meta property="og:site_name" content="NoorApp" />
         <meta property="og:locale" content="bn_BD" />
         <meta property="og:locale:alternate" content="en_US" />
-        <meta property="og:title" content={story.seo.open_graph?.title || story.seo.title} />
+        <meta property="og:title" content={story.seo.open_graph?.title || seoTitle} />
         <meta property="og:description" content={story.seo.open_graph?.description || metaDescription} />
         <meta property="og:url" content={story?.seo?.canonical_url || url} />
         <meta property="og:image" content={ogImage} />
@@ -500,7 +500,7 @@ export default function StoryDetailPage() {
           ))}
         <meta name="twitter:card" content="summary_large_image" />
         <meta name="twitter:site" content="@noorapp" />
-        <meta name="twitter:title" content={story.seo.open_graph?.title || story.seo.title} />
+        <meta name="twitter:title" content={story.seo.open_graph?.title || seoTitle} />
         <meta name="twitter:description" content={story.seo.open_graph?.description || metaDescription} />
         <meta name="twitter:image" content={ogImage} />
         <meta name="twitter:image:alt" content={story.title_en} />

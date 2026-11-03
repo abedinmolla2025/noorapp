@@ -196,7 +196,13 @@ const uniqueStoryTitle = (value) => {
     .trim()
     .replace(/(?:\s*\|\s*Noor(?:\s*App)?)+$/iu, "")
     .trim();
-  return shortenMetaText(`${base} | Noor`, 70);
+  // Title-clip fix (2026-11-03, local branch): the 70-character clip dropped
+  // BOTH tail words and the "| Noor" suffix for all 62/74 affected bundled
+  // stories, and made the prerender <title>/og:title/twitter:title differ from
+  // the SPA <title>. Google sets no <title> character limit and truncates the
+  // displayed title link by device width itself, so the cap bought no
+  // search-display benefit. Descriptions still use shortenMetaText (160 chars).
+  return `${base} | Noor`;
 };
 
 const isClippedStoryDescription = (value) => {
