@@ -73,7 +73,9 @@ export const AppSettingsProvider = ({ children }: { children: React.ReactNode })
   const [language, setLanguageState] = useState<AppLanguage>(() => {
     // Phase 5 (2026-10-02): the default must agree with the served <html lang>.
     // Served markup is route-aware (api/prerender.js getHtmlLang): "bn" on
-    // /hadith/.../bangla* and /dua, "ur" on /hadith/.../urdu*, "en" elsewhere.
+    // /hadith/.../bangla* and /dua and story detail pages (/stories/:slug,
+    // /stories/:slug/trailer — but NOT the /stories hub or /stories/category/*),
+    // "ur" on /hadith/.../urdu*, "en" elsewhere.
     // A stored user preference always wins; otherwise derive from the route so
     // hydration no longer contradicts the crawler-visible markup.
     // NOTE: AppLanguage has no "ur" member, so Urdu routes fall back to the
@@ -83,6 +85,7 @@ export const AppSettingsProvider = ({ children }: { children: React.ReactNode })
     if (stored === "bn" || stored === "en" || stored === "ar") return stored;
     const path = window.location.pathname || "";
     if (path === "/dua" || path.startsWith("/hadith/sahih-bukhari/bangla")) return "bn";
+    if (path.startsWith("/stories/") && !path.startsWith("/stories/category/")) return "bn";
     return "en";
   });
 

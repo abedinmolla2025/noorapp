@@ -17,9 +17,13 @@ const DESC_FALLBACK_EN = " Read Islamic content in Bengali.";
 // on Bengali-primary routes so short Bengali descriptions are not padded with English.
 const DESC_FALLBACK_BN = " বাংলায় নির্ভরযোগ্য ইসলামিক কন্টেন্ট পড়ুন।";
 
-/** Phase 5 (2026-10-02): Bengali-primary route patterns (mirrors api/prerender.js getHtmlLang). */
+/** Phase 5 (2026-10-02): Bengali-primary route patterns (mirrors api/prerender.js getHtmlLang).
+ * Story DETAIL pages are Bengali-primary (served body is title_bn/content_bn);
+ * the /stories hub and /stories/category/* listings stay non-Bengali-primary. */
 function isBengaliPrimaryPath(pathname: string): boolean {
-  return pathname === "/dua" || pathname.startsWith("/hadith/sahih-bukhari/bangla");
+  if (pathname === "/dua" || pathname.startsWith("/hadith/sahih-bukhari/bangla")) return true;
+  if (pathname.startsWith("/stories/") && !pathname.startsWith("/stories/category/")) return true;
+  return false;
 }
 
 /** Trim a string to a max length at the nearest word boundary (no ellipsis). */

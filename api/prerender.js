@@ -905,9 +905,14 @@ const normalizeHadithLang = (value) => {
 // Bengali-primary routes declare "bn"; Urdu hadith routes declare "ur";
 // everything else keeps the shell default "en". Deliberately NOT blanket:
 // /stories and /quiz stay "en" (mixed/EN-chrome templates; audit judgment call).
-// Must stay in sync with the client default in AppSettingsContext.tsx.
+// Story DETAIL pages are Bengali-primary (served body is title_bn/content_bn),
+// so /stories/:slug and /stories/:slug/trailer declare "bn"; the /stories hub
+// and /stories/category/* listings stay "en".
+// Must stay in sync with the client default in AppSettingsContext.tsx and with
+// isBengaliPrimaryPath in SeoHead.tsx.
 const getHtmlLang = (routePath) => {
   if (routePath === "/dua" || routePath.startsWith("/hadith/sahih-bukhari/bangla")) return "bn";
+  if (routePath.startsWith("/stories/") && !routePath.startsWith("/stories/category/")) return "bn";
   if (routePath.startsWith("/hadith/sahih-bukhari/urdu")) return "ur";
   return "en";
 };
