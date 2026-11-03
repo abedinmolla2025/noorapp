@@ -34,18 +34,36 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    retryable and sent by the tick; the row itself stays planned
  *    (a tick NEVER adopts content, plans, publishes, or creates a row)
  *  - planned --tick, past date--> failed ("superseded") + its pending
- *    deliveries failed; stale content is NEVER reused as another day's
- *    publication, and retryable rows of superseded publications are
- *    left to terminate naturally through bounded backoff
+ *    AND retryable deliveries failed, so no stale notification can
+ *    survive supersede. Stale content is NEVER reused as another day's
+ *    publication. As defense-in-depth, runRetries also refuses any
+ *    delivery whose parent publication is missing or failed, closing
+ *    such rows terminally — so even a supersede that fails halfway
+ *    cannot later send stale content.
  *  - pending --daily adoption OR tick--> retryable (due now) --> sent
  *    / failed / disabled (410 disables the token; attempts cap at 4)
+ *  - retryable sends are claimed atomically (H2): one conditional
+ *    UPDATE moves next_attempt_at 10 minutes out (the lease) only if
+ *    the row is still retryable, under the cap, and due. Exactly one
+ *    overlapping worker matches a row; losers match zero rows and skip.
+ *    A crashed worker's lease expires on its own. No new column, status,
+ *    RPC, or migration is needed for this claim.
  *  - sent / failed / disabled are terminal; the per-device cap and the
  *    token pre-check make re-runs skip already-attempted devices.
+ *  - Zero-row rule (H3): a success claim needs row proof. A sent update
+ *    or a publication flip matching zero rows is treated as a failure,
+ *    never counted as success; a repair matching zero rows means
+ *    another run won the race and triggers re-resolution, never a
+ *    clobber. Promotion matching zero rows is a normal empty outcome,
+ *    and its count always comes from actually returned rows.
  *  - Residual at-least-once window (by design, no transaction spans
  *    the push provider and the database): a crash after the provider
  *    accepts a message but before its row flips to sent means the
  *    retry tick re-sends that device once. Systematic duplicates are
- *    prevented; this single window is not.
+ *    prevented; this single window is not. A further microsecond window
+ *    remains between the post-claim parent re-check and the provider
+ *    call; no database mechanism can close it without provider-side
+ *    idempotency.
  *
  * OPEN OWNER DECISIONS (current behavior kept, proposal documented):
  *  - Pause vs retry ticks: today ticks ignore the settings gate, so
@@ -460,8 +478,13 @@ async function sendToTokens(
       const res = await webpush.sendNotification(sub, JSON.stringify(push), { TTL: 86400, urgency: "normal" } as never);
       const status = (res as unknown as { statusCode?: number }).statusCode ?? 201;
       if (status >= 200 && status < 300) {
+        // H3: a sent update that matches zero rows is not a success.
+        // The push went out, so the per-token catch below degrades this
+        // to retryable (the known at-least-once window); it must not be
+        // counted sent.
+        const { data: updated } = await svc.from("daily_content_deliveries").update({ status: "sent", attempts: 1 } as never).eq("publication_id", publicationId).eq("device_id", t.device_id).select("id");
+        if (!((updated as unknown[] | null)?.length)) throw new Error("Delivery sent update affected 0 rows");
         sent++;
-        await svc.from("daily_content_deliveries").update({ status: "sent", attempts: 1 } as never).eq("publication_id", publicationId).eq("device_id", t.device_id);
       } else {
         const cls = classifyFailure(status);
         failed++;
@@ -512,16 +535,61 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
   let sent = 0;
   let failed = 0;
   for (const row of (rows ?? []) as Array<{ id: string; publication_id: string; token_id: string; device_id: string | null; attempts: number }>) {
-    const { data: pub } = await svc.from("daily_content_publications").select("push").eq("id", row.publication_id).maybeSingle();
+    const { data: pub } = await svc.from("daily_content_publications").select("push, status").eq("id", row.publication_id).maybeSingle();
     const { data: tok } = await svc.from("device_push_tokens").select("token, enabled").eq("id", row.token_id).maybeSingle();
-    if (!pub || !tok || !(tok as { enabled: boolean }).enabled) continue;
+    // H1 defense-in-depth: a delivery whose parent publication is gone
+    // or failed (superseded) must never send. Close it terminally
+    // instead of re-reading it on every tick forever.
+    if (!pub || (pub as { status: string }).status === "failed") {
+      await svc.from("daily_content_deliveries").update({
+        status: "failed",
+        error: !pub ? "parent publication missing" : "parent publication failed",
+      } as never).eq("id", row.id);
+      continue;
+    }
+    if (!tok || !(tok as { enabled: boolean }).enabled) continue;
+    // H2 atomic claim (no migration needed): a single conditional UPDATE
+    // is the claim. It moves next_attempt_at 10 minutes out (the lease)
+    // only if the row is still retryable, under the attempt cap, and due.
+    // Postgres serializes concurrent updates on the row lock, so exactly
+    // one overlapping worker matches a row; losers match zero rows and
+    // skip. A crashed worker's lease expires on its own, so its row
+    // becomes claimable again — claims never stick forever. Process-local
+    // single-flight was rejected: it cannot span Vercel instances, while
+    // this database claim can. No RPC is needed; plain PostgREST update
+    // suffices, so no schema change is required.
+    const claimIso = new Date().toISOString();
+    const { data: claimed } = await svc.from("daily_content_deliveries")
+      .update({ next_attempt_at: new Date(Date.now() + 10 * 60_000).toISOString() } as never)
+      .eq("id", row.id)
+      .eq("status", "retryable")
+      .lt("attempts", 4)
+      .lte("next_attempt_at", claimIso)
+      .select("id");
+    if (!((claimed as unknown[] | null)?.length)) continue; // lost the race — never send
+    // Post-claim parent re-check: supersede may have failed the parent
+    // between the first check and the claim (its row update landing
+    // before its deliveries update). Only a supersede landing between
+    // this re-check and the provider call (microseconds) can still
+    // produce a stale send, which no database mechanism can close
+    // without provider-side idempotency.
+    const { data: pubFresh } = await svc.from("daily_content_publications").select("status").eq("id", row.publication_id).maybeSingle();
+    if (!pubFresh || (pubFresh as { status: string }).status === "failed") {
+      await svc.from("daily_content_deliveries").update({ status: "failed", error: "parent publication failed" } as never).eq("id", row.id);
+      continue;
+    }
     retried++;
     const attempts = (row.attempts ?? 0) + 1;
     try {
       const sub = JSON.parse(String((tok as { token: string }).token));
       await webpush.sendNotification(sub, JSON.stringify((pub as { push: unknown }).push), { TTL: 86400, urgency: "normal" } as never);
+      // H3: a sent update that matches zero rows is not a success. The
+      // push went out, so this falls into the catch below and degrades
+      // to retryable (the known at-least-once window); it must not be
+      // counted sent.
+      const { data: flipped } = await svc.from("daily_content_deliveries").update({ status: "sent", attempts } as never).eq("id", row.id).select("id");
+      if (!((flipped as unknown[] | null)?.length)) throw new Error("Delivery sent update affected 0 rows");
       sent++;
-      await svc.from("daily_content_deliveries").update({ status: "sent", attempts } as never).eq("id", row.id);
     } catch (e) {
       // M2: same structured classification as the first send. A 410 on
       // retry disables the token instead of burning the remaining
@@ -553,10 +621,10 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
  *     planned row without a push is corrupt and is left for the daily
  *     path to repair — the tick cannot plan.
  *  2. Supersede past-date planned rows (mark failed) and fail their
- *     never-attempted pending deliveries. Stale content is never reused
- *     as another day's publication. Retryable rows of superseded
- *     publications are left alone to terminate naturally through their
- *     bounded backoff.
+ *     pending AND retryable deliveries, so no stale notification can
+ *     survive supersede. Stale content is never reused as another day's
+ *     publication. Rows a failed supersede leaves behind are closed by
+ *     the parent-status check in runRetries (step 3), never sent.
  *  3. Process due retryable deliveries (runRetries, unchanged).
  * Settings are deliberately NOT consulted here (pre-decision behavior,
  * see the header): completing retries for already-published content
@@ -591,15 +659,19 @@ async function runTick(svc: Svc, kolkataDate: string): Promise<{
     .eq("status", "planned")
     .lt("kolkata_date", kolkataDate);
   for (const row of (stale ?? []) as Array<{ id: string }>) {
-    await svc.from("daily_content_publications").update({
+    const { data: failedRow } = await svc.from("daily_content_publications").update({
       status: "failed",
       error: "superseded: planned row from a past date was never published",
-    } as never).eq("id", row.id);
+    } as never).eq("id", row.id).select("id");
+    // H1: close pending AND retryable deliveries in one statement, so
+    // no stale notification can survive supersede. The parent-status
+    // check in runRetries is defense-in-depth for rows this update
+    // misses (for example when it throws halfway through).
     await svc.from("daily_content_deliveries").update({
       status: "failed",
       error: "superseded: publication never published",
-    } as never).eq("publication_id", row.id).eq("status", "pending");
-    superseded++;
+    } as never).eq("publication_id", row.id).in("status", ["pending", "retryable"]);
+    if (((failedRow as unknown[] | null)?.length)) superseded++;
   }
   const retries = await runRetries(svc);
   return { ...retries, promoted, superseded };
@@ -671,18 +743,49 @@ Deno.serve(async (req: Request) => {
     // Valid plan: resolve today's publication row. Repair-in-place is the
     // rule for failed and corrupt rows: rewriting the existing row to the
     // fresh plan can never violate the unique date, unlike fail + insert.
-    const repairToPlan = async (id: string) => {
-      await svc.from("daily_content_publications").update({
-        status: "planned",
-        hadith_ref: `hadith:${plan.hadith!.id}`,
-        hadith_source_line: plan.hadith!.sourceLine,
-        cards: plan.cards,
-        push: plan.push,
-        hadith_cycle: plan.hadithCycle,
-        card_cycle: plan.cardCycle,
-        error: null,
-        published_at: null,
-      } as never).eq("id", id);
+    // The repair is conditional on the row still holding the observed
+    // state (H3): an unconditional update could clobber a concurrent
+    // run's published row. A zero-row repair means another run won the
+    // race, so we re-read and resolve again instead of sending.
+    const freshPlan = {
+      status: "planned",
+      hadith_ref: `hadith:${plan.hadith!.id}`,
+      hadith_source_line: plan.hadith!.sourceLine,
+      cards: plan.cards,
+      push: plan.push,
+      hadith_cycle: plan.hadithCycle,
+      card_cycle: plan.cardCycle,
+      error: null,
+      published_at: null,
+    };
+    const repairToPlan = async (id: string, mode: "failed" | "corrupt"): Promise<boolean> => {
+      const { data: updated } = mode === "failed"
+        ? await svc.from("daily_content_publications").update(freshPlan as never).eq("id", id).eq("status", "failed").select("id")
+        : await svc.from("daily_content_publications").update(freshPlan as never).eq("id", id).eq("status", "planned").is("push", null).select("id");
+      return ((updated as unknown[] | null)?.length ?? 0) > 0;
+    };
+    type Resolution =
+      | { kind: "ready"; publicationId: string; pushForSend: typeof plan.push }
+      | { kind: "deduped" }
+      | { kind: "conflict" };
+    const resolveRow = async (row: { id: string; status: string; push: unknown } | null): Promise<Resolution> => {
+      if (!row) return { kind: "conflict" };
+      if (row.status === "published") return { kind: "deduped" };
+      if (row.status === "planned" && row.push) {
+        // Resume a crashed run: adopt the stored push (same day, same
+        // content — re-planning could change the day's content mid-flight).
+        return { kind: "ready", publicationId: row.id, pushForSend: row.push as typeof plan.push };
+      }
+      const repaired = await repairToPlan(row.id, row.status === "failed" ? "failed" : "corrupt");
+      if (repaired) return { kind: "ready", publicationId: row.id, pushForSend: plan.push };
+      const { data: fresh } = await svc.from("daily_content_publications")
+        .select("id, status, push").eq("id", row.id).maybeSingle();
+      const f = fresh as { id: string; status: string; push: unknown } | null;
+      if (f?.status === "published") return { kind: "deduped" };
+      if (f?.status === "planned" && f.push) {
+        return { kind: "ready", publicationId: f.id, pushForSend: f.push as typeof plan.push };
+      }
+      return { kind: "conflict" };
     };
     const { data: todayRow } = await svc.from("daily_content_publications")
       .select("id, status, push")
@@ -690,19 +793,16 @@ Deno.serve(async (req: Request) => {
       .maybeSingle();
     let publicationId: string | null = null;
     let pushForSend = plan.push;
-    if (todayRow?.status === "published") {
-      return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
-    }
-    if (todayRow?.status === "planned" && (todayRow as { push: unknown }).push) {
-      // Resume a crashed run: adopt the stored push (same day, same
-      // content — re-planning could change the day's content mid-flight).
-      publicationId = (todayRow as { id: string }).id;
-      pushForSend = (todayRow as { push: typeof plan.push }).push;
-    } else if (todayRow) {
-      // Corrupt planned row (no push) or failed row: repair in place to
-      // the fresh plan. No new insert, so the unique date is safe.
-      await repairToPlan((todayRow as { id: string }).id);
-      publicationId = (todayRow as { id: string }).id;
+    if (todayRow) {
+      const r = await resolveRow(todayRow as { id: string; status: string; push: unknown });
+      if (r.kind === "deduped") {
+        return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+      }
+      if (r.kind === "conflict") {
+        return jsonResponse({ ok: false, error: "Publication repair conflict." }, 500);
+      }
+      publicationId = r.publicationId;
+      pushForSend = r.pushForSend;
     } else {
       const { data: pub } = await svc
         .from("daily_content_publications")
@@ -727,19 +827,15 @@ Deno.serve(async (req: Request) => {
           .select("id, status, push")
           .eq("kolkata_date", kolkataDate)
           .maybeSingle();
-        const row = raced as { id: string; status: string; push: unknown } | null;
-        if (row?.status === "published") {
+        const r = await resolveRow(raced as { id: string; status: string; push: unknown } | null);
+        if (r.kind === "deduped") {
           return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
         }
-        if (row?.status === "planned" && row.push) {
-          publicationId = row.id;
-          pushForSend = row.push as typeof plan.push;
-        } else if (row) {
-          await repairToPlan(row.id);
-          publicationId = row.id;
-        } else {
+        if (r.kind === "conflict") {
           return jsonResponse({ ok: false, error: "Publication insert failed." }, 500);
         }
+        publicationId = r.publicationId;
+        pushForSend = r.pushForSend;
       }
     }
     // Stale `pending` delivery rows (inserted but never attempted because
@@ -760,13 +856,16 @@ Deno.serve(async (req: Request) => {
       // mark published here.
       return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
     }
-    await svc.from("daily_content_publications").update({
+    const { data: flipped } = await svc.from("daily_content_publications").update({
       status: "published",
       published_at: new Date().toISOString(),
       recipients_total: delivery.total,
       recipients_sent: delivery.sent,
       recipients_failed: delivery.failed,
-    } as never).eq("id", publicationId);
+    } as never).eq("id", publicationId).select("id");
+    // H3: a flip that matches zero rows must not be reported as
+    // published. The row stays planned and the next run recovers it.
+    if (!((flipped as unknown[] | null)?.length)) throw new Error("Publication flip affected 0 rows");
     return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: publicationId, delivery });
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);

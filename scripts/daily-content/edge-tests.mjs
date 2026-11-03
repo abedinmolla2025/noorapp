@@ -110,10 +110,14 @@ function makeSvc(seed = {}) {
   };
   let seq = 1000;
   const flags = {
-    hidePlannedOnce: false,
+    hideTodayRowOnce: false,
     throwOnDeliveryInsertAt: null,
     throwOnPublicationUpdate: false,
     throwOnPromotionUpdate: false,
+    throwOnSupersedeDeliveries: false,
+    throwOnSentUpdate: false,
+    zeroRowSentUpdateAt: null,
+    zeroRowFlip: false,
   };
   const matches = (rows, filters) => rows.filter((r) => filters.every((f) => f(r)));
 
@@ -139,6 +143,10 @@ function makeSvc(seed = {}) {
       this.filters.push((r) => vs.includes(r[c]));
       return this;
     }
+    is(c, v) {
+      this.filters.push((r) => (v === null ? r[c] == null : r[c] === v));
+      return this;
+    }
     lt(c, v) {
       this.filters.push((r) => r[c] < v);
       return this;
@@ -158,12 +166,13 @@ function makeSvc(seed = {}) {
     rows() {
       let rs = matches(tables[this.table], this.filters);
       if (
-        flags.hidePlannedOnce &&
+        flags.hideTodayRowOnce &&
         this.table === "daily_content_publications" &&
-        this.descs.some((d) => d.c === "status" && d.v === "planned")
+        this.descs.some((d) => d.c === "kolkata_date")
       ) {
-        // Race simulation: the planned row exists but this read misses it.
-        flags.hidePlannedOnce = false;
+        // Race simulation: today's row exists but this read misses it,
+        // so the handler attempts an insert and hits the unique date.
+        flags.hideTodayRowOnce = false;
         return [];
       }
       for (const [c, asc] of this.orders) {
@@ -224,7 +233,26 @@ function makeSvc(seed = {}) {
       return { data: row, error: null };
     }
     doUpdate() {
-      // Fault-injection flags (tests only; each fires once).
+      // Fault-injection flags (tests only; each fires once unless counted).
+      if (flags.throwOnSupersedeDeliveries && this.table === "daily_content_deliveries" && this.patch?.status === "failed" && typeof this.patch?.error === "string" && this.patch.error.includes("superseded") && !("attempts" in this.patch)) {
+        flags.throwOnSupersedeDeliveries = false;
+        throw new Error("DB down during supersede deliveries update");
+      }
+      if (flags.zeroRowSentUpdateAt != null && this.table === "daily_content_deliveries" && this.patch?.status === "sent") {
+        flags.zeroRowSentUpdateAt--;
+        if (flags.zeroRowSentUpdateAt === 0) {
+          flags.zeroRowSentUpdateAt = null;
+          return { data: [], error: null }; // success, zero rows — no mutation
+        }
+      }
+      if (flags.zeroRowFlip && this.table === "daily_content_publications" && this.patch?.status === "published") {
+        flags.zeroRowFlip = false;
+        return { data: [], error: null }; // success, zero rows — no mutation
+      }
+      if (flags.throwOnSentUpdate && this.table === "daily_content_deliveries" && this.patch?.status === "sent") {
+        flags.throwOnSentUpdate = false;
+        throw new Error("DB down during sent update");
+      }
       if (flags.throwOnPublicationUpdate && this.table === "daily_content_publications" && this.patch?.status === "published") {
         flags.throwOnPublicationUpdate = false;
         throw new Error("DB down during publication update");
@@ -459,7 +487,7 @@ await t("edge H2: insert race adopts the planned row", async () => {
       { id: "pub-race", kolkata_date: TODAY, status: "planned", push: { title: "T", body: "B" }, cards: [] },
     ],
   });
-  svc.flags.hidePlannedOnce = true; // first planned-read misses the row
+  svc.flags.hideTodayRowOnce = true; // first today-row read misses the row
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
   const res = await callEdge({});
@@ -764,7 +792,10 @@ await t("edge H2: past-date planned row is superseded, never reused", async () =
   assert.notEqual(today.push.title, "STALE");
 });
 
-await t("edge H2: retryable rows of a superseded publication terminate naturally", async () => {
+await t("edge H1: retryable rows of a superseded publication are never sent", async () => {
+  // SUPERSEDES the 4c78eb7 policy ("terminate naturally"): a supersede
+  // now fails retryable rows too, and the parent check in runRetries
+  // closes any straggler. No stale notification may survive supersede.
   const svc = makeSvc({
     settings: [{ enabled: true }],
     tokens: [token("tX", "dX")],
@@ -780,10 +811,8 @@ await t("edge H2: retryable rows of a superseded publication terminate naturally
   const res = await callEdge({ retry_only: true });
   assert.equal(res.json.superseded, 1);
   assert.equal(svc.tables.daily_content_publications[0].status, "failed");
-  // The in-flight retry is not cancelled by the supersede; it terminates
-  // through the normal bounded retry path.
-  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
-  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "failed");
+  assert.equal(calls.length, 0);
 });
 
 await t("edge H2: pending row from a post-acceptance crash is re-sent once by the tick (at-least-once window)", async () => {
@@ -1002,6 +1031,253 @@ await t("edge policy: retry_only wins over dry_run (pre-decision behavior)", asy
   assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
   assert.equal(calls.length, 1);
   assert.equal(svc.tables.daily_content_publications.length, 1); // no new row
+});
+
+// ---- Final remediation: stale block, atomic claim, zero-row protection ----
+await t("edge H1: failed parent publication is excluded from retry selection", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    publications: [
+      { id: "pub-f", kolkata_date: YESTERDAY, status: "failed", push: { title: "T", body: "B" } },
+    ],
+    deliveries: [
+      { id: "r1", publication_id: "pub-f", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  // The parent check closes the straggler terminally instead of sending it.
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "failed");
+  assert.equal(calls.length, 0);
+});
+
+await t("edge H1: published parent deliveries still retry normally", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    publications: [
+      { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+    ],
+    deliveries: [
+      { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+  assert.equal(calls.length, 1);
+});
+
+await t("edge H1: halfway supersede failure recovers without stale sends", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("tX", "dX")],
+    publications: [
+      { id: "pub-old", kolkata_date: YESTERDAY, status: "planned", push: { title: "T", body: "B" }, cards: [] },
+    ],
+    deliveries: [
+      { id: "del-p", publication_id: "pub-old", token_id: "tX", device_id: "dX", status: "pending", attempts: 0 },
+      { id: "del-r", publication_id: "pub-old", token_id: "tX", device_id: "dX", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  svc.flags.throwOnSupersedeDeliveries = true; // row fails, deliveries update throws
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const first = await callEdge({ retry_only: true });
+  assert.equal(first.status, 500);
+  assert.equal(svc.tables.daily_content_publications[0].status, "failed");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "del-p").status, "pending");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "del-r").status, "retryable");
+  // Next tick: the row is already failed, so the stale query skips it —
+  // but the parent check in runRetries closes both stragglers, unsent.
+  const second = await callEdge({ retry_only: true });
+  assert.equal(second.json.ok, true);
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "del-p").status, "pending");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "del-r").status, "failed");
+  assert.equal(calls.length, 0);
+});
+
+await t("edge H2: two overlapping ticks send a retryable delivery exactly once", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    publications: [
+      { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+    ],
+    deliveries: [
+      { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  // Genuine overlap: both ticks run concurrently against the same store.
+  // The atomic claim (one conditional UPDATE) lets exactly one win; the
+  // loser matches zero rows and skips without sending.
+  const [a, b] = await Promise.all([callEdge({ retry_only: true }), callEdge({ retry_only: true })]);
+  assert.equal(a.json.ok, true);
+  assert.equal(b.json.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+});
+
+await t("edge H2: claimed row recovers after worker failure, sent row cannot be reclaimed", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    publications: [
+      { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+    ],
+    deliveries: [
+      // Claimed by a worker that died mid-send: lease still active.
+      { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2999-01-01T00:00:00.000Z" },
+      { id: "r2", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "sent", attempts: 1 },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const first = await callEdge({ retry_only: true });
+  assert.equal(first.json.ok, true);
+  assert.equal(calls.length, 0); // active lease: not claimable, not sent
+  // Lease expires: the row becomes claimable again and sends exactly once.
+  svc.tables.daily_content_deliveries.find((d) => d.id === "r1").next_attempt_at = "2000-01-01T00:00:00.000Z";
+  const second = await callEdge({ retry_only: true });
+  assert.equal(second.json.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "r1").status, "sent");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "r2").status, "sent");
+});
+
+await t("edge H2: 410 on a claimed retry still disables the token", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    publications: [
+      { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+    ],
+    deliveries: [
+      { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  setWebpush(async () => {
+    throw Object.assign(new Error("gone"), { statusCode: 410 });
+  });
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(svc.tables.device_push_tokens[0].enabled, false);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "failed");
+});
+
+await t("edge H3: zero-row sent update is not counted as success", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  svc.flags.zeroRowSentUpdateAt = 2; // t2's sent-update succeeds with zero rows
+  stubs.holder.svc = svc;
+  setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  // t1 sent normally; t2's push went out but its row never flipped, so
+  // it degrades to retryable and is NOT counted sent.
+  assert.equal(res.json.delivery.sent, 1);
+  assert.equal(res.json.delivery.failed, 1);
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.device_id === "d1").status, "sent");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.device_id === "d2").status, "retryable");
+});
+
+await t("edge H3: sent-update database error degrades to retryable, batch continues", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  svc.flags.throwOnSentUpdate = true; // t1's sent-update throws
+  stubs.holder.svc = svc;
+  setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.device_id === "d1").status, "retryable");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.device_id === "d2").status, "sent");
+  assert.equal(res.json.delivery.sent, 1);
+  assert.equal(res.json.delivery.failed, 1);
+});
+
+await t("edge H3: zero-row publication flip is not reported as published", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  svc.flags.zeroRowFlip = true; // flip succeeds with zero rows
+  stubs.holder.svc = svc;
+  setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.status, 500);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+});
+
+await t("edge H3: tick promotion error fails safely, zero pending promotes zero", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t2", "d2")],
+    publications: [
+      { id: "pub-plan", kolkata_date: TODAY, status: "planned", push: { title: "T", body: "B" }, cards: [] },
+    ],
+    deliveries: [
+      { id: "del-p", publication_id: "pub-plan", token_id: "t2", device_id: "d2", status: "pending", attempts: 0 },
+    ],
+  });
+  svc.flags.throwOnPromotionUpdate = true; // tick promotion throws
+  stubs.holder.svc = svc;
+  setWebpush(ok201);
+  const failed = await callEdge({ retry_only: true });
+  assert.equal(failed.status, 500);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "pending");
+  // Flag spent: the next tick promotes and sends normally.
+  const ok = await callEdge({ retry_only: true });
+  assert.equal(ok.json.ok, true);
+  assert.equal(ok.json.promoted, 1);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+  // Zero pending is a normal empty outcome, not an error.
+  const svc2 = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [
+      { id: "pub-plan", kolkata_date: TODAY, status: "planned", push: { title: "T", body: "B" }, cards: [] },
+    ],
+  });
+  stubs.holder.svc = svc2;
+  const empty = await callEdge({ retry_only: true });
+  assert.equal(empty.json.ok, true);
+  assert.equal(empty.json.promoted, 0);
+});
+
+await t("edge H3: concurrent repair conflict never clobbers a published row", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [],
+    publications: [
+      { id: "pub-fail", kolkata_date: TODAY, status: "failed", error: "No eligible hadith in the pool." },
+    ],
+  });
+  stubs.holder.svc = svc;
+  setWebpush(ok201);
+  const [a, b] = await Promise.all([callEdge({}), callEdge({})]);
+  assert.equal(a.json.ok, true);
+  assert.equal(b.json.ok, true);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
 });
 
 console.log(`edge tests: ${n} passed`);
