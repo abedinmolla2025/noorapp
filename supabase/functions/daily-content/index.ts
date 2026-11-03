@@ -8,8 +8,7 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  * approved launch steps (see docs/daily-content/PRODUCTION-READINESS.md).
  *
  * Behaviour:
- *  - One run per Asia/Kolkata date (idempotent: a published publication
- *    for the date is never re-published or re-sent).
+ *  - One publication per Asia/Kolkata date (UNIQUE kolkata_date).
  *  - Exactly one eligible hadith (Arabic + Bengali + number + book key;
  *    no grade is ever claimed — the table carries none).
  *  - 3-5 share cards from eligible admin_content duas (Arabic + Bengali
@@ -21,6 +20,40 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    (max 3 attempts, 5/15/45 min backoff) via { retry_only: true } runs.
  *  - { dry_run: true } plans everything, writes nothing, sends nothing.
  * Logic mirrors src/lib/dailyContent/* — keep the two in sync.
+ *
+ * Publication state machine (all transitions date-scoped; the unique
+ * date is never violated, so no schema change was needed):
+ *  - (none) --daily run, valid plan--> planned --send finishes--> published
+ *  - (none) --daily run, no valid plan--> failed (one row per date; a
+ *    later same-date run with a valid plan repairs it in place, it does
+ *    NOT insert a second row and the date is never blocked)
+ *  - planned --daily run, same date--> adopted (stored push is sent;
+ *    never re-planned mid-flight) or repaired in place (corrupt row
+ *    without a push, or failed row, rewritten to the fresh plan)
+ *  - planned --tick, same date--> pending deliveries promoted to
+ *    retryable and sent by the tick; the row itself stays planned
+ *    (a tick NEVER adopts content, plans, publishes, or creates a row)
+ *  - planned --tick, past date--> failed ("superseded") + its pending
+ *    deliveries failed; stale content is NEVER reused as another day's
+ *    publication, and retryable rows of superseded publications are
+ *    left to terminate naturally through bounded backoff
+ *  - pending --daily adoption OR tick--> retryable (due now) --> sent
+ *    / failed / disabled (410 disables the token; attempts cap at 4)
+ *  - sent / failed / disabled are terminal; the per-device cap and the
+ *    token pre-check make re-runs skip already-attempted devices.
+ *  - Residual at-least-once window (by design, no transaction spans
+ *    the push provider and the database): a crash after the provider
+ *    accepts a message but before its row flips to sent means the
+ *    retry tick re-sends that device once. Systematic duplicates are
+ *    prevented; this single window is not.
+ *
+ * OPEN OWNER DECISIONS (current behavior kept, proposal documented):
+ *  - Pause vs retry ticks: today ticks ignore the settings gate, so
+ *    retries complete while paused. PROPOSED: pause should also stop
+ *    retry ticks. Not implemented pending the owner's decision.
+ *  - retry_only + dry_run combined: today retry wins and performs
+ *    real retries. PROPOSED: the endpoint should reject the
+ *    combination. Not implemented pending the owner's decision.
  * ------------------------------------------------------------------ */
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -369,7 +402,7 @@ async function sendToTokens(
   svc: Svc,
   publicationId: string,
   push: NonNullable<Awaited<ReturnType<typeof planDay>>["push"]>,
-): Promise<{ total: number; sent: number; failed: number; disabled: number }> {
+): Promise<{ total: number; sent: number; failed: number; disabled: number; skipped: number }> {
   const { data: tokens } = await svc
     .from("device_push_tokens")
     .select("id, token, platform, device_id")
@@ -386,9 +419,32 @@ async function sendToTokens(
   let sent = 0;
   let failed = 0;
   let disabled = 0;
+  let skipped = 0;
   for (const t of (tokens ?? []) as Array<{ id: string; token: string; platform: string; device_id: string | null }>) {
-    if (t.device_id && optedOut.has(t.device_id)) continue;
+    // M3: never send without a stable device identity. A NULL or empty
+    // device_id cannot be capped (Postgres treats NULLs as distinct in
+    // the unique constraint), cannot be opted out, and cannot be matched
+    // reliably for status updates — so such tokens are skipped, not sent.
+    // token_id was evaluated as an alternative primary key and rejected:
+    // it is not in the DB unique constraint, it breaks opt-out and
+    // preference joins keyed by device_id, and it is nulled when its
+    // token row is deleted. It is used below only as defense-in-depth.
+    if (!hasText(t.device_id)) {
+      skipped++;
+      continue;
+    }
+    if (optedOut.has(t.device_id)) continue;
     total++;
+    // Defense-in-depth: skip if a delivery row already exists for this
+    // publication + token, even if the device_id changed since the row
+    // was written. The DB unique constraint on (publication, device)
+    // remains the primary guard for stable device_ids.
+    const { data: prior } = await svc.from("daily_content_deliveries")
+      .select("id")
+      .eq("publication_id", publicationId)
+      .eq("token_id", t.id)
+      .limit(1);
+    if ((prior as unknown[] | null)?.length) continue;
     // Per-device daily cap: one delivery row per (publication, device).
     const { error: capErr } = await svc.from("daily_content_deliveries").insert({
       publication_id: publicationId,
@@ -439,7 +495,7 @@ async function sendToTokens(
       await svc.from("daily_content_deliveries").update(patch as never).eq("publication_id", publicationId).eq("device_id", t.device_id);
     }
   }
-  return { total, sent, failed, disabled };
+  return { total, sent, failed, disabled, skipped };
 }
 
 async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; failed: number }> {
@@ -489,6 +545,66 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
   return { retried, sent, failed };
 }
 
+/**
+ * The 15-minute retry tick. It NEVER publishes, plans, adopts content,
+ * or creates a publication row. Its recovery policy:
+ *  1. Promote today's planned publication's pending deliveries to
+ *     retryable (due now), so step 3 sends them in this same tick. A
+ *     planned row without a push is corrupt and is left for the daily
+ *     path to repair — the tick cannot plan.
+ *  2. Supersede past-date planned rows (mark failed) and fail their
+ *     never-attempted pending deliveries. Stale content is never reused
+ *     as another day's publication. Retryable rows of superseded
+ *     publications are left alone to terminate naturally through their
+ *     bounded backoff.
+ *  3. Process due retryable deliveries (runRetries, unchanged).
+ * Settings are deliberately NOT consulted here (pre-decision behavior,
+ * see the header): completing retries for already-published content
+ * continues while paused. Proposed change — pause stops ticks too —
+ * needs the owner's decision.
+ */
+async function runTick(svc: Svc, kolkataDate: string): Promise<{
+  retried: number;
+  sent: number;
+  failed: number;
+  promoted: number;
+  superseded: number;
+}> {
+  let promoted = 0;
+  const { data: plannedToday } = await svc.from("daily_content_publications")
+    .select("id, push")
+    .eq("kolkata_date", kolkataDate)
+    .eq("status", "planned")
+    .maybeSingle();
+  const plannedRow = plannedToday as { id: string; push: unknown } | null;
+  if (plannedRow?.push) {
+    const { data: promotedRows } = await svc.from("daily_content_deliveries")
+      .update({ status: "retryable", next_attempt_at: new Date().toISOString() } as never)
+      .eq("publication_id", plannedRow.id)
+      .eq("status", "pending")
+      .select("id");
+    promoted = (promotedRows as unknown[] | null)?.length ?? 0;
+  }
+  let superseded = 0;
+  const { data: stale } = await svc.from("daily_content_publications")
+    .select("id")
+    .eq("status", "planned")
+    .lt("kolkata_date", kolkataDate);
+  for (const row of (stale ?? []) as Array<{ id: string }>) {
+    await svc.from("daily_content_publications").update({
+      status: "failed",
+      error: "superseded: planned row from a past date was never published",
+    } as never).eq("id", row.id);
+    await svc.from("daily_content_deliveries").update({
+      status: "failed",
+      error: "superseded: publication never published",
+    } as never).eq("publication_id", row.id).eq("status", "pending");
+    superseded++;
+  }
+  const retries = await runRetries(svc);
+  return { ...retries, promoted, superseded };
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -499,13 +615,17 @@ Deno.serve(async (req: Request) => {
   }
   const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  const kolkataDate = kolkataDateString(new Date());
 
   try {
+    // Retry-only precedence (OPEN OWNER DECISION — see header): retry
+    // wins over dry_run, so a combined request performs real retries.
+    // Proposed safest behavior: reject the combination. Not implemented
+    // pending the owner's decision.
     if (body.retry_only === true) {
-      return jsonResponse({ ok: true, ...(await runRetries(svc)) });
+      return jsonResponse({ ok: true, ...(await runTick(svc, kolkataDate)) });
     }
 
-    const kolkataDate = kolkataDateString(new Date());
     const plan = await planDay(svc, kolkataDate);
 
     if (body.dry_run === true) {
@@ -519,61 +639,71 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ ok: false, reason: "paused" });
     }
 
-    const { data: existing } = await svc
-      .from("daily_content_publications")
-      .select("id")
-      .eq("kolkata_date", kolkataDate)
-      .eq("status", "published")
-      .maybeSingle();
-    if (existing) {
-      return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
-    }
     if (!plan.hadith || !plan.push) {
-      await svc.from("daily_content_publications").insert({
-        kolkata_date: kolkataDate,
-        status: "failed",
-        hadith_ref: null,
-        hadith_source_line: null,
+      // No valid plan: record the failure once per date, but never let
+      // the failure row reserve the date against a later recovery. If a
+      // row already occupies today, leave it untouched (published means
+      // a concurrent run already finished the day; planned/failed means
+      // an earlier attempt already recorded its outcome) and just report.
+      const { data: todayRow } = await svc.from("daily_content_publications")
+        .select("id, status")
+        .eq("kolkata_date", kolkataDate)
+        .maybeSingle();
+      if (todayRow?.status === "published") {
+        return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+      }
+      if (!todayRow) {
+        await svc.from("daily_content_publications").insert({
+          kolkata_date: kolkataDate,
+          status: "failed",
+          hadith_ref: null,
+          hadith_source_line: null,
+          cards: plan.cards,
+          push: plan.push,
+          hadith_cycle: plan.hadithCycle,
+          card_cycle: plan.cardCycle,
+          error: plan.hadithEmptyReason,
+        } as never);
+      }
+      return jsonResponse({ ok: false, reason: plan.hadithEmptyReason });
+    }
+
+    // Valid plan: resolve today's publication row. Repair-in-place is the
+    // rule for failed and corrupt rows: rewriting the existing row to the
+    // fresh plan can never violate the unique date, unlike fail + insert.
+    const repairToPlan = async (id: string) => {
+      await svc.from("daily_content_publications").update({
+        status: "planned",
+        hadith_ref: `hadith:${plan.hadith!.id}`,
+        hadith_source_line: plan.hadith!.sourceLine,
         cards: plan.cards,
         push: plan.push,
         hadith_cycle: plan.hadithCycle,
         card_cycle: plan.cardCycle,
-        error: plan.hadithEmptyReason,
-      } as never);
-      return jsonResponse({ ok: false, reason: plan.hadithEmptyReason });
-    }
-
-    // H2: safe publication state machine. The row starts as `planned`
-    // (a status the migration already allows) and only becomes
-    // `published` AFTER sendToTokens finishes. A crash anywhere before
-    // that leaves a recoverable `planned` row — never a published-but-
-    // unsent day that the dedupe would then block forever.
-    const { data: planned } = await svc
-      .from("daily_content_publications")
-      .select("id")
+        error: null,
+        published_at: null,
+      } as never).eq("id", id);
+    };
+    const { data: todayRow } = await svc.from("daily_content_publications")
+      .select("id, status, push")
       .eq("kolkata_date", kolkataDate)
-      .eq("status", "planned")
       .maybeSingle();
-    let publicationId: string | null = (planned as { id: string } | null)?.id ?? null;
+    let publicationId: string | null = null;
     let pushForSend = plan.push;
-    if (publicationId) {
+    if (todayRow?.status === "published") {
+      return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+    }
+    if (todayRow?.status === "planned" && (todayRow as { push: unknown }).push) {
       // Resume a crashed run: adopt the stored push (same day, same
       // content — re-planning could change the day's content mid-flight).
-      const { data: adopted } = await svc
-        .from("daily_content_publications")
-        .select("push")
-        .eq("id", publicationId)
-        .maybeSingle();
-      const row = adopted as { push: unknown } | null;
-      if (row && row.push) {
-        pushForSend = row.push as typeof plan.push;
-      } else {
-        // Corrupt planned row (nothing to send): fail it and start fresh.
-        await svc.from("daily_content_publications").update({ status: "failed" } as never).eq("id", publicationId);
-        publicationId = null;
-      }
-    }
-    if (!publicationId) {
+      publicationId = (todayRow as { id: string }).id;
+      pushForSend = (todayRow as { push: typeof plan.push }).push;
+    } else if (todayRow) {
+      // Corrupt planned row (no push) or failed row: repair in place to
+      // the fresh plan. No new insert, so the unique date is safe.
+      await repairToPlan((todayRow as { id: string }).id);
+      publicationId = (todayRow as { id: string }).id;
+    } else {
       const { data: pub } = await svc
         .from("daily_content_publications")
         .insert({
@@ -590,18 +720,23 @@ Deno.serve(async (req: Request) => {
         .single();
       publicationId = (pub as { id: string } | null)?.id ?? null;
       if (!publicationId) {
-        // Race: another run created today's row first. Adopt it instead
-        // of failing the day or creating a duplicate publication.
+        // Race: another run created today's row first. Resolve it the
+        // same way as above instead of failing the day.
         const { data: raced } = await svc
           .from("daily_content_publications")
-          .select("id, push")
+          .select("id, status, push")
           .eq("kolkata_date", kolkataDate)
-          .eq("status", "planned")
           .maybeSingle();
-        const row = raced as { id: string; push: unknown } | null;
-        if (row && row.push) {
+        const row = raced as { id: string; status: string; push: unknown } | null;
+        if (row?.status === "published") {
+          return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+        }
+        if (row?.status === "planned" && row.push) {
           publicationId = row.id;
           pushForSend = row.push as typeof plan.push;
+        } else if (row) {
+          await repairToPlan(row.id);
+          publicationId = row.id;
         } else {
           return jsonResponse({ ok: false, error: "Publication insert failed." }, 500);
         }
@@ -619,8 +754,10 @@ Deno.serve(async (req: Request) => {
     try {
       delivery = await sendToTokens(svc, publicationId, pushForSend);
     } catch (e) {
-      // Send aborted mid-flight: the row stays `planned`, so the next
-      // run (daily or retry tick) resumes it. Never mark published here.
+      // Send aborted mid-flight: the row stays `planned`. Only a later
+      // daily-path run adopts it; a retry tick recovers its pending and
+      // retryable deliveries but never adopts or publishes it. Never
+      // mark published here.
       return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
     }
     await svc.from("daily_content_publications").update({
