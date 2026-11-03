@@ -127,12 +127,12 @@ is reused, so existing browser subscriptions keep working.
 7. **No scholar review step.** Eligibility is completeness + source
    fields, NOT an authenticity verdict. No grade is ever shown. If the
    owner wants graded selection, that is a separate workflow.
-8. **Background catalog is smaller than a full batch.** The catalog holds
-   3 text-free backgrounds; a 3–5 card batch reuses a scene only after
-   every scene has been used once (the QC gate flags any earlier repeat
-   as an error). Before live use, generate one text-free background per
-   new subject so the catalog covers the batch — never a reason to invent
-   text or repeat a scene early.
+8. **Background catalog now covers a full batch.** The catalog holds 7
+   text-free backgrounds (guidance path, mountain sunrise, rain leaf,
+   morning bedroom window, home entrance, night lantern, mosque
+   courtyard); a 3–5 card batch gets a distinct scene per card with
+   spares left, and the QC gate still flags any earlier repeat as an
+   error. Further subjects keep joining the same unbounded catalog.
 
 ## 8. Share cards: OG-poster system (local, previews only)
 

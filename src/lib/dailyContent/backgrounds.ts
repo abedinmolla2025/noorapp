@@ -55,15 +55,43 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     prompt:
       "Photorealistic premium macro photograph, tall vertical portrait orientation: a fresh green leaf covered in clear rain droplets, soft golden sunlight glowing through the droplets, dreamy green bokeh background, pure and refreshing atmosphere, crisp detail, soft cinematic light. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
   },
+  {
+    id: "morning-window",
+    file: "bg-morning-window.jpg",
+    scene: "Quiet bedroom at first morning light, dawn through sheer curtains, prayer cap on side table",
+    subjects: ["waking", "wake up", "sleep", "bedroom", "fajr", "ঘুম", "জাগা"],
+    prompt:
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a quiet bedroom at first morning light: soft golden dawn streaming through a half-open window with sheer curtains, a neatly made bed in gentle shadow, a prayer cap resting on a wooden side table, calm and peaceful atmosphere, warm highlights, deep soft shadows, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+  },
+  {
+    id: "home-entrance",
+    file: "bg-home-entrance.jpg",
+    scene: "Warm home entrance at golden hour, open carved wooden door, plants and courtyard",
+    subjects: ["home", "entering", "entrance", "family", "house", "household", "বাড়ি", "ঘরে প্রবেশ", "পরিবার"],
+    prompt:
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a warm welcoming home entrance at golden hour: an open carved wooden doorway with soft light spilling out, potted plants and a woven doormat, a quiet family home courtyard beyond, warm and peaceful domestic atmosphere, rich warm tones, gentle shadows, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+  },
+  {
+    id: "night-lantern",
+    file: "bg-night-lantern.jpg",
+    scene: "Ornate lantern glowing on a branch in a dark night forest, stars above",
+    subjects: ["night", "protection", "lantern", "darkness", "evening", "safety", "fear", "রাত", "অন্ধকার", "হেফাজত"],
+    prompt:
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a glowing ornate lantern hanging from a tree branch in a dark quiet forest at night, warm golden light radiating into deep blue-black shadows, mist between the trees, stars faintly visible above, feeling of safety and protection in the darkness, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+  },
+  {
+    id: "courtyard-prayer",
+    file: "bg-courtyard-prayer.jpg",
+    scene: "Man from behind in quiet prayer in a mosque courtyard at dusk, arches and lamps",
+    subjects: ["mosque", "masjid", "মসজিদ", "courtyard", "tawbah", "তওবা", "salah", "নামাজ"],
+    prompt:
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a man seen from behind in quiet prayer inside a serene mosque courtyard at dusk, rows of arches and soft warm lamps, stone floor reflecting gentle light, humble and contemplative atmosphere of repentance, warm golden and deep teal tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+  },
 ];
 
 /** Future scene ideas (NOT inventory — each needs its own generated file first). */
 export const FUTURE_SCENE_IDEAS: string[] = [
-  "morning bedroom window with sunrise (waking dua)",
-  "warm home entrance with open door (entering-home dua)",
-  "ornate lantern glowing in a night forest (protection)",
   "white flower in soft sunlight (righteous offspring)",
-  "mosque courtyard at golden sunset, person praying (istighfar)",
   "mountain river valley with pines (dhikr)",
   "riverside mosque city with bridge and gardens (deen and dunya)",
   "feather drifting over clouds at sunrise (mercy, ease of burden)",

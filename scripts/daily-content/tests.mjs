@@ -215,6 +215,25 @@ t("background: intentions hadith matches the sunrise scene", () =>
   assert.equal(bg.matchBackground(P({ kind: "hadith", title: "আজকের হাদিস", bengali: "কর্মের ফলাফল নিয়তের উপর নির্ভরশীল।", sourceLine: "Sahih Bukhari" })).id, "intention-sunrise"));
 t("background: unknown subject falls back to the first scene", () =>
   assert.equal(bg.matchBackground(P({ title: "zzz-no-match" })).id, "guidance-path"));
+t("background: waking title matches the morning window scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "ঘুম থেকে জাগার দোয়া" })).id, "morning-window"));
+t("background: entering-home title matches the home entrance scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "ঘরে প্রবেশের দোয়া" })).id, "home-entrance"));
+t("background: night protection title matches the lantern scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "রাতে হেফাজতের দোয়া" })).id, "night-lantern"));
+t("background: mosque title matches the courtyard scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "মসজিদে প্রবেশের দোয়া" })).id, "courtyard-prayer"));
+t("background: full 5-card batch gets 5 distinct scenes", () => {
+  const cards = [
+    P({ title: "হেদায়াতের দোয়া", recordRef: "content:b1" }),
+    P({ title: "ক্ষমা প্রার্থনার দোয়া", recordRef: "content:b2" }),
+    P({ title: "ঘুম থেকে জাগার দোয়া", recordRef: "content:b3" }),
+    P({ title: "ঘরে প্রবেশের দোয়া", recordRef: "content:b4" }),
+    P({ title: "রাতে হেফাজতের দোয়া", recordRef: "content:b5" }),
+  ];
+  const assigned = bg.assignBackgrounds(cards);
+  assert.equal(new Set(assigned.map((a) => a.background.id)).size, 5);
+});
 t("background: batch assignment never repeats while scenes remain", () => {
   const cards = [
     P({ title: "ক্ষমা প্রার্থনার দোয়া" }),
