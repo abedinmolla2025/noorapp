@@ -8,6 +8,7 @@ import {
   Info,
   Mail,
   ShieldCheck,
+  Cookie,
   FileText,
   LayoutGrid,
   HandHeart,
@@ -136,6 +137,16 @@ export default function FooterSection({
             </h3>
             <ul className="flex flex-col gap-3">
               {companyLinks.map(renderLink)}
+              <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("noor:reopen-cookie-banner"))}
+                  className="inline-flex items-center gap-2 text-[13px] leading-none text-muted-foreground transition-all duration-150 hover:text-primary hover:scale-[1.02] active:scale-[0.98]"
+                >
+                  <Cookie className="h-[15px] w-[15px] shrink-0" />
+                  Cookie settings
+                </button>
+              </li>
             </ul>
           </div>
         </div>

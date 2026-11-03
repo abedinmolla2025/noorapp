@@ -5,6 +5,27 @@ import { isBotUA, isHeadlessSignal } from "@/lib/botDetection";
 
 const SESSION_KEY = "noor_visitor_session";
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 min sliding window
+const CONSENT_KEY = "noor_cookie_consent";
+
+// Consent gate (2026-11-03, local branch): first-party tracking runs ONLY when
+// analytics consent is granted. Stored forms mirror index.html's parse:
+// "accepted" -> granted; "rejected" -> denied; JSON {ad, an} -> the an field.
+// No stored choice -> NOT granted -> skip (pre-consent views uncounted).
+// This fixes the G2 inconsistency (Reject recorded but tracking continued).
+// Policy wording and retention stay owner decisions; this changes behavior only.
+// AdSense script loading is NOT gated here (separate sub-decision).
+function isAnalyticsConsentGranted(): boolean {
+  try {
+    const raw = localStorage.getItem(CONSENT_KEY);
+    if (!raw) return false;
+    if (raw === "accepted") return true;
+    if (raw === "rejected") return false;
+    const parsed = JSON.parse(raw) as { an?: unknown };
+    return parsed.an === "granted";
+  } catch {
+    return false;
+  }
+}
 
 function getOrCreateSessionId(): string {
   try {
@@ -112,6 +133,9 @@ export function usePageTracking() {
     // table. Historical rows are untouched (exclusion-first; deletion needs a
     // separate owner authorization). Human browsers are unaffected.
     if (isBotUA(ua).bot || isHeadlessSignal({ webdriver: (navigator as Navigator & { webdriver?: unknown }).webdriver })) return;
+
+    // Consent gate: denied or no stored choice -> no insert, no geo/auth calls.
+    if (!isAnalyticsConsentGranted()) return;
 
     (async () => {
       const geo = await fetchGeo();

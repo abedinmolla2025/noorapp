@@ -57,6 +57,15 @@ export default function CookieConsentBanner() {
     }
   }, [visible]);
 
+  useEffect(() => {
+    const reopen = () => {
+      setShowPrefs(false);
+      if (claimCustomPrompt("cookie")) setVisible(true);
+    };
+    window.addEventListener("noor:reopen-cookie-banner", reopen);
+    return () => window.removeEventListener("noor:reopen-cookie-banner", reopen);
+  }, []);
+
   const accept = () => {
     persist("accepted");
     pushConsent({ ad: "granted", an: "granted" });
