@@ -1,0 +1,183 @@
+{
+  "generatedAt": "2026-11-03T13:21:45.854Z",
+  "mode": "dry-run (plan only, no sends)",
+  "days": [
+    {
+      "kolkataDate": "2026-11-03",
+      "hadith": null,
+      "hadithEmptyReason": "No eligible hadith in the pool (every record is missing Arabic, Bengali translation, hadith number, book key, or is excluded). Nothing was invented to fill the slot.",
+      "cards": [
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-protection-surah-al-falaq-113-4",
+          "title": "জাদু থেকে আশ্রয়ের দোয়া",
+          "sourceLine": "Surah Al-Falaq 113:4",
+          "canonicalLink": "/dua/dua-for-protection-surah-al-falaq-113-4"
+        },
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-patience-surah-aal-i-imraan-3-147",
+          "title": "বাড়াবাড়ির ক্ষমা ও দৃঢ়তার দোয়া",
+          "sourceLine": "Surah Aal-i-Imraan 3:147",
+          "canonicalLink": "/dua/dua-for-patience-surah-aal-i-imraan-3-147"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-after-wudu",
+          "title": "অযুর পর দোয়া",
+          "sourceLine": "মুসলিম ২৩৪",
+          "canonicalLink": "/dua/dua-after-wudu"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-for-guidance-surah-quran-x-136",
+          "title": "হেদায়াত, তাকওয়া ও অভাবমুক্তির দোয়া",
+          "sourceLine": "Sahih Muslim 2721",
+          "canonicalLink": "/dua/dua-for-guidance-surah-quran-x-136"
+        }
+      ],
+      "push": null,
+      "hadithCycle": 1,
+      "cardCycle": 1,
+      "diagnostics": {
+        "hadithPool": 0,
+        "hadithEligible": 0,
+        "contentPool": 40,
+        "contentEligible": 40
+      }
+    },
+    {
+      "kolkataDate": "2026-11-04",
+      "hadith": null,
+      "hadithEmptyReason": "No eligible hadith in the pool (every record is missing Arabic, Bengali translation, hadith number, book key, or is excluded). Nothing was invented to fill the slot.",
+      "cards": [
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-guidance-surah-al-baqara-2-129",
+          "title": "নবী প্রেরণের জন্য ইবরাহীমের দোয়া",
+          "sourceLine": "Surah Al-Baqara 2:129",
+          "canonicalLink": "/dua/dua-for-guidance-surah-al-baqara-2-129"
+        },
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-guidance-surah-aal-i-imraan-3-9",
+          "title": "কিয়ামে সমবেত হওয়ার বিশ্বাসের দোয়া",
+          "sourceLine": "Surah Aal-i-Imraan 3:9",
+          "canonicalLink": "/dua/dua-for-guidance-surah-aal-i-imraan-3-9"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-for-forgiveness-surah-quran-x-146",
+          "title": "আস্তাগফিরুল্লাহ — প্রতিদিনের ইস্তেগফার",
+          "sourceLine": "Sahih al-Bukhari 6307",
+          "canonicalLink": "/dua/dua-for-forgiveness-surah-quran-x-146"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-for-guidance-surah-quran-x-151",
+          "title": "ঘুমানোর দোয়া",
+          "sourceLine": "Sahih al-Bukhari 6324",
+          "canonicalLink": "/dua/dua-for-guidance-surah-quran-x-151"
+        }
+      ],
+      "push": null,
+      "hadithCycle": 1,
+      "cardCycle": 1,
+      "diagnostics": {
+        "hadithPool": 0,
+        "hadithEligible": 0,
+        "contentPool": 40,
+        "contentEligible": 40
+      }
+    },
+    {
+      "kolkataDate": "2026-11-05",
+      "hadith": null,
+      "hadithEmptyReason": "No eligible hadith in the pool (every record is missing Arabic, Bengali translation, hadith number, book key, or is excluded). Nothing was invented to fill the slot.",
+      "cards": [
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-faith-surah-ibrahim-14-7",
+          "title": "শোকে নিয়ামত বৃদ্ধির আয়াত",
+          "sourceLine": "Surah Ibrahim 14:7",
+          "canonicalLink": "/dua/dua-for-faith-surah-ibrahim-14-7"
+        },
+        {
+          "kind": "quran",
+          "recordRef": "content:surah-al-ikhlas-2",
+          "title": "সূরা ইখলাস",
+          "sourceLine": "Al-Ikhlas 112:1-4",
+          "canonicalLink": "/dua/surah-al-ikhlas-2"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-for-guidance-surah-quran-x-156",
+          "title": "আল্লাহর ভালোবাসা লাভের দোয়া",
+          "sourceLine": "Jami at-Tirmidhi 3490",
+          "canonicalLink": "/dua/dua-for-guidance-surah-quran-x-156"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-when-looking-in-the-mirror",
+          "title": "আয়নায় দেখার দোয়া",
+          "sourceLine": "মুসনাদ আহমাদ ৩৮২৩",
+          "canonicalLink": "/dua/dua-when-looking-in-the-mirror"
+        }
+      ],
+      "push": null,
+      "hadithCycle": 1,
+      "cardCycle": 1,
+      "diagnostics": {
+        "hadithPool": 0,
+        "hadithEligible": 0,
+        "contentPool": 40,
+        "contentEligible": 40
+      }
+    },
+    {
+      "kolkataDate": "2026-11-06",
+      "hadith": null,
+      "hadithEmptyReason": "No eligible hadith in the pool (every record is missing Arabic, Bengali translation, hadith number, book key, or is excluded). Nothing was invented to fill the slot.",
+      "cards": [
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-forgiveness-surah-al-baqara-2-286",
+          "title": "সাধ্যের বাইরে বোঝা না দেওয়ার দোয়া",
+          "sourceLine": "Surah Al-Baqara 2:286",
+          "canonicalLink": "/dua/dua-for-forgiveness-surah-al-baqara-2-286"
+        },
+        {
+          "kind": "quran",
+          "recordRef": "content:dua-for-guidance-surah-al-anbiyaa-21-83",
+          "title": "আইয়ুব (আ.)-এর ধৈর্য ও আরোগ্যের দোয়া",
+          "sourceLine": "Surah Al-Anbiyaa 21:83",
+          "canonicalLink": "/dua/dua-for-guidance-surah-al-anbiyaa-21-83"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-for-breaking-fast",
+          "title": "ইফতারের দোয়া",
+          "sourceLine": "আবূ দাঊদ ২৩৫৭",
+          "canonicalLink": "/dua/dua-for-breaking-fast"
+        },
+        {
+          "kind": "hadith",
+          "recordRef": "content:dua-for-protection-surah-quran-x-141",
+          "title": "সকাল-সন্ধ্যায় ক্ষতি থেকে সুরক্ষার দোয়া",
+          "sourceLine": "Sunan Abi Dawood 5088",
+          "canonicalLink": "/dua/dua-for-protection-surah-quran-x-141"
+        }
+      ],
+      "push": null,
+      "hadithCycle": 1,
+      "cardCycle": 1,
+      "diagnostics": {
+        "hadithPool": 0,
+        "hadithEligible": 0,
+        "contentPool": 40,
+        "contentEligible": 40
+      }
+    }
+  ],
+  "crossDayDuplicateCards": false
+}

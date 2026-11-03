@@ -118,6 +118,20 @@ const getDailyHadith = (): Hadith => {
 
 type Language = "bengali" | "english" | "arabic" | "urdu" | "turkish";
 
+/**
+ * A source-verified record published by the Daily Content automation.
+ * When provided, the card shows THIS record instead of the built-in rotation
+ * (which has no hadith numbers and therefore cannot be source-verified).
+ * When absent, behaviour is exactly the original rotation — nothing breaks.
+ */
+export interface PublishedDailyHadith {
+  bengali: string;
+  arabic: string;
+  source: string;
+  chapter: string;
+  canonicalLink: string;
+}
+
 const languages: { key: Language; label: string }[] = [
   { key: "bengali", label: "বাংলা" },
   { key: "english", label: "English" },
@@ -126,12 +140,19 @@ const languages: { key: Language; label: string }[] = [
   { key: "turkish", label: "Türkçe" },
 ];
 
-const DailyHadith = () => {
+const DailyHadith = ({ published }: { published?: PublishedDailyHadith | null } = {}) => {
   const navigate = useNavigate();
   const [selectedLang, setSelectedLang] = useState<Language>("bengali");
-  
+
   // Get today's hadith - memoized so it doesn't change during the session
   const dailyHadith = useMemo(() => getDailyHadith(), []);
+
+  // Published record wins over the rotation; otherwise identical behaviour.
+  const shownText = published ? published.bengali : dailyHadith.translations[selectedLang];
+  const shownArabic = published ? published.arabic : dailyHadith.arabicOriginal;
+  const shownSource = published ? published.source : dailyHadith.source;
+  const shownChapter = published ? published.chapter : dailyHadith.chapter;
+  const readMoreLink = published ? published.canonicalLink : "/hadith/sahih-bukhari";
 
   return (
     <motion.div 
@@ -223,22 +244,22 @@ const DailyHadith = () => {
           
           <div className="relative z-10">
             <p className={`text-white text-base md:text-lg font-medium leading-relaxed md:leading-loose ${
-              selectedLang === "arabic" || selectedLang === "urdu" 
-                ? "text-right font-arabic" 
+              !published && (selectedLang === "arabic" || selectedLang === "urdu")
+                ? "text-right font-arabic"
                 : ""
             }`}>
-              {dailyHadith.translations[selectedLang]}
+              {shownText}
             </p>
 
-            {/* Arabic Original - Shown when not Arabic selected */}
-            {selectedLang !== "arabic" && (
-              <motion.div 
+            {/* Arabic Original - Shown when not Arabic selected (always for published) */}
+            {(published || selectedLang !== "arabic") && (
+              <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 className="mt-4 pt-4 border-t border-white/10"
               >
                 <p className="text-right text-amber-300/80 text-sm md:text-base leading-relaxed font-arabic" dir="rtl">
-                  {dailyHadith.arabicOriginal}
+                  {shownArabic}
                 </p>
               </motion.div>
             )}
@@ -248,7 +269,8 @@ const DailyHadith = () => {
           <div className="absolute bottom-2 right-3 text-amber-400/10 text-6xl md:text-7xl font-serif leading-none rotate-180 select-none">"</div>
         </motion.div>
 
-        {/* Language Selector - Scrollable on mobile */}
+        {/* Language Selector - hidden for published records (single verified Bengali text) */}
+        {!published && (
         <div className="mb-5 md:mb-6">
           <div className="flex flex-wrap gap-2 md:gap-2.5">
             {languages.map((lang, index) => (
@@ -270,6 +292,7 @@ const DailyHadith = () => {
             ))}
           </div>
         </div>
+        )}
 
         {/* Footer - Source & Action */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pt-4 md:pt-5 border-t border-white/10">
@@ -278,15 +301,15 @@ const DailyHadith = () => {
               <BookOpen size={18} className="text-amber-400" />
             </div>
             <div>
-              <p className="font-bold text-amber-400 text-base md:text-lg">{dailyHadith.source}</p>
-              <p className="text-white/50 text-sm">Chapter: {dailyHadith.chapter}</p>
+              <p className="font-bold text-amber-400 text-base md:text-lg">{shownSource}</p>
+              <p className="text-white/50 text-sm">Chapter: {shownChapter}</p>
             </div>
           </div>
-          
-          <motion.button 
+
+          <motion.button
             whileHover={{ scale: 1.02, x: 3 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate("/hadith/sahih-bukhari")}
+            onClick={() => navigate(readMoreLink)}
             className="flex items-center justify-center gap-2 px-5 py-2.5 md:py-3 bg-gradient-to-r from-amber-400/15 to-amber-500/10 border border-amber-400/30 hover:border-amber-400/50 text-white font-semibold rounded-xl transition-all group"
           >
             <span>আরও পড়ুন</span>
