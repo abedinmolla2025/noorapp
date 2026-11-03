@@ -80,7 +80,7 @@ function page(card, format) {
 <body><div style="position:relative;width:${W}px;height:${H}px;overflow:hidden;font-family:system-ui,sans-serif;background:#0b1526">
 <img src="${card.background}" alt="" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover">
 <div style="position:absolute;inset:0;background:linear-gradient(180deg, rgba(4,10,20,0.62) 0%, rgba(4,10,20,0.28) 38%, rgba(4,10,20,0.30) 62%, rgba(4,10,20,0.74) 100%)"></div>
-<div style="position:relative;height:100%;display:flex;flex-direction:column;padding:${portrait ? "26px 28px 20px" : "22px 26px 18px"}">
+<div style="position:relative;height:100%;display:flex;flex-direction:column;padding:${portrait ? "28px 28px 30px" : "24px 26px 26px"}">
 <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px">
 <div style="display:flex;align-items:center;gap:9px">
 <img src="logo-1-emerald-gold.svg" alt="NoorApp" style="width:40px;height:40px;border-radius:12px">
@@ -90,22 +90,12 @@ function page(card, format) {
 <svg width="26" height="26" viewBox="0 0 24 24" fill="none"><path d="M12 4.5C10 3 7 2.5 4 3v13.5c3-.5 6 0 8 1.5 2-1.5 5-2 8-1.5V3c-3-.5-6 0-8 1.5Z" fill="${GOLD}"/><path d="M12 4.5V19" stroke="#0b1526" stroke-width="1.4"/></svg>
 <div><div style="color:${GOLD};font-weight:800;font-size:11px;letter-spacing:0.8px;line-height:1.3">${card.badge}</div>
 <div style="color:#fff;font-size:11px;line-height:1.3">${card.sourceLine}</div></div></div></div>
-<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:${portrait ? 14 : 11}px;padding:${portrait ? "10px 0" : "6px 0"}">
-<div style="color:${GOLD};font-weight:800;font-size:${portrait ? 40 : 33}px;line-height:1.3;font-family:'Noto Sans Bengali','Noto Serif Bengali',system-ui,sans-serif;text-shadow:0 2px 14px rgba(0,0,0,0.65)">${card.title}</div>
+<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:${portrait ? 18 : 14}px;padding:${portrait ? "10px 0" : "6px 0"}">
+<div style="color:${GOLD};font-weight:800;font-size:${portrait ? 44 : 36}px;line-height:1.3;font-family:'Noto Sans Bengali','Noto Serif Bengali',system-ui,sans-serif;text-shadow:0 2px 14px rgba(0,0,0,0.65)">${card.title}</div>
 ${divider()}
 <div style="width:100%;background:rgba(6,15,28,0.66);border:1px solid ${GOLD_BORDER};border-radius:18px;padding:${portrait ? "16px 20px" : "13px 18px"}">
-<div dir="rtl" lang="ar" style="color:#fff;font-size:${portrait ? 27 : 23}px;line-height:1.9;font-family:'Noto Naskh Arabic','Amiri',serif;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${card.arabic}</div></div>
-<div style="color:#fff;font-size:${portrait ? 20 : 17}px;line-height:1.65;font-family:'Noto Sans Bengali','Noto Serif Bengali',system-ui,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,0.65)"><span style="color:${GOLD};font-size:${portrait ? 26 : 22}px;font-weight:700">“</span>${card.bengali}<span style="color:${GOLD};font-size:${portrait ? 26 : 22}px;font-weight:700">”</span></div>
-</div>
-<div style="display:flex;align-items:center;gap:12px;background:#fdfcf8;border-radius:999px;padding:9px 14px;width:100%">
-<div style="display:flex;align-items:center;gap:7px;flex-shrink:0">
-<img src="logo-1-emerald-gold.svg" alt="NoorApp" style="width:30px;height:30px;border-radius:9px">
-<span style="color:#0d3b2e;font-weight:800;font-size:13px;letter-spacing:0.3px">NOOR APP</span></div>
-<div style="width:1px;align-self:stretch;background:#e2ddd2;flex-shrink:0"></div>
-<div style="flex:1;color:#1f2937;font-size:11.5px;line-height:1.5;font-family:'Noto Sans Bengali',system-ui,sans-serif">দোয়া, জিকির, কুরআন, হাদিস ও ইসলামিক কনটেন্ট পেতে<br>আজই ডাউনলোড করুন <span style="color:#0d6b4f;font-weight:700">Noor App</span></div>
-<div style="display:flex;gap:6px;flex-shrink:0">
-<span style="background:#111;color:#fff;border-radius:6px;padding:5px 8px;font-size:9.5px;line-height:1.3;text-align:center">GET IT ON<br><b style="font-size:11px">Google Play</b></span>
-<span style="background:#111;color:#fff;border-radius:6px;padding:5px 8px;font-size:9.5px;line-height:1.3;text-align:center">Download on the<br><b style="font-size:11px">App Store</b></span></div>
+<div dir="rtl" lang="ar" style="color:#fff;font-size:${portrait ? 30 : 25}px;line-height:1.9;font-family:'Noto Naskh Arabic','Amiri',serif;text-shadow:0 2px 12px rgba(0,0,0,0.6)">${card.arabic}</div></div>
+<div style="color:#fff;font-size:${portrait ? 22 : 19}px;line-height:1.65;font-family:'Noto Sans Bengali','Noto Serif Bengali',system-ui,sans-serif;text-shadow:0 2px 12px rgba(0,0,0,0.65)"><span style="color:${GOLD};font-size:${portrait ? 26 : 22}px;font-weight:700">“</span>${card.bengali}<span style="color:${GOLD};font-size:${portrait ? 26 : 22}px;font-weight:700">”</span></div>
 </div></div></div></body></html>`;
 }
 

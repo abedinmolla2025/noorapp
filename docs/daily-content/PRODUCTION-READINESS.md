@@ -144,9 +144,11 @@ language as a DOM component, with NO fixed theme count:
 - **Component**: `src/components/dailyContent/OgShareCard.tsx` — green
   NOOR APP mark + `noorapp.in`, dark reference pill with gold book icon,
   gold Bengali title, gold divider, dark glass Arabic panel, white
-  Bengali translation with gold quote marks, white footer banner with
-  Bengali CTA. Store pills are DOM text: the repo holds no official
-  store-badge artwork, so none is faked.
+  Bengali translation with gold quote marks. There is NO footer banner:
+  no store badges, no download text, no bottom strip (owner direction
+  2026-11-03). Branding lives in the header only, and the content stack
+  is vertically centered with slightly larger type, so the frame
+  rebalances itself with no empty space where a banner used to be.
 - **Badge rule** (`badgeLabelForCard`): Quran-sourced → QURANIC DUA,
   hadith-sourced → HADITH, dua from a hadith collection → PROPHETIC DUA,
   otherwise DUA. It restates the record's source, never a new claim.

@@ -52,10 +52,14 @@ type OgShareCardProps = {
  * OG-poster-style share card. This rebuilds the visual language of the
  * existing Dua OG posters — green NOOR APP mark, dark reference pill with
  * gold book icon, gold Bengali title, gold divider, dark glass Arabic
- * panel, white Bengali translation, white footer banner — as a DOM
- * component, so every religious string comes from the record verbatim.
+ * panel, white Bengali translation — as a DOM component, so every
+ * religious string comes from the record verbatim.
  * The background is a text-free photograph under a dark scrim; the model
  * that made it never wrote any text into it.
+ * There is deliberately NO footer banner: no store badges, no download
+ * text, no bottom strip. Branding lives in the header only, and the
+ * content stack is vertically centered, so the frame rebalances itself
+ * with no empty space where a banner used to be.
  */
 export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait" }: OgShareCardProps) {
   const stage = OG_STAGE_SIZE[format];
@@ -92,7 +96,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
           height: "100%",
           display: "flex",
           flexDirection: "column",
-          padding: portrait ? "26px 28px 20px" : "22px 26px 18px",
+          padding: portrait ? "28px 28px 30px" : "24px 26px 26px",
           boxSizing: "border-box",
         }}
       >
@@ -140,7 +144,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
             alignItems: "center",
             justifyContent: "center",
             textAlign: "center",
-            gap: portrait ? 14 : 11,
+            gap: portrait ? 18 : 14,
             padding: portrait ? "10px 0" : "6px 0",
           }}
         >
@@ -148,7 +152,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
             style={{
               color: GOLD,
               fontWeight: 800,
-              fontSize: portrait ? 40 : 33,
+              fontSize: portrait ? 44 : 36,
               lineHeight: 1.3,
               fontFamily: '"Noto Sans Bengali", "Noto Serif Bengali", system-ui, sans-serif',
               textShadow: "0 2px 14px rgba(0,0,0,0.65)",
@@ -172,7 +176,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
               lang="ar"
               style={{
                 color: "#fff",
-                fontSize: portrait ? 27 : 23,
+                fontSize: portrait ? 30 : 25,
                 lineHeight: 1.9,
                 fontFamily: '"Noto Naskh Arabic", "Amiri", serif',
                 textShadow: "0 2px 12px rgba(0,0,0,0.6)",
@@ -184,7 +188,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
           <div
             style={{
               color: "#fff",
-              fontSize: portrait ? 20 : 17,
+              fontSize: portrait ? 22 : 19,
               lineHeight: 1.65,
               fontFamily: '"Noto Sans Bengali", "Noto Serif Bengali", system-ui, sans-serif',
               textShadow: "0 2px 12px rgba(0,0,0,0.65)",
@@ -196,71 +200,6 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
           </div>
         </div>
 
-        {/* Footer banner: logo, Bengali CTA, store pills (DOM text — the repo
-            holds no official store-badge artwork, so no badge image is faked). */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            gap: 12,
-            background: "#fdfcf8",
-            borderRadius: 999,
-            padding: "9px 14px",
-            width: "100%",
-            boxSizing: "border-box",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 7, flexShrink: 0 }}>
-            <img src={LOGO} alt="NoorApp" style={{ width: 30, height: 30, borderRadius: 9 }} />
-            <span style={{ color: "#0d3b2e", fontWeight: 800, fontSize: 13, letterSpacing: 0.3 }}>NOOR APP</span>
-          </div>
-          <div style={{ width: 1, alignSelf: "stretch", background: "#e2ddd2", flexShrink: 0 }} />
-          <div
-            style={{
-              flex: 1,
-              color: "#1f2937",
-              fontSize: 11.5,
-              lineHeight: 1.5,
-              fontFamily: '"Noto Sans Bengali", system-ui, sans-serif',
-            }}
-          >
-            দোয়া, জিকির, কুরআন, হাদিস ও ইসলামিক কনটেন্ট পেতে
-            <br />
-            আজই ডাউনলোড করুন <span style={{ color: "#0d6b4f", fontWeight: 700 }}>Noor App</span>
-          </div>
-          <div style={{ display: "flex", gap: 6, flexShrink: 0 }}>
-            <span
-              style={{
-                background: "#111",
-                color: "#fff",
-                borderRadius: 6,
-                padding: "5px 8px",
-                fontSize: 9.5,
-                lineHeight: 1.3,
-                textAlign: "center",
-              }}
-            >
-              GET IT ON
-              <br />
-              <b style={{ fontSize: 11 }}>Google Play</b>
-            </span>
-            <span
-              style={{
-                background: "#111",
-                color: "#fff",
-                borderRadius: 6,
-                padding: "5px 8px",
-                fontSize: 9.5,
-                lineHeight: 1.3,
-                textAlign: "center",
-              }}
-            >
-              Download on the
-              <br />
-              <b style={{ fontSize: 11 }}>App Store</b>
-            </span>
-          </div>
-        </div>
       </div>
     </div>
   );
