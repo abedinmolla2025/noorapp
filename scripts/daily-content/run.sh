@@ -7,6 +7,7 @@ echo "== compile dailyContent lib =="
 ./node_modules/.bin/tsc src/lib/dailyContent/types.ts src/lib/dailyContent/eligibility.ts \
   src/lib/dailyContent/selection.ts src/lib/dailyContent/cards.ts src/lib/dailyContent/push.ts \
   src/lib/dailyContent/delivery.ts src/lib/dailyContent/plan.ts \
+  src/lib/dailyContent/backgrounds.ts src/lib/dailyContent/ogQc.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 echo "== build fixture (real bundled duas) =="
 node scripts/daily-content/build-fixture.mjs

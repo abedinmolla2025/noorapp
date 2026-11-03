@@ -127,6 +127,58 @@ is reused, so existing browser subscriptions keep working.
 7. **No scholar review step.** Eligibility is completeness + source
    fields, NOT an authenticity verdict. No grade is ever shown. If the
    owner wants graded selection, that is a separate workflow.
+8. **Background catalog is smaller than a full batch.** The catalog holds
+   3 text-free backgrounds; a 3–5 card batch reuses a scene only after
+   every scene has been used once (the QC gate flags any earlier repeat
+   as an error). Before live use, generate one text-free background per
+   new subject so the catalog covers the batch — never a reason to invent
+   text or repeat a scene early.
+
+## 8. Share cards: OG-poster system (local, previews only)
+
+The fixed-theme card systems (5-theme, then 8-theme) were set aside
+unpushed: they were color variations of one template, which the owner
+rejected. The replacement rebuilds the existing Dua OG posters' visual
+language as a DOM component, with NO fixed theme count:
+
+- **Component**: `src/components/dailyContent/OgShareCard.tsx` — green
+  NOOR APP mark + `noorapp.in`, dark reference pill with gold book icon,
+  gold Bengali title, gold divider, dark glass Arabic panel, white
+  Bengali translation with gold quote marks, white footer banner with
+  Bengali CTA. Store pills are DOM text: the repo holds no official
+  store-badge artwork, so none is faked.
+- **Badge rule** (`badgeLabelForCard`): Quran-sourced → QURANIC DUA,
+  hadith-sourced → HADITH, dua from a hadith collection → PROPHETIC DUA,
+  otherwise DUA. It restates the record's source, never a new claim.
+- **Backgrounds** (`src/lib/dailyContent/backgrounds.ts`): text-free
+  photographs generated separately — the image model never writes
+  Arabic/Bengali text, and all text is overlaid programmatically from
+  the record. Scenes are matched to the card's subject
+  (`assignBackgrounds`: subject match first, no repeat inside a batch
+  while unused scenes remain, deterministic). The catalog is unbounded
+  by design; `FUTURE_SCENE_IDEAS` lists the next subjects, not inventory.
+- **Export** (`ExportableOgShareCard.tsx`, existing `useDomToPng`):
+  stage 540×675 / 540×540 at pixelRatio 2 = exactly 1080×1350 /
+  1080×1080 PNG.
+- **QC** (`src/lib/dailyContent/ogQc.ts`): character-exact text equality
+  vs the source record, non-empty fields, background uniqueness, and
+  long-text warnings (never silent truncation). Contrast is verified
+  visually on real previews, not numerically, because the backgrounds
+  are photographs (readability comes from the dark scrim + glass panel).
+- **Admin**: `/admin/daily-content` now previews OG cards with their
+  assigned backgrounds, a QC PASS/FAIL line, and per-card PNG export.
+  The old `IslamicContentShareCard` file is untouched on disk.
+- **Previews** (regenerable, not committed):
+  `scripts/daily-content/preview/build-preview.mjs` → `out/`:
+  Quran (guidance, Al-Faatiha 1:6, path-at-dawn), Hadith (intentions,
+  Sahih Bukhari with no number — the app's own entry carries none),
+  Dua (forgiveness, Al-A'raaf 7:23, rain leaf), plus a square
+  forgiveness card. All 4 visually QC'd PASS at exact export sizes.
+- **Existing OG images untouched**: `public/assets/dua-og/` and
+  `public/assets/og-images/` are byte-identical (git status clean);
+  `DuaDetailPage` og:image metadata and the canvas OG generator are
+  not modified. The new backgrounds live separately in
+  `public/assets/card-backgrounds/`.
 
 ## 7. Exact steps for a separately approved production launch
 

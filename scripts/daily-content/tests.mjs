@@ -13,6 +13,8 @@ const cards = await import(path.join(dir, ".out/cards.js"));
 const push = await import(path.join(dir, ".out/push.js"));
 const deliv = await import(path.join(dir, ".out/delivery.js"));
 const planMod = await import(path.join(dir, ".out/plan.js"));
+const bg = await import(path.join(dir, ".out/backgrounds.js"));
+const ogQc = await import(path.join(dir, ".out/ogQc.js"));
 
 let n = 0;
 const t = (name, fn) => { fn(); n++; console.log(`ok ${n} - ${name}`); };
@@ -198,6 +200,63 @@ t("planDay consecutive days never repeat the hadith", () => {
     history = r.nextHistory;
   }
   assert.equal(new Set(ids).size, 3);
+});
+
+// --- OG backgrounds (no fixed theme count; scenes matched by subject) ---
+const P = (over = {}) => ({
+  kind: "dua", recordRef: "content:s1", title: "TITLE", arabic: "ARABIC", bengali: "BENGALI",
+  sourceLine: "REF", canonicalLink: "/dua/s1", altText: "ALT", caption: "CAP", ...over,
+});
+t("background: guidance title matches the path scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "হেদায়াতের দোয়া", sourceLine: "Surah Al-Faatiha 1:6" })).id, "guidance-path"));
+t("background: forgiveness title matches the leaf scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "ক্ষমা প্রার্থনার দোয়া", sourceLine: "Surah Al-A'raaf 7:23" })).id, "forgiveness-leaf"));
+t("background: intentions hadith matches the sunrise scene", () =>
+  assert.equal(bg.matchBackground(P({ kind: "hadith", title: "আজকের হাদিস", bengali: "কর্মের ফলাফল নিয়তের উপর নির্ভরশীল।", sourceLine: "Sahih Bukhari" })).id, "intention-sunrise"));
+t("background: unknown subject falls back to the first scene", () =>
+  assert.equal(bg.matchBackground(P({ title: "zzz-no-match" })).id, "guidance-path"));
+t("background: batch assignment never repeats while scenes remain", () => {
+  const cards = [
+    P({ title: "ক্ষমা প্রার্থনার দোয়া" }),
+    P({ title: "ক্ষমা চাওয়া", recordRef: "content:s2" }),
+    P({ title: "হেদায়াতের দোয়া", recordRef: "content:s3" }),
+  ];
+  const assigned = bg.assignBackgrounds(cards);
+  assert.equal(new Set(assigned.map((a) => a.background.id)).size, 3);
+  assert.equal(assigned[0].background.id, "forgiveness-leaf");
+  assert.deepEqual(bg.assignBackgrounds(cards), assigned);
+});
+t("badge: quran -> QURANIC DUA, hadith -> HADITH", () => {
+  assert.equal(bg.badgeLabelForCard(P({ kind: "quran" })), "QURANIC DUA");
+  assert.equal(bg.badgeLabelForCard(P({ kind: "hadith" })), "HADITH");
+});
+t("badge: dua record follows its reference", () => {
+  assert.equal(bg.badgeLabelForCard(P({ sourceLine: "Surah Al-Baqarah 2:201" })), "QURANIC DUA");
+  assert.equal(bg.badgeLabelForCard(P({ sourceLine: "Sahih al-Bukhari 6307" })), "PROPHETIC DUA");
+  assert.equal(bg.badgeLabelForCard(P({ sourceLine: "Daily Dua Collection" })), "DUA");
+});
+
+// --- OG quality gate ---
+t("ogQc: verbatim check catches one changed character", () => {
+  const src = { title: "T", arabic: "A", bengali: "B", sourceLine: "R" };
+  assert.equal(ogQc.checkOgVerbatim(src, src).ok, true);
+  assert.equal(ogQc.checkOgVerbatim({ ...src, bengali: "B!" }, src).ok, false);
+});
+t("ogQc: batch flags empty fields and in-batch background repeats", () => {
+  const bad = ogQc.checkOgCardBatch([P({ arabic: "  " })], ["guidance-path"], 3);
+  assert.equal(bad.ok, false);
+  const dup = ogQc.checkOgCardBatch([P(), P({ recordRef: "content:s2" })], ["guidance-path", "guidance-path"], 3);
+  assert.equal(dup.ok, false);
+});
+t("ogQc: long text is a warning, never a silent cut", () => {
+  const r = ogQc.checkOgCardBatch([P({ bengali: "x".repeat(400) })], ["guidance-path"], 3);
+  assert.equal(r.ok, true);
+  assert.equal(r.warnings.length, 1);
+});
+t("ogQc: export sizes are exactly 1080x1350 and 1080x1080", () => {
+  assert.deepEqual(ogQc.ogExportSize("portrait"), { width: 1080, height: 1350 });
+  assert.deepEqual(ogQc.ogExportSize("square"), { width: 1080, height: 1080 });
+  assert.deepEqual(ogQc.OG_STAGE_SIZE.portrait, { width: 540, height: 675 });
 });
 
 console.log(`\nALL ${n} TESTS PASSED`);

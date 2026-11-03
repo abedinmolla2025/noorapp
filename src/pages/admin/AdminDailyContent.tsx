@@ -4,7 +4,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import DailyHadith from "@/components/DailyHadith";
-import { IslamicContentShareCard } from "@/components/dailyContent/IslamicContentShareCard";
+import { ExportableOgShareCard } from "@/components/dailyContent/ExportableOgShareCard";
+import { assignBackgrounds, backgroundUrl, badgeLabelForCard, CARD_BACKGROUNDS } from "@/lib/dailyContent/backgrounds";
+import { checkOgCardBatch } from "@/lib/dailyContent/ogQc";
 import { supabase } from "@/integrations/supabase/client";
 import { dailyContentStore } from "@/lib/dailyContent/store";
 import { kolkataDateString, nextDailyRunAt } from "@/lib/dailyContent/selection";
@@ -195,16 +197,43 @@ export default function AdminDailyContent() {
                 }}
               />
             )}
-            <div className="grid gap-4 sm:grid-cols-2">
-              {plan?.cards.map((card) => (
-                <div key={card.recordRef} className="space-y-2">
-                  <IslamicContentShareCard card={card} />
-                  <p className="text-xs text-muted-foreground">
-                    Alt: {card.altText} · Link: {card.canonicalLink}
-                  </p>
-                </div>
-              ))}
-            </div>
+            {(() => {
+              const assigned = plan ? assignBackgrounds(plan.cards) : [];
+              const qc = plan
+                ? checkOgCardBatch(
+                    plan.cards,
+                    assigned.map((a) => a.background.id),
+                    CARD_BACKGROUNDS.length,
+                  )
+                : null;
+              return (
+                <>
+                  {qc && (
+                    <p className="text-xs text-muted-foreground">
+                      Card QC: {qc.ok ? "PASS" : `FAIL — ${qc.errors.join("; ")}`}
+                      {qc.warnings.length ? ` · Warnings: ${qc.warnings.join("; ")}` : ""}
+                      {plan && plan.cards.length > CARD_BACKGROUNDS.length
+                        ? ` · Catalog holds ${CARD_BACKGROUNDS.length} backgrounds for ${plan.cards.length} cards — generate one per new subject before live use.`
+                        : ""}
+                    </p>
+                  )}
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    {assigned.map(({ card, background }) => (
+                      <div key={card.recordRef} className="space-y-2">
+                        <ExportableOgShareCard
+                          card={card}
+                          backgroundUrl={backgroundUrl(background)}
+                          badgeLabel={badgeLabelForCard(card)}
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          Background: {background.scene} · Alt: {card.altText} · Link: {card.canonicalLink}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              );
+            })()}
             {plan?.push && (
               <div className="rounded-lg border p-4">
                 <p className="font-semibold">Push notification preview</p>
