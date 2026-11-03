@@ -81,11 +81,20 @@ export function planDay(input: PlanInput): PlanResult {
     Math.max(CARD_MIN_COUNT, input.cardCount ?? CARD_TARGET_COUNT),
   );
   const cardUsed = new Set(input.history.cardUsedRefs);
+  // Card cycle: when every eligible record was already used, this day's
+  // picks restart the rotation — advance the cycle and reset the used set
+  // to just today's picks (same rule as the hadith rotation). The old
+  // code picked against the used set first and only advanced when the
+  // pick was non-empty — but exhaustion itself makes the pick empty, so
+  // the cycle never advanced and the pool stayed empty forever.
+  const allCardsUsed =
+    eligibleContents.length > 0 &&
+    eligibleContents.every((c) => cardUsed.has(`content:${c.slug}`));
   const pickedContents = pickCards(
     eligibleContents,
     (c) => `content:${c.slug}`,
     (c) => contentKind(c),
-    cardUsed,
+    allCardsUsed ? new Set<string>() : cardUsed,
     cardCount,
   );
   const cards: CardPayload[] = pickedContents.map(buildCard);
@@ -98,13 +107,7 @@ export function planDay(input: PlanInput): PlanResult {
     }
   }
   const trimmedCards = cards.slice(0, CARD_MAX_COUNT);
-  // Card cycle: when every eligible record was already used, this day's
-  // picks restart the rotation — advance the cycle and reset the used set
-  // to just today's picks (same rule as the hadith rotation).
-  const allCardsUsed =
-    eligibleContents.length > 0 &&
-    eligibleContents.every((c) => cardUsed.has(`content:${c.slug}`));
-  const cardCycle = allCardsUsed && pickedContents.length > 0
+  const cardCycle = allCardsUsed
     ? input.history.cardCycle + 1
     : input.history.cardCycle;
   const nextCardUsed = allCardsUsed

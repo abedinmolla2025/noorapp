@@ -180,6 +180,61 @@ function jsonResponse(payload: unknown, status = 200): Response {
 
 type Svc = ReturnType<typeof createClient>;
 
+/**
+ * H3: share-card selection with cycle wrap. Seeded order, max 2 per kind
+ * on the first pass, 4 target, never duplicated in a day. When the whole
+ * eligible pool is already used in the current cycle, the old inline loop
+ * returned zero cards forever (the pool silently emptied). Now the
+ * selection restarts with an empty used set and reports `wrapped: true`,
+ * so the caller advances cardCycle — the same rule the hadith rotation
+ * and the TS lib's planDay already use. An empty pool stays empty: no
+ * cards are ever invented.
+ */
+export function selectShareCards(
+  eligible: Array<ReturnType<typeof mapDua>>,
+  used: ReadonlySet<string>,
+): { cards: Array<Record<string, unknown>>; wrapped: boolean } {
+  const ordered = seededShuffle(
+    eligible,
+    hashString(eligible.map((d) => `content:${d.slug}`).join("|")),
+  );
+  const run = (blocked: ReadonlySet<string>) => {
+    const cards: Array<Record<string, unknown>> = [];
+    const perKind = new Map<string, number>();
+    const seen = new Set<string>();
+    for (const pass of [0, 1]) {
+      for (const d of ordered) {
+        if (cards.length >= 4) break;
+        const ref = `content:${d.slug}`;
+        if (seen.has(ref) || blocked.has(ref)) continue;
+        const kind = duaKind(d.source_type);
+        if (pass === 0 && (perKind.get(kind) ?? 0) >= 2) continue;
+        const title = (d.title_bn ?? "").trim() || (d.title_en ?? "").trim();
+        const bengali = (d.translation_bn ?? "").trim();
+        cards.push({
+          kind,
+          recordRef: ref,
+          title,
+          arabic: (d.arabic ?? "").trim(),
+          bengali,
+          sourceLine: (d.reference ?? "").trim(),
+          canonicalLink: `/dua/${d.slug}`,
+          altText: `${kind === "quran" ? "কুরআনের আয়াত" : kind === "hadith" ? "হাদিস" : "দোয়া"}: ${excerpt(bengali, 80)} — ${(d.reference ?? "").trim()}`,
+          caption: `🤲 ${title}\n${bengali}\n📖 ${(d.reference ?? "").trim()}\n🔗 https://noorapp.in/dua/${d.slug}\n— NoorApp`,
+        });
+        seen.add(ref);
+        perKind.set(kind, (perKind.get(kind) ?? 0) + 1);
+      }
+    }
+    return cards;
+  };
+  const first = run(used);
+  if (first.length === 0 && eligible.length > 0 && used.size > 0) {
+    return { cards: run(new Set()), wrapped: true };
+  }
+  return { cards: first, wrapped: false };
+}
+
 async function planDay(svc: Svc, kolkataDate: string) {
   const { data: hadithRows } = await svc
     .from("hadiths")
@@ -233,35 +288,9 @@ async function planDay(svc: Svc, kolkataDate: string) {
     : null;
   const hadithLink = hadith?.book_key === "bukhari" ? "/hadith/sahih-bukhari/bangla" : "/hadith";
 
-  // Cards: seeded order, max 2 per kind, 4 target, never duplicated in a day.
-  const cards: Array<Record<string, unknown>> = [];
-  const perKind = new Map<string, number>();
-  const seen = new Set<string>();
-  const orderedD = seededShuffle(eligibleD, hashString(eligibleD.map((d) => `content:${d.slug}`).join("|")));
-  for (const pass of [0, 1]) {
-    for (const d of orderedD) {
-      if (cards.length >= 4) break;
-      const ref = `content:${d.slug}`;
-      if (seen.has(ref) || cardUsed.has(ref)) continue;
-      const kind = duaKind(d.source_type);
-      if (pass === 0 && (perKind.get(kind) ?? 0) >= 2) continue;
-      const title = (d.title_bn ?? "").trim() || (d.title_en ?? "").trim();
-      const bengali = (d.translation_bn ?? "").trim();
-      cards.push({
-        kind,
-        recordRef: ref,
-        title,
-        arabic: (d.arabic ?? "").trim(),
-        bengali,
-        sourceLine: (d.reference ?? "").trim(),
-        canonicalLink: `/dua/${d.slug}`,
-        altText: `${kind === "quran" ? "কুরআনের আয়াত" : kind === "hadith" ? "হাদিস" : "দোয়া"}: ${excerpt(bengali, 80)} — ${(d.reference ?? "").trim()}`,
-        caption: `🤲 ${title}\n${bengali}\n📖 ${(d.reference ?? "").trim()}\n🔗 https://noorapp.in/dua/${d.slug}\n— NoorApp`,
-      });
-      seen.add(ref);
-      perKind.set(kind, (perKind.get(kind) ?? 0) + 1);
-    }
-  }
+  const shareSelection = selectShareCards(eligibleD, cardUsed);
+  const cards = shareSelection.cards;
+  const nextCardCycle = shareSelection.wrapped ? cardCycle + 1 : cardCycle;
   if (hadith) {
     const ref = `hadith:${hadith.id}`;
     if (!cards.some((c) => c.recordRef === ref)) {
@@ -307,7 +336,7 @@ async function planDay(svc: Svc, kolkataDate: string) {
     cards: finalCards,
     push,
     hadithCycle: nextHadithCycle,
-    cardCycle,
+    cardCycle: nextCardCycle,
     diagnostics: {
       hadithPool: (hadithRows ?? []).length,
       hadithEligible: eligibleH.length,
@@ -317,10 +346,23 @@ async function planDay(svc: Svc, kolkataDate: string) {
   };
 }
 
-function classifyFailure(status: number | null): string {
+export function classifyFailure(status: number | null): string {
   if (status === 404 || status === 410 || status === 401 || status === 403) return "disabled";
   if (status === null || status === 429 || status >= 500) return "retryable";
   return "failed";
+}
+
+/**
+ * M2: read the push provider's structured status code from a thrown error.
+ * The web-push client attaches `statusCode` to its errors; that is the
+ * ONLY signal used. Message text is never parsed for digits (a message can
+ * contain incidental numbers, and a real 410 without digits in its message
+ * was previously misclassified as retryable). No status code at all means
+ * a network-style failure, which is retryable — never a wrongful disable.
+ */
+export function extractPushStatus(e: unknown): number | null {
+  const s = (e as { statusCode?: unknown } | null)?.statusCode;
+  return typeof s === "number" && Number.isInteger(s) ? s : null;
 }
 
 async function sendToTokens(
@@ -378,9 +420,13 @@ async function sendToTokens(
         await svc.from("daily_content_deliveries").update(patch as never).eq("publication_id", publicationId).eq("device_id", t.device_id);
       }
     } catch (e) {
+      // M2: classify from the structured status code, never from message
+      // text. A 410 that arrives without digits in its message used to be
+      // misclassified as retryable; an error with no status code at all
+      // is a network-style failure and stays retryable (never a wrongful
+      // token disable).
+      const cls = classifyFailure(extractPushStatus(e));
       const msg = e instanceof Error ? e.message : String(e);
-      const m = msg.match(/(\d{3})/);
-      const cls = classifyFailure(m ? Number(m[1]) : null);
       failed++;
       if (cls === "disabled") {
         disabled++;
@@ -420,9 +466,15 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
       await webpush.sendNotification(sub, JSON.stringify((pub as { push: unknown }).push), { TTL: 86400, urgency: "normal" } as never);
       sent++;
       await svc.from("daily_content_deliveries").update({ status: "sent", attempts } as never).eq("id", row.id);
-    } catch {
+    } catch (e) {
+      // M2: same structured classification as the first send. A 410 on
+      // retry disables the token instead of burning the remaining
+      // attempts; anything else follows the normal backoff/max rule.
       failed++;
-      if (attempts >= 4) {
+      if (classifyFailure(extractPushStatus(e)) === "disabled") {
+        await svc.from("device_push_tokens").update({ enabled: false } as never).eq("id", row.token_id);
+        await svc.from("daily_content_deliveries").update({ status: "failed", attempts } as never).eq("id", row.id);
+      } else if (attempts >= 4) {
         await svc.from("daily_content_deliveries").update({ status: "failed", attempts } as never).eq("id", row.id);
       } else {
         const delayMin = BACKOFF[Math.min(attempts - 1, BACKOFF.length - 1)];
@@ -461,7 +513,9 @@ Deno.serve(async (req: Request) => {
     }
 
     const { data: settings } = await svc.from("daily_content_settings").select("enabled").limit(1).maybeSingle();
-    if (settings && (settings as { enabled: boolean }).enabled === false) {
+    // M1: fail CLOSED. A missing settings row used to fall through and
+    // publish; now automation runs only when a row explicitly enables it.
+    if (!settings || (settings as { enabled: boolean }).enabled !== true) {
       return jsonResponse({ ok: false, reason: "paused" });
     }
 
@@ -489,27 +543,89 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ ok: false, reason: plan.hadithEmptyReason });
     }
 
-    const { data: pub } = await svc
+    // H2: safe publication state machine. The row starts as `planned`
+    // (a status the migration already allows) and only becomes
+    // `published` AFTER sendToTokens finishes. A crash anywhere before
+    // that leaves a recoverable `planned` row — never a published-but-
+    // unsent day that the dedupe would then block forever.
+    const { data: planned } = await svc
       .from("daily_content_publications")
-      .insert({
-        kolkata_date: kolkataDate,
-        status: "published",
-        hadith_ref: `hadith:${plan.hadith.id}`,
-        hadith_source_line: plan.hadith.sourceLine,
-        cards: plan.cards,
-        push: plan.push,
-        hadith_cycle: plan.hadithCycle,
-        card_cycle: plan.cardCycle,
-        published_at: new Date().toISOString(),
-      } as never)
       .select("id")
-      .single();
-    const publicationId = (pub as { id: string } | null)?.id;
-    if (!publicationId) {
-      return jsonResponse({ ok: false, error: "Publication insert failed." }, 500);
+      .eq("kolkata_date", kolkataDate)
+      .eq("status", "planned")
+      .maybeSingle();
+    let publicationId: string | null = (planned as { id: string } | null)?.id ?? null;
+    let pushForSend = plan.push;
+    if (publicationId) {
+      // Resume a crashed run: adopt the stored push (same day, same
+      // content — re-planning could change the day's content mid-flight).
+      const { data: adopted } = await svc
+        .from("daily_content_publications")
+        .select("push")
+        .eq("id", publicationId)
+        .maybeSingle();
+      const row = adopted as { push: unknown } | null;
+      if (row && row.push) {
+        pushForSend = row.push as typeof plan.push;
+      } else {
+        // Corrupt planned row (nothing to send): fail it and start fresh.
+        await svc.from("daily_content_publications").update({ status: "failed" } as never).eq("id", publicationId);
+        publicationId = null;
+      }
     }
-    const delivery = await sendToTokens(svc, publicationId, plan.push);
+    if (!publicationId) {
+      const { data: pub } = await svc
+        .from("daily_content_publications")
+        .insert({
+          kolkata_date: kolkataDate,
+          status: "planned",
+          hadith_ref: `hadith:${plan.hadith.id}`,
+          hadith_source_line: plan.hadith.sourceLine,
+          cards: plan.cards,
+          push: plan.push,
+          hadith_cycle: plan.hadithCycle,
+          card_cycle: plan.cardCycle,
+        } as never)
+        .select("id")
+        .single();
+      publicationId = (pub as { id: string } | null)?.id ?? null;
+      if (!publicationId) {
+        // Race: another run created today's row first. Adopt it instead
+        // of failing the day or creating a duplicate publication.
+        const { data: raced } = await svc
+          .from("daily_content_publications")
+          .select("id, push")
+          .eq("kolkata_date", kolkataDate)
+          .eq("status", "planned")
+          .maybeSingle();
+        const row = raced as { id: string; push: unknown } | null;
+        if (row && row.push) {
+          publicationId = row.id;
+          pushForSend = row.push as typeof plan.push;
+        } else {
+          return jsonResponse({ ok: false, error: "Publication insert failed." }, 500);
+        }
+      }
+    }
+    // Stale `pending` delivery rows (inserted but never attempted because
+    // a previous run crashed mid-send) become `retryable` now, so the
+    // retry tick delivers them instead of dropping them silently. The
+    // per-(publication, device) cap still prevents any double-send.
+    await svc.from("daily_content_deliveries").update({
+      status: "retryable",
+      next_attempt_at: new Date().toISOString(),
+    } as never).eq("publication_id", publicationId).eq("status", "pending");
+    let delivery;
+    try {
+      delivery = await sendToTokens(svc, publicationId, pushForSend);
+    } catch (e) {
+      // Send aborted mid-flight: the row stays `planned`, so the next
+      // run (daily or retry tick) resumes it. Never mark published here.
+      return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+    }
     await svc.from("daily_content_publications").update({
+      status: "published",
+      published_at: new Date().toISOString(),
       recipients_total: delivery.total,
       recipients_sent: delivery.sent,
       recipients_failed: delivery.failed,

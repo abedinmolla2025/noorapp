@@ -21,9 +21,11 @@ function json(status: number, body: unknown): Response {
 
 type CronRequest = {
   url?: string;
-  headers?:
-    | { get: (name: string) => string | null }
-    | { authorization?: string; Authorization?: string };
+  headers?: {
+    get?: (name: string) => string | null;
+    authorization?: string;
+    Authorization?: string;
+  };
 };
 
 export default async function handler(req: CronRequest) {
@@ -42,6 +44,11 @@ export default async function handler(req: CronRequest) {
 
   const url = new URL(req?.url ?? "http://localhost/api/daily-content-run");
   const dryRun = url.searchParams.get("dry_run") === "1";
+  // H1: the 15-minute retry tick drives retry-only processing through this
+  // endpoint. The flag must reach the edge function, which runs ONLY the
+  // retry path when it sees it (no planning, no publication) — so a retry
+  // tick can never trigger a normal daily publication.
+  const retryOnly = url.searchParams.get("retry_only") === "1";
 
   try {
     const res = await fetch(EDGE_URL, {
@@ -50,10 +57,10 @@ export default async function handler(req: CronRequest) {
         Authorization: `Bearer ${secret}`,
         "Content-Type": "application/json",
       },
-      body: JSON.stringify({ dry_run: dryRun, dispatch_at: new Date().toISOString() }),
+      body: JSON.stringify({ dry_run: dryRun, retry_only: retryOnly, dispatch_at: new Date().toISOString() }),
       signal: AbortSignal.timeout(60_000),
     });
-    return json(200, { ok: res.ok, status: res.status, dry_run: dryRun });
+    return json(200, { ok: res.ok, status: res.status, dry_run: dryRun, retry_only: retryOnly });
   } catch {
     return json(502, { ok: false, error: "Daily content dispatch failed." });
   }

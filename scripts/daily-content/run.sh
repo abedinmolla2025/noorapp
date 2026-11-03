@@ -9,10 +9,16 @@ echo "== compile dailyContent lib =="
   src/lib/dailyContent/delivery.ts src/lib/dailyContent/plan.ts \
   src/lib/dailyContent/backgrounds.ts src/lib/dailyContent/ogQc.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
+# Separate invocation: mixing api/ into the lib compile would move the
+# lib outputs into .out/src/... (common rootDir), breaking test imports.
+./node_modules/.bin/tsc api/daily-content-run.ts \
+  --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 echo "== build fixture (real bundled duas) =="
 node scripts/daily-content/build-fixture.mjs
 echo "== unit tests =="
 node scripts/daily-content/tests.mjs
+echo "== edge-function regression tests (real edge code, stubbed deps) =="
+node scripts/daily-content/edge-tests.mjs
 echo "== dry-run (plan only) =="
 node scripts/daily-content/dry-run.mjs
 rm -rf scripts/daily-content/.out

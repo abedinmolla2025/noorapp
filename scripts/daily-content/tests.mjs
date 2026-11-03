@@ -17,7 +17,19 @@ const bg = await import(path.join(dir, ".out/backgrounds.js"));
 const ogQc = await import(path.join(dir, ".out/ogQc.js"));
 
 let n = 0;
-const t = (name, fn) => { fn(); n++; console.log(`ok ${n} - ${name}`); };
+const pending = [];
+// Tests run strictly in order (async tests included): endpoint tests share
+// one fetch stub and one env secret, so parallel execution would race.
+let chain = Promise.resolve();
+const t = (name, fn) => {
+  const p = chain.then(async () => {
+    await fn();
+    n++;
+    console.log(`ok ${n} - ${name}`);
+  });
+  chain = p.catch(() => {});
+  pending.push(p);
+};
 const H = (over = {}) => ({
   id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1,
   arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", ...over,
@@ -210,6 +222,102 @@ t("planDay consecutive days never repeat the hadith", () => {
   assert.equal(new Set(ids).size, 3);
 });
 
+// --- H3 (lib mirror): card cycle wraps only when the pool is exhausted ---
+t("planDay card cycle wraps when every content is used", () => {
+  const contents = [1, 2, 3].map((i) => C({ slug: `s${i}` }));
+  const hadiths = [H({ id: "h1", hadith_number: 1 })];
+  const history = {
+    hadithUsedRefs: [],
+    hadithCycle: 1,
+    cardUsedRefs: ["content:s1", "content:s2", "content:s3"],
+    cardCycle: 1,
+  };
+  const r = planMod.planDay({ kolkataDate: "2026-11-03", hadiths, contents, history });
+  assert.equal(r.plan.cardCycle, 2);
+  assert.equal(r.nextHistory.cardCycle, 2);
+  const contentRefs = r.plan.cards
+    .filter((c) => c.recordRef.startsWith("content:"))
+    .map((c) => c.recordRef)
+    .sort();
+  assert.ok(contentRefs.length > 0, "wrapped pool yields cards again");
+  assert.deepEqual(r.nextHistory.cardUsedRefs.sort(), contentRefs);
+});
+
+t("planDay card cycle does not wrap on a partial pool", () => {
+  const contents = [1, 2, 3].map((i) => C({ slug: `s${i}` }));
+  const hadiths = [H({ id: "h1", hadith_number: 1 })];
+  const history = {
+    hadithUsedRefs: [],
+    hadithCycle: 1,
+    cardUsedRefs: ["content:s1"],
+    cardCycle: 1,
+  };
+  const r = planMod.planDay({ kolkataDate: "2026-11-03", hadiths, contents, history });
+  assert.equal(r.plan.cardCycle, 1);
+  assert.ok(!r.plan.cards.map((c) => c.recordRef).includes("content:s1"));
+});
+
+// --- H1: endpoint forwards retry_only to the edge (real endpoint file) ---
+const endpoint = await import(path.join(dir, ".out/daily-content-run.js"));
+let capturedFetch = null;
+globalThis.fetch = async (url, init) => {
+  capturedFetch = { url, body: JSON.parse(init.body) };
+  return { ok: true, status: 200 };
+};
+const endpointReq = (url, auth = "Bearer test-secret") => ({
+  url,
+  headers: { get: (name) => (name.toLowerCase() === "authorization" ? auth : null) },
+});
+
+t("endpoint forwards retry_only=1 to the edge", async () => {
+  process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
+  capturedFetch = null;
+  const res = await endpoint.default(
+    endpointReq("http://localhost/api/daily-content-run?retry_only=1"),
+  );
+  assert.equal(capturedFetch.body.retry_only, true);
+  assert.equal(capturedFetch.body.dry_run, false);
+  const json = await res.json();
+  assert.equal(json.retry_only, true);
+  assert.equal(json.dry_run, false);
+});
+
+t("endpoint forwards a normal run without retry_only", async () => {
+  process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
+  capturedFetch = null;
+  const res = await endpoint.default(endpointReq("http://localhost/api/daily-content-run"));
+  assert.equal(capturedFetch.body.retry_only, false);
+  assert.equal(capturedFetch.body.dry_run, false);
+  assert.equal((await res.json()).retry_only, false);
+});
+
+t("endpoint forwards dry_run=1 without retry_only", async () => {
+  process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
+  capturedFetch = null;
+  await endpoint.default(endpointReq("http://localhost/api/daily-content-run?dry_run=1"));
+  assert.equal(capturedFetch.body.dry_run, true);
+  assert.equal(capturedFetch.body.retry_only, false);
+});
+
+t("endpoint rejects a wrong bearer without calling the edge", async () => {
+  process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
+  capturedFetch = null;
+  const res = await endpoint.default(
+    endpointReq("http://localhost/api/daily-content-run?retry_only=1", "Bearer wrong"),
+  );
+  assert.equal(res.status, 401);
+  assert.equal(capturedFetch, null);
+});
+
+t("endpoint fails closed when its secret is missing", async () => {
+  delete process.env.DAILY_CONTENT_CRON_SECRET;
+  capturedFetch = null;
+  const res = await endpoint.default(endpointReq("http://localhost/api/daily-content-run"));
+  assert.equal(res.status, 500);
+  assert.equal(capturedFetch, null);
+  process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
+});
+
 // --- OG backgrounds (no fixed theme count; scenes matched by subject) ---
 const P = (over = {}) => ({
   kind: "dua", recordRef: "content:s1", title: "TITLE", arabic: "ARABIC", bengali: "BENGALI",
@@ -286,4 +394,5 @@ t("ogQc: export sizes are exactly 1080x1350 and 1080x1080", () => {
   assert.deepEqual(ogQc.OG_STAGE_SIZE.portrait, { width: 540, height: 675 });
 });
 
+await Promise.all(pending);
 console.log(`\nALL ${n} TESTS PASSED`);
