@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { isBotUA, isHeadlessSignal } from "@/lib/botDetection";
 
 const SESSION_KEY = "noor_visitor_session";
 const SESSION_TTL_MS = 30 * 60 * 1000; // 30 min sliding window
@@ -105,6 +106,12 @@ export function usePageTracking() {
 
     const ua = navigator.userAgent || "";
     const ref = document.referrer || "";
+
+    // F-BOT-1 (2026-11-03, local branch): skip known crawlers and automation
+    // BEFORE any geo lookup, auth read, or insert — bot rows never reach the
+    // table. Historical rows are untouched (exclusion-first; deletion needs a
+    // separate owner authorization). Human browsers are unaffected.
+    if (isBotUA(ua).bot || isHeadlessSignal({ webdriver: (navigator as Navigator & { webdriver?: unknown }).webdriver })) return;
 
     (async () => {
       const geo = await fetchGeo();
