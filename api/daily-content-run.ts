@@ -50,6 +50,15 @@ export default async function handler(req: CronRequest) {
   // tick can never trigger a normal daily publication.
   const retryOnly = url.searchParams.get("retry_only") === "1";
 
+  // DECIDED POLICY (launch preparation): a combined retry_only + dry_run
+  // request is a client error. Rejecting here — before any fetch — means
+  // the edge function is never even contacted, so the combination
+  // performs no planning, publication, or sending. The edge enforces
+  // the same rejection as defense-in-depth for direct callers.
+  if (dryRun && retryOnly) {
+    return json(400, { ok: false, error: "retry_only and dry_run cannot be combined." });
+  }
+
   try {
     const res = await fetch(EDGE_URL, {
       method: "POST",

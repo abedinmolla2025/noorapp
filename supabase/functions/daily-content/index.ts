@@ -65,19 +65,50 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    call; no database mechanism can close it without provider-side
  *    idempotency.
  *
- * OPEN OWNER DECISIONS (current behavior kept, proposal documented):
- *  - Pause vs retry ticks: today ticks ignore the settings gate, so
- *    retries complete while paused. PROPOSED: pause should also stop
- *    retry ticks. Not implemented pending the owner's decision.
- *  - retry_only + dry_run combined: today retry wins and performs
- *    real retries. PROPOSED: the endpoint should reject the
- *    combination. Not implemented pending the owner's decision.
+ * DECIDED OWNER POLICIES (launch preparation; both now implemented):
+ *  - Pause stops retry ticks: the settings gate applies to the retry
+ *    branch exactly as to the daily branch, so a paused system sends
+ *    nothing at all. Dry-run stays read-only and is unaffected.
+ *  - retry_only + dry_run combined is a client error (400) at both
+ *    the endpoint and the edge: it performs no planning, publication,
+ *    or sending.
  * ------------------------------------------------------------------ */
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const VAPID_PUBLIC = Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY")!;
 const VAPID_PRIVATE = Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY")!;
+
+// Push timeout (hardening B): every provider call is bounded well
+// below the 10-minute retry lease, so a hung provider cannot hold a
+// claimed row past its lease and invite a second worker to send the
+// same delivery. Default 30 seconds; overridable per deployment via
+// DAILY_CONTENT_PUSH_TIMEOUT_MS (milliseconds) — production leaves it
+// unset. The race below never retries inside the call: on timeout the
+// single attempt ends, the error carries no status code, and the
+// existing classification treats it as retryable without disabling
+// the token. The underlying request may still complete late (provider
+// accepted), but that late completion touches no database state — it
+// can neither resurrect nor overwrite a terminal row. It can only
+// produce the documented at-least-once re-send on the next tick.
+const PUSH_TIMEOUT_MS_DEFAULT = 30_000;
+function pushTimeoutMs(): number {
+  const raw = Number(Deno.env.get("DAILY_CONTENT_PUSH_TIMEOUT_MS") ?? "");
+  return Number.isFinite(raw) && raw > 0 ? Math.floor(raw) : PUSH_TIMEOUT_MS_DEFAULT;
+}
+async function sendPushWithTimeout(sub: unknown, payload: string): Promise<{ statusCode?: number }> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  try {
+    return await Promise.race([
+      webpush.sendNotification(sub, payload, { TTL: 86400, urgency: "normal" } as never) as Promise<{ statusCode?: number }>,
+      new Promise<never>((_, reject) => {
+        timer = setTimeout(() => reject(new Error("Push request timed out")), pushTimeoutMs());
+      }),
+    ]);
+  } finally {
+    if (timer !== undefined) clearTimeout(timer);
+  }
+}
 const CRON_SECRET = Deno.env.get("DAILY_CONTENT_CRON_SECRET") ?? "";
 const DEFAULT_ICON = "https://www.noorapp.in/notification-icon.png";
 const DEFAULT_BADGE = "https://www.noorapp.in/badge-icon.png";
@@ -475,7 +506,7 @@ async function sendToTokens(
     if (capErr) continue; // Already attempted for this device today — skip (no double-send).
     try {
       const sub = JSON.parse(typeof t.token === "string" ? t.token : JSON.stringify(t.token));
-      const res = await webpush.sendNotification(sub, JSON.stringify(push), { TTL: 86400, urgency: "normal" } as never);
+      const res = await sendPushWithTimeout(sub, JSON.stringify(push));
       const status = (res as unknown as { statusCode?: number }).statusCode ?? 201;
       if (status >= 200 && status < 300) {
         // H3: a sent update that matches zero rows is not a success.
@@ -515,7 +546,11 @@ async function sendToTokens(
       if (cls === "retryable") {
         patch.next_attempt_at = new Date(Date.now() + 5 * 60_000).toISOString();
       }
-      await svc.from("daily_content_deliveries").update(patch as never).eq("publication_id", publicationId).eq("device_id", t.device_id);
+      // Hardening A: the patch is conditional on the row still being
+      // pending. If the sent-update committed but its acknowledgement was
+      // lost, the row is already `sent` — this patch must match zero rows
+      // and leave it sent, never resurrect it to retryable/failed.
+      await svc.from("daily_content_deliveries").update(patch as never).eq("publication_id", publicationId).eq("device_id", t.device_id).eq("status", "pending");
     }
   }
   return { total, sent, failed, disabled, skipped };
@@ -582,7 +617,7 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
     const attempts = (row.attempts ?? 0) + 1;
     try {
       const sub = JSON.parse(String((tok as { token: string }).token));
-      await webpush.sendNotification(sub, JSON.stringify((pub as { push: unknown }).push), { TTL: 86400, urgency: "normal" } as never);
+      await sendPushWithTimeout(sub, JSON.stringify((pub as { push: unknown }).push));
       // H3: a sent update that matches zero rows is not a success. The
       // push went out, so this falls into the catch below and degrades
       // to retryable (the known at-least-once window); it must not be
@@ -597,16 +632,19 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
       failed++;
       if (classifyFailure(extractPushStatus(e)) === "disabled") {
         await svc.from("device_push_tokens").update({ enabled: false } as never).eq("id", row.token_id);
-        await svc.from("daily_content_deliveries").update({ status: "failed", attempts } as never).eq("id", row.id);
+        // Hardening A: conditional on still being retryable, so a
+        // sent-update that committed but lost its acknowledgement can
+        // never be overwritten back to failed (see sendToTokens catch).
+        await svc.from("daily_content_deliveries").update({ status: "failed", attempts } as never).eq("id", row.id).eq("status", "retryable");
       } else if (attempts >= 4) {
-        await svc.from("daily_content_deliveries").update({ status: "failed", attempts } as never).eq("id", row.id);
+        await svc.from("daily_content_deliveries").update({ status: "failed", attempts } as never).eq("id", row.id).eq("status", "retryable");
       } else {
         const delayMin = BACKOFF[Math.min(attempts - 1, BACKOFF.length - 1)];
         await svc.from("daily_content_deliveries").update({
           status: "retryable",
           attempts,
           next_attempt_at: new Date(Date.now() + delayMin * 60_000).toISOString(),
-        } as never).eq("id", row.id);
+        } as never).eq("id", row.id).eq("status", "retryable");
       }
     }
   }
@@ -626,10 +664,10 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
  *     publication. Rows a failed supersede leaves behind are closed by
  *     the parent-status check in runRetries (step 3), never sent.
  *  3. Process due retryable deliveries (runRetries, unchanged).
- * Settings are deliberately NOT consulted here (pre-decision behavior,
- * see the header): completing retries for already-published content
- * continues while paused. Proposed change — pause stops ticks too —
- * needs the owner's decision.
+ * Settings are consulted by the handler before runTick is reached
+ * (decided policy): a paused system never enters this function, so a
+ * paused system sends nothing at all — no promotion, no supersede, no
+ * retries. Dry-run never reaches this function either.
  */
 async function runTick(svc: Svc, kolkataDate: string): Promise<{
   retried: number;
@@ -690,11 +728,23 @@ Deno.serve(async (req: Request) => {
   const kolkataDate = kolkataDateString(new Date());
 
   try {
-    // Retry-only precedence (OPEN OWNER DECISION — see header): retry
-    // wins over dry_run, so a combined request performs real retries.
-    // Proposed safest behavior: reject the combination. Not implemented
-    // pending the owner's decision.
+    // DECIDED POLICY (launch preparation): retry_only + dry_run is a
+    // client error, never a real retry and never a plan. Rejecting here
+    // — before any planning, publication, or send — guarantees the
+    // combination performs nothing.
+    if (body.retry_only === true && body.dry_run === true) {
+      return jsonResponse({ ok: false, error: "retry_only and dry_run cannot be combined." }, 400);
+    }
+    // DECIDED POLICY (launch preparation): pause stops retry ticks too.
+    // The settings gate applies to the retry branch exactly as it does
+    // to the daily branch, so a paused system sends nothing at all.
+    // Dry-run stays read-only and is unaffected (it returns before any
+    // gate below).
     if (body.retry_only === true) {
+      const { data: settings } = await svc.from("daily_content_settings").select("enabled").limit(1).maybeSingle();
+      if (!settings || (settings as { enabled: boolean }).enabled !== true) {
+        return jsonResponse({ ok: false, reason: "paused" });
+      }
       return jsonResponse({ ok: true, ...(await runTick(svc, kolkataDate)) });
     }
 

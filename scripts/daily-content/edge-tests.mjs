@@ -78,9 +78,12 @@ if (!fs.existsSync(edgeJs)) throw new Error("edge transpile produced no output")
 
 // ---- Deno double: env values + capture the served handler ----
 let capturedHandler = null;
+// Tests may override single env values per test (e.g. a short push
+// timeout) without touching the base map below.
+const edgeEnvOverrides = {};
 globalThis.Deno = {
   env: {
-    get: (k) =>
+    get: (k) => edgeEnvOverrides[k] ??
       ({
         SUPABASE_URL: "http://stub",
         SUPABASE_SERVICE_ROLE_KEY: "key",
@@ -116,6 +119,7 @@ function makeSvc(seed = {}) {
     throwOnPromotionUpdate: false,
     throwOnSupersedeDeliveries: false,
     throwOnSentUpdate: false,
+    commitThenThrowSentUpdate: false,
     zeroRowSentUpdateAt: null,
     zeroRowFlip: false,
   };
@@ -252,6 +256,15 @@ function makeSvc(seed = {}) {
       if (flags.throwOnSentUpdate && this.table === "daily_content_deliveries" && this.patch?.status === "sent") {
         flags.throwOnSentUpdate = false;
         throw new Error("DB down during sent update");
+      }
+      if (flags.commitThenThrowSentUpdate && this.table === "daily_content_deliveries" && this.patch?.status === "sent") {
+        flags.commitThenThrowSentUpdate = false;
+        // Commit-then-lost-acknowledgement: apply the patch FIRST (the
+        // row really becomes sent), then throw as if the response was
+        // lost. The catch handler must not resurrect the row.
+        const rs = this.rows();
+        for (const r of rs) Object.assign(r, this.patch);
+        throw new Error("DB ack lost after sent update committed");
       }
       if (flags.throwOnPublicationUpdate && this.table === "daily_content_publications" && this.patch?.status === "published") {
         flags.throwOnPublicationUpdate = false;
@@ -988,32 +1001,38 @@ await t("edge M3: same token identity is never sent twice, even after a device_i
   assert.equal(svc.tables.daily_content_deliveries.length, 1);
 });
 
-// ---- Owner decisions: current behavior pinned, proposals documented ----
-await t("edge policy: retry ticks proceed while paused (pre-decision behavior)", async () => {
-  // OPEN DECISION (see edge header): today ticks ignore the settings
-  // gate. Proposed: pause should stop ticks too. This test pins the
-  // current behavior so the decision stays visible, it does not settle it.
+// ---- Decided owner policies (launch preparation) ----
+await t("edge policy: pause stops retry ticks (no promotion, no retry, no send)", async () => {
+  // DECIDED POLICY (see edge header): the settings gate applies to the
+  // retry branch exactly as to the daily branch. A paused system sends
+  // nothing at all — the tick must not promote, supersede, or retry.
   const svc = makeSvc({
     settings: [],
     publications: [
       { id: "pub-r", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+      { id: "pub-p", kolkata_date: YESTERDAY, status: "planned", push: { title: "T", body: "B" } },
     ],
     tokens: [token("t1", "d1")],
     deliveries: [
       { id: "r1", publication_id: "pub-r", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+      { id: "p1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "pending", attempts: 0, next_attempt_at: null },
     ],
   });
   stubs.holder.svc = svc;
-  setWebpush(ok201);
+  const calls = setWebpush(ok201);
   const res = await callEdge({ retry_only: true });
-  assert.equal(res.json.ok, true);
-  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+  assert.equal(res.json.ok, false);
+  assert.equal(res.json.reason, "paused");
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "r1").status, "retryable");
+  assert.equal(svc.tables.daily_content_deliveries.find((d) => d.id === "p1").status, "pending");
+  assert.equal(svc.tables.daily_content_publications.find((p) => p.id === "pub-p").status, "planned"); // not superseded while paused
 });
 
-await t("edge policy: retry_only wins over dry_run (pre-decision behavior)", async () => {
-  // OPEN DECISION (see edge header): today a combined request performs
-  // real retries. Proposed: the endpoint should reject the combination.
-  // This test pins the current precedence; it does not settle the decision.
+await t("edge policy: retry_only + dry_run is rejected and performs nothing", async () => {
+  // DECIDED POLICY (see edge header): the combination is a client
+  // error at the edge (and at the endpoint, tested in tests.mjs). No
+  // planning, publication, or sending may happen.
   const svc = makeSvc({
     settings: [{ enabled: true }],
     publications: [
@@ -1027,9 +1046,10 @@ await t("edge policy: retry_only wins over dry_run (pre-decision behavior)", asy
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
   const res = await callEdge({ retry_only: true, dry_run: true });
-  assert.equal(res.json.ok, true);
-  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
-  assert.equal(calls.length, 1);
+  assert.equal(res.status, 400);
+  assert.equal(res.json.ok, false);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "retryable");
   assert.equal(svc.tables.daily_content_publications.length, 1); // no new row
 });
 
@@ -1278,6 +1298,113 @@ await t("edge H3: concurrent repair conflict never clobbers a published row", as
   assert.equal(b.json.ok, true);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
+});
+
+// ---- Launch hardening A: sent-row resurrection + B: push timeout ----
+await t("edge hardening A: first-send sent update commits but ack is lost — row stays sent, no re-send", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  svc.flags.commitThenThrowSentUpdate = true; // commit, then lose the ack
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent"); // catch patch matched zero rows
+  assert.equal(calls.length, 1);
+  // A later tick must not re-send the same delivery.
+  const calls2 = setWebpush(ok201);
+  const tick = await callEdge({ retry_only: true });
+  assert.equal(tick.json.ok, true);
+  assert.equal(calls2.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+});
+
+await t("edge hardening A: retry sent update commits but ack is lost — row stays sent, next tick does not re-send", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [
+      { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+    ],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  svc.flags.commitThenThrowSentUpdate = true; // commit, then lose the ack
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent"); // catch patch matched zero rows
+  assert.equal(calls.length, 1);
+  const calls2 = setWebpush(ok201);
+  const tick2 = await callEdge({ retry_only: true });
+  assert.equal(tick2.json.ok, true);
+  assert.equal(calls2.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+});
+
+await t("edge hardening B: push timeout is retryable and never disables the token", async () => {
+  edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "25"; // fast timeout for this test only
+  try {
+    const svc = makeSvc({
+      settings: [{ enabled: true }],
+      hadiths: [hadithRow()],
+      duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+      tokens: [token("t1", "d1")],
+    });
+    stubs.holder.svc = svc;
+    const calls = setWebpush(() => new Promise(() => {})); // provider never responds
+    const res = await callEdge({});
+    assert.equal(res.json.ok, true);
+    const row = svc.tables.daily_content_deliveries[0];
+    assert.equal(row.status, "retryable");
+    assert.ok(row.next_attempt_at && new Date(row.next_attempt_at).getTime() > Date.now());
+    assert.equal(svc.tables.device_push_tokens[0].enabled, true); // timeout must not disable
+    assert.equal(calls.length, 1); // exactly one attempt, no silent in-call retry
+  } finally {
+    delete edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS;
+  }
+});
+
+await t("edge hardening B: late provider completion after timeout cannot change the row; next tick re-sends once (at-least-once)", async () => {
+  edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "25"; // timeout fires first
+  try {
+    const svc = makeSvc({
+      settings: [{ enabled: true }],
+      publications: [
+        { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+      ],
+      tokens: [token("t1", "d1")],
+      deliveries: [
+        { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+      ],
+    });
+    stubs.holder.svc = svc;
+    // Provider accepts LATE (100 ms), after the 25 ms timeout already fired.
+    const calls = setWebpush(() => new Promise((resolve) => setTimeout(() => resolve({ statusCode: 201 }), 100)));
+    const res = await callEdge({ retry_only: true });
+    assert.equal(res.json.ok, true);
+    assert.equal(svc.tables.daily_content_deliveries[0].status, "retryable"); // timeout path, not sent
+    assert.equal(calls.length, 1);
+    // Let the late acceptance land: it must not touch the row.
+    await new Promise((r) => setTimeout(r, 150));
+    assert.equal(svc.tables.daily_content_deliveries[0].status, "retryable");
+    // Simulate time passing, then the next tick re-sends (documented
+    // at-least-once: the provider accepted once, the retry sends again).
+    svc.tables.daily_content_deliveries[0].next_attempt_at = "2000-01-01T00:00:00.000Z";
+    delete edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS; // default 30 s, so the re-send succeeds
+    const tick2 = await callEdge({ retry_only: true });
+    assert.equal(tick2.json.ok, true);
+    assert.equal(calls.length, 2);
+    assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
+  } finally {
+    delete edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS;
+  }
 });
 
 console.log(`edge tests: ${n} passed`);

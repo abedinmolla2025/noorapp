@@ -299,6 +299,16 @@ t("endpoint forwards dry_run=1 without retry_only", async () => {
   assert.equal(capturedFetch.body.retry_only, false);
 });
 
+t("endpoint rejects retry_only=1 combined with dry_run=1 without calling the edge", async () => {
+  process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
+  capturedFetch = null;
+  const res = await endpoint.default(
+    endpointReq("http://localhost/api/daily-content-run?retry_only=1&dry_run=1"),
+  );
+  assert.equal(res.status, 400);
+  assert.equal(capturedFetch, null);
+});
+
 t("endpoint rejects a wrong bearer without calling the edge", async () => {
   process.env.DAILY_CONTENT_CRON_SECRET = "test-secret";
   capturedFetch = null;
