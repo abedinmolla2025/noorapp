@@ -81,6 +81,7 @@ const AdminSplashScreens = lazy(() => import("./pages/admin/AdminSplashScreens")
 const AdminReports = lazy(() => import("./pages/admin/AdminReports"));
 const AdminFinance = lazy(() => import("./pages/admin/AdminFinance"));
 const AdminSchedulers = lazy(() => import("./pages/admin/AdminSchedulers"));
+const AdminDailyContent = lazy(() => import("./pages/admin/AdminDailyContent"));
 
 const queryClient = new QueryClient();
 
@@ -167,6 +168,7 @@ const AppRoutes = () => {
           <Route path="/admin/security" element={<AdminLayout><AdminSecurity /></AdminLayout>} />
           <Route path="/admin/security/backend-status" element={<AdminLayout><BackendStatusPage /></AdminLayout>} />
           <Route path="/admin/scheduler" element={<AdminLayout><AdminSchedulers /></AdminLayout>} />
+          <Route path="/admin/daily-content" element={<AdminLayout><AdminDailyContent /></AdminLayout>} />
           <Route path="/admin/audit" element={<AdminLayout><AdminAuditPage /></AdminLayout>} />
           
           <Route path="*" element={<NotFound />} />

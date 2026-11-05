@@ -7,7 +7,7 @@ import PrayerHeroCard from "@/components/PrayerHeroCard";
 import FeatureIcons from "@/components/FeatureIcons";
 import AudioRecitationCard from "@/components/AudioRecitationCard";
 import BottomNavigation from "@/components/BottomNavigation";
-import DailyHadith from "@/components/DailyHadith";
+import { DailyHadithContainer } from "@/components/dailyContent/DailyHadithContainer";
 import AthanSettingsModal from "@/components/AthanSettingsModal";
 import FooterSection from "@/components/FooterSection";
 import { OccasionCarousel } from "@/components/OccasionCarousel";
@@ -141,7 +141,7 @@ const Index = () => {
             </div>
           ),
         },
-        { section_key: "daily_hadith", el: <DailyHadith /> },
+        { section_key: "daily_hadith", el: <DailyHadithContainer /> },
                 { section_key: "seo_intro",
           el: <SeoIntroSection />,
         },
@@ -228,7 +228,7 @@ const Index = () => {
               el: wrapWithVariant(
                 <div data-daily-hadith-card className={cls}>
                   {scopedCss ? <style>{scopedCss}</style> : null}
-                  <DailyHadith />
+                  <DailyHadithContainer />
                 </div>,
                 rowSettings?.styleVariant,
               ),
