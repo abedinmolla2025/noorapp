@@ -1,6 +1,15 @@
 /// <reference lib="deno.ns" />
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  requireAdmin,
+  httpErrorResponse,
+  HttpError,
+} from "../_shared/require-admin.ts";
+import {
+  INTERNAL_CALLER,
+  signInternalCall,
+} from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -113,8 +122,30 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
 
   try {
+    // S-2 remediation candidate: admin-only. This is an administrative /
+    // scheduled job, not a user-facing endpoint, and no shipped caller
+    // exists, so gating breaks no authorized caller. Pair with the S-3
+    // architecture decision: gating alone does not fix delivery, and
+    // fixing delivery without gating would hand an unauthenticated
+    // caller a working push trigger.
+    //
+    // PHASE 2 / S-3 Option A (2026-11-10): the call to send-push below
+    // now uses the dedicated HMAC service-to-service auth
+    // (PRAYER_PUSH_INTERNAL_SECRET, owner-created; the agent never
+    // handles the value) with deviceId mandatory — the old
+    // `Authorization: Bearer <service-role>` call is REMOVED (it
+    // returned 401 by design: a service-role JWT has no `sub`, so
+    // send-push's getClaims gate rejects it). If the secret is not
+    // configured the attempt fails closed (500-class error, no send,
+    // NO fallback to the service-role path). Draft rows are deleted
+    // on failed sends and the prayer_notification_log row is written
+    // on EVERY send attempt (success or failure) so the dedup check
+    // at the top of the loop actually fires.
+    await requireAdmin(req);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const internalSecret = (Deno.env.get("PRAYER_PUSH_INTERNAL_SECRET") ?? "").trim();
     const svc = createClient(supabaseUrl, serviceKey);
 
     const now = new Date();
@@ -196,34 +227,73 @@ Deno.serve(async (req) => {
             continue;
           }
 
-          // Send push via send-push function
-          const sendUrl = `${supabaseUrl}/functions/v1/send-push`;
-          const sendRes = await fetch(sendUrl, {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${serviceKey}`,
-            },
-            body: JSON.stringify({ notificationId: notification.id }),
-          });
-
-          if (!sendRes.ok) {
+          // S-3 Option A: signed internal call to send-push, scoped to
+          // THIS preference's device only (deviceId mandatory — no
+          // broadcast). Never the service-role Bearer (dead by design).
+          let attemptOk = false;
+          if (!internalSecret) {
             errors.push(
-              `Failed to send notification: ${await sendRes.text()}`
+              `PRAYER_PUSH_INTERNAL_SECRET is not configured; prayer push for ${pref.id}/${prayer} not sent`,
             );
-            continue;
+          } else {
+            const timestamp = String(Date.now());
+            const nonce = crypto.randomUUID();
+            const signature = await signInternalCall(internalSecret, {
+              timestamp,
+              nonce,
+              notificationId: notification.id,
+              deviceId: pref.device_id,
+            });
+            const sendUrl = `${supabaseUrl}/functions/v1/send-push`;
+            const sendRes = await fetch(sendUrl, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Noor-Internal-Caller": INTERNAL_CALLER,
+                "X-Noor-Timestamp": timestamp,
+                "X-Noor-Nonce": nonce,
+                "X-Noor-Signature": signature,
+              },
+              body: JSON.stringify({ notificationId: notification.id, deviceId: pref.device_id }),
+            });
+            if (!sendRes.ok) {
+              errors.push(
+                `Failed to send notification: ${sendRes.status}`,
+              );
+            } else {
+              attemptOk = true;
+              sent++;
+            }
           }
 
-          // Log the notification
-          await svc.from("prayer_notification_log").insert({
-            preference_id: pref.id,
-            prayer_name: prayer,
-            prayer_time: `${today}T${prayerTime}:00`,
-            prayer_date: today,
-            notification_id: notification.id,
-          });
+          if (!attemptOk) {
+            // Draft-row cleanup: a failed send must not leave a draft
+            // behind to accumulate (or to be sent later by another path).
+            await svc.from("admin_notifications").delete().eq("id", notification.id);
+          }
 
-          sent++;
+          // Dedup fix: log EVERY send attempt (success or failure) so
+          // the `existing` check above fires and this prayer is not
+          // re-attempted all window. A log failure must not mask the
+          // attempt outcome, so it is swallowed here (and the error is
+          // recorded). NOTE (pre-deploy schema check): this insert
+          // passes notification_id = the draft id even on failure; if
+          // prayer_notification_log.notification_id is NOT NULL in
+          // production this insert is valid as written; verify before
+          // deploy (see PHASE2-DEPLOYMENT-DEPENDENCY-MAP.md).
+          try {
+            await svc.from("prayer_notification_log").insert({
+              preference_id: pref.id,
+              prayer_name: prayer,
+              prayer_time: `${today}T${prayerTime}:00`,
+              prayer_date: today,
+              notification_id: notification.id,
+            });
+          } catch (logErr) {
+            errors.push(
+              `Failed to log notification for ${pref.id}/${prayer}: ${logErr instanceof Error ? logErr.message : String(logErr)}`,
+            );
+          }
         }
       } catch (error) {
         const msg = error instanceof Error ? error.message : String(error);
@@ -240,6 +310,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     const msg = error instanceof Error ? error.message : String(error);
     console.error("send-prayer-notifications error:", msg);
+    if (error instanceof HttpError) return httpErrorResponse(error, corsHeaders);
     return json(500, { error: msg });
   }
 });

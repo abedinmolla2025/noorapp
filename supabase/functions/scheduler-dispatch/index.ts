@@ -1,12 +1,216 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.6";
 import webpush from "https://esm.sh/web-push@3.6.7?bundle";
+import { HttpError } from "../_shared/require-admin.ts";
 
 /* ------------------------------------------------------------------
  * scheduler-dispatch — invoked by pg_cron every minute (bulk)
  * or by the admin panel with { schedule_id } (test / preview).
  * Self-contained: selects content, generates Bengali copy, signs and
  * sends web push using the VAPID keypair in secrets.
+ *
+ * PHASE 2 (2026-11-10) — DUAL-MODE AUTH GATE (previously ungated:
+ * anyone who could reach the endpoint could trigger a broadcast push
+ * to every enabled device):
+ *   - bulk (no schedule_id; pg_cron / api/scheduler-tick.ts):
+ *     dedicated cron secret ONLY. Header
+ *     `Authorization: Bearer <SCHEDULER_CRON_SECRET>`, compared with
+ *     timingSafeEqual. An admin JWT alone is NOT accepted for bulk.
+ *     Missing/empty SCHEDULER_CRON_SECRET -> 500 (fail closed).
+ *   - single schedule ({ schedule_id }, admin "Test send"):
+ *     cron secret OR requireAdmin (valid admin JWT). Non-admin JWT -> 403.
+ *   - preview ({ schedule_id, preview: true } or dry_run: true):
+ *     ADMIN-ONLY dry run. Returns the copy + target count and sends
+ *     NOTHING: no webpush call, no scheduler_notification_runs row,
+ *     no last_sent_at update. The cron secret is NOT accepted here.
+ * Auth runs BEFORE any service-role client is created, so a rejected
+ * request makes zero DB calls and zero sends.
+ *
+ * The gate decision itself (decideSchedulerAuth, timingSafeEqual,
+ * parseSchedulerRequest) is NODE_TESTABLE and unit-tested in
+ * scheduler-gate.test.mjs; authenticateScheduler() below wires that
+ * exact decision function into the live handler (getClaims + is_admin
+ * via an anon client, same sequence as requireAdmin).
+ *
+ * Deployment companions (must land together — see
+ * PHASE2-DEPLOYMENT-DEPENDENCY-MAP.md):
+ *   - _shared/require-admin.ts deployed FIRST (this import).
+ *   - SCHEDULER_CRON_SECRET created as a Supabase edge secret
+ *     (owner-only; the agent never handles the value). The same
+ *     value must be the Vercel SCHEDULER_CRON_SECRET env var.
+ *   - migration 20261110_001_scheduler_cron_secret.sql: pg_cron now
+ *     sends the dedicated vault secret 'scheduler_cron_secret',
+ *     NOT the service_role key.
+ *   - api/scheduler-tick.ts: unchanged behaviour (already forwards
+ *     SCHEDULER_CRON_SECRET as Bearer, bulk only, no schedule_id).
+ *   - AdminSchedulers.tsx: Preview now sends { preview: true }.
+ * What the gate does NOT cover: it does not rate-limit the cron
+ * caller, does not validate schedule content, and does not change
+ * the (pre-existing, eager) VAPID init at module scope — S-9
+ * lazy-init remains a separate candidate.
  * ------------------------------------------------------------------ */
+
+// --- NODE_TESTABLE_BEGIN ---
+// Extracted verbatim by scheduler-gate.test.mjs so Node can exercise
+// the exact production decision logic without Deno.
+export type SchedulerMode = "bulk" | "single" | "preview";
+export type SchedulerAuthDecision =
+  | { ok: true; mode: SchedulerMode; via: "cron-secret" | "admin" }
+  | { ok: false; status: 401 | 403 | 500; error: string };
+
+/** Length-tolerant constant-time-ish string compare (no early exit on content). */
+export function timingSafeEqual(a: string, b: string): boolean {
+  const n = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < n; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
+/** Pure classification of a request body into a gate mode. */
+export function parseSchedulerRequest(body: unknown): { mode: SchedulerMode; scheduleId: string | null } {
+  const b = (body ?? {}) as Record<string, unknown>;
+  const scheduleId =
+    typeof b.schedule_id === "string" && b.schedule_id ? b.schedule_id : null;
+  const preview = b.preview === true || b.dry_run === true;
+  if (scheduleId && preview) return { mode: "preview", scheduleId };
+  if (scheduleId) return { mode: "single", scheduleId };
+  return { mode: "bulk", scheduleId: null };
+}
+
+/**
+ * Pure gate decision. `cronSecret` is "" when unconfigured.
+ * `claims`/`isAdmin` come from the anon-client getClaims + is_admin RPC
+ * (null/error when the JWT path was not attempted or failed).
+ */
+export function decideSchedulerAuth(opts: {
+  mode: SchedulerMode;
+  authHeader: string | null;
+  cronSecret: string;
+  claims: { sub?: unknown } | null | undefined;
+  claimsError: unknown;
+  isAdmin: unknown;
+  isAdminError: unknown;
+}): SchedulerAuthDecision {
+  const h = opts.authHeader ?? "";
+  const bearer = h.startsWith("Bearer ") ? h.slice("Bearer ".length) : null;
+  const cronOk =
+    opts.cronSecret !== "" &&
+    bearer !== null &&
+    bearer.length > 0 &&
+    timingSafeEqual(bearer, opts.cronSecret);
+
+  if (opts.mode === "bulk") {
+    if (!opts.cronSecret) {
+      return { ok: false, status: 500, error: "SCHEDULER_CRON_SECRET is not configured" };
+    }
+    if (!cronOk) {
+      return { ok: false, status: 401, error: "Invalid or missing cron secret" };
+    }
+    return { ok: true, mode: "bulk", via: "cron-secret" };
+  }
+
+  if (opts.mode === "preview") {
+    // Admin-only: the cron secret is deliberately NOT accepted here.
+    if (bearer === null) {
+      return { ok: false, status: 401, error: "Missing or malformed Authorization header" };
+    }
+    if (opts.claimsError || typeof opts.claims?.sub !== "string" || !opts.claims.sub) {
+      return { ok: false, status: 401, error: "Invalid or expired token" };
+    }
+    if (opts.isAdminError || opts.isAdmin !== true) {
+      return { ok: false, status: 403, error: "Admin access required" };
+    }
+    return { ok: true, mode: "preview", via: "admin" };
+  }
+
+  // single: cron secret OR valid admin JWT.
+  if (cronOk) return { ok: true, mode: "single", via: "cron-secret" };
+  if (bearer === null) {
+    return { ok: false, status: 401, error: "Missing or malformed Authorization header" };
+  }
+  if (opts.claimsError || typeof opts.claims?.sub !== "string" || !opts.claims.sub) {
+    return { ok: false, status: 401, error: "Invalid or expired token" };
+  }
+  if (opts.isAdminError || opts.isAdmin !== true) {
+    return { ok: false, status: 403, error: "Admin access required" };
+  }
+  return { ok: true, mode: "single", via: "admin" };
+}
+// --- NODE_TESTABLE_END ---
+
+/**
+ * Live wiring for the gate: resolves the JWT path (anon-client
+ * getClaims + is_admin RPC, exactly as requireAdmin does) and feeds
+ * the outcome into decideSchedulerAuth. Throws HttpError on failure.
+ * The cron-secret path never touches Supabase Auth. Returns the
+ * accepted mode + via for audit logging (never logs the secret).
+ */
+async function authenticateScheduler(
+  req: Request,
+  mode: SchedulerMode,
+): Promise<SchedulerAuthDecision & { ok: true }> {
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  const authHeader =
+    req.headers.get("authorization") ?? req.headers.get("Authorization") ?? null;
+  const cronSecret = (Deno.env.get("SCHEDULER_CRON_SECRET") ?? "").trim();
+
+  // Bulk is cron-only: no JWT validation is attempted at all.
+  if (mode === "bulk") {
+    const d = decideSchedulerAuth({
+      mode,
+      authHeader,
+      cronSecret,
+      claims: null,
+      claimsError: null,
+      isAdmin: null,
+      isAdminError: null,
+    });
+    if (!d.ok) throw new HttpError(d.status, d.error);
+    return d;
+  }
+
+  // Single: cron secret short-circuits before any JWT work.
+  const bearer =
+    authHeader && authHeader.startsWith("Bearer ")
+      ? authHeader.slice("Bearer ".length)
+      : null;
+  if (
+    mode === "single" &&
+    cronSecret !== "" &&
+    bearer !== null &&
+    timingSafeEqual(bearer, cronSecret)
+  ) {
+    return { ok: true, mode, via: "cron-secret" };
+  }
+
+  if (!url || !anonKey) throw new HttpError(500, "Server auth configuration missing");
+  if (!authHeader || !authHeader.startsWith("Bearer ") || authHeader.length <= "Bearer ".length) {
+    throw new HttpError(401, "Missing or malformed Authorization header");
+  }
+  const jwt = authHeader.slice("Bearer ".length);
+  const authed = createClient(url, anonKey, {
+    global: { headers: { Authorization: authHeader } },
+  });
+  const { data: claimsData, error: claimsErr } = await authed.auth.getClaims(jwt);
+  const userId =
+    typeof claimsData?.claims?.sub === "string" ? (claimsData.claims.sub as string) : "";
+  const { data: isAdmin, error: isAdminErr } = await authed.rpc("is_admin", {
+    _user_id: userId,
+  });
+  const d = decideSchedulerAuth({
+    mode,
+    authHeader,
+    cronSecret,
+    claims: claimsErr ? null : { sub: userId },
+    claimsError: claimsErr,
+    isAdmin,
+    isAdminError: isAdminErr,
+  });
+  if (!d.ok) throw new HttpError(d.status, d.error);
+  return d;
+}
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
@@ -397,10 +601,19 @@ function pemToBuffer(pem: string): ArrayBuffer {
   return bytes.buffer;
 }
 
-/* ---------------- single schedule dispatch ---------------- */
-async function dispatchSchedule(svc: ReturnType<typeof createClient>, id: string): Promise<{ ok: boolean; total: number; sent: number; failed: number; copy: { title: string; body: string } }> {
+/* ---------------- single schedule: copy resolution (no sends) ---------------- */
+async function loadScheduleCopy(
+  svc: ReturnType<typeof createClient>,
+  id: string,
+): Promise<{
+  s: Schedule;
+  copy: { title: string; body: string };
+  content: { type: "dua" | "story"; title: string; slug: string; path: string } | null;
+  imageUrl: string | null;
+  deepLink: string | null;
+} | null> {
   const { data: sched } = await svc.from("scheduler_schedules").select("*").eq("id", id).maybeSingle();
-  if (!sched) return { ok: false, total: 0, sent: 0, failed: 0, copy: { title: "", body: "" } };
+  if (!sched) return null;
   const s = sched as unknown as Schedule;
 
   const eventType =
@@ -433,6 +646,53 @@ async function dispatchSchedule(svc: ReturnType<typeof createClient>, id: string
     imageUrl = rec?.og_image_data?.og_image_url || rec?.image_url || null;
     deepLink = content.path;
   }
+  return { s, copy, content, imageUrl, deepLink };
+}
+
+/** Preview (dry run): copy + target count only. Sends NOTHING and writes NOTHING. */
+async function buildSchedulePreview(
+  svc: ReturnType<typeof createClient>,
+  id: string,
+): Promise<{
+  copy: { title: string; body: string };
+  content_title: string | null;
+  content_type: string | null;
+  deep_link: string | null;
+  image_url: string | null;
+  target: string;
+  targets: number;
+} | null> {
+  const loaded = await loadScheduleCopy(svc, id);
+  if (!loaded) return null;
+  const { s, copy, content, imageUrl, deepLink } = loaded;
+  const hasFcm = !!FCM_JSON;
+  const allowed = s.target === "web"
+    ? ["web"]
+    : s.target === "android"
+      ? (hasFcm ? ["android"] : ["web"])
+      : (hasFcm ? ["android", "web"] : ["web"]);
+  const { data: tokens } = await svc
+    .from("device_push_tokens")
+    .select("id")
+    .eq("enabled", true)
+    .in("platform", allowed)
+    .limit(5000);
+  return {
+    copy,
+    content_title: content?.title ?? null,
+    content_type: content?.type ?? null,
+    deep_link: deepLink,
+    image_url: imageUrl,
+    target: s.target,
+    targets: (tokens as unknown[] | null)?.length ?? 0,
+  };
+}
+
+/* ---------------- single schedule dispatch ---------------- */
+async function dispatchSchedule(svc: ReturnType<typeof createClient>, id: string): Promise<{ ok: boolean; total: number; sent: number; failed: number; copy: { title: string; body: string } }> {
+  const loaded = await loadScheduleCopy(svc, id);
+  if (!loaded) return { ok: false, total: 0, sent: 0, failed: 0, copy: { title: "", body: "" } };
+  const { s, copy, content, imageUrl, deepLink } = loaded;
 
   const startedAt = new Date().toISOString();
   const assets = await getNotificationAssets(svc);
@@ -471,18 +731,33 @@ Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
   }
-  const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
 
   try {
     const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+    const { mode, scheduleId } = parseSchedulerRequest(body);
 
-    // Single schedule: admin test / preview
-    if (typeof body.schedule_id === "string" && body.schedule_id) {
-      const result = await dispatchSchedule(svc, body.schedule_id as string);
+    // PHASE 2 gate: auth BEFORE any service-role client is created.
+    // A rejected request makes zero DB calls and zero sends.
+    const auth = await authenticateScheduler(req, mode);
+
+    const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+
+    // Preview: admin-only dry run — copy + target count, never sends.
+    if (mode === "preview") {
+      const preview = await buildSchedulePreview(svc, scheduleId as string);
+      if (!preview) return jsonResponse({ ok: false, error: "schedule_not_found" }, 404);
+      return jsonResponse({ ok: true, dryRun: true, ...preview });
+    }
+
+    // Single schedule: admin test / preview (real send).
+    if (mode === "single") {
+      const result = await dispatchSchedule(svc, scheduleId as string);
       return jsonResponse(result);
     }
 
-    // Bulk: pg_cron dispatch
+    // Bulk: pg_cron dispatch (cron-secret only; `auth.via` is always
+    // "cron-secret" here — an admin JWT cannot reach this branch).
+    void auth;
     const nowIso = new Date().toISOString();
     const { data: due, error: dueErr } = await svc
       .from("scheduler_schedules")
@@ -509,6 +784,9 @@ Deno.serve(async (req: Request) => {
 
     return jsonResponse({ ok: true, dispatched: results.length, results });
   } catch (e) {
-    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+    // Auth failures surface their own status (401/403/500 fail-closed);
+    // unexpected errors stay 500 without leaking details.
+    const status = e instanceof HttpError ? e.status : 500;
+    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, status);
   }
 });

@@ -285,8 +285,15 @@ export default function AdminSchedulers() {
                   <Button size="sm" variant="ghost" onClick={() => { setEditing({ ...s, id: s.id }); setDialogOpen(true); }}>এডিট</Button>
                   <Button size="sm" variant="ghost" onClick={async () => {
                     setPreviewOpen(s);
-                    const res = await supabase.functions.invoke("scheduler-dispatch", { body: { schedule_id: s.id } });
-                    if (!res.error) setPreviewCopy((res.data as { copy?: { title: string; body: string } }).copy ?? null);
+                    // PHASE 2 (2026-11-10): Preview is a DRY RUN — { preview: true }
+                    // is admin-only and sends NOTHING (no push, no run row).
+                    // The old call ({ schedule_id } only) SENT the notification.
+                    const res = await supabase.functions.invoke("scheduler-dispatch", { body: { schedule_id: s.id, preview: true } });
+                    if (!res.error) {
+                      const d = res.data as { copy?: { title: string; body: string }; targets?: number; dryRun?: boolean };
+                      setPreviewCopy(d.copy ?? null);
+                      if (d.dryRun) toast.success(`প্রিভিউ (ড্রাই-রান) — কিছু পাঠানো হয়নি; টার্গেট: ${d.targets ?? 0} টি`);
+                    }
                   }}>
                     <Eye className="mr-1 h-3.5 w-3.5" /> প্রিভিউ
                   </Button>
