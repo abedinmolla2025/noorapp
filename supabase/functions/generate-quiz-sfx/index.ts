@@ -1,4 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import {
+  httpErrorResponse,
+  requireAdmin,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -11,6 +15,10 @@ serve(async (req) => {
   }
 
   try {
+    // P0 remediation: quiz SFX spends ElevenLabs credits; only admins may invoke it.
+    // (No callers in the frontend — quiz SFX is local Web Audio — so gating breaks nothing.)
+    await requireAdmin(req);
+
     const { type } = await req.json();
     const ELEVENLABS_API_KEY = Deno.env.get("ELEVENLABS_API_KEY");
 
@@ -66,10 +74,6 @@ serve(async (req) => {
     });
   } catch (error) {
     console.error("Error in generate-quiz-sfx:", error);
-    const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(
-      JSON.stringify({ error: message }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return httpErrorResponse(error, corsHeaders);
   }
 });

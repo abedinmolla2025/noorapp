@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import {
+  httpErrorResponse,
+  requireAdmin,
+  requireSecret,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +11,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -23,10 +27,13 @@ const SYSTEM_PROMPT = [
 async function generateForHadith(arabic: string, bengali: string | null, attempt = 0): Promise<{ explanation_bn: string; lessons_bn: string[] }> {
   const userText = `আরবি:\n${arabic}\n\nবাংলা অনুবাদ:\n${bengali || "(অনুবাদ নেই, আরবি থেকে অর্থ বের করো)"}\n\nএই হাদিসের জন্য বাংলা explanation_bn ও lessons_bn তৈরি করো।`;
 
+  // Fail closed: the Lovable key is a secret and must never be hardcoded.
+  const lovableApiKey = requireSecret("LOVABLE_API_KEY");
+
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      Authorization: `Bearer ${lovableApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -92,6 +99,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // P0 remediation: stats and process require an authenticated admin.
+    // The service-role client is only created AFTER this check.
+    await requireAdmin(req);
+
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process";
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -173,12 +184,6 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("generate-hadith-seo error", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      {
-        status: 500,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
+    return httpErrorResponse(e, corsHeaders);
   }
 });

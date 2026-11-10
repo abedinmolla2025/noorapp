@@ -44,9 +44,12 @@ import { HttpError } from "../_shared/require-admin.ts";
  *     SCHEDULER_CRON_SECRET as Bearer, bulk only, no schedule_id).
  *   - AdminSchedulers.tsx: Preview now sends { preview: true }.
  * What the gate does NOT cover: it does not rate-limit the cron
- * caller, does not validate schedule content, and does not change
- * the (pre-existing, eager) VAPID init at module scope — S-9
- * lazy-init remains a separate candidate.
+ * caller and does not validate schedule content.
+ *
+ * S-9 lazy-init (Option B, Phase 4 decision 5) is applied: the VAPID
+ * keys are read lazily by ensureVapid() on the web send path only, so
+ * a missing/empty pair fails closed per delivery instead of crashing
+ * the module at boot; dry-run/preview never touches them.
  * ------------------------------------------------------------------ */
 
 // --- NODE_TESTABLE_BEGIN ---
@@ -215,8 +218,11 @@ async function authenticateScheduler(
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VAPID_PUBLIC = Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY")!;
-const VAPID_PRIVATE = Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY")!;
+// NOTE (S-9 lazy-init, Option B — Phase 4 decision 5, applied 2026-11-11):
+// the VAPID keys are deliberately NOT read here. The previous module-scope
+// reads + setVapidDetails call threw at import time when the keys were
+// missing/empty, killing the whole function at boot. Keys are read lazily
+// by ensureVapid() on the web send path only (see deliver()).
 const FCM_JSON = (Deno.env.get("FCM_SERVICE_ACCOUNT_JSON") ?? "").trim();
 const DEFAULT_NOTIFICATION_ICON = "https://www.noorapp.in/notification-icon.png";
 const DEFAULT_NOTIFICATION_BADGE = "https://www.noorapp.in/badge-icon.png";
@@ -246,12 +252,6 @@ async function getNotificationAssets(svc: ReturnType<typeof createClient>): Prom
     badge: safeAssetUrl(notifications.defaultBadgeUrl || branding.faviconUrl, DEFAULT_NOTIFICATION_BADGE),
   };
 }
-
-webpush.setVapidDetails(
-  "https://noorapp.in",
-  VAPID_PUBLIC,
-  VAPID_PRIVATE,
-);
 
 interface Schedule {
   id: string;
@@ -455,6 +455,26 @@ async function pickContent(
 }
 
 /* ---------------- web push delivery ---------------- */
+// S-9 lazy VAPID init: initialise web-push credentials only when a web
+// send is actually attempted. Fail-closed: a missing/empty key pair
+// throws a clear operational error (env-var names only — never key
+// material), caught by the per-token try/catch in deliver() as a failed
+// delivery; never a boot crash, never a send. FCM (android) deliveries
+// do not call this and are unaffected. The flag is per-isolate: a secret
+// rotation takes effect on the next cold start.
+let vapidReady = false;
+function ensureVapid(): void {
+  if (vapidReady) return;
+  const pub = (Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY") ?? "").trim();
+  const priv = (Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY") ?? "").trim();
+  if (!pub || !priv) {
+    throw new Error(
+      "VAPID keys are not configured (WEBPUSH_VAPID_PUBLIC_KEY / WEBPUSH_VAPID_PRIVATE_KEY missing or empty); push sending is unavailable",
+    );
+  }
+  webpush.setVapidDetails("https://noorapp.in", pub, priv);
+  vapidReady = true;
+}
 async function deliver(
   svc: ReturnType<typeof createClient>,
   opts: { title: string; body: string; imageUrl: string | null; deepLink: string | null; target: string; iconUrl: string; badgeUrl: string }
@@ -481,6 +501,11 @@ async function deliver(
     const plat = String(t.platform);
     try {
       if (plat === "web") {
+        // S-9 lazy VAPID init (see ensureVapid() above deliver()).
+        // A missing/empty key pair throws here, inside the per-token
+        // try/catch, so it counts as a failed delivery with a clear
+        // message — never a boot crash, never a send.
+        ensureVapid();
         const subscriptionJson = typeof t.token === "string" ? t.token : JSON.stringify(t.token);
         const res = await webpush.sendNotification(
           JSON.parse(subscriptionJson),

@@ -76,8 +76,12 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VAPID_PUBLIC = Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY")!;
-const VAPID_PRIVATE = Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY")!;
+// NOTE (S-9 lazy-init, Option B — Phase 4 decision 5, applied 2026-11-11):
+// the VAPID keys are deliberately NOT read here. The previous module-scope
+// reads + setVapidDetails call threw at import time when the keys were
+// missing/empty ("No key set vapidDetails.publicKey"), killing the whole
+// function at boot — including dry_run. Keys are read lazily by
+// ensureVapid() on the send path only (see sendPushWithTimeout).
 
 // Push timeout (hardening B): every provider call is bounded at most
 // half the 10-minute retry lease, so a hung provider cannot hold a
@@ -105,7 +109,29 @@ export function pushTimeoutMs(): number {
   if (!Number.isFinite(raw) || raw <= 0) return PUSH_TIMEOUT_MS_DEFAULT;
   return Math.min(Math.floor(raw), PUSH_TIMEOUT_MS_MAX);
 }
+// S-9 lazy VAPID init: initialise web-push credentials only when a send
+// is actually attempted. Fail-closed: a missing/empty key pair throws a
+// clear operational error (env-var names only — never key material),
+// which the per-delivery catch classifies as retryable via the existing
+// no-status-code rule; no token is ever disabled for it and no send is
+// attempted. dry_run never reaches this function, so it works without
+// keys. The flag is per-isolate: a secret rotation takes effect on the
+// next cold start, which is the standard edge-function behaviour.
+let vapidReady = false;
+function ensureVapid(): void {
+  if (vapidReady) return;
+  const pub = (Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY") ?? "").trim();
+  const priv = (Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY") ?? "").trim();
+  if (!pub || !priv) {
+    throw new Error(
+      "VAPID keys are not configured (WEBPUSH_VAPID_PUBLIC_KEY / WEBPUSH_VAPID_PRIVATE_KEY missing or empty); push sending is unavailable",
+    );
+  }
+  webpush.setVapidDetails("https://noorapp.in", pub, priv);
+  vapidReady = true;
+}
 async function sendPushWithTimeout(sub: unknown, payload: string): Promise<{ statusCode?: number }> {
+  ensureVapid();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -121,8 +147,6 @@ async function sendPushWithTimeout(sub: unknown, payload: string): Promise<{ sta
 const CRON_SECRET = Deno.env.get("DAILY_CONTENT_CRON_SECRET") ?? "";
 const DEFAULT_ICON = "https://www.noorapp.in/notification-icon.png";
 const DEFAULT_BADGE = "https://www.noorapp.in/badge-icon.png";
-
-webpush.setVapidDetails("https://noorapp.in", VAPID_PUBLIC, VAPID_PRIVATE);
 
 const hasText = (v: unknown): v is string =>
   typeof v === "string" && v.trim().length > 0;

@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import {
+  httpErrorResponse,
+  requireAdmin,
+  requireSecret,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +11,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -72,10 +76,13 @@ async function generate(args: {
     required.push("content");
   }
 
+  // Fail closed: the Lovable key is a secret and must never be hardcoded.
+  const lovableApiKey = requireSecret("LOVABLE_API_KEY");
+
   const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
+      Authorization: `Bearer ${lovableApiKey}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
@@ -136,6 +143,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // P0 remediation: stats and process require an authenticated admin.
+    // The service-role client is only created AFTER this check.
+    await requireAdmin(req);
+
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process";
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -258,9 +269,6 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("fix-dua-content error", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return httpErrorResponse(e, corsHeaders);
   }
 });

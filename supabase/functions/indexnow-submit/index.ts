@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  requireAdmin,
+  httpErrorResponse,
+  HttpError,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -11,6 +16,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // S-2 remediation candidate: admin-only. IndexNow submission is an
+    // administrative SEO action; no shipped caller exists, so gating
+    // breaks no authorized caller.
+    await requireAdmin(req);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseAnonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
@@ -66,6 +76,7 @@ Deno.serve(async (req) => {
     );
   } catch (err) {
     console.error("IndexNow submission error:", err);
+    if (err instanceof HttpError) return httpErrorResponse(err, corsHeaders);
     return new Response(
       JSON.stringify({ success: false, error: err instanceof Error ? err.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
