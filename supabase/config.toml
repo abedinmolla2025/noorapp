@@ -4,19 +4,19 @@ project_id = "llicfiepatzgllmjhzbw"
 verify_jwt = false
 
 [functions.notify-search-engines]
-verify_jwt = false
+verify_jwt = true
 
 [functions.indexnow-submit]
-verify_jwt = false
+verify_jwt = true
 
 [functions.test-indexnow]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-push]
 verify_jwt = false
 
 [functions.send-prayer-notifications]
-verify_jwt = false
+verify_jwt = true
 
 [functions.send-quiz-reminders]
 verify_jwt = false
@@ -34,4 +34,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-quiz-sfx]
+verify_jwt = true
+
+[functions.daily-content]
 verify_jwt = false
