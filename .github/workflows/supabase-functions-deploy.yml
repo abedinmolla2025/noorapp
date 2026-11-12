@@ -1,0 +1,271 @@
+# DRAFT — Supabase Edge Function deploy via GitHub Actions (NOT in the repo, NOT run)
+#
+# Purpose: deploy the consolidated security-gated Edge Functions WITHOUT
+# needing Supabase access from the agent environment. The deploy runs in
+# GitHub Actions with the Supabase CLI, using an owner-created secret.
+#
+# Status: DRAFT for owner review only. Reviewed 2026-11-11 (see
+# FOUR-BLOCKER-REPORT.md §WS3 for the point-by-point review).
+# Nothing here is approved, pushed, or run. Do not add to the repo
+# until the owner approves it in its own message, and do not create
+# the secret until then.
+#
+# REVIEW FIXES APPLIED IN THIS DRAFT (2026-11-11):
+#   - CLI version is now ASSERTED (must be 3.1.0), not just printed.
+#   - Project-ref guard: EXPECTED_REF is a single variable, asserted
+#     against the literal, and cross-checked against
+#     supabase/config.toml project_id in the checked-out branch.
+#     A wrong ref fails the workflow before any deploy runs.
+#   - Each function directory is checked to exist before its deploy.
+#   - Smoke test now covers ALL 11 functions and expects exactly 401
+#     (the old draft tested one function and accepted any non-200,
+#     so a 500/404 would have falsely passed).
+#   - Smoke-test bodies are chosen so the 401 path is deterministic:
+#     scheduler-dispatch is called in preview mode (missing auth -> 401
+#     regardless of secrets); daily-content is called with action "run"
+#     (the status/opt_out/opt_in actions bypass the CRON check by design
+#     and must NOT be used for this test).
+#   - The smoke-test step no longer receives SUPABASE_ACCESS_TOKEN
+#     (it is unauthenticated by design; least privilege).
+#   - Added a function-version verification step (functions list +
+#     per-function presence check) after deploy.
+#   - No migration commands exist in this file (verified by grep;
+#     the only "migration" hits are these comments).
+#   - No secret is echoed, no `set -x`, no env dump anywhere.
+#     GitHub also auto-masks the secret in logs.
+#
+# REVIEW FIXES APPLIED BY WS-B (2026-11-11, FINAL-WS-B-EDGE-JWT.md):
+#   - Deploy loop passes --no-verify-jwt for daily-content and
+#     scheduler-dispatch (the two functions whose real callers present
+#     non-JWT credentials). The other 9 deploy without the flag.
+#   - New "JWT-mode guard" step asserts supabase/config.toml contains
+#     verify_jwt = false for daily-content and scheduler-dispatch
+#     before any deploy runs (fail-closed; the durable config fix).
+#   - Smoke test now captures the 401 body and asserts the function's
+#     own JSON for the two OFF-required functions (proves verification
+#     is actually off as deployed); curl --max-time 30 added.
+#
+# OPEN CHECKS (not decided here — must resolve before approval):
+#   1. JWT mode — DECIDED 2026-11-11 (WS-B, FINAL-WS-B-EDGE-JWT.md).
+#      verify_jwt OFF (required): scheduler-dispatch (cron secret is a
+#      non-JWT Bearer) and daily-content (CRON-secret Bearer for run /
+#      retry, plus browser preference calls send NO Authorization header
+#      at all). Deploying either with verification ON breaks its real
+#      caller at the gateway, before the function runs.
+#      verify_jwt ON (recommended, Supabase standard): the 9 requireAdmin
+#      functions — every known caller presents a valid Supabase user JWT
+#      via functions.invoke (admin panel), or there is no caller yet
+#      (indexnow-submit, test-indexnow, generate-quiz-sfx,
+#      send-prayer-notifications — future callers must present an admin
+#      JWT by design). OFF is also compatible for these 9, so the deploy
+#      is NOT blocked if their config entries still say false — but the
+#      branch should fix the 5 stale `verify_jwt = false` entries
+#      (notify-search-engines, indexnow-submit, test-indexnow,
+#      send-prayer-notifications, generate-quiz-sfx) to match. The 4 AI
+#      functions have no config entry and deploy ON by CLI default.
+#      REQUIRED BRANCH FIX — LANDED 2026-11-11 in commit 4a9d708
+#      (was missing before that commit): supabase/config.toml on the
+#      branch now has
+#        [functions.daily-content]
+#        verify_jwt = false
+#      Without it daily-content would deploy with verification ON and
+#      the cron + browser preference paths would break. The workflow
+#      asserts this entry exists (JWT-mode guard step) and deploys
+#      daily-content + scheduler-dispatch with --no-verify-jwt so the
+#      required mode is explicit even if config drifts.
+#      The 401 smoke test passes in either mode for the 9 JWT functions;
+#      for the 2 OFF-required functions it now also asserts the 401
+#      BODY is the function's own JSON (proving verification is off).
+#   2. AUTHENTICATED ADMIN TEST — deliberately NOT in this workflow.
+#      A true authenticated call needs a real admin user's JWT, which
+#      cannot be minted in CI without a new admin-credential secret.
+#      Adding such a secret is a new secret surface and is NOT
+#      proposed here. Instead the authenticated test is a REQUIRED
+#      MANUAL step (see the final step of this workflow, which prints
+#      the checklist into the run log): after deploy, the owner opens
+#      the Noor App admin panel and runs one admin action that calls
+#      a gated function (e.g. enrich-dua-content stats). The admin
+#      panel uses the admin's real session — a true authenticated
+#      path. If that call succeeds (200) while the unauthenticated
+#      smoke test returns 401, the gate is proven live both ways.
+#
+# Prerequisites (owner actions, each its own approval):
+#   1. Push branch muse/phase2-security-2026-11-10 (local commit 4a9d708)
+#      to GitHub — this workflow runs FROM that branch, because the gated
+#      function code lives only there.
+#   2. Create secret SUPABASE_ACCESS_TOKEN in the repo (Settings ->
+#      Secrets -> Actions). The token comes from the Supabase Dashboard
+#      (Account -> Access Tokens) in the owner's phone browser.
+#      Never paste it in chat.
+#   3. HARD GATE 0 must be OPEN before any migration runs. This workflow
+#      deploys FUNCTIONS ONLY — it runs no migration and writes no data.
+#      (The 070001/070002/070003 migrations are a separate track.)
+#
+# Functions deployed (the consolidated set, commit 4a9d708):
+#   enrich-dua-content, fix-dua-content, generate-hadith-seo,
+#   generate-dua-seo, generate-quiz-sfx, notify-search-engines,
+#   indexnow-submit, test-indexnow, send-prayer-notifications,
+#   scheduler-dispatch, daily-content (CRON-secret auth, VAPID lazy-init)
+# Deliberately NOT deployed by this workflow: send-push, send-contact-email
+# (unchanged by the consolidation; deploy them only on their own approval).
+#
+# What this workflow NEVER does: no database migration, no data write,
+# no Cron registration, no publication, no push notification, no secret
+# in logs. Deploying daily-content does not activate automation — the
+# edge's enabled=false settings gate stays in force.
+
+name: Deploy gated Edge Functions (DRAFT)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY to deploy the gated functions to production'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.confirm == 'DEPLOY' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: muse/phase2-security-2026-11-10
+
+      - name: Install pinned Supabase CLI
+        run: |
+          set -euo pipefail
+          npm install -g supabase@3.1.0
+          CLI_VERSION="$(supabase --version)"
+          echo "Supabase CLI version: $CLI_VERSION"
+          case "$CLI_VERSION" in
+            *3.1.0*) ;;
+            *) echo "Unexpected CLI version (want 3.1.0). Refusing."; exit 1 ;;
+          esac
+
+      - name: Project-ref guard
+        run: |
+          set -euo pipefail
+          EXPECTED_REF="llicfiepatzgllmjhzbw"
+          [ "$EXPECTED_REF" = "llicfiepatzgllmjhzbw" ] || { echo "Ref guard failed."; exit 1; }
+          CONFIG_REF="$(grep '^project_id' supabase/config.toml | sed 's/.*\"\(.*\)\".*/\1/')"
+          [ "$CONFIG_REF" = "$EXPECTED_REF" ] || { echo "config.toml project_id ($CONFIG_REF) does not match expected ref. Refusing."; exit 1; }
+          echo "Project-ref guard passed: $EXPECTED_REF"
+          echo "EXPECTED_REF=$EXPECTED_REF" >> "$GITHUB_ENV"
+
+      - name: JWT-mode guard (config must match the decided modes)
+        run: |
+          set -euo pipefail
+          # Required OFF (WS-B, FINAL-WS-B-EDGE-JWT.md): daily-content
+          # and scheduler-dispatch. Their real callers present non-JWT
+          # credentials (cron secrets as Bearer; browser preference
+          # calls send no Authorization header at all), so the gateway
+          # must not verify JWTs for them. config.toml is the durable
+          # source of truth; the deploy loop also passes --no-verify-jwt
+          # for these two. Fail closed if the branch has not landed the
+          # config fix yet (daily-content had no config entry before
+          # 4a9d708; the guard fails closed if a future branch drops it).
+          for fn in daily-content scheduler-dispatch; do
+            if ! grep -A1 "^\[functions\.$fn\]" supabase/config.toml | grep -q "verify_jwt = false"; then
+              echo "JWT-mode guard FAILED: supabase/config.toml lacks '[functions.$fn] verify_jwt = false'. Refusing."
+              exit 1
+            fi
+          done
+          echo "JWT-mode guard passed: daily-content + scheduler-dispatch are verify_jwt = false in config.toml."
+
+      - name: Deploy gated functions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications scheduler-dispatch daily-content; do
+            [ -d "supabase/functions/$fn" ] || { echo "Missing function directory: $fn. Refusing."; exit 1; }
+            echo "Deploying $fn ..."
+            case "$fn" in
+              daily-content|scheduler-dispatch)
+                # Required OFF (WS-B): real callers present non-JWT
+                # credentials (cron secrets as Bearer; browser preference
+                # calls send no Authorization header). The JWT-mode guard
+                # step already asserted the matching config.toml entries.
+                supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --no-verify-jwt
+                ;;
+              *)
+                supabase functions deploy "$fn" --project-ref "$EXPECTED_REF"
+                ;;
+            esac
+          done
+          echo "All 11 functions deployed."
+
+      - name: Verify deployed function versions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          supabase functions list --project-ref "$EXPECTED_REF" > /tmp/functions-list.txt
+          cat /tmp/functions-list.txt
+          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications scheduler-dispatch daily-content; do
+            grep -q "$fn" /tmp/functions-list.txt || { echo "Function not listed after deploy: $fn. Refusing."; exit 1; }
+          done
+          echo "All 11 functions present in the deployed list."
+
+      - name: Smoke check — unauthenticated calls must return exactly 401
+        run: |
+          set -euo pipefail
+          BASE="https://llicfiepatzgllmjhzbw.supabase.co/functions/v1"
+          check_401() {
+            fn="$1"; body="$2"; want_body="$3"
+            resp=$(curl -s --max-time 30 -w '\n%{http_code}' -X POST "$BASE/$fn" -H 'Content-Type: application/json' -d "$body")
+            code="${resp##*$'\n'}"
+            resp_body="${resp%$'\n'*}"
+            echo "$fn unauthenticated status: $code (want 401)"
+            [ "$code" = "401" ] || { echo "GATE NOT LIVE on $fn (got $code). Failing."; exit 1; }
+            # When want_body is given, the 401 body must be the
+            # FUNCTION's own JSON, not the gateway's
+            # {"code":"UNAUTHORIZED_..."} body. That proves platform JWT
+            # verification is actually OFF as deployed (WS-B) — a status
+            # check alone cannot tell the modes apart.
+            if [ -n "$want_body" ]; then
+              case "$resp_body" in
+                *"$want_body"*) echo "$fn 401 body is the function's own JSON (verify_jwt off as deployed)." ;;
+                *) echo "GATE BODY MISMATCH on $fn: got '$resp_body', want body containing '$want_body'. Failing."; exit 1 ;;
+              esac
+            fi
+          }
+          # requireAdmin functions: any body 401s before body parsing.
+          # Status only here — the deployed mode for these 9 is not
+          # asserted (ON recommended; OFF also compatible — WS-B).
+          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications; do
+            check_401 "$fn" '{}' ''
+          done
+          # scheduler-dispatch: preview mode 401s on missing auth
+          # regardless of secrets (bulk mode would 500 if the cron
+          # secret is unconfigured, so it must not be used here).
+          # Body asserted: the function must answer with its own
+          # "Missing or malformed Authorization header" JSON, proving
+          # verification is off (the cron-secret path needs it off).
+          check_401 "scheduler-dispatch" '{"schedule_id":"smoke-test","preview":true}' 'Missing or malformed Authorization header'
+          # daily-content: action "run" hits the CRON check (status /
+          # opt_out / opt_in bypass it by design and must not be used).
+          # Body asserted: the function must answer with its own
+          # {"ok":false,"error":"Unauthorized"} JSON, proving
+          # verification is off (the CRON-secret Bearer and the
+          # no-Authorization browser preference calls need it off).
+          check_401 "daily-content" '{"action":"run","dry_run":true}' '"error":"Unauthorized"'
+          echo "Smoke check passed: all 11 functions return 401 unauthenticated."
+
+      - name: Manual verification checklist (REQUIRED — owner, after this run)
+        run: |
+          echo "The CI checks above prove the gates REJECT. The matching"
+          echo "ACCEPT proof must be done by the owner from the admin panel:"
+          echo "  1. Open the Noor App admin panel (admin session)."
+          echo "  2. Run one admin action that calls a gated function"
+          echo "     (e.g. enrich-dua-content stats). It must return 200."
+          echo "  3. Confirm Daily Content automation is still PAUSED"
+          echo "     (daily_content_settings.enabled=false; no publication,"
+          echo "     no cron, no push sent)."
+          echo "  4. Report the result back; deployment is NOT complete"
+          echo "     until this manual check passes."
