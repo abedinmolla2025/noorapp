@@ -14,16 +14,18 @@ const corsHeaders = {
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Enrichment pipeline for Duas — generates when_to_recite_*, virtue text,
+// Enrichment pipeline for Duas — generates when_to_recite_*,
 // hadith_reference (with strict validation against our hadiths table),
 // related_duas (validated against admin_content), and a small FAQ block.
+// Virtue/fadilah claims are NOT generated (removed 2026-11-07, P0 remediation):
+// unsupported religious claims must never enter the review pipeline.
 // Writes to metadata.enrichment_pending; admin must approve before it merges.
 
 const SYSTEM_PROMPT = [
   "You are an Islamic scholar and multilingual content editor for a Dua reference website.",
   "For each Dua you enrich, produce contextual metadata in 4 languages: Bengali (bn), English (en), Hindi (hi), Urdu (ur).",
   "when_to_recite_*: 60-100 words each language — WHEN and WHY a Muslim recites this dua (occasion, situation, timing). Plain, factual, no invented rulings.",
-  "virtue_bn/en/hi/ur: 40-70 words each — the spiritual virtue (fadilah) in general accepted terms. Do NOT quote a specific hadith unless you cite an exact book+number that actually exists.",
+  "Do NOT generate virtue (fadilah), reward (sawab), benefit, or afterlife-outcome claims of any kind. The response must contain no virtue, reward, or benefit wording.",
   "faq: 3 short Q&A pairs (bn language). Each answer 30-60 words. Practical questions a reader would ask.",
   "hadith_reference: OPTIONAL. Only include if you are certain of an EXACT authentic reference from Sahih Bukhari / Sahih Muslim / Jami' at-Tirmidhi / Sunan Abi Dawud / Sunan an-Nasa'i / Sunan Ibn Majah, formatted like 'Sahih Bukhari 6407'. If not certain, return null. NEVER FABRICATE.",
   "quran_reference: OPTIONAL. Only include if you know the exact Surah:Ayah (e.g. '2:286'). If not certain, return null.",
@@ -36,10 +38,6 @@ type EnrichedPayload = {
   when_to_recite_en: string;
   when_to_recite_hi: string;
   when_to_recite_ur: string;
-  virtue_bn: string;
-  virtue_en: string;
-  virtue_hi: string;
-  virtue_ur: string;
   faq: Array<{ q: string; a: string }>;
   hadith_reference: string | null;
   quran_reference: string | null;
@@ -74,10 +72,6 @@ async function callAi(userText: string, attempt = 0): Promise<EnrichedPayload> {
                 when_to_recite_en: { type: "string" },
                 when_to_recite_hi: { type: "string" },
                 when_to_recite_ur: { type: "string" },
-                virtue_bn: { type: "string" },
-                virtue_en: { type: "string" },
-                virtue_hi: { type: "string" },
-                virtue_ur: { type: "string" },
                 faq: {
                   type: "array",
                   minItems: 3,
@@ -103,10 +97,6 @@ async function callAi(userText: string, attempt = 0): Promise<EnrichedPayload> {
                 "when_to_recite_en",
                 "when_to_recite_hi",
                 "when_to_recite_ur",
-                "virtue_bn",
-                "virtue_en",
-                "virtue_hi",
-                "virtue_ur",
                 "faq",
                 "hadith_reference",
                 "quran_reference",
@@ -222,30 +212,17 @@ Deno.serve(async (req) => {
       const pending = (row?.metadata as any)?.enrichment_pending;
       if (!pending) throw new Error("no pending enrichment");
 
-      const toArray = (val: any) => {
-        if (!val) return null;
-        if (Array.isArray(val)) return val;
-        if (typeof val !== "string") return [String(val)];
-        // Split by newlines, bullets, or numbers
-        return val
-          .split(/\n+/)
-          .map(s => s.replace(/^[\s•\-\d\.\)\>]+/, "").trim())
-          .filter(s => s.length > 0);
-      };
-
       const merged = { ...(row.metadata as any), enrichment_status: "approved" };
       delete merged.enrichment_pending;
+      // Virtue/fadilah claims are never merged into live fields (P0 remediation):
+      // pending rows written before this fix may still carry virtue_* values;
+      // they are deliberately not copied here, so they can never reach publication.
       const patch: Record<string, unknown> = {
         metadata: merged,
         when_to_recite_bn: pending.when_to_recite_bn,
         when_to_recite_en: pending.when_to_recite_en,
         when_to_recite_hi: pending.when_to_recite_hi,
         when_to_recite_ur: pending.when_to_recite_ur,
-        benefits_bn: toArray(pending.virtue_bn),
-        benefits_en: toArray(pending.virtue_en),
-        benefits_hi: toArray(pending.virtue_hi),
-        benefits_ur: toArray(pending.virtue_ur),
-        virtue: pending.virtue_bn,
         faq: pending.faq,
       };
       if (pending.hadith_reference) patch.hadith_reference = pending.hadith_reference;
@@ -306,10 +283,6 @@ Deno.serve(async (req) => {
           when_to_recite_en: raw.when_to_recite_en,
           when_to_recite_hi: raw.when_to_recite_hi,
           when_to_recite_ur: raw.when_to_recite_ur,
-          virtue_bn: raw.virtue_bn,
-          virtue_en: raw.virtue_en,
-          virtue_hi: raw.virtue_hi,
-          virtue_ur: raw.virtue_ur,
           faq: raw.faq,
           hadith_reference: hadithRef,
           quran_reference: quranRef,
