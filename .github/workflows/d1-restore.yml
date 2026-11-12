@@ -56,6 +56,16 @@
 #      platform objects are never mistaken for user objects. Any
 #      unknown user-owned object fails the job (fail-closed).
 #
+# Revision 5 (connection-format correction, 2026-11-12) — changes from
+# Revision 4 (guard correction only):
+#   1. The host check now pins the EXACT session-pooler host of the
+#      REHEARSAL project, verified from the Dashboard on 2026-11-12:
+#      aws-1-ap-southeast-1.pooler.supabase.com (port 5432).
+#      The production host must NEVER be used here: the rehearsal
+#      guard accepts only the rehearsal host. (Same correction as
+#      d1-backup.yml Revision 5; the two guards are identical except
+#      for the project ref and the host value.)
+#
 # Secrets required (repo Settings -> Secrets and variables -> Actions):
 #   REHEARSAL_DB_URL       Session-pooler connection string (port 5432)
 #                          for rehearsal project cazdbxxffvdnsdatjsrx.
@@ -163,16 +173,28 @@ jobs:
       - name: Guard - exact REHEARSAL_DB_URL validation (rehearsal only)
         run: |
           set -euo pipefail
-          # Revision 4: the URL is parsed exactly, not matched by
+          # Revision 5: the URL is parsed exactly, not matched by
           # substring. The old substring guard accepted a suffix or
           # prefix host attack, a ref hidden in the password or
           # query, a wrong port, and a wrong username. Each part
           # below is checked separately. The URL and the password
           # are never echoed; only the validated host (public
           # knowledge) is printed.
+          # Revision 5 (2026-11-12) pins the exact host: Revision 4
+          # required the DIRECT-connection host db.<ref>.supabase.co
+          # together with the pooler username postgres.<ref> — a
+          # combination that matches no real Supabase option. The
+          # session-pooler host is pinned in EXPECTED_HOST below —
+          # the exact value verified from the Dashboard on
+          # 2026-11-12: aws-1-ap-southeast-1.pooler.supabase.com.
+          # Never use the production host here — the rehearsal guard
+          # accepts only the rehearsal host. The pooler host carries
+          # no project ref, so the ref is verified via the username
+          # (postgres.<ref>) and the other project's ref must not
+          # appear anywhere in the URL.
           EXPECTED_REF="cazdbxxffvdnsdatjsrx"
           OTHER_REF="llicfiepatzgllmjhzbw"
-          EXPECTED_HOST="db.${EXPECTED_REF}.supabase.co"
+          EXPECTED_HOST="aws-1-ap-southeast-1.pooler.supabase.com"
           EXPECTED_USER="postgres.${EXPECTED_REF}"
           URL="$REHEARSAL_DB_URL"
           case "$URL" in
