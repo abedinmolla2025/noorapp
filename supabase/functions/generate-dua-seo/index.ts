@@ -18,11 +18,10 @@ const STORY_SYSTEM_PROMPT = [
   "তুমি একজন ইসলামিক স্কলার এবং বাংলা SEO কন্টেন্ট লেখক।",
   "প্রতিটি ইসলামিক গল্পের জন্য সহজ, প্রাঞ্জল বাংলায় ব্যাখ্যা ও শিক্ষা লিখবে।",
   "explanation_bn: ১০০–১৫০ শব্দ; গল্পের প্রেক্ষাপট, ঘটনা ও নৈতিক বার্তা ব্যাখ্যা করো।",
-  "benefits_bn: ৩–৫টি ছোট bullet point, প্রতিটি ৬–১৫ শব্দ; গল্প থেকে পাওয়া শিক্ষা ও উপকার।",
-  "কোনো ফজিলত, সওয়াব বা পরকালীন ফলাফলের দাবি করবে না — benefits শুধু গল্পের প্রতিষ্ঠিত বিষয়বস্তু থেকে পাওয়া ব্যবহারিক শিক্ষা।",
+  "কোনো ফজিলত, সওয়াব, উপকার বা পরকালীন ফলাফলের দাবি তৈরি করবে না — benefits/virtue/reward ধরনের কোনো কন্টেন্ট দেবে না।",
   "কোনো বানোয়াট বর্ণনা বা দুর্বল রেওয়ায়াত যোগ করবে না।",
   "প্রতিটি গল্পের জন্য কন্টেন্ট unique হতে হবে।",
-  "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words) এবং benefits_en/hi/ur (৩–৫ bullet points each)।",
+  "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words)।",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
 ].join("\n");
 
@@ -31,10 +30,9 @@ const SYSTEM_PROMPT = [
   "প্রতিটি দোয়ার জন্য সহজ, প্রাঞ্জল বাংলায় ব্যাখ্যা ও শিক্ষা লিখবে।",
   "explanation_bn: ১০০–১৫০ শব্দ, সহজ বাংলা; দোয়ার অর্থ, প্রেক্ষাপট ও বাস্তব শিক্ষা ব্যাখ্যা করো।",
   "স্বাভাবিকভাবে অন্তত একবার এই phrase গুলোর কোনো একটি ব্যবহার করো: \"আমরা শিখি\", \"ইসলামে শিক্ষা\"।",
-  "benefits_bn: ৩–৫টি ছোট bullet point, প্রতিটি ৬–১৫ শব্দ; দোয়ার ব্যবহারিক শিক্ষা ও উপকার।",
-  "কোনো ফজিলত, সওয়াব বা পরকালীন ফলাফলের দাবি করবে না — benefits শুধু দোয়ার প্রতিষ্ঠিত অর্থ থেকে পাওয়া ব্যবহারিক শিক্ষা।",
+  "কোনো ফজিলত, সওয়াব, উপকার বা পরকালীন ফলাফলের দাবি তৈরি করবে না — benefits/virtue/reward ধরনের কোনো কন্টেন্ট দেবে না।",
   "প্রতিটি দোয়ার জন্য কন্টেন্ট unique হতে হবে।",
-  "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words) এবং benefits_en/hi/ur (৩–৫ bullet points each)। অনুবাদ অর্থ-বিশ্বস্ত ও স্বাভাবিক হতে হবে।",
+  "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words)। অনুবাদ অর্থ-বিশ্বস্ত ও স্বাভাবিক হতে হবে।",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
 ].join("\n");
 
@@ -42,10 +40,13 @@ const SYSTEM_PROMPT = [
 // Phase 2 / G-1 (2026-11-10): server-side virtue-language blocklist.
 // The P0 remediation left generate-dua-seo suppression PROMPT-ONLY:
 // benefits_* were still generated AND written straight to live
-// admin_content rows. This candidate closes the write path in two ways:
-//   (1) benefits_* are NEVER written to live rows (the update object
-//       below contains no benefits_* key at all — the model may still
-//       return them, but they are discarded server-side);
+// admin_content rows. G-1 (2026-11-10) closed the write path:
+// benefits_* are NEVER written to live rows (the update object
+// below contains no benefits_* key at all). Full suppression
+// (2026-11-12, Option A): benefits_* are no longer requested at all
+// — not in the prompt, not in the tool schema, not in the return type
+// — so the model never generates them. The two layers below remain:
+//   (1) benefits_* are NEVER written to live rows;
 //   (2) every explanation_* field is scanned for virtue/reward-claim
 //       language BEFORE any write; a hit rejects the whole row
 //       (failed++, error "virtue_language_blocked", zero writes).
@@ -108,11 +109,11 @@ async function generateForDua(args: {
   bengali: string | null;
   category: string | null;
   kind?: "dua" | "story";
-}, attempt = 0): Promise<{ explanation_bn: string; benefits_bn: string[]; explanation_en: string; benefits_en: string[]; explanation_hi: string; benefits_hi: string[]; explanation_ur: string; benefits_ur: string[] }> {
+}, attempt = 0): Promise<{ explanation_bn: string; explanation_en: string; explanation_hi: string; explanation_ur: string }> {
   const isStory = args.kind === "story";
   const userText = isStory
-    ? `গল্পের নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nগল্পের বাংলা টেক্সট:\n${(args.bengali || "(টেক্সট নেই)").slice(0, 4000)}\n\nএই গল্পের জন্য explanation ও benefits (শিক্ষা) তৈরি করো।`
-    : `দোয়ার নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nআরবি:\n${args.arabic || "(আরবি নেই)"}\n\nবাংলা অর্থ:\n${args.bengali || "(অনুবাদ নেই, আরবি থেকে বের করো)"}\n\nএই দোয়ার জন্য বাংলা explanation_bn ও benefits_bn তৈরি করো।`;
+    ? `গল্পের নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nগল্পের বাংলা টেক্সট:\n${(args.bengali || "(টেক্সট নেই)").slice(0, 4000)}\n\nএই গল্পের জন্য explanation (ব্যাখ্যা) তৈরি করো।`
+    : `দোয়ার নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nআরবি:\n${args.arabic || "(আরবি নেই)"}\n\nবাংলা অর্থ:\n${args.bengali || "(অনুবাদ নেই, আরবি থেকে বের করো)"}\n\nএই দোয়ার জন্য বাংলা explanation_bn তৈরি করো।`;
 
   // Fail closed: the Lovable key is a secret and must never be hardcoded.
   const lovableApiKey = requireSecret("LOVABLE_API_KEY");
@@ -134,48 +135,20 @@ async function generateForDua(args: {
           type: "function",
           function: {
             name: "save_dua_seo",
-            description: "Save the multilingual SEO explanation and benefits for a dua (Bengali + English + Hindi + Urdu).",
+            description: "Save the multilingual SEO explanation for a dua (Bengali + English + Hindi + Urdu).",
             parameters: {
               type: "object",
               properties: {
                 explanation_bn: { type: "string" },
-                benefits_bn: {
-                  type: "array",
-                  items: { type: "string" },
-                  minItems: 3,
-                  maxItems: 5,
-                },
                 explanation_en: { type: "string" },
-                benefits_en: {
-                  type: "array",
-                  items: { type: "string" },
-                  minItems: 3,
-                  maxItems: 5,
-                },
                 explanation_hi: { type: "string" },
-                benefits_hi: {
-                  type: "array",
-                  items: { type: "string" },
-                  minItems: 3,
-                  maxItems: 5,
-                },
                 explanation_ur: { type: "string" },
-                benefits_ur: {
-                  type: "array",
-                  items: { type: "string" },
-                  minItems: 3,
-                  maxItems: 5,
-                },
               },
               required: [
                 "explanation_bn",
-                "benefits_bn",
                 "explanation_en",
-                "benefits_en",
                 "explanation_hi",
-                "benefits_hi",
                 "explanation_ur",
-                "benefits_ur",
               ],
               additionalProperties: false,
             },
@@ -203,20 +176,14 @@ async function generateForDua(args: {
   const call = data?.choices?.[0]?.message?.tool_calls?.[0];
   if (!call?.function?.arguments) throw new Error("no tool call returned");
   const parsed = JSON.parse(call.function.arguments);
-  if (!parsed.explanation_bn || !Array.isArray(parsed.benefits_bn)) {
+  if (!parsed.explanation_bn) {
     throw new Error("invalid tool args");
   }
-  const cleanArr = (a: unknown) =>
-    Array.isArray(a) ? a.map((s: any) => String(s).trim()).filter(Boolean) : [];
   return {
     explanation_bn: String(parsed.explanation_bn).trim(),
-    benefits_bn: cleanArr(parsed.benefits_bn),
     explanation_en: parsed.explanation_en ? String(parsed.explanation_en).trim() : "",
-    benefits_en: cleanArr(parsed.benefits_en),
     explanation_hi: parsed.explanation_hi ? String(parsed.explanation_hi).trim() : "",
-    benefits_hi: cleanArr(parsed.benefits_hi),
     explanation_ur: parsed.explanation_ur ? String(parsed.explanation_ur).trim() : "",
-    benefits_ur: cleanArr(parsed.benefits_ur),
   };
 }
 
@@ -260,7 +227,7 @@ Deno.serve(async (req) => {
     const { data: rows, error } = await supabase
       .from("admin_content")
       .select(
-        "id, title, category, content_arabic, content, explanation_bn, benefits_bn, explanation_en, benefits_en, explanation_hi, benefits_hi, explanation_ur, benefits_ur",
+        "id, title, category, content_arabic, content, explanation_bn, explanation_en, explanation_hi, explanation_ur",
       )
       .in("content_type", typeFilter)
       .or(
@@ -301,10 +268,11 @@ Deno.serve(async (req) => {
                 `virtue_language_blocked (${gate.blockedFields.join(", ")})`,
               );
             }
-            // G-1: benefits_* are NEVER written to live rows. The model
-            // still returns them (tool schema unchanged), but they are
-            // discarded here. Only explanation_* may be written, and
-            // only after passing the gate above.
+            // G-1 + full suppression (2026-11-12, Option A): benefits_*
+            // are no longer requested (not in the prompt, schema, or
+            // return type) and are NEVER written to live rows. Only
+            // explanation_* may be written, and only after passing the
+            // gate above.
             const update: Record<string, unknown> = {};
             if (!d.explanation_bn) update.explanation_bn = out.explanation_bn;
             if (!d.explanation_en && out.explanation_en)
