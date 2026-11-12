@@ -4,6 +4,13 @@ Migration file: `supabase/migrations/202611030001_daily_content.sql`
 (REVIEW ONLY — do not apply without a separate explicit approval;
 do not modify during launch; if it must change, stop and re-review.)
 
+Correction note: this checklist reflects the Option C–corrected
+migration (all four admin policies use
+`public.is_admin(auth.uid())`; corrected file md5
+`7dd7f00aaab4cb668c72e4cf8bbed062`). The superseded
+email-list-based instructions have been removed from this
+checklist; do not follow any older copy that still describes them.
+
 How to use this checklist: work top to bottom in production AFTER
 the migration is approved and applied. Each item is marked with its
 evidence bucket. "Confirmed from repository" items were verified by
@@ -72,9 +79,10 @@ to choose, not just to verify.
       policy for `public`/`anon`/`authenticated` without an admin
       check).
 - [ ] Admin policies (all keyed on
-      `auth.jwt()->>'email' IN (SELECT email FROM public.admin_users)`):
-      settings full access; publications read; deliveries read;
-      preferences read.
+      `public.is_admin(auth.uid())`): settings full access FOR ALL
+      with explicit USING and explicit WITH CHECK; publications
+      read, deliveries read, preferences read (each FOR SELECT).
+      No admin policy references any email-list table.
 - [ ] Service-role policies (`auth.role() = 'service_role'`, full
       access) on all four tables — the edge function path.
 - [ ] All policies are created idempotently (`IF NOT EXISTS` guards
@@ -86,9 +94,11 @@ to choose, not just to verify.
 
 ## D. Requires production verification
 
-- [ ] `public.admin_users` EXISTS in production (see §F — no repo
-      migration creates it). If it exists, confirm it contains the
-      owner's admin email(s) (presence only in shared documents).
+- [ ] `public.is_admin(uuid)` EXISTS in production (SECURITY
+      DEFINER, owner `postgres`) and `public.user_roles` contains at
+      least one admin/super_admin row (owner-reported 2026-11-04;
+      re-confirm at apply time if the owner wishes). No email-list
+      admin table is required, and its existence is NOT checked.
 - [ ] Production `device_push_tokens` matches the repo schema from
       `20260212...sql`: UUID PK `id`, `device_id TEXT NOT NULL`,
       `token TEXT NOT NULL`, `platform` default `'web'`,
@@ -99,8 +109,9 @@ to choose, not just to verify.
       any partial prior apply was inspected row-by-row before
       re-running — never assume a clean slate.
 - [ ] After applying: list tables, constraints, RLS flags, and
-      policies from production and compare each line against §A–§C.
-      Any mismatch → stop, do not deploy.
+      policies from production and compare each line against §A–§C
+      and complete the §G matrix gate. Any mismatch → stop, do not
+      deploy.
 
 ## E. Nullable device_id implications — Confirmed, with a decision
 
@@ -121,11 +132,15 @@ to choose, not just to verify.
 
 ## F. Requires an owner decision
 
-- [ ] If `admin_users` is absent in production: create it out-of-band
-      (owner dashboard/SQL, with the admin email list), OR approve a
-      follow-up migration creating it. Until one of these happens,
-      admin policies fail closed (no admin reads) — the system still
-      runs (service-role path), but admin-page reads return nothing.
+- [ ] Option C correction review: the migration's admin
+      predicates were corrected to `public.is_admin(auth.uid())`
+      (local change, awaiting owner review). Until that correction
+      is approved, the migration must not be applied. The
+      superseded email-list options (create it out-of-band, or a
+      follow-up migration creating it) are closed and must not be
+      followed. With the correction applied, admin reads work via
+      `user_roles`; without it, admin policies cannot be created
+      at all (the old predicate referenced a nonexistent table).
 - [ ] Preferences client-write path: the migration intentionally
       opens no client write policy (comment: "launch follow-up").
       Decide: ship launch without a user-facing daily toggle, or
@@ -135,3 +150,53 @@ to choose, not just to verify.
 - [ ] `deliveries.updated_at` has no refresh trigger (cosmetic only:
       the column exists but is never updated by the edge). Decide
       whether to add a trigger later; it affects nothing functional.
+
+## G. Written intended grant set and 8-privilege verification matrix
+
+### G1. Intended grant set (per table, per role)
+
+Measured after apply with `has_table_privilege` for all eight
+table privileges. `service_role` is out of this matrix: it accesses
+via the service-role policies (and bypasses RLS as the backend
+role); its privileges are not granted to client roles.
+
+| Table | anon | authenticated | REFERENCES / TRUNCATE / TRIGGER / MAINTAIN (both roles) |
+|---|---|---|---|
+| `daily_content_settings` | — (no privilege) | SELECT, INSERT, UPDATE, DELETE | NONE |
+| `daily_content_publications` | SELECT only (the published-only policy restricts it to `status = 'published'` rows) | SELECT | NONE |
+| `daily_content_deliveries` | — (no privilege) | SELECT | NONE |
+| `daily_content_preferences` | — (no privilege) | SELECT | NONE |
+
+Rules:
+- A grant and a policy are different things: the matrix measures
+  GRANTS; the policies (§C) then restrict what each grant can do.
+  Anon SELECT on publications is usable only for published rows
+  because of the policy, not because the grant is limited.
+- TRUNCATE and TRIGGER are NEVER intended for `anon` or
+  `authenticated` on any of these tables (PostgREST cannot issue
+  them). Any `true` value is a gate failure, without exception.
+- REFERENCES and MAINTAIN are NOT intended for either role on any
+  of these tables (no justification exists for them here).
+- The intended set is per table as written above; it is never
+  copied from a default ACL.
+
+### G2. Matrix gate procedure (post-migration, read-only)
+
+- For each of the four tables, measure all eight privileges
+  (SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRUNCATE, TRIGGER,
+  MAINTAIN) for `anon` and `authenticated` (32 cells).
+- PASS: the measured matrix equals the §G1 intended set exactly.
+- FAIL → STOP, do not deploy, if: any TRUNCATE or TRIGGER is true;
+  any privilege outside the intended set is present; any intended
+  privilege is missing.
+- Note on defaults: tables created as `postgres` carry the
+  `postgres` defaults (`arwdxm` for `anon`/`authenticated`) unless
+  the apply path differs. The MEASURED matrix is authoritative —
+  never assume the outcome from the defaults.
+- Any permission narrowing needed to reach the intended set,
+  including any REVOKE (and any GRANT), requires its own separate
+  owner approval. It is not covered by the migration-apply approval
+  or any other approval. Without that approval, the gate cannot be
+  closed by changing permissions.
+- After this gate passes, edge deployment proceeds per runbook
+  Step 4 (`verify_jwt = false` specified explicitly).

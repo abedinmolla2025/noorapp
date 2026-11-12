@@ -13,24 +13,31 @@ Preconditions (all true at the time of writing):
   commit `1a49613` + hardening + policies, local only, never pushed).
 - System state: DISABLED, unmigrated, undeployed, no cron registered,
   no publication, no send.
-- This runbook assumes the migration file
+- This runbook assumes the Option C–corrected migration file
   `supabase/migrations/202611030001_daily_content.sql` is applied
-  exactly as reviewed (CHECKLIST-MIGRATION-RLS.md). Do not edit it
-  during launch; if it must change, stop and re-review.
+  exactly as reviewed (CHECKLIST-MIGRATION-RLS.md). The corrected
+  migration uses `public.is_admin(auth.uid())` for all four admin
+  policies (file md5 `7dd7f00aaab4cb668c72e4cf8bbed062` — verify
+  before applying). Do not edit it during launch; if it must
+  change, stop and re-review.
 
 ## Step 1 — Review migration and schema compatibility
 
 Owner action: read CHECKLIST-MIGRATION-RLS.md and the migration file.
-Verify: the four tables, constraints, and policies match the review;
+Verify: the four tables, constraints, and policies match the review —
+the admin policies use `public.is_admin(auth.uid())` (see
+CHECKLIST-MIGRATION-RLS.md §C), not any email-list table;
 production `device_push_tokens` has the columns the edge reads
 (`id`, `token`, `platform`, `device_id`, `enabled`).
-Verify: whether `public.admin_users` exists in production.
-Decision needed before Step 3: if `admin_users` is absent, decide
-whether to create it out-of-band or add a migration for it
-(see REMAINING-APPROVALS.md). Do not proceed to Step 3 with this
-undecided if admin-page reads are required for launch monitoring.
+Verify: `public.is_admin(uuid)` exists and `public.user_roles`
+contains at least one admin/super_admin row (owner-reported
+2026-11-04; re-confirm at apply time if the owner wishes).
+No email-list admin table is required, and no such decision is
+pending: the superseded options (create it out-of-band, or add a
+migration for it) must not be followed.
 Stop condition: any schema incompatibility (missing column, type
-mismatch, conflicting table) → stop, report, do not apply.
+mismatch, conflicting table) or a missing `is_admin` function →
+stop, report, do not apply.
 
 ## Step 2 — Verify required configuration presence
 
@@ -49,26 +56,45 @@ inconsistent → stop. Never print a secret value to prove presence.
 
 ## Step 3 — Apply migration (ONLY after explicit approval)
 
-Owner action: apply `202611030001_daily_content.sql` to production.
-Then verify in production (read-only queries): all four tables
-exist; RLS enabled on all four; UNIQUE constraints present
-(`kolkata_date`, `publication_id + device_id`); policies listed
-(public published-only SELECT, admin policies, service-role
-policies); seed row `daily_content_settings (id=1, enabled=false)`
-present — the system must start PAUSED.
-Stop condition: any verification mismatch → stop, do not deploy,
-assess whether a repair migration is needed (separate approval).
+Owner action: apply the Option C–corrected
+`202611030001_daily_content.sql` to production (only after the
+correction itself is owner-approved — see REMAINING-APPROVALS.md).
+Then run the post-migration verification gate (read-only queries):
+all four tables exist; RLS enabled on all four; UNIQUE constraints
+present (`kolkata_date`, `publication_id + device_id`); policies
+listed (public published-only SELECT, `is_admin` admin policies,
+service-role policies); seed row
+`daily_content_settings (id=1, enabled=false)` present — the system
+must start PAUSED; and the 8-privilege matrix gate passes
+(CHECKLIST-MIGRATION-RLS.md §G): all eight privileges
+(SELECT, INSERT, UPDATE, DELETE, REFERENCES, TRUNCATE, TRIGGER,
+MAINTAIN) measured for `anon` and `authenticated` on all four
+tables, equal to the written intended grant set, with
+TRUNCATE/TRIGGER false for both roles on all four tables.
+Any permission narrowing needed to reach the intended set,
+including any REVOKE, requires its own separate owner approval —
+it is not covered by the migration-apply approval.
+Stop condition: any verification mismatch, any TRUNCATE/TRIGGER
+grant, or any privilege outside the intended set → stop, do not
+deploy, assess whether a repair migration or a separately approved
+narrowing step is needed.
 
 ## Step 4 — Deploy the Edge Function (ONLY after explicit approval)
 
 Owner action: deploy `supabase/functions/daily-content` with the
-secrets from Step 2.
+secrets from Step 2, with `verify_jwt = false` specified explicitly
+for this function (a `[functions.daily-content]` entry with
+`verify_jwt = false` in `supabase/config.toml`, or the equivalent
+`--verify-jwt=false` deploy flag). The handler authenticates with
+the Bearer cron secret, not a JWT, so a deployment without this
+setting will fail gateway JWT verification before the handler runs.
 Then verify: an unauthenticated/ wrong-secret call returns 401;
 an authenticated dry-run call returns a plan (see Step 5) — never a
 publication. Confirm the deployed code is the reviewed commit (the
 hardening + policies), not an older or newer tree.
-Stop condition: 401 check fails (auth misconfigured) or the deployed
-version cannot be confirmed → stop, do not enable.
+Stop condition: 401 check fails (auth misconfigured, including a
+gateway JWT rejection — recheck the `verify_jwt` setting) or the
+deployed version cannot be confirmed → stop, do not enable.
 
 ## Step 5 — Run real-path dry-run and inspect results
 
@@ -128,7 +154,16 @@ planned publication within the day (see the readiness report).
 Verify: the schedule is registered and its payload is retry-only
 (a retry tick must never plan or publish).
 Note: retry ticks now respect the pause gate (decided policy), so
-pausing stops retries too.
+pausing stops retries too. Overlap safety: the daily first-send
+claims each row (10-minute `next_attempt_at` lease) before sending,
+and both promotion paths skip leased rows, so a retry tick landing
+mid-send cannot re-send the same row — no schedule offset is
+required (see approvals item 12 for the fix review). Tick responses
+report the published-promotion count as `promotedPublished`, so
+strand recoveries (due pending rows of today's published
+publication promoted after a crash-resume) are visible in tick
+output; a nonzero value is expected only when a crash-resume
+preceded the tick.
 
 ## Step 10 — Verify the first publication and delivery
 
@@ -148,7 +183,9 @@ and investigate before the next run.
 
 Owner action: on a subscribed Android Chrome device, confirm: the
 notification arrives, tapping it opens the correct canonical link,
-the DailyHadith card shows the published hadith, and the share cards
+the DailyHadith card shows the published hadith (after the separately
+approved homepage swap; before the swap, the homepage shows the
+original rotation), and the share cards
 render verbatim. Confirm a disabled/uninstalled subscription is
 cleaned up on the next run (410 → token disabled, no repeated sends
 to the dead token).
@@ -163,7 +200,8 @@ delivery outcomes (sent/failed/retryable counts per publication);
 retryable rows aging past their backoff (a row stuck retryable
 across days indicates a provider or token problem, not normal
 backoff); duplicate deliveries per device (must be zero except the
-documented at-least-once cases in the readiness report §10);
+documented at-least-once cases in the readiness report §10 and
+PRODUCTION-READINESS.md §6 item 10);
 failed jobs (edge errors, auth failures, timeouts).
 Escalation: any systematic duplicate, any stale notification, or any
 failed publication two days running → pause per the rollback plan

@@ -2,8 +2,10 @@
 
 Owner-operated procedure. NOT performed in the launch-preparation
 mission. Do not run this procedure until runbook Steps 1–4 are
-complete (migration applied, configuration verified, edge function
-deployed). The dry-run itself must change nothing: it is the last
+complete (Option C–corrected migration applied, post-migration
+verification gate including the 8-privilege matrix passed,
+configuration verified, edge function deployed with
+`verify_jwt = false`). The dry-run itself must change nothing: it is the last
 verification before any enablement decision.
 
 ## Procedure

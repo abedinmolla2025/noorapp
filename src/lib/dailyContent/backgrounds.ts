@@ -40,6 +40,38 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
       "Photorealistic premium landscape photograph, tall vertical portrait orientation: a narrow luminous footpath winding through soft green rolling hills at dawn, gentle mist, warm golden sunlight breaking on the horizon, a small distant mosque silhouette with a single minaret far on the horizon, peaceful and serene atmosphere, soft cinematic light, rich detail. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
   },
   {
+    id: "parents-hands",
+    file: "bg-parents-hands.jpg",
+    scene: "An adult child's hands gently holding an elderly parent's wrinkled hands in warm golden window light at home, a quiet moment of mercy and gratitude for the parents who raised the child",
+    subjects: ["parents", "parent", "elderly", "hands", "care", "mercy", "gratitude", "home", "পিতা-মাতা", "বৃদ্ধ"],
+    prompt:
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: an adult child's hands gently and respectfully holding the wrinkled hands of an elderly parent, warm golden window light, soft focus background of a quiet home interior, tender and reverent atmosphere, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. Close-up on hands only, no faces, no identifiable people. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+  },
+  {
+    id: "family-child",
+    file: "bg-family-child.jpg",
+    scene: "Parents and a young child walking together on a garden path at golden hour, seen from behind, a hopeful family moment and a quiet prayer for righteous offspring",
+    subjects: ["family", "child", "children", "offspring", "parents", "prayer", "hope", "garden", "path", "পরিবার", "সন্তান"],
+    prompt:
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: parents and a young child seen from behind walking together on a peaceful garden path at golden hour, soft morning light through trees, serene family atmosphere, warm green and gold tones, generous darker areas at the top and bottom for text overlay. Seen from behind only, no faces, no identifiable people. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+  },
+  {
+    id: "dawn-forgiveness",
+    file: "bg-dawn-forgiveness.jpg",
+    scene: "First dawn light breaking through darkness over a calm valley with mist and a lake, a reflective moment of repentance and hope for forgiveness and mercy",
+    subjects: ["forgiveness", "repentance", "dawn", "light", "darkness", "mercy", "hope", "valley", "mist", "ক্ষমা", "তওবা"],
+    prompt:
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: first dawn light breaking through darkness over a calm valley, soft golden rays cutting through thin mist and dark clouds, a quiet reflective landscape, hopeful and peaceful atmosphere, deep navy shadows and warm gold light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+  },
+  {
+    id: "patience-tree",
+    file: "bg-patience-tree.jpg",
+    scene: "A single strong old tree standing firm on a rocky mountain slope in difficult weather, wind-bent branches with a break of golden light, a resilient image of patience and steadfast endurance",
+    subjects: ["patience", "steadfastness", "endurance", "tree", "mountain", "weather", "resilience", "firm", "strong", "ধৈর্য", "দৃঢ়তা"],
+    prompt:
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a single strong old tree standing firm on a rocky mountain slope in difficult weather, wind-bent branches, dramatic clouds with a break of golden light, resilient and steadfast atmosphere, deep green and slate tones with warm gold highlights, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+  },
+  {
     id: "intention-sunrise",
     file: "bg-intention-sunrise.jpg",
     scene: "Golden sunrise over layered mountains and a valley river",
@@ -86,6 +118,38 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     subjects: ["mosque", "masjid", "মসজিদ", "courtyard", "tawbah", "তওবা", "salah", "নামাজ"],
     prompt:
       "Photorealistic cinematic vertical photograph, portrait orientation, of a man seen from behind in quiet prayer inside a serene mosque courtyard at dusk, rows of arches and soft warm lamps, stone floor reflecting gentle light, humble and contemplative atmosphere of repentance, warm golden and deep teal tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+  },
+  {
+    id: "suhur-meal",
+    file: "bg-suhur-meal.jpg",
+    scene: "A simple pre-dawn suhur meal on a wooden table — dates in a small bowl, a glass of water, bread — with a warm lantern and faint blue pre-dawn light through the window, a calm blessed quiet before the Ramadan fast begins",
+    subjects: ["suhur", "meal", "dates", "pre-dawn", "ramadan", "blessing", "fast", "water", "table", "light", "calm", "blessed", "quiet", "peaceful", "সেহরি", "রমজান"],
+    prompt:
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: a simple pre-dawn suhur meal on a wooden table — dates in a small bowl, a glass of water, a plate of bread — in a quiet dark home with soft warm lantern light and a faint blue pre-dawn glow through a window, calm and blessed atmosphere of the Ramadan fast before dawn, deep navy and warm gold tones, generous darker areas at the top and bottom for text overlay. No people, no faces. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+  },
+  {
+    id: "library",
+    file: "bg-library.jpg",
+    scene: "A quiet Islamic library reading corner — wooden shelves of old books, an open Quran on a carved wooden rehal stand, a warm brass reading lamp and a cup of tea, a focused warm reverent calm of study and learning",
+    subjects: ["knowledge", "books", "reading", "study", "book", "learning", "quran", "lamp", "stand", "library", "focused", "warm", "reverent", "calm", "জ্ঞান", "পড়া"],
+    prompt:
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: a quiet Islamic library reading corner — wooden shelves of old books, an open Quran on a carved wooden rehal stand, a warm brass reading lamp glowing softly, a cup of tea beside it, reverent focused atmosphere of study and learning, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. No people, no faces. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+  },
+  {
+    id: "gratitude-garden",
+    file: "bg-gratitude-garden.jpg",
+    scene: "Morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist, a peaceful grateful atmosphere of nature and blessing",
+    subjects: ["gratitude", "nature", "sunlight", "garden", "green", "leaves", "blessing", "peaceful", "morning", "কৃতজ্ঞতা", "প্রকৃতি"],
+    prompt:
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist, peaceful and grateful atmosphere, soft cinematic light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image.",
+  },
+  {
+    id: "helping-hands",
+    file: "bg-helping-hands.jpg",
+    scene: "Two hands gently offering a cup of tea to an elderly person in a warm sunlit home, a respectful tender moment of kindness and compassion, no faces",
+    subjects: ["kindness", "helping", "compassion", "hands", "tea", "elderly", "care", "warm", "respectful", "tender", "দয়া", "সদাচরণ"],
+    prompt:
+      "Photorealistic premium photograph, tall vertical portrait orientation: two hands gently offering a cup of tea to an elderly person in a warm sunlit home, respectful and tender atmosphere, soft golden light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay, no faces in close-up. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image.",
   },
 ];
 

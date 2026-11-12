@@ -81,7 +81,9 @@ alter table public.daily_content_publications enable row level security;
 alter table public.daily_content_deliveries enable row level security;
 alter table public.daily_content_preferences enable row level security;
 
--- Same admin check as the scheduler tables (admin_users email list).
+-- Admin check via public.is_admin(auth.uid()) (user_roles table),
+-- the same function the app's existing policies use. The old
+-- email-list table is no longer referenced.
 -- Plus: published rows are public by definition (the homepage card reads
 -- today's row anonymously), so SELECT is open for status='published' only.
 do $$ begin
@@ -91,19 +93,19 @@ do $$ begin
   end if;
   if not exists (select 1 from pg_policies where tablename = 'daily_content_settings' and policyname = 'Admins full access') then
     create policy "Admins full access" on public.daily_content_settings
-      for all using (auth.jwt()->>'email' in (select email from public.admin_users));
+      for all using (public.is_admin(auth.uid())) with check (public.is_admin(auth.uid()));
   end if;
   if not exists (select 1 from pg_policies where tablename = 'daily_content_publications' and policyname = 'Admins read publications') then
     create policy "Admins read publications" on public.daily_content_publications
-      for select using (auth.jwt()->>'email' in (select email from public.admin_users));
+      for select using (public.is_admin(auth.uid()));
   end if;
   if not exists (select 1 from pg_policies where tablename = 'daily_content_deliveries' and policyname = 'Admins read deliveries') then
     create policy "Admins read deliveries" on public.daily_content_deliveries
-      for select using (auth.jwt()->>'email' in (select email from public.admin_users));
+      for select using (public.is_admin(auth.uid()));
   end if;
   if not exists (select 1 from pg_policies where tablename = 'daily_content_preferences' and policyname = 'Admins read preferences') then
     create policy "Admins read preferences" on public.daily_content_preferences
-      for select using (auth.jwt()->>'email' in (select email from public.admin_users));
+      for select using (public.is_admin(auth.uid()));
   end if;
   if not exists (select 1 from pg_policies where tablename = 'daily_content_publications' and policyname = 'Service writes publications') then
     create policy "Service writes publications" on public.daily_content_publications

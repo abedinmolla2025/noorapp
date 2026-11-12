@@ -8,6 +8,8 @@ import { ExportableOgShareCard } from "@/components/dailyContent/ExportableOgSha
 import { assignBackgrounds, backgroundUrl, badgeLabelForCard, CARD_BACKGROUNDS } from "@/lib/dailyContent/backgrounds";
 import { checkOgCardBatch } from "@/lib/dailyContent/ogQc";
 import { supabase } from "@/integrations/supabase/client";
+import RecommendationReview from "@/components/dailyContent/RecommendationReview";
+import { useAdmin } from "@/contexts/AdminContext";
 import { dailyContentStore } from "@/lib/dailyContent/store";
 import { kolkataDateString, nextDailyRunAt } from "@/lib/dailyContent/selection";
 import { planDay, type PlanResult } from "@/lib/dailyContent/plan";
@@ -28,13 +30,57 @@ function formatKolkata(iso: string): string {
 }
 
 /**
- * Daily Content admin — LOCAL PREVIEW MODE.
- * Plans the day from the real bundled dua pool + the public hadiths table
- * (when reachable), renders the exact previews, and stores plans locally.
- * This page NEVER publishes, schedules or sends anything: production
- * publication runs in the `daily-content` edge function after a separate
- * launch approval, and reads/writes the `daily_content_*` tables instead.
+ * Daily Content admin — live production data + LOCAL PREVIEW MODE.
+ * When an admin Supabase session is present, the live cards read the real
+ * `daily_content_*` tables through the admin RLS policies (settings,
+ * publications, retryable/failed deliveries). The live switch can only pause:
+ * enable is disabled while owner enablement approval is pending, and the
+ * handler refuses any attempt to set enabled=true.
+ * The preview/history/retry sections below remain local-only: they plan from
+ * the real bundled dua pool + the public hadiths table (when reachable) and
+ * store plans in browser localStorage.
+ * This page NEVER publishes, schedules, sends, or triggers a dry run:
+ * production publication runs in the `daily-content` edge function, and the
+ * browser never calls it with a secret (the status check sends no
+ * Authorization header, so the function answers 401 before any logic).
  */
+
+// Deployed edge function (mission state: ACTIVE, verify_jwt=false).
+const EDGE_URL = "https://llicfiepatzgllmjhzbw.supabase.co/functions/v1/daily-content";
+
+interface LiveSettings {
+  enabled: boolean;
+  updated_at: string;
+}
+
+interface LivePublication {
+  id: string;
+  kolkata_date: string;
+  status: string;
+  hadith_ref: string | null;
+  hadith_source_line: string | null;
+  cards: unknown;
+  push: { title?: string; body?: string; deep_link?: string } | null;
+  recipients_total: number;
+  recipients_sent: number;
+  recipients_failed: number;
+  error: string | null;
+  created_at: string;
+  published_at: string | null;
+}
+
+interface LiveDelivery {
+  id: string;
+  publication_id: string;
+  device_id: string | null;
+  platform: string;
+  status: string;
+  attempts: number;
+  max_attempts: number;
+  error: string | null;
+  next_attempt_at: string | null;
+  created_at: string;
+}
 export default function AdminDailyContent() {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -44,6 +90,16 @@ export default function AdminDailyContent() {
   const [result, setResult] = useState<PlanResult | null>(null);
   const [publications, setPublications] = useState<PublicationRecord[]>([]);
   const [deliveries, setDeliveries] = useState<DeliveryAttempt[]>([]);
+  const { isAdmin, loading: adminLoading } = useAdmin();
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveError, setLiveError] = useState<string | null>(null);
+  const [liveAvailable, setLiveAvailable] = useState(false);
+  const [liveSettings, setLiveSettings] = useState<LiveSettings | null>(null);
+  const [livePublications, setLivePublications] = useState<LivePublication[]>([]);
+  const [liveDeliveries, setLiveDeliveries] = useState<LiveDelivery[]>([]);
+  const [liveToggling, setLiveToggling] = useState(false);
+  const [edgeStatus, setEdgeStatus] = useState<string | null>(null);
+  const [edgeChecking, setEdgeChecking] = useState(false);
 
   useEffect(() => {
     setEnabled(dailyContentStore.getSettings().enabled);
@@ -84,6 +140,107 @@ export default function AdminDailyContent() {
   useEffect(() => {
     void loadPool();
   }, [loadPool]);
+
+  const loadLive = useCallback(async () => {
+    setLiveLoading(true);
+    setLiveError(null);
+    try {
+      const { data: s, error: sErr } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("daily_content_settings" as any)
+        .select("enabled, updated_at")
+        .eq("id", 1)
+        .maybeSingle();
+      if (sErr) throw sErr;
+      const { data: p, error: pErr } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("daily_content_publications" as any)
+        .select("id, kolkata_date, status, hadith_ref, hadith_source_line, cards, push, recipients_total, recipients_sent, recipients_failed, error, created_at, published_at")
+        .order("kolkata_date", { ascending: false })
+        .limit(30);
+      if (pErr) throw pErr;
+      const { data: d, error: dErr } = await supabase
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from("daily_content_deliveries" as any)
+        .select("id, publication_id, device_id, platform, status, attempts, max_attempts, error, next_attempt_at, created_at")
+        .in("status", ["retryable", "failed"])
+        .order("next_attempt_at", { ascending: true })
+        .limit(50);
+      if (dErr) throw dErr;
+      setLiveSettings((s ?? null) as unknown as LiveSettings | null);
+      setLivePublications((p ?? []) as unknown as LivePublication[]);
+      setLiveDeliveries((d ?? []) as unknown as LiveDelivery[]);
+      setLiveAvailable(true);
+    } catch (e) {
+      setLiveAvailable(false);
+      setLiveError(e instanceof Error ? e.message : "Live data could not be loaded.");
+    } finally {
+      setLiveLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!adminLoading && isAdmin) void loadLive();
+  }, [adminLoading, isAdmin, loadLive]);
+
+  const toggleLive = useCallback(
+    async (checked: boolean) => {
+      // HARDENING (owner enablement approval pending): the frontend must
+      // never set enabled=true. The switch is also disabled while paused,
+      // so this guard is defense-in-depth for any other call path.
+      if (checked) {
+        setLiveError("Enable is disabled — awaiting owner approval. No change was made.");
+        return;
+      }
+      if (
+        !window.confirm(
+          "Pause the live Daily Content automation? This updates the live settings row; already-scheduled triggers will return paused.",
+        )
+      ) {
+        return;
+      }
+      setLiveToggling(true);
+      try {
+        const { error } = await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .from("daily_content_settings" as any)
+          .update({ enabled: checked })
+          .eq("id", 1);
+        if (error) throw error;
+        await loadLive();
+      } catch (e) {
+        setLiveError(e instanceof Error ? e.message : "Live settings update failed.");
+      } finally {
+        setLiveToggling(false);
+      }
+    },
+    [loadLive],
+  );
+
+  const checkEdge = useCallback(async () => {
+    setEdgeChecking(true);
+    setEdgeStatus(null);
+    try {
+      // No Authorization header on purpose: without a secret the function
+      // answers 401 before any logic. 401 here means "reachable, auth gate
+      // responding" — it is NOT a dry run and sends nothing.
+      const res = await fetch(EDGE_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: "{}",
+        signal: AbortSignal.timeout(15000),
+      });
+      setEdgeStatus(
+        res.status === 401
+          ? "Reachable — auth gate responding (401 without a secret, as expected)"
+          : `Unexpected status ${res.status}`,
+      );
+    } catch {
+      setEdgeStatus("Unreachable — network error or timeout");
+    } finally {
+      setEdgeChecking(false);
+    }
+  }, []);
 
   const today = useMemo(() => kolkataDateString(new Date()), []);
   const nextRun = useMemo(() => nextDailyRunAt(new Date()), []);
@@ -129,17 +286,199 @@ export default function AdminDailyContent() {
   }, []);
 
   const plan = result?.plan ?? null;
+  const todayLive = livePublications.find((p) => p.kolkata_date === today);
+  const latestPublished = livePublications.find((p) => p.status === "published");
+  const latestPush = latestPublished?.push ?? null;
+  const pubDateById = new Map(livePublications.map((p) => [p.id, p.kolkata_date]));
 
   return (
     <div className="space-y-6 p-4 md:p-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-2xl font-bold">Daily Content Automation</h1>
-        <Badge variant="secondary">Local preview mode — nothing is published or sent</Badge>
+        <Badge variant="secondary">
+          {liveAvailable
+            ? "Live production data connected — this page never publishes or sends"
+            : "Local preview mode — nothing is published or sent"}
+        </Badge>
       </div>
+
+      {liveAvailable && liveSettings && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Live automation state</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Switch
+                checked={liveSettings.enabled}
+                onCheckedChange={(v) => void toggleLive(v)}
+                disabled={liveToggling || !liveSettings.enabled}
+              />
+              <span>{liveSettings.enabled ? "Enabled (live)" : "Paused (live)"}</span>
+              <Badge variant={liveSettings.enabled ? "default" : "secondary"}>
+                {liveSettings.enabled ? "live enabled" : "live paused"}
+              </Badge>
+              {!liveSettings.enabled && <Badge variant="outline">Awaiting Owner Approval</Badge>}
+            </div>
+            {liveError && <p className="text-sm text-destructive">{liveError}</p>}
+            <p className="text-sm text-muted-foreground">
+              Live settings updated: {formatKolkata(liveSettings.updated_at)}. Enable is
+              disabled while owner enablement approval is pending — no frontend interaction
+              can set enabled=true. Pause remains available when the automation is enabled.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Target schedule: daily at 06:00 Asia/Kolkata. Next run (computed):{" "}
+              <strong>{formatKolkata(nextRun)}</strong>. The daily trigger runs only after its
+              separately approved cron registration.
+            </p>
+            <p className="text-sm text-muted-foreground">
+              Today&apos;s live row:{" "}
+              {todayLive ? (
+                <>
+                  <Badge
+                    variant={
+                      todayLive.status === "failed"
+                        ? "destructive"
+                        : todayLive.status === "published"
+                          ? "default"
+                          : "secondary"
+                    }
+                  >
+                    {todayLive.status}
+                  </Badge>{" "}
+                  {todayLive.hadith_source_line ?? "no hadith"} ·{" "}
+                  {Array.isArray(todayLive.cards) ? todayLive.cards.length : 0} cards
+                </>
+              ) : (
+                "no live publication row for today yet."
+              )}
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => void loadLive()} disabled={liveLoading}>
+                Reload live data
+              </Button>
+              <Button variant="outline" onClick={() => void checkEdge()} disabled={edgeChecking}>
+                Check edge function status
+              </Button>
+            </div>
+            {edgeStatus && (
+              <p className="text-sm text-muted-foreground">Edge function daily-content: {edgeStatus}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Edge function: {EDGE_URL} (deployed; this page never calls it with a secret and
+              never triggers a dry run).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Live publication history</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {livePublications.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No live publication rows yet.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {livePublications.map((p) => (
+                  <li key={p.id} className="flex flex-wrap gap-2 items-center">
+                    <span>{p.kolkata_date}</span>
+                    <Badge
+                      variant={
+                        p.status === "failed"
+                          ? "destructive"
+                          : p.status === "published"
+                            ? "default"
+                            : "secondary"
+                      }
+                    >
+                      {p.status}
+                    </Badge>
+                    <span>{p.hadith_source_line ?? "no hadith"}</span>
+                    <span>{Array.isArray(p.cards) ? p.cards.length : 0} cards</span>
+                    <span>
+                      sent {p.recipients_sent}/{p.recipients_total}, failed {p.recipients_failed}
+                    </span>
+                    {p.error && <span className="text-destructive">{p.error}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && latestPush && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Live push preview (latest published day)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-1 text-sm">
+            <p>
+              <span className="font-semibold">Title:</span> {latestPush.title ?? ""}
+            </p>
+            <p>
+              <span className="font-semibold">Body:</span> {latestPush.body ?? ""}
+            </p>
+            <p>
+              <span className="font-semibold">Deep link:</span> {latestPush.deep_link ?? ""}
+            </p>
+            <p className="text-xs text-muted-foreground">Preview only — this page never sends pushes.</p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Live failed jobs &amp; retry</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {liveDeliveries.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                No retryable or failed live deliveries.
+              </p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {liveDeliveries.map((d) => (
+                  <li key={d.id} className="flex flex-wrap gap-2 items-center">
+                    <span>{pubDateById.get(d.publication_id) ?? "unknown date"}</span>
+                    <span>{d.device_id ?? "no device"}</span>
+                    <Badge variant="destructive">{d.status}</Badge>
+                    <span>
+                      attempts: {d.attempts}/{d.max_attempts}
+                    </span>
+                    {d.next_attempt_at && <span>next: {formatKolkata(d.next_attempt_at)}</span>}
+                    {d.error && <span className="text-destructive">{d.error}</span>}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-muted-foreground mt-3">
+              Production retries run through the 15-minute retry trigger after its separate
+              approval — this page does not send retries.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      <RecommendationReview />
+
+      {!liveAvailable && (
+        <p className="text-sm text-muted-foreground">
+          {adminLoading
+            ? "Checking admin session…"
+            : liveError
+              ? `Live data unavailable: ${liveError}. Showing local preview below.`
+              : "Live data requires an admin Supabase session. Showing local preview below."}
+        </p>
+      )}
 
       <Card>
         <CardHeader>
-          <CardTitle>Automation control</CardTitle>
+          <CardTitle>Automation control (local preview)</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center gap-3">

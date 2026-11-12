@@ -97,8 +97,13 @@ globalThis.Deno = {
   },
 };
 const stubs = await import(pathToFileURL(path.join(outDir, "edge-test-stubs.mjs")).href);
-await import(pathToFileURL(path.join(outDir, "edge-under-test.mjs")).href);
+// Captured so tests can call exported edge internals (pushTimeoutMs) directly.
+const edgeMod = await import(pathToFileURL(path.join(outDir, "edge-under-test.mjs")).href);
 if (!capturedHandler) throw new Error("edge handler was not captured");
+
+// Phase 9: the lib's Islamic context (compiled by run.sh before this file
+// runs) is the equivalence oracle for the edge's ported context.
+const cal = await import(path.join(dir, ".out-cal/context.js"));
 
 // ---- in-memory fake Supabase (PostgREST-shaped, thenable builder) ----
 function makeSvc(seed = {}) {
@@ -110,6 +115,7 @@ function makeSvc(seed = {}) {
     daily_content_preferences: seed.prefs ?? [],
     hadiths: seed.hadiths ?? [],
     admin_content: seed.duas ?? [],
+    daily_content_recommendations: seed.recommendations ?? [],
   };
   let seq = 1000;
   const flags = {
@@ -125,6 +131,14 @@ function makeSvc(seed = {}) {
   };
   const matches = (rows, filters) => rows.filter((r) => filters.every((f) => f(r)));
 
+  // PostgREST's default db-max-rows is 1,000: no query returns more than
+  // 1,000 rows unless the project raised it. The fake models that ceiling
+  // on EVERY select (explicit limit or not), so a test that fetches a big
+  // set without pagination fails here exactly as it would in production.
+  // This is what makes the Phase 2 (hadith pool) and Phase 3 (opt-out)
+  // pagination tests discriminating: the old uncapped code cannot pass.
+  const FAKE_MAX_ROWS = 1000;
+
   class Q {
     constructor(table) {
       this.table = table;
@@ -134,6 +148,7 @@ function makeSvc(seed = {}) {
       this.lim = null;
       this.insertRow = null;
       this.patch = null;
+      this.upsertRow = null;
     }
     select() {
       return this;
@@ -157,6 +172,14 @@ function makeSvc(seed = {}) {
     }
     lte(c, v) {
       this.filters.push((r) => r[c] <= v);
+      return this;
+    }
+    gt(c, v) {
+      this.filters.push((r) => r[c] > v);
+      return this;
+    }
+    gte(c, v) {
+      this.filters.push((r) => r[c] >= v);
       return this;
     }
     order(c, { ascending }) {
@@ -184,7 +207,7 @@ function makeSvc(seed = {}) {
           a[c] < b[c] ? (asc ? -1 : 1) : a[c] > b[c] ? (asc ? 1 : -1) : 0,
         );
       }
-      return this.lim == null ? rs : rs.slice(0, this.lim);
+      return rs.slice(0, Math.min(this.lim ?? Infinity, FAKE_MAX_ROWS));
     }
     async maybeSingle() {
       const rs = this.rows();
@@ -207,6 +230,26 @@ function makeSvc(seed = {}) {
     update(patch) {
       this.patch = patch;
       return this;
+    }
+    upsert(row) {
+      this.upsertRow = row;
+      return this;
+    }
+    doUpsert() {
+      const row = { ...this.upsertRow };
+      // Conflict key: device_id for preferences, else id. Mirrors
+      // PostgREST upsert on the table's primary key.
+      const key = row.device_id !== undefined ? "device_id" : row.id !== undefined ? "id" : null;
+      if (key) {
+        const existing = tables[this.table].find((r) => r[key] === row[key]);
+        if (existing) {
+          Object.assign(existing, row);
+          return { data: existing, error: null };
+        }
+      }
+      if (row.id == null) row.id = `${this.table}-${seq++}`;
+      tables[this.table].push(row);
+      return { data: row, error: null };
     }
     doInsert() {
       const row = { ...this.insertRow };
@@ -280,6 +323,7 @@ function makeSvc(seed = {}) {
     }
     then(res, rej) {
       try {
+        if (this.upsertRow) return Promise.resolve(this.doUpsert()).then(res, rej);
         if (this.insertRow) return Promise.resolve(this.doInsert()).then(res, rej);
         if (this.patch) return Promise.resolve(this.doUpdate()).then(res, rej);
         return Promise.resolve({ data: this.rows(), error: null }).then(res, rej);
@@ -368,6 +412,18 @@ async function callEdge(body) {
   return { status: res.status, json: await res.json() };
 }
 
+// Phase 3: the preference endpoint takes no CRON secret — the subscription
+// endpoint in the body is its credential — so tests call without auth.
+async function callEdgeNoAuth(body) {
+  const req = new Request("http://edge/functions/v1/daily-content", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  const res = await capturedHandler(req);
+  return { status: res.status, json: await res.json() };
+}
+
 function setWebpush(behavior) {
   const calls = [];
   stubs.holder.webpush = {
@@ -403,6 +459,214 @@ await t("edge H2: fresh run ends published with delivery counts", async () => {
   assert.equal(pub.recipients_sent, 2);
   assert.equal(svc.tables.daily_content_deliveries.filter((d) => d.status === "sent").length, 2);
   assert.equal(calls.length, 2);
+});
+
+// ---- Opt-out: a device with daily_enabled=false is never sent ----
+await t("edge opt-out: daily_enabled=false device is skipped, no row, no send", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+    prefs: [{ device_id: "d2", daily_enabled: false }],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  const pub = svc.tables.daily_content_publications[0];
+  assert.equal(pub.status, "published");
+  assert.equal(pub.recipients_total, 1);
+  assert.equal(pub.recipients_sent, 1);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries[0].device_id, "d1");
+});
+
+// ---- N-1: retry path respects opt-outs ----
+await t("edge N-1: retry skips opted-out device and closes its row, no send", async () => {
+  const pub = { id: "pub-o", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [pub],
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+    deliveries: [
+      { id: "o1", publication_id: "pub-o", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+      { id: "o2", publication_id: "pub-o", token_id: "t2", device_id: "d2", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+    prefs: [{ device_id: "d2", daily_enabled: false }],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 1);
+  const o1 = svc.tables.daily_content_deliveries.find((d) => d.id === "o1");
+  const o2 = svc.tables.daily_content_deliveries.find((d) => d.id === "o2");
+  assert.equal(o1.status, "sent");
+  assert.equal(o2.status, "failed");
+  assert.equal(o2.error, "device opted out of daily content");
+});
+
+// ---- R-5: retry tick landing mid-send must not double-send ----
+await t("edge R-5: retry tick during daily send sends nothing extra", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  // Gate the first provider call open: the daily run blocks inside its
+  // send while the tick runs, proving the tick cannot re-send the
+  // leased row. Without the claim, the tick would promote + send it.
+  let releaseGate;
+  let markStarted;
+  const started = new Promise((r) => { markStarted = r; });
+  const gate = new Promise((r) => { releaseGate = r; });
+  const calls = [];
+  stubs.holder.webpush = {
+    calls,
+    sendNotification: async (sub, payload) => {
+      calls.push({ sub, payload });
+      markStarted();
+      await gate;
+      return { statusCode: 201 };
+    },
+  };
+  const dailyReq = new Request("http://edge/functions/v1/daily-content", {
+    method: "POST",
+    headers: {
+      authorization: "Bearer test-secret",
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({}),
+  });
+  const dailyPromise = capturedHandler(dailyReq);
+  await started; // daily is inside its provider call, row claimed
+  const tick = await callEdge({ retry_only: true });
+  assert.equal(tick.json.ok, true);
+  assert.equal(tick.json.promoted, 0);
+  releaseGate();
+  const dailyRes = await dailyPromise;
+  const dailyJson = await dailyRes.json();
+  assert.equal(dailyJson.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries.filter((d) => d.status === "sent").length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
+});
+
+// ---- Strand recovery: tick promotes pending rows of today's published publication ----
+await t("edge strand: tick recovers due pending row of today's published publication", async () => {
+  const pub = { id: "pub-s", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [pub],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "s1", publication_id: "pub-s", token_id: "t1", device_id: "d1", status: "pending", attempts: 0, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(res.json.promoted, 0);
+  assert.equal(res.json.promotedPublished, 1);
+  const s1 = svc.tables.daily_content_deliveries.find((d) => d.id === "s1");
+  assert.equal(s1.status, "sent");
+});
+
+await t("edge strand: tick leaves leased pending row of published publication untouched", async () => {
+  const pub = { id: "pub-s", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [pub],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "s1", publication_id: "pub-s", token_id: "t1", device_id: "d1", status: "pending", attempts: 0, next_attempt_at: "2999-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 0);
+  assert.equal(res.json.promotedPublished, 0);
+  const s1 = svc.tables.daily_content_deliveries.find((d) => d.id === "s1");
+  assert.equal(s1.status, "pending");
+});
+
+// ---- Strand scoping: yesterday's published publication is never revived ----
+// Phase 7: the stranded pending row is now failed terminally (visible +
+// auditable) instead of sitting pending forever. It is still never sent.
+await t("edge strand: tick fails (never revives) pending row of yesterday's published publication", async () => {
+  const pub = { id: "pub-y", kolkata_date: YESTERDAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [pub],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "y1", publication_id: "pub-y", token_id: "t1", device_id: "d1", status: "pending", attempts: 0, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 0);
+  assert.equal(res.json.promoted, 0);
+  assert.equal(res.json.promotedPublished, 0);
+  const y1 = svc.tables.daily_content_deliveries.find((d) => d.id === "y1");
+  assert.equal(y1.status, "failed");
+  assert.equal(y1.error, "stale: publication date has passed");
+});
+
+// ---- NULL retryable: tick selects and sends a retryable row with null next_attempt_at ----
+await t("edge NULL retryable: tick sends retryable row with null next_attempt_at", async () => {
+  const pub = { id: "pub-n", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [pub],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "n1", publication_id: "pub-n", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: null },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 1);
+  const n1 = svc.tables.daily_content_deliveries.find((d) => d.id === "n1");
+  assert.equal(n1.status, "sent");
+});
+
+// ---- Push timeout clamp: at most half the 10-minute lease ----
+await t("edge push timeout: DAILY_CONTENT_PUSH_TIMEOUT_MS clamps to 300,000 ms", async () => {
+  const prev = edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS;
+  try {
+    delete edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS;
+    assert.equal(edgeMod.pushTimeoutMs(), 30_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "abc";
+    assert.equal(edgeMod.pushTimeoutMs(), 30_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "0";
+    assert.equal(edgeMod.pushTimeoutMs(), 30_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "-5";
+    assert.equal(edgeMod.pushTimeoutMs(), 30_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "60000";
+    assert.equal(edgeMod.pushTimeoutMs(), 60_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "300000";
+    assert.equal(edgeMod.pushTimeoutMs(), 300_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "600000";
+    assert.equal(edgeMod.pushTimeoutMs(), 300_000);
+    edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = "900000";
+    assert.equal(edgeMod.pushTimeoutMs(), 300_000);
+  } finally {
+    if (prev === undefined) delete edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS;
+    else edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS = prev;
+  }
 });
 
 // ---- H2: crash mid-send leaves planned; resume adopts, no duplicates ----
@@ -488,6 +752,32 @@ await t("edge H2: published day dedupes with zero sends", async () => {
   assert.equal(res.json.deduped, true);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   assert.equal(calls.length, 0);
+});
+
+// Phase 4: a scheduler that fires twice for the same date (double cron,
+// overlapping triggers, manual re-run) must not double-publish or
+// double-send. Two sequential LIVE daily calls: the first publishes and
+// sends once; the second dedupes with zero additional sends.
+await t("edge Phase 4: a second daily trigger for the same date dedupes with zero extra sends", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const first = await callEdge({});
+  assert.equal(first.json.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
+  const second = await callEdge({});
+  assert.equal(second.json.ok, true);
+  assert.equal(second.json.deduped, true);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  assert.equal(svc.tables.daily_content_deliveries.length, 1);
 });
 
 await t("edge H2: insert race adopts the planned row", async () => {
@@ -1294,8 +1584,14 @@ await t("edge H3: concurrent repair conflict never clobbers a published row", as
   stubs.holder.svc = svc;
   setWebpush(ok201);
   const [a, b] = await Promise.all([callEdge({}), callEdge({})]);
-  assert.equal(a.json.ok, true);
-  assert.equal(b.json.ok, true);
+  // S-5 (2026-11-08): the flip is conditional on status = 'planned',
+  // so exactly one run flips the row to published; the other matches
+  // zero rows and reports the flip failure instead of silently
+  // overwriting the first run's counters. Which run wins is a race.
+  const oks = [a.json.ok, b.json.ok].filter(Boolean).length;
+  assert.equal(oks, 1);
+  const loser = a.json.ok ? b : a;
+  assert.match(loser.json.error, /flip affected 0 rows/);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
 });
@@ -1405,6 +1701,556 @@ await t("edge hardening B: late provider completion after timeout cannot change 
   } finally {
     delete edgeEnvOverrides.DAILY_CONTENT_PUSH_TIMEOUT_MS;
   }
+});
+
+// ---- Phase 2: hadith pool pagination past the 5,000-row limit ----
+const bigHadiths = (count) =>
+  Array.from({ length: count }, (_, i) =>
+    hadithRow({ id: `h${i + 1}`, hadith_number: i + 1 }),
+  );
+
+await t("edge Phase 2: dry-run plans from the full 7,220-row hadith pool", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: bigHadiths(7220),
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.dry_run, true);
+  // Before this fix the pool was capped at 5,000 by .limit(5000); the
+  // fake honours limit, so this test FAILS on the old code (pool 5000)
+  // and passes only when keyset pagination fetches all 7,220 rows.
+  assert.equal(res.json.plan.diagnostics.hadithPool, 7220);
+  assert.equal(res.json.plan.diagnostics.hadithEligible, 7220);
+  assert.equal(res.json.plan.diagnostics.hadithPoolTruncated, false);
+  assert.ok(res.json.plan.hadith);
+  // Determinism: the seeded pick is stable across repeated dry-runs
+  // (same pool -> same shuffle seed -> same pick).
+  const res2 = await callEdge({ dry_run: true });
+  assert.equal(res2.json.plan.hadith.id, res.json.plan.hadith.id);
+  assert.equal(res2.json.plan.diagnostics.hadithPool, 7220);
+});
+
+await t("edge Phase 2: page-boundary pools (1,000 / 1,001 / 2,000 rows) are complete", async () => {
+  for (const count of [1000, 1001, 2000]) {
+    const svc = makeSvc({
+      settings: [{ enabled: true }],
+      hadiths: bigHadiths(count),
+      duas: [],
+      tokens: [],
+    });
+    stubs.holder.svc = svc;
+    const res = await callEdge({ dry_run: true });
+    assert.equal(res.json.plan.diagnostics.hadithPool, count, `pool ${count}`);
+    assert.equal(res.json.plan.diagnostics.hadithEligible, count, `eligible ${count}`);
+    assert.equal(res.json.plan.diagnostics.hadithPoolTruncated, false);
+    assert.ok(res.json.plan.hadith, `pick ${count}`);
+  }
+});
+
+await t("edge Phase 2: decimal hadith numbers paginate in order", async () => {
+  // Real data has decimal numbers in the local files (e.g. 690.2); the
+  // production column is `integer NOT NULL`, so decimals cannot occur
+  // there — but the keyset cursor must still order them numerically,
+  // not lexicographically, across page breaks. Note 690.2 is INELIGIBLE
+  // by the standing integer rule (edge eligibleHadith + lib
+  // eligibility.ts both require Number.isInteger), so the pool is 1503
+  // but only 1502 are eligible. That rule is unchanged by this fix.
+  const rows = [
+    hadithRow({ id: "h-a", hadith_number: 690 }),
+    hadithRow({ id: "h-b", hadith_number: 690.2 }),
+    hadithRow({ id: "h-c", hadith_number: 691 }),
+    ...Array.from({ length: 1500 }, (_, i) =>
+      hadithRow({ id: `hx${i + 1}`, hadith_number: 1001 + i }),
+    ),
+  ];
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: rows,
+    duas: [],
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.json.plan.diagnostics.hadithPool, 1503);
+  assert.equal(res.json.plan.diagnostics.hadithEligible, 1502);
+  assert.equal(res.json.plan.diagnostics.hadithPoolTruncated, false);
+  assert.ok(res.json.plan.hadith);
+});
+
+await t("edge Phase 2: pool beyond the 50,000-row safety bound fails closed", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: bigHadiths(50000),
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.dry_run, true);
+  assert.equal(res.json.plan.diagnostics.hadithPool, 50000);
+  assert.equal(res.json.plan.diagnostics.hadithPoolTruncated, true);
+  assert.equal(res.json.plan.hadith, null);
+  assert.match(res.json.plan.hadithEmptyReason, /50,000-row safety bound/);
+  assert.equal(res.json.plan.push, null);
+  assert.deepEqual(res.json.plan.cards, []);
+});
+
+// ---- Phase 3: opt-out completeness past the 1,000-row PostgREST cap ----
+await t("edge Phase 3: an opt-out on the second preferences page is respected on first send", async () => {
+  // 1,500 opted-out devices; the token under test is d-1499, whose
+  // preference sorts LAST (page 2 of the keyset pagination). Without
+  // pagination the fake's 1,000-row PostgREST cap returns only the first
+  // 1,000 preferences, d-1499 is missed, and the device is sent to.
+  // The token table stays small (6 rows) — the token fetch is not under
+  // test here; the opt-out set is.
+  const prefs = Array.from({ length: 1500 }, (_, i) => ({
+    device_id: `d-${String(i).padStart(4, "0")}`,
+    daily_enabled: false,
+  }));
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: [],
+    tokens: [
+      token("t-opt", "d-1499"),
+      ...["c-0", "c-1", "c-2", "c-3", "c-4"].map((d, i) => token(`t-clean-${i}`, d)),
+    ],
+    prefs,
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 5);
+  assert.ok(calls.every((c) => c.sub.endpoint.startsWith("https://push.example/t-clean-")));
+  assert.equal(svc.tables.daily_content_deliveries.length, 5);
+  assert.ok(svc.tables.daily_content_deliveries.every((r) => r.device_id.startsWith("c-")));
+});
+
+await t("edge Phase 3: an opt-out on the second preferences page closes a retryable row, never sends", async () => {
+  const prefs = Array.from({ length: 1200 }, (_, i) => ({
+    device_id: `d-${String(i).padStart(4, "0")}`,
+    daily_enabled: false,
+  }));
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [
+      { id: "pub-p", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } },
+    ],
+    tokens: [token("t1", "d-1199")],
+    deliveries: [
+      { id: "r1", publication_id: "pub-p", token_id: "t1", device_id: "d-1199", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+    prefs,
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "failed");
+  assert.equal(svc.tables.daily_content_deliveries[0].error, "device opted out of daily content");
+});
+
+// ---- Phase 3: user-facing preference endpoint (no CRON secret) ----
+await t("edge Phase 3: opt_out by subscription endpoint writes the preference, no CRON secret needed", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: false }],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdgeNoAuth({ action: "opt_out", endpoint: "https://push.example/t1" });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.daily_enabled, false);
+  assert.equal(res.json.devices, 1);
+  assert.equal(svc.tables.daily_content_preferences.length, 1);
+  assert.equal(svc.tables.daily_content_preferences[0].device_id, "d1");
+  assert.equal(svc.tables.daily_content_preferences[0].daily_enabled, false);
+  // Opt-out works while paused and creates no publication or delivery.
+  assert.equal(svc.tables.daily_content_publications.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+});
+
+await t("edge Phase 3: opt_in flips the same preference back (upsert, one row)", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: false }],
+    tokens: [token("t1", "d1")],
+    prefs: [{ device_id: "d1", daily_enabled: false }],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdgeNoAuth({ action: "opt_in", endpoint: "https://push.example/t1" });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.daily_enabled, true);
+  assert.equal(svc.tables.daily_content_preferences.length, 1);
+  assert.equal(svc.tables.daily_content_preferences[0].daily_enabled, true);
+});
+
+await t("edge Phase 3: preference endpoint rejects unknown endpoint, missing endpoint, bare device_id, http endpoint", async () => {
+  const svc = makeSvc({ tokens: [token("t1", "d1")] });
+  stubs.holder.svc = svc;
+  const unknown = await callEdgeNoAuth({ action: "opt_out", endpoint: "https://push.example/nope" });
+  assert.equal(unknown.status, 404);
+  const missing = await callEdgeNoAuth({ action: "opt_out" });
+  assert.equal(missing.status, 400);
+  const bareId = await callEdgeNoAuth({ action: "opt_out", device_id: "d1" });
+  assert.equal(bareId.status, 400);
+  const http = await callEdgeNoAuth({ action: "opt_out", endpoint: "http://push.example/t1" });
+  assert.equal(http.status, 400);
+  assert.equal(svc.tables.daily_content_preferences.length, 0);
+});
+
+await t("edge Phase 3: duplicate token rows for one device opt out once (devices: 1)", async () => {
+  const svc = makeSvc({
+    tokens: [token("t1", "d1"), token("t2", "d1")],
+  });
+  stubs.holder.svc = svc;
+  // Production holds 5 duplicate (device_id, platform) groups; both rows
+  // carry the same subscription endpoint here, so both resolve to d1.
+  svc.tables.device_push_tokens[1].token = svc.tables.device_push_tokens[0].token;
+  const res = await callEdgeNoAuth({ action: "opt_out", endpoint: "https://push.example/t1" });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.devices, 1);
+  assert.equal(svc.tables.daily_content_preferences.length, 1);
+});
+
+await t("edge Phase 3: automation still requires the CRON secret; preference actions do not", async () => {
+  const svc = makeSvc({ settings: [{ enabled: true }], hadiths: [hadithRow()], duas: [] });
+  stubs.holder.svc = svc;
+  const noAuth = await callEdgeNoAuth({});
+  assert.equal(noAuth.status, 401);
+  const dryNoAuth = await callEdgeNoAuth({ dry_run: true });
+  assert.equal(dryNoAuth.status, 401);
+  const retryNoAuth = await callEdgeNoAuth({ retry_only: true });
+  assert.equal(retryNoAuth.status, 401);
+  // An unknown action is not a preference action, so it falls through to
+  // the CRON gate and is 401 without the secret.
+  const unknownActionNoAuth = await callEdgeNoAuth({ action: "subscribe", endpoint: "https://push.example/t1" });
+  assert.equal(unknownActionNoAuth.status, 401);
+});
+
+// ---- Phase 7: token pagination, R-6 stale close, retry ordering, status ----
+
+// Phase 7: the token fetch is keyset-paged. 1,200 tokens cross the 1,000-row
+// PostgREST cap the old single `.limit(5000)` query hit: old code sends to
+// 1,000 devices, fixed code to all 1,200. Zero-padded ids keep the keyset
+// order lexicographic.
+await t("edge Phase 7: first send reaches all 1,200 tokens past the 1,000-row cap", async () => {
+  const tokens = Array.from({ length: 1200 }, (_, i) =>
+    token(`t-${String(i).padStart(4, "0")}`, `d-${String(i).padStart(4, "0")}`));
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens,
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.delivery.total, 1200);
+  assert.equal(res.json.delivery.sent, 1200);
+  assert.equal(res.json.delivery.tokensTruncated, false);
+  assert.equal(calls.length, 1200);
+  assert.equal(svc.tables.daily_content_deliveries.length, 1200);
+});
+
+// Phase 7 (R-6): a retryable AND a pending delivery for a published
+// publication from a past Kolkata date must never send. The tick fails
+// them terminally (visible as failed + error) instead of delivering
+// yesterday's content late.
+await t("edge Phase 7: stale deliveries for a past-date publication fail terminally, zero sends", async () => {
+  const pub = { id: "pub-stale", kolkata_date: YESTERDAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+    publications: [pub],
+    deliveries: [
+      { id: "r1", publication_id: "pub-stale", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+      { id: "p1", publication_id: "pub-stale", token_id: "t2", device_id: "d2", status: "pending", attempts: 0, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 0);
+  const rows = svc.tables.daily_content_deliveries;
+  assert.equal(rows.find((r) => r.id === "r1").status, "failed");
+  assert.equal(rows.find((r) => r.id === "r1").error, "stale: publication date has passed");
+  assert.equal(rows.find((r) => r.id === "p1").status, "failed");
+  assert.equal(rows.find((r) => r.id === "p1").error, "stale: publication date has passed");
+});
+
+// Phase 7: retry backlog is oldest-due first. Seeded in reverse due order
+// so the old unordered code would send t3 first; the ordered code sends
+// t1 (due 2000-01-01), then t2, then t3.
+await t("edge Phase 7: retry tick sends oldest-due retryables first", async () => {
+  const pub = { id: "pub-o", kolkata_date: TODAY, status: "published", push: { title: "T", body: "B" } };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1"), token("t2", "d2"), token("t3", "d3")],
+    publications: [pub],
+    deliveries: [
+      { id: "o3", publication_id: "pub-o", token_id: "t3", device_id: "d3", status: "retryable", attempts: 1, next_attempt_at: "2000-01-03T00:00:00.000Z" },
+      { id: "o2", publication_id: "pub-o", token_id: "t2", device_id: "d2", status: "retryable", attempts: 1, next_attempt_at: "2000-01-02T00:00:00.000Z" },
+      { id: "o1", publication_id: "pub-o", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.deepEqual(calls.map((c) => c.sub.endpoint), [
+    "https://push.example/t1",
+    "https://push.example/t2",
+    "https://push.example/t3",
+  ]);
+});
+
+// Phase 7: the read-only status action reports this subscription's daily
+// preference without the CRON secret, while paused, with no publication
+// or delivery created.
+await t("edge Phase 7: status returns the server preference without auth, while paused", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: false }],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdgeNoAuth({ action: "status", endpoint: "https://push.example/t1" });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.action, "status");
+  assert.equal(res.json.daily_enabled, true);
+  assert.equal(res.json.devices, 1);
+  assert.equal(svc.tables.daily_content_publications.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+  assert.equal(svc.tables.daily_content_preferences.length, 0);
+});
+
+await t("edge Phase 7: status reflects an opt-out, and rejects unknown/missing endpoints", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: false }],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const out = await callEdgeNoAuth({ action: "opt_out", endpoint: "https://push.example/t1" });
+  assert.equal(out.status, 200);
+  const res = await callEdgeNoAuth({ action: "status", endpoint: "https://push.example/t1" });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.daily_enabled, false);
+  const unknown = await callEdgeNoAuth({ action: "status", endpoint: "https://push.example/nope" });
+  assert.equal(unknown.status, 404);
+  const missing = await callEdgeNoAuth({ action: "status" });
+  assert.equal(missing.status, 400);
+});
+
+// ---- Phase 9: daily automation consumes approved recommendation runs ----
+const approvedRun = (over = {}) => ({
+  id: "rec-1",
+  kolkata_date: TODAY,
+  hijri_key: "1448-05-26",
+  context: {
+    gregorianKey: TODAY,
+    hijri: { year: 1448, month: 5, day: 26 },
+    confirmation: "calculated",
+    activeEventSlugs: [],
+    ramadanStage: null,
+  },
+  recommendations: [
+    { kind: "hadith", ref: "hadith:h-approved", relevance: 0.95, reasonBn: "প্রাসঙ্গিক", sourceLine: "Sahih al-Bukhari, Hadith 534" },
+    { kind: "content", ref: "content:s1", relevance: 0.9, reasonBn: "প্রাসঙ্গিক", sourceLine: "REF-s1" },
+    { kind: "content", ref: "content:s2", relevance: 0.88, reasonBn: "প্রাসঙ্গিক", sourceLine: "REF-s2" },
+    { kind: "content", ref: "content:s3", relevance: 0.85, reasonBn: "প্রাসঙ্গিক", sourceLine: "REF-s3" },
+    { kind: "content", ref: "content:s4", relevance: 0.82, reasonBn: "প্রাসঙ্গিক", sourceLine: "REF-s4" },
+  ],
+  dropped: [],
+  status: "approved",
+  created_by: "admin-uuid",
+  created_at: "2026-11-07T00:00:00Z",
+  ...over,
+});
+
+await t("edge Phase 9: the ported Islamic context matches the lib over a date sweep", async () => {
+  // Any disagreement between the port and the lib is a drift bug: the
+  // dates span Ramadan stages, month windows, a leap-year Dhul Hijjah
+  // (1447, 30 days) and a non-leap one (1448, 29 days).
+  const dates = [
+    "2026-11-07", "2026-02-18", "2026-03-04", "2026-03-10", "2026-03-20",
+    "2026-05-27", "2026-06-16", "2026-01-15", "2025-06-27", "2024-03-11",
+    "2023-03-23", "2026-08-16", "2027-02-07", "2027-06-04", "2027-06-05",
+    "2030-12-31",
+  ];
+  for (const d of dates) {
+    const libCtx = cal.getIslamicContextForKey(d);
+    const edgeCtx = edgeMod.islamicContextForKolkataDate(d);
+    assert.deepEqual(edgeCtx.hijri, libCtx.hijri, `hijri ${d}`);
+    assert.equal(edgeCtx.hijriKey, libCtx.hijriKey, `hijriKey ${d}`);
+    assert.equal(edgeCtx.confirmation, libCtx.confirmation, `confirmation ${d}`);
+    assert.deepEqual(edgeCtx.activeEventSlugs, libCtx.activeEvents.map((e) => e.event.slug), `events ${d}`);
+    assert.equal(edgeCtx.ramadanStage, libCtx.ramadanStage, `ramadanStage ${d}`);
+  }
+});
+
+await t("edge Phase 9: dry-run plans from the approved run when one exists", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [
+      hadithRow({ id: "h-approved", hadith_number: 534 }),
+      hadithRow({ id: "h-seed", hadith_number: 535 }),
+    ],
+    duas: ["s1", "s2", "s3", "s4"].map((s) => duaRow(s)),
+    recommendations: [approvedRun()],
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.plan.source, "approved-recommendation");
+  assert.equal(res.json.plan.hadithSource, "approved");
+  assert.equal(res.json.plan.cardsSource, "approved");
+  assert.equal(res.json.plan.recommendationId, "rec-1");
+  assert.equal(res.json.plan.hadith.id, "h-approved");
+  assert.equal(res.json.plan.cards[0].recordRef, "hadith:h-approved");
+  assert.deepEqual(
+    res.json.plan.cards.slice(1).map((c) => c.recordRef),
+    ["content:s1", "content:s2", "content:s3", "content:s4"],
+  );
+  // The plan's context is the lib's context for today.
+  const libCtx = cal.getIslamicContextForKey(TODAY);
+  assert.equal(res.json.plan.context.hijriKey, libCtx.hijriKey);
+  assert.deepEqual(res.json.plan.context.activeEventSlugs, libCtx.activeEvents.map((e) => e.event.slug));
+  assert.equal(res.json.plan.context.ramadanStage, libCtx.ramadanStage);
+  assert.equal(res.json.plan.diagnostics.approvedRun, true);
+  assert.equal(res.json.plan.diagnostics.approvedHadithSkipped, null);
+});
+
+await t("edge Phase 9: an ineligible approved hadith falls back to the seeded pick", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [
+      // The approved hadith has no Bengali text, so it is not eligible
+      // and must never be planned — the seeded pick takes the slot.
+      hadithRow({ id: "h-approved", hadith_number: 534, bengali: "" }),
+      hadithRow({ id: "h-seed", hadith_number: 535 }),
+    ],
+    duas: ["s1", "s2", "s3", "s4"].map((s) => duaRow(s)),
+    recommendations: [approvedRun()],
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.json.plan.hadith.id, "h-seed");
+  assert.equal(res.json.plan.hadithSource, "seeded");
+  // The cards still come from the run: the fallback is per slot.
+  assert.equal(res.json.plan.cardsSource, "approved");
+  assert.equal(res.json.plan.source, "approved-recommendation");
+  assert.match(res.json.plan.diagnostics.approvedHadithSkipped, /not in the eligible pool/);
+});
+
+await t("edge Phase 9: a short approved card set is filled from the seeded selection", async () => {
+  const run = approvedRun({
+    recommendations: [
+      { kind: "hadith", ref: "hadith:h-approved", relevance: 0.95, reasonBn: "প্রাসঙ্গিক", sourceLine: "Sahih al-Bukhari, Hadith 534" },
+      { kind: "content", ref: "content:s1", relevance: 0.9, reasonBn: "প্রাসঙ্গিক", sourceLine: "REF-s1" },
+      { kind: "content", ref: "content:s2", relevance: 0.88, reasonBn: "প্রাসঙ্গিক", sourceLine: "REF-s2" },
+    ],
+  });
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [
+      hadithRow({ id: "h-approved", hadith_number: 534 }),
+      hadithRow({ id: "h-seed", hadith_number: 535 }),
+    ],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    recommendations: [run],
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.json.plan.hadith.id, "h-approved");
+  assert.equal(res.json.plan.cardsSource, "approved+seeded");
+  const contentRefs = res.json.plan.cards.slice(1).map((c) => c.recordRef);
+  assert.deepEqual(contentRefs.slice(0, 2), ["content:s1", "content:s2"]);
+  assert.equal(contentRefs.length, 4);
+  assert.equal(new Set(contentRefs).size, 4);
+});
+
+await t("edge Phase 9: an approved hadith already used this cycle is skipped", async () => {
+  const pub = {
+    id: "pub-old",
+    kolkata_date: YESTERDAY,
+    status: "published",
+    hadith_ref: "hadith:h-approved",
+    cards: [],
+    hadith_cycle: 1,
+    card_cycle: 1,
+  };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [
+      hadithRow({ id: "h-approved", hadith_number: 534 }),
+      hadithRow({ id: "h-seed", hadith_number: 535 }),
+    ],
+    duas: ["s1", "s2", "s3", "s4"].map((s) => duaRow(s)),
+    publications: [pub],
+    recommendations: [approvedRun()],
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.json.plan.hadith.id, "h-seed");
+  assert.equal(res.json.plan.hadithSource, "seeded");
+  assert.match(res.json.plan.diagnostics.approvedHadithSkipped, /already used this cycle/);
+});
+
+await t("edge Phase 9: a live daily run publishes the approved hadith and records the run", async () => {
+  const calls = setWebpush(ok201);
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [
+      hadithRow({ id: "h-approved", hadith_number: 534 }),
+      hadithRow({ id: "h-seed", hadith_number: 535 }),
+    ],
+    duas: ["s1", "s2", "s3", "s4"].map((s) => duaRow(s)),
+    recommendations: [approvedRun()],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({});
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  const pub = svc.tables.daily_content_publications[0];
+  assert.equal(pub.status, "published");
+  assert.equal(pub.hadith_ref, "hadith:h-approved");
+  assert.equal(pub.recommendation_id, "rec-1");
+  assert.equal(calls.length, 1);
+});
+
+await t("edge Phase 9: with no approved run the plan stays seeded and carries the context", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.json.plan.source, "seeded");
+  assert.equal(res.json.plan.hadithSource, "seeded");
+  assert.equal(res.json.plan.cardsSource, "seeded");
+  assert.equal(res.json.plan.recommendationId, null);
+  assert.equal(res.json.plan.diagnostics.approvedRun, false);
+  assert.equal(res.json.plan.diagnostics.approvedHadithSkipped, null);
+  const libCtx = cal.getIslamicContextForKey(TODAY);
+  assert.equal(res.json.plan.context.hijriKey, libCtx.hijriKey);
 });
 
 console.log(`edge tests: ${n} passed`);

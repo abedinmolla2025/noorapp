@@ -13,13 +13,13 @@ production. Every item in §6 needs its own separate owner approval.
 | Card payloads | `src/lib/dailyContent/cards.ts` | Verbatim fields only. No virtue/benefit/grade wording. Hadith link = book page (no guessed deep URL). |
 | Push payloads + retry | `src/lib/dailyContent/push.ts`, `delivery.ts` | Same 60/120 clamps as scheduler-dispatch. Dead tokens disabled; 429/5xx retryable; max 4 attempts, 5/15/45 min backoff. |
 | Day planner | `src/lib/dailyContent/plan.ts` | Pure function: 1 hadith + 3–5 cards + push. Empty hadith slot reports a reason, never invents. |
-| Share card UI | `src/components/dailyContent/IslamicContentShareCard.tsx` | Square card, DailyHadith branding. Export via existing `useDomToPng` (html-to-image). |
+| Share card UI | `src/components/dailyContent/OgShareCard.tsx` + `ExportableOgShareCard.tsx` | OG-poster system (§8): Dua OG visual language, no fixed theme count, subject-matched text-free backgrounds, programmatic verbatim text overlay. The old `IslamicContentShareCard.tsx` file is untouched on disk. |
 | DailyHadith feed | `src/components/DailyHadith.tsx` | Optional `published` prop. Absent = original 7-item rotation, byte-identical behaviour. |
-| Admin page | `src/pages/admin/AdminDailyContent.tsx` | Route `/admin/daily-content`, sidebar "Daily Content". Enable/pause flag, next run, hadith preview, card previews, push preview, local history, failed jobs + retry. Local-preview banner; never publishes/sends. |
+| Admin page | `src/pages/admin/AdminDailyContent.tsx` | Route `/admin/daily-content`, sidebar "Daily Content". Enable/pause flag (LOCAL flag only — production enable/pause is dashboard/SQL), next run (computed, not a registered schedule), hadith preview, card previews, push preview, local history, failed jobs + retry (local rows only). Local-preview banner; never publishes/sends. No user-facing daily toggle UI (see §6 item 5). |
 | Cron trigger | `api/daily-content-run.ts` | Forwards to the edge function; relays status only. NO cron registered yet. |
 | Edge function | `supabase/functions/daily-content/index.ts` | Full prod logic (plan → publish → web-push → deliveries → retries). NOT deployed. |
 | Migration | `supabase/migrations/202611030001_daily_content.sql` | 4 tables + RLS + admin policies. NOT applied. |
-| Tests + dry-run | `scripts/daily-content/` | `npm run daily-content:verify`. 31 tests + 4-day dry-run. |
+| Tests + dry-run | `scripts/daily-content/` | `bash scripts/daily-content/run.sh`. 56 unit + 44 edge tests + 4-day dry-run + TypeScript clean (verified 2026-11-04 for HEAD `022fa31`). Local dry-run hadith pool is empty (synthetic fixture) — see §6 item 2. |
 
 ## 2. What was REUSED (not rebuilt)
 
@@ -41,6 +41,11 @@ Vercel (project `noorappold`, existing vars untouched):
 Supabase Edge Function secrets (`daily-content` function):
 - `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` — standard, already used by
   `scheduler-dispatch`.
+- Deployment setting (not a secret): `verify_jwt = false` for
+  `daily-content` (config.toml entry or `--verify-jwt=false` flag) —
+  the handler authenticates with the Bearer cron secret, not a JWT;
+  without this, gateway JWT verification rejects cron calls. See
+  runbook Step 4.
 - `WEBPUSH_VAPID_PUBLIC_KEY`, `WEBPUSH_VAPID_PRIVATE_KEY` — SAME pair as
   `scheduler-dispatch` / `webpush-public-key`. Do NOT generate a new pair:
   a new pair invalidates every existing browser subscription.
@@ -53,8 +58,8 @@ Cron (register ONLY after launch approval):
   both (double trigger is harmless due to the published-date idempotency,
   but one is cleaner).
 - Retry processing: same endpoint with body `{ "retry_only": true }` on a
-  15-minute schedule, OR rely on the next daily tick (retries then run late).
-  Recommended: 15-minute retry tick, same secret.
+  15-minute schedule, same secret (runbook Step 9). The retry tick is
+  part of the launch procedure, not optional.
 
 ## 4. Database migration requirements
 
@@ -65,12 +70,20 @@ File: `supabase/migrations/202611030001_daily_content.sql` (review only).
   one-per-device-per-day cap, enforced by the database).
 - `daily_content_preferences` (per-device daily opt-out; absent = follows
   the general push subscription).
-- RLS enabled; admin read via the `admin_users` email check (same as the
-  scheduler tables); writes via service role only. No client write path is
-  opened in this migration.
+- RLS enabled; admin policies use `public.is_admin(auth.uid())`
+  (Option C correction; corrected file md5
+  `7dd7f00aaab4cb668c72e4cf8bbed062`); writes via service role
+  only. No client write path is opened in this migration. No
+  email-list admin table is required.
+- Post-apply gate: after applying, complete the 8-privilege matrix
+  gate (CHECKLIST-MIGRATION-RLS.md §G) before proceeding; any
+  narrowing (including REVOKE) needs its own separate approval.
 
 Pre-apply checklist (owner/DBA, read-only first):
-1. Confirm `admin_users` table exists (the policies reference it).
+1. Confirm the migration file is the Option C–corrected version
+   (md5 above) and that its correction is owner-approved; confirm
+   `public.is_admin(uuid)` exists and `user_roles` has an
+   admin/super_admin row.
 2. Confirm `device_push_tokens` has `device_id` populated for web rows
    (the cap key and opt-out join on it).
 3. Apply in the Supabase SQL editor; verify the 4 tables + seed row
@@ -90,7 +103,7 @@ is reused, so existing browser subscriptions keep working.
   (404/410) are auto-disabled server-side.
 - Daily-only opt-out: `daily_content_preferences.daily_enabled = false`
   for the device (admin/edge-function path; client toggle UI is a
-  launch follow-up — see §7).
+  launch follow-up — see §6 item 5).
 - Android Chrome: Web Push is supported (service worker + PushManager).
   The notification uses remote icon/badge URLs and an optional image,
   which Android Chrome renders. No `actions` buttons are used (compat).
@@ -119,8 +132,10 @@ is reused, so existing browser subscriptions keep working.
    chapter-slug mapping (future work, not a launch blocker).
 5. **Daily-content toggle UI for users is not built.** Unsubscribe works
    via the existing push unsubscribe; the per-device daily toggle needs
-   a client write path (edge-function endpoint or RLS policy) — launch
-   follow-up, not a blocker for the first run.
+   the edge-mediated write path (Option B design in
+   REMAINING-APPROVALS.md — a direct client RLS policy on
+   `daily_content_preferences` is rejected because `device_id` is
+   self-asserted) — launch follow-up, not a blocker for the first run.
 6. **Head-meta live observation is unavailable** (browser tool cannot
    expose `<head>`), so admin previews render in-app only. Previews are
    component renders, not crawler HTML.
@@ -133,6 +148,64 @@ is reused, so existing browser subscriptions keep working.
    courtyard); a 3–5 card batch gets a distinct scene per card with
    spares left, and the QC gate still flags any earlier repeat as an
    error. Further subjects keep joining the same unbounded catalog.
+9. **Option C migration correction and launch documentation refresh
+   are implemented locally and await owner review.** The corrected
+   migration (is_admin policies) and the refreshed launch documents
+   (runbook, approvals, migration checklist, config checklist,
+   dry-run checklist, rollback plan, this document) are local
+   changes only — none is applied, deployed, or live until its own
+   approval.
+10. **At-least-once residuals R-5/R-6 + retry opt-out N-1
+    (2026-11-04 mission; full text in the mission report).**
+    R-5 (daily-vs-tick double-send window) is FIXED LOCALLY in
+    this mission: first-send claim (10-minute `next_attempt_at`
+    lease) + promotion guards, covered by a daily-vs-tick overlap
+    edge test; the fix itself awaits owner review (approvals
+    item 12) and is not deployed. N-1 (retry path ignored
+    opt-outs) is FIXED LOCALLY in this mission: runRetries now
+    reads `daily_content_preferences` and closes opted-out rows
+    terminally, covered by a retry opt-out edge test; same review
+    status. R-6 (stale retryables from old publications send on
+    re-enable after a long pause, because runRetries is
+    date-agnostic) is NOT code-fixed: it is mitigated by
+    rollback-plan re-enable step 3 (review + explicitly fail
+    stale retryables before re-enabling). The remaining
+    at-least-once windows (crash after provider acceptance,
+    late acceptance after a timeout, microsecond re-check window)
+    are unchanged documented residuals; explicit acceptance is
+    approvals item 13.
+11. **Focused re-audit round (2026-11-04): strand defect found
+    and fixed locally.** The re-audit confirmed the R-5 claim and
+    the N-1 fix but found a LOW defect the claim introduced:
+    crash + daily resume within the 10-minute lease stranded a
+    pending row behind a `published` flip (silent single-device
+    miss). Fixed locally in this mission: ticks now promote due
+    pending rows of today's published publication (same-day
+    content only; past days never revived), covered by two strand
+    edge tests. Also fixed locally: NULL-retryable selection +
+    claim (latent gap), and a status guard on the retry
+    sent-update (in-flight opt-out race: the send itself remains
+    unavoidable, but the row is no longer resurrected to sent).
+    Remaining accepted residuals: the in-flight opt-out race
+    itself; disabled-token + opted-out rows never terminally
+    closed (pre-existing, nothing sent); the lease-boundary
+    note (push timeout must stay well inside the 10-minute
+    lease — see CHECKLIST-CONFIG.md). These latest fixes were
+    verified by the full suite (56 unit + 50 edge, tsc 0,
+    eslint 0) but have NOT had a third independent audit pass —
+    they await owner review under approvals item 12.
+
+    Update 2026-11-04 (post final review): the final independent
+    review classified the send-path fixes PASS FOR OWNER REVIEW and
+    set three conditions, all remediated locally in this diff
+    (uncommitted): `pushTimeoutMs` clamped to 300,000 ms max
+    (default 30,000 ms preserved, invalid values fall back to the
+    default); `runTick` returns `promotedPublished`; a past-day
+    non-revival edge test proves yesterday's published pending rows
+    stay pending under today's tick. Suite now 56 unit + 52 edge,
+    tsc 0, eslint 0. The midnight-spanning strand residual and the
+    R-6 operational mitigation (rollback-plan re-enable step 3) are
+    unchanged.
 
 ## 8. Share cards: OG-poster system (local, previews only)
 
@@ -188,13 +261,16 @@ language as a DOM component, with NO fixed theme count:
 
 In order. Stop at any failed step and report it; do not skip ahead.
 
-1. **Approve + apply the migration** (§4) in the Supabase SQL editor.
-   Verify 4 tables + seed row `enabled = false`.
+1. **Approve + apply the migration** (§4) in the Supabase SQL editor
+   (only after the Option C correction itself is owner-approved).
+   Verify 4 tables + seed row `enabled = false`, then complete the
+   8-privilege matrix gate (CHECKLIST-MIGRATION-RLS.md §G).
 2. **Set the secrets** (§3): `DAILY_CONTENT_CRON_SECRET` (new random value)
    in Vercel AND in the `daily-content` edge function secrets. Confirm the
    VAPID pair matches the existing `scheduler-dispatch` pair (compare
    public keys only, never print private keys).
-3. **Deploy the edge function** `daily-content` (Supabase CLI/dashboard).
+3. **Deploy the edge function** `daily-content` (Supabase CLI/dashboard)
+   with `verify_jwt = false` specified explicitly (runbook Step 4).
    Do NOT deploy the Vercel endpoint change yet — actually the endpoint
    ships with the next app deploy; if the app is not being deployed for
    other reasons, the pg_cron alternative in §3 avoids an app deploy.
@@ -202,17 +278,20 @@ In order. Stop at any failed step and report it; do not skip ahead.
    secret and `{ "dry_run": true }`. Verify: ≥1 eligible hadith, 3–5
    cards, push payload with a real deep link, no writes, no sends.
    If hadiths = 0 or duas = 0, STOP — resolve §6 items 2–3 first.
-5. **Enable**: set `daily_content_settings.enabled = true` (SQL or admin).
+5. **Enable**: set `daily_content_settings.enabled = true` via the
+   owner dashboard/SQL path only (the admin UI cannot write settings).
 6. **Register ONE cron trigger** (§3) for 06:00 Asia/Kolkata + the
    15-minute retry tick.
 7. **First live run watch**: after the first 06:00 run, check
    `daily_content_publications` (1 row, status published, counts) and
-   `daily_content_deliveries` (sent/failed/retryable). Confirm the homepage
-   Daily Hadith card shows the published record: the launch deploy swaps
-   `<DailyHadith />` for `<DailyHadithContainer />` in `Index.tsx` (two
-   places: the `daily_hadith` section entry and the fallback render).
-   The container falls back to the rotation whenever there is no
-   publication, so the homepage never breaks.
+   `daily_content_deliveries` (sent/failed/retryable). The homepage
+   Daily Hadith card shows the published record ONLY after the
+   separately approved homepage swap (`<DailyHadith />` →
+   `<DailyHadithContainer />` in `Index.tsx`, two places: the
+   `daily_hadith` section entry and the fallback render) is deployed;
+   until then the homepage shows the original rotation. The container
+   falls back to the rotation whenever there is no publication, so
+   the homepage never breaks.
 8. **Verify on a subscribed Android Chrome device**: one notification,
    correct deep link, tap opens the content. Confirm no second
    notification the same day (cap check).

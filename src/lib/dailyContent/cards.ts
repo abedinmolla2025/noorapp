@@ -1,4 +1,5 @@
 import type { CardKind, CardPayload, ContentRecord, DailyHadithPick, HadithRecord } from "./types.js";
+import { transliterateArabic, extractHadithMatn } from "./transliteration.js";
 
 /**
  * Book-key display names. Only keys the dataset actually uses are mapped;
@@ -65,6 +66,12 @@ export function buildCard(c: ContentRecord): CardPayload {
   const bengali = (c.translation_bn ?? "").trim();
   const arabic = (c.arabic ?? "").trim();
   const sourceLine = (c.reference ?? "").trim();
+  // Pronunciation: the record's stored bn when present (UNVERIFIED — see
+  // transliteration.ts), else a rule-based candidate from the exact Arabic.
+  // Neither is ever presented as verified.
+  const storedBn = (c.pronunciation?.bn ?? "").trim();
+  const pronunciation =
+    storedBn !== "" ? storedBn : arabic !== "" ? transliterateArabic(arabic).candidate : null;
   return {
     kind,
     recordRef: `content:${c.slug}`,
@@ -75,6 +82,10 @@ export function buildCard(c: ContentRecord): CardPayload {
     canonicalLink: `/dua/${c.slug}`,
     altText: `${KIND_LABEL_BN[kind]}: ${excerpt(bengali, 80)} — ${sourceLine}`,
     caption: `🤲 ${title}\n${bengali}\n📖 ${sourceLine}\n🔗 https://noorapp.in/dua/${c.slug}\n— NoorApp`,
+    pronunciation,
+    pronunciationStatus: storedBn !== "" ? "stored-unverified" : pronunciation !== null ? "candidate" : "missing",
+    pronunciationSource: storedBn !== "" ? "stored" : pronunciation !== null ? "generated" : null,
+    pronunciationScope: pronunciation !== null ? "full" : null,
   };
 }
 
@@ -82,6 +93,11 @@ export function buildCard(c: ContentRecord): CardPayload {
 export function buildHadithCard(pick: DailyHadithPick): CardPayload {
   const h = pick.record;
   const bengali = (h.bengali ?? "").trim();
+  // The poster's pronunciation covers the MATN (the quoted saying) only —
+  // the full isnad + matn candidate lives in the admin review panel.
+  // A long isnad pronunciation would overcrowd the poster (mission A5).
+  const matn = extractHadithMatn(h.arabic.trim());
+  const matnPronunciation = matn !== null ? transliterateArabic(matn).candidate : null;
   return {
     kind: "hadith",
     recordRef: `hadith:${h.id}`,
@@ -92,5 +108,9 @@ export function buildHadithCard(pick: DailyHadithPick): CardPayload {
     canonicalLink: pick.canonicalLink,
     altText: `হাদিস: ${excerpt(bengali, 80)} — ${pick.sourceLine}`,
     caption: `🤲 আজকের হাদিস\n${bengali}\n📖 ${pick.sourceLine}\n🔗 https://noorapp.in${pick.canonicalLink}\n— NoorApp`,
+    pronunciation: matnPronunciation,
+    pronunciationStatus: matnPronunciation !== null ? "candidate" : "missing",
+    pronunciationSource: matnPronunciation !== null ? "generated" : null,
+    pronunciationScope: matnPronunciation !== null ? "matn-only" : null,
   };
 }

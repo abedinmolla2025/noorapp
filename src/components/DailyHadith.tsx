@@ -2,6 +2,11 @@ import { useState, useMemo } from "react";
 import { BookOpen, ChevronRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
+import { kolkataDateString } from "@/lib/dailyContent/selection";
+import {
+  rotationIndexForDate,
+  type RotationReason,
+} from "@/lib/dailyContent/containerState";
 
 interface HadithTranslation {
   bengali: string;
@@ -106,13 +111,11 @@ const hadithCollection: Hadith[] = [
   },
 ];
 
-// Function to get hadith based on current date
-const getDailyHadith = (): Hadith => {
-  const today = new Date();
-  const startOfYear = new Date(today.getFullYear(), 0, 0);
-  const diff = today.getTime() - startOfYear.getTime();
-  const dayOfYear = Math.floor(diff / (1000 * 60 * 60 * 24));
-  const hadithIndex = dayOfYear % hadithCollection.length;
+// Function to get hadith based on the current Asia/Kolkata date (Phase 6:
+// the rotation pick must be the same for every visitor on the same Kolkata
+// day, not depend on the device's local timezone).
+const getDailyHadith = (kolkataDate: string): Hadith => {
+  const hadithIndex = rotationIndexForDate(kolkataDate, hadithCollection.length);
   return hadithCollection[hadithIndex];
 };
 
@@ -140,19 +143,82 @@ const languages: { key: Language; label: string }[] = [
   { key: "turkish", label: "Türkçe" },
 ];
 
-const DailyHadith = ({ published }: { published?: PublishedDailyHadith | null } = {}) => {
+export interface DailyHadithProps {
+  published?: PublishedDailyHadith | null;
+  /**
+   * Phase 6 — which state the card is in. Defaults to "published" when a
+   * record is given, otherwise "rotation" (the original behaviour).
+   * "loading" renders a skeleton with no hadith text.
+   * Phase 8 — "contextual" shows the approved recommendation run's hadith
+   * (no publication yet): the same single verified Bengali record as
+   * "published", plus the Islamic context line (contextLabel).
+   */
+  status?: "loading" | "published" | "contextual" | "rotation";
+  /** Why the rotation is showing (rotation mode only). */
+  rotationReason?: RotationReason;
+  /** Islamic context line for the contextual state (Hijri date + events). */
+  contextLabel?: string;
+}
+
+const ROTATION_NOTES: Record<RotationReason, string> = {
+  "no-publication": "আজকের হাদীস এখনও প্রকাশিত হয়নি — এটি দৈনিক সংকলন থেকে নেওয়া।",
+  "invalid-content": "আজকের হাদীস লোড করা যায়নি — এটি দৈনিক সংকলন থেকে নেওয়া।",
+  "fetch-error": "আজকের হাদীস লোড করা যায়নি — এটি দৈনিক সংকলন থেকে নেওয়া।",
+};
+
+const DailyHadith = ({ published, status, rotationReason, contextLabel }: DailyHadithProps = {}) => {
   const navigate = useNavigate();
   const [selectedLang, setSelectedLang] = useState<Language>("bengali");
 
-  // Get today's hadith - memoized so it doesn't change during the session
-  const dailyHadith = useMemo(() => getDailyHadith(), []);
+  const effectiveStatus = status ?? (published ? "published" : "rotation");
+  const isPublished = effectiveStatus === "published";
+  const isContextual = effectiveStatus === "contextual";
+  // Published and contextual both show a single verified Bengali record
+  // (no language selector, Arabic always shown); only the badge and the
+  // context line differ.
+  const isRecord = isPublished || isContextual;
 
-  // Published record wins over the rotation; otherwise identical behaviour.
-  const shownText = published ? published.bengali : dailyHadith.translations[selectedLang];
-  const shownArabic = published ? published.arabic : dailyHadith.arabicOriginal;
-  const shownSource = published ? published.source : dailyHadith.source;
-  const shownChapter = published ? published.chapter : dailyHadith.chapter;
-  const readMoreLink = published ? published.canonicalLink : "/hadith/sahih-bukhari";
+  // Today's rotation pick, keyed on the Asia/Kolkata date so it is the
+  // same for every visitor on the same Kolkata day.
+  const kolkataToday = kolkataDateString(new Date());
+  const dailyHadith = useMemo(() => getDailyHadith(kolkataToday), [kolkataToday]);
+
+  // Published/contextual record wins over the rotation; otherwise identical behaviour.
+  const shownText = isRecord && published ? published.bengali : dailyHadith.translations[selectedLang];
+  const shownArabic = isRecord && published ? published.arabic : dailyHadith.arabicOriginal;
+  const shownSource = isRecord && published ? published.source : dailyHadith.source;
+  const shownChapter = isRecord && published ? published.chapter : dailyHadith.chapter;
+  const readMoreLink = isRecord && published ? published.canonicalLink : "/hadith/sahih-bukhari";
+
+  if (effectiveStatus === "loading") {
+    return (
+      <motion.div
+        className="relative overflow-hidden rounded-[1.5rem] md:rounded-[2rem] shadow-2xl"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, ease: "easeOut" }}
+        aria-busy="true"
+        aria-label="Loading today's hadith"
+      >
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 via-teal-800 to-cyan-900" />
+        <div className="relative z-10 p-5 md:p-7 lg:p-8">
+          <div className="flex items-center gap-3 md:gap-4 mb-5 md:mb-6">
+            <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl md:rounded-2xl bg-white/10 animate-pulse" />
+            <div className="flex-1 space-y-2">
+              <div className="h-5 w-32 rounded bg-white/10 animate-pulse" />
+              <div className="h-3 w-48 rounded bg-white/10 animate-pulse" />
+            </div>
+          </div>
+          <div className="bg-white/[0.07] border border-white/10 rounded-xl md:rounded-2xl p-4 md:p-6 mb-5 md:mb-6 space-y-3">
+            <div className="h-4 w-full rounded bg-white/10 animate-pulse" />
+            <div className="h-4 w-5/6 rounded bg-white/10 animate-pulse" />
+            <div className="h-4 w-2/3 rounded bg-white/10 animate-pulse" />
+          </div>
+          <div className="h-10 w-40 rounded-xl bg-white/10 animate-pulse" />
+        </div>
+      </motion.div>
+    );
+  }
 
   return (
     <motion.div 
@@ -226,12 +292,33 @@ const DailyHadith = ({ published }: { published?: PublishedDailyHadith | null } 
             </div>
           </div>
           
-          {/* Decorative Badge */}
+          {/* Decorative Badge — Phase 6: the rotation never claims to be
+              today's publication. Published shows "Today"; the rotation
+              shows "Daily rotation". Phase 8: the approved contextual plan
+              shows "আজকের প্রসঙ্গ" — it is never presented as a
+              publication. */}
           <div className="hidden sm:flex items-center gap-2 bg-amber-400/10 border border-amber-400/20 rounded-full px-3 py-1.5">
             <div className="w-2 h-2 bg-amber-400 rounded-full animate-pulse" />
-            <span className="text-xs text-amber-300 font-medium">Today</span>
+            <span className="text-xs text-amber-300 font-medium">{isPublished ? "Today" : isContextual ? "আজকের প্রসঙ্গ" : "Daily rotation"}</span>
           </div>
         </div>
+
+        {/* Rotation note — Phase 6: visible on all screen sizes (the badge
+            above is hidden on mobile), so the rotation is never mistaken
+            for today's official publication. */}
+        {!isRecord && (
+          <p className="text-sm text-white/60 mb-5 md:mb-6">
+            {ROTATION_NOTES[rotationReason ?? "no-publication"]}
+          </p>
+        )}
+
+        {/* Context line — Phase 8: the Islamic context of the approved
+            plan (Hijri date + active events), visible on all screen sizes. */}
+        {isContextual && contextLabel && (
+          <p className="text-sm text-amber-300/80 mb-5 md:mb-6">
+            {contextLabel}
+          </p>
+        )}
 
         {/* Hadith Text Card */}
         <motion.div 
@@ -244,15 +331,15 @@ const DailyHadith = ({ published }: { published?: PublishedDailyHadith | null } 
           
           <div className="relative z-10">
             <p className={`text-white text-base md:text-lg font-medium leading-relaxed md:leading-loose ${
-              !published && (selectedLang === "arabic" || selectedLang === "urdu")
+              !isRecord && (selectedLang === "arabic" || selectedLang === "urdu")
                 ? "text-right font-arabic"
                 : ""
             }`}>
               {shownText}
             </p>
 
-            {/* Arabic Original - Shown when not Arabic selected (always for published) */}
-            {(published || selectedLang !== "arabic") && (
+            {/* Arabic Original - Shown when not Arabic selected (always for published/contextual records) */}
+            {(isRecord || selectedLang !== "arabic") && (
               <motion.div
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
@@ -269,8 +356,8 @@ const DailyHadith = ({ published }: { published?: PublishedDailyHadith | null } 
           <div className="absolute bottom-2 right-3 text-amber-400/10 text-6xl md:text-7xl font-serif leading-none rotate-180 select-none">"</div>
         </motion.div>
 
-        {/* Language Selector - hidden for published records (single verified Bengali text) */}
-        {!published && (
+        {/* Language Selector - hidden for published/contextual records (single verified Bengali text) */}
+        {!isRecord && (
         <div className="mb-5 md:mb-6">
           <div className="flex flex-wrap gap-2 md:gap-2.5">
             {languages.map((lang, index) => (

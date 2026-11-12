@@ -1,5 +1,9 @@
 # NoorApp Daily Content — Production Launch Readiness Report
 
+---
+**Supersession notice (2026-11-04, added after the mission):** This report describes the launch-preparation mission as it stood at commit `022fa31`. Two parts are superseded and must not be followed as operator instructions: (1) the admin-policy design is now Option C (`public.is_admin(auth.uid())`) — the `admin_users` decision in §11/§13 is closed, and the migration has been corrected locally (awaiting owner review); (2) the launch documents have since been refreshed (runbook, approvals, migration checklist, config checklist, dry-run checklist, rollback plan, production-readiness doc) — for operator steps, follow the refreshed documents and the current audit, not §§11–13 of this report. The test results, hardening analysis, and at-least-once residuals in §§4–10 remain accurate for commit `022fa31`. The original report text below is unchanged.
+---
+
 Target: commit `1a49613` ("Block stale deliveries + atomic retry claims +
 zero-row guards"), branch `muse/daily-content-auto-2026-11-03`.
 Audit status at mission start: READY FOR LAUNCH REVIEW (independent final

@@ -31,9 +31,20 @@ export interface ContentRecord {
   translation_bn: string | null;
   reference: string | null;
   category?: string | null;
+  /**
+   * Stored Bengali pronunciation (bundled `pronunciation.bn`, or the DB's
+   * `content_pronunciation`). Present in 160/218 bundled records, EMPTY in
+   * 58/218 (including the parents dua 17:24). Stored values are UNVERIFIED
+   * (undocumented, inconsistent convention, unknown provenance — see
+   * transliteration.ts) and are never presented as verified.
+   */
+  pronunciation?: { bn?: string | null; en?: string | null } | null;
 }
 
 export type CardKind = "quran" | "hadith" | "dua";
+
+/** Pronunciation status — never "verified" unless an admin reviewed it. */
+export type PronunciationStatus = "verified" | "stored-unverified" | "candidate" | "missing";
 
 export interface CardPayload {
   kind: CardKind;
@@ -48,6 +59,19 @@ export interface CardPayload {
   canonicalLink: string;
   altText: string;
   caption: string;
+  /**
+   * Bengali pronunciation to display. For duas: the stored `pronunciation.bn`
+   * when present (status "stored-unverified"), else a generated candidate
+   * (status "candidate"). For hadiths: the generated candidate of the
+   * MATN (the saying) — the full-isnad candidate lives in the admin panel,
+   * never on a poster (mission A5). Null only when no Arabic exists.
+   */
+  pronunciation: string | null;
+  pronunciationStatus: PronunciationStatus;
+  /** "stored" = the record's own pronunciation field; "generated" = rule-based candidate. */
+  pronunciationSource: "stored" | "generated" | null;
+  /** "full" = the whole Arabic; "matn-only" = the hadith's quoted saying. */
+  pronunciationScope: "full" | "matn-only" | null;
 }
 
 export interface DailyHadithPick {
