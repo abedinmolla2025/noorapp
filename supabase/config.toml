@@ -35,3 +35,6 @@ verify_jwt = false
 
 [functions.generate-quiz-sfx]
 verify_jwt = false
+
+[functions.daily-content]
+verify_jwt = false

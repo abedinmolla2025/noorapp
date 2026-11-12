@@ -8,6 +8,7 @@ import { ExportableOgShareCard } from "@/components/dailyContent/ExportableOgSha
 import { assignBackgrounds, backgroundUrl, badgeLabelForCard, CARD_BACKGROUNDS } from "@/lib/dailyContent/backgrounds";
 import { checkOgCardBatch } from "@/lib/dailyContent/ogQc";
 import { supabase } from "@/integrations/supabase/client";
+import RecommendationReview from "@/components/dailyContent/RecommendationReview";
 import { useAdmin } from "@/contexts/AdminContext";
 import { dailyContentStore } from "@/lib/dailyContent/store";
 import { kolkataDateString, nextDailyRunAt } from "@/lib/dailyContent/selection";
@@ -166,9 +167,9 @@ export default function AdminDailyContent() {
         .order("next_attempt_at", { ascending: true })
         .limit(50);
       if (dErr) throw dErr;
-      setLiveSettings((s ?? null) as LiveSettings | null);
-      setLivePublications((p ?? []) as LivePublication[]);
-      setLiveDeliveries((d ?? []) as LiveDelivery[]);
+      setLiveSettings((s ?? null) as unknown as LiveSettings | null);
+      setLivePublications((p ?? []) as unknown as LivePublication[]);
+      setLiveDeliveries((d ?? []) as unknown as LiveDelivery[]);
       setLiveAvailable(true);
     } catch (e) {
       setLiveAvailable(false);
@@ -462,6 +463,8 @@ export default function AdminDailyContent() {
           </CardContent>
         </Card>
       )}
+
+      <RecommendationReview />
 
       {!liveAvailable && (
         <p className="text-sm text-muted-foreground">

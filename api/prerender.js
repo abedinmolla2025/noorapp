@@ -862,11 +862,24 @@ const renderHijriCalendar = () => {
     html += `
     <section class="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <h2 class="text-xl font-bold text-foreground">Important Islamic dates</h2>
-      <ul class="mt-3 space-y-3">${dates.map((d) => `
+      <ul class="mt-3 space-y-3">${dates.map((d) => {
+        const monthName = (Array.isArray(months) && d.hijriMonth >= 1 && d.hijriMonth <= 12)
+          ? months[d.hijriMonth - 1]
+          : (d.month || "");
+        const dayLabel = d.hijriDayStart
+          ? (d.hijriDayEnd && d.hijriDayEnd !== d.hijriDayStart
+              ? `${d.hijriDayStart}–${d.hijriDayEnd}`
+              : String(d.hijriDayStart))
+          : (d.day ? String(d.day) : "");
+        const name = d.nameBn || d.name || "";
+        const description = d.descriptionBn || d.description || "";
+        return `
         <li class="border-b border-border pb-3 last:border-0 last:pb-0">
-          <p class="text-sm font-semibold text-foreground">${esc(d.name || "")}${d.nameEn ? ` (${esc(d.nameEn)})` : ""}</p>
-          <p class="mt-0.5 text-xs text-muted-foreground">${esc(d.month || "")}${d.day ? ` ${esc(String(d.day))}` : ""}${d.description ? ` — ${esc(d.description)}` : ""}</p>
-        </li>`).join("")}</ul>
+          <p class="text-sm font-semibold text-foreground">${esc(name)}${d.nameEn ? ` (${esc(d.nameEn)})` : ""}</p>
+          <p class="mt-0.5 text-xs text-muted-foreground">${esc(monthName)}${dayLabel ? ` ${esc(dayLabel)}` : ""}${description ? ` — ${esc(description)}` : ""}</p>
+          ${d.noteBn ? `<p class="mt-0.5 text-xs text-muted-foreground">${esc(d.noteBn)}</p>` : ""}
+        </li>`;
+      }).join("")}</ul>
       <p class="mt-3 text-xs text-muted-foreground">Exact Gregorian dates vary by moon sighting in your region.</p>
     </section>`;
   }

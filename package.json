@@ -8,7 +8,8 @@
     "build": "node scripts/extract-tool-data.mjs && vite build && mv dist/index.html dist/app.html",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "daily-content:verify": "bash scripts/daily-content/run.sh"
   },
   "dependencies": {
     "@admob-plus/capacitor": "^2.0.0-alpha.4",

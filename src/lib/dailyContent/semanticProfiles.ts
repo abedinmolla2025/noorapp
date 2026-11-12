@@ -1,0 +1,171 @@
+/**
+ * Curated semantic profiles for the eight demo records (mission Part B +
+ * Priority 5: gratitude + kindness, 2026-11-08).
+ *
+ * Each profile is built from the record's own approved Bengali meaning,
+ * category, emotion and entities, plus the mission's B3 table (the brief's
+ * own topic→visual guidance). Nothing here invents religious context or
+ * historical events. The `meaning` field is verbatim from the record;
+ * for the three hadiths the local dataset has no Bengali meaning, so the
+ * English meaning is used and the Bengali gap is flagged in the demo.
+ *
+ * The keyword sets are the scorer's evidence: subject/meaning/object/tone
+ * keywords must appear in a scene's description, subjects or generation
+ * prompt for the scene to score. A symbolic visual (dawn for forgiveness,
+ * a tree for patience) is scored on the meaning's CENTRAL idea
+ * (steadfastness, hope for mercy), not on literal word matching — the
+ * B3 table itself endorses those metaphors.
+ */
+
+import type { SemanticProfile } from "./semantic";
+
+export const CURATED_PROFILES: Record<string, SemanticProfile> = {
+  "content:dua-for-parents": {
+    id: "content:dua-for-parents",
+    subject: "পিতা-মাতার প্রতি দয়া",
+    topic: "পিতা-মাতা",
+    meaning: "হে আমার রব! তাদের ওপর দয়া কর, যেমন তারা আমাকে ছোটবেলায় লালিত-পালিত করেছে।",
+    people: ["adult child", "elderly parents"],
+    objects: ["hands"],
+    actions: ["holding hands", "asking mercy", "remembering upbringing"],
+    tone: ["tender", "grateful", "reverent", "peaceful"],
+    environment: "home",
+    metaphor: "a child's hands holding the parents' hands — the care returned",
+    unsuitable: ["mosque", "lantern", "children playing", "mountain", "generic Islamic background"],
+    emphasis: "the hands, the care, the warmth",
+    subjectKeywords: ["parents", "elderly", "hands", "care"],
+    meaningKeywords: ["mercy", "gratitude", "parents", "raised"],
+    objectKeywords: ["hands", "home", "light"],
+    toneKeywords: ["tender", "reverent", "warm", "peaceful"],
+  },
+  "content:dua-for-family-surah-aal-i-imraan-3-38": {
+    id: "content:dua-for-family-surah-aal-i-imraan-3-38",
+    subject: "নেক সন্তান চাওয়ার দোয়া",
+    topic: "নেক সন্তান",
+    meaning: "সেখানেই যাকারিয়া তাঁর পালনকর্তার নিকট প্রার্থনা করলেন। বললেন, হে, আমার পালনকর্তা! তোমার নিকট থেকে আমাকে পুত-পবিত্র সন্তান দান কর-নিশ্চয়ই তুমি প্রার্থনা শ্রবণকারী।",
+    people: ["parents", "young child"],
+    objects: ["garden path"],
+    actions: ["walking together", "praying for offspring"],
+    tone: ["hopeful", "peaceful", "warm", "serene"],
+    environment: "garden",
+    metaphor: "a family walking together on a path — the hoped-for future",
+    unsuitable: ["depicting Zakariya", "mosque generic", "children playing alone"],
+    emphasis: "the family together, the hope",
+    subjectKeywords: ["family", "child", "parents", "offspring"],
+    meaningKeywords: ["righteous", "offspring", "prayer", "hope"],
+    objectKeywords: ["path", "garden", "morning", "light"],
+    toneKeywords: ["peaceful", "hopeful", "warm", "serene"],
+  },
+  "content:dua-for-forgiveness-surah-al-araaf-7-23": {
+    id: "content:dua-for-forgiveness-surah-al-araaf-7-23",
+    subject: "ক্ষমা প্রার্থনা ও তওবা",
+    topic: "ক্ষমা",
+    meaning: "তারা উভয়ে বললঃ হে আমাদের পালনকর্তা আমরা নিজেদের প্রতি জুলম করেছি। যদি আপনি আমাদেরকে ক্ষমা না করেন এবং আমাদের প্রতি অনুগ্রহ না করেন, তবে আমরা অবশ্যই অবশ্যই ধ্বংস হয়ে যাব।",
+    people: [],
+    objects: ["dawn", "valley", "lake"],
+    actions: ["admitting wrongdoing", "seeking forgiveness"],
+    tone: ["reflective", "hopeful", "peaceful", "humble"],
+    environment: "dawn valley",
+    metaphor: "dawn light breaking through darkness — mercy after wrongdoing",
+    unsuitable: ["celebration", "mosque generic", "happy festival"],
+    emphasis: "the dawn light breaking through darkness",
+    subjectKeywords: ["forgiveness", "repentance", "darkness", "mercy"],
+    meaningKeywords: ["forgiveness", "mercy", "hope", "repentance"],
+    objectKeywords: ["dawn", "light", "valley", "mist"],
+    toneKeywords: ["reflective", "hopeful", "peaceful", "humble"],
+  },
+  "content:dua-for-patience-surah-aal-i-imraan-3-147": {
+    id: "content:dua-for-patience-surah-aal-i-imraan-3-147",
+    subject: "বাড়াবাড়ির ক্ষমা ও দৃঢ়তা",
+    topic: "ধৈর্য ও দৃঢ়তা",
+    meaning: "তারা আর কিছুই বলেনি-শুধু বলেছে, হে আমাদের পালনকর্তা! মোচন করে দাও আমাদের পাপ এবং যা কিছু বাড়াবাড়ি হয়ে গেছে আমাদের কাজে। আর আমাদিগকে দৃঢ় রাখ এবং কাফেরদের উপর আমাদিগকে সাহায্য কর।",
+    people: ["believers"],
+    objects: ["tree", "mountain"],
+    actions: ["standing firm", "enduring"],
+    tone: ["resilient", "steadfast", "firm", "strong"],
+    environment: "mountain slope in difficult weather",
+    metaphor: "a strong tree surviving difficult weather — patience that stands",
+    unsuitable: ["calm beach", "celebration", "mosque generic"],
+    emphasis: "the tree standing firm against the weather",
+    subjectKeywords: ["patience", "steadfastness", "tree", "resilience"],
+    meaningKeywords: ["steadfast", "endurance", "patience", "firm"],
+    objectKeywords: ["tree", "mountain", "weather", "light"],
+    toneKeywords: ["resilient", "steadfast", "firm", "strong"],
+  },
+  "hadith:bukhari-30-1923": {
+    id: "hadith:bukhari-30-1923",
+    subject: "সেহরি — ভোরের খাবার ও বরকত",
+    topic: "সেহরি",
+    meaning: "Take Suhur as there is a blessing in it. (Bengali meaning not in the local dataset — gap, never invented.)",
+    people: [],
+    objects: ["dates", "water", "meal", "table"],
+    actions: ["eating before dawn"],
+    tone: ["calm", "blessed", "quiet", "peaceful"],
+    environment: "pre-dawn home, a simple table",
+    metaphor: "dates and water in the quiet before dawn — blessing in the meal",
+    unsuitable: ["mosque prayer scene (this is about the MEAL, not prayer)", "sunset (it is pre-dawn)", "crowded iftar table"],
+    emphasis: "the dates and water, the pre-dawn quiet",
+    subjectKeywords: ["suhur", "meal", "dates", "pre-dawn", "ramadan"],
+    meaningKeywords: ["blessing", "suhur", "meal", "fast"],
+    objectKeywords: ["dates", "water", "table", "light"],
+    toneKeywords: ["calm", "blessed", "quiet", "peaceful"],
+  },
+  "hadith:bukhari-3-75": {
+    id: "hadith:bukhari-3-75",
+    subject: "কিতাবের জ্ঞান",
+    topic: "জ্ঞান",
+    meaning: "O Allah! Bestow on him the knowledge of the Book (Qur'an). (Bengali meaning not in the local dataset — gap, never invented.)",
+    people: ["student", "teacher"],
+    objects: ["books", "Quran stand", "lamp"],
+    actions: ["reading", "studying"],
+    tone: ["focused", "warm", "reverent", "calm"],
+    environment: "library / study room",
+    metaphor: "warm lamplight on books — the light of knowledge",
+    unsuitable: ["mosque generic", "children playing", "empty bedroom"],
+    emphasis: "the books and the warm reading light",
+    subjectKeywords: ["knowledge", "books", "reading", "study"],
+    meaningKeywords: ["knowledge", "book", "learning", "quran"],
+    objectKeywords: ["books", "lamp", "stand", "library"],
+    toneKeywords: ["focused", "warm", "reverent", "calm"],
+  },
+  "content:dua-for-faith-surah-ibrahim-14-7": {
+    id: "content:dua-for-faith-surah-ibrahim-14-7",
+    subject: "কৃতজ্ঞতা ও নিয়ামত বৃদ্ধি",
+    topic: "কৃতজ্ঞতা",
+    meaning: "তোমরা কৃতজ্ঞ হলে আমি অবশ্যই বাড়িয়ে দেব।",
+    people: [],
+    objects: ["sunlight", "leaves", "garden"],
+    actions: ["being grateful", "receiving blessing"],
+    tone: ["grateful", "peaceful", "hopeful", "quiet"],
+    environment: "garden in morning light",
+    metaphor: "morning light through green leaves — gratitude receiving more blessing",
+    unsuitable: ["mosque generic", "people praying", "dark storm"],
+    emphasis: "the sunlight through the leaves, the blessing",
+    subjectKeywords: ["gratitude", "blessing", "grateful", "nature"],
+    meaningKeywords: ["grateful", "blessing", "thankful", "increase"],
+    objectKeywords: ["sunlight", "leaves", "garden", "morning"],
+    toneKeywords: ["peaceful", "grateful", "warm", "quiet"],
+  },
+  "hadith:bukhari-42-2363": {
+    id: "hadith:bukhari-42-2363",
+    subject: "তৃষ্ণার্তকে পানি দেওয়া — দয়া",
+    topic: "দয়া",
+    meaning: "While a man was walking he felt thirsty... he saw a dog panting and eating mud because of excessive thirst... he filled his shoe with water... and watered the dog. Allah thanked him for his (good) deed and forgave him. (Bengali meaning not in the local dataset — gap, never invented.)",
+    people: ["man"],
+    objects: ["water", "hands", "cup", "tea"],
+    actions: ["offering water", "helping", "serving"],
+    tone: ["kind", "compassionate", "tender", "respectful", "warm"],
+    environment: "home / roadside, warm light",
+    metaphor: "hands offering a drink to one in need — kindness rewarded",
+    unsuitable: ["animal cruelty", "mosque generic", "celebration"],
+    emphasis: "the hands offering, the care",
+    subjectKeywords: ["kindness", "compassion", "helping", "care"],
+    meaningKeywords: ["kindness", "helping", "care", "reward"],
+    objectKeywords: ["hands", "tea", "cup", "offering"],
+    toneKeywords: ["tender", "respectful", "warm", "compassion"],
+  },
+};
+
+export function getCuratedProfile(recordRef: string): SemanticProfile | null {
+  return CURATED_PROFILES[recordRef] ?? null;
+}

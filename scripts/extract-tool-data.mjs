@@ -97,17 +97,17 @@ const jobs = [
     label: "tasbih dhikr",
   },
   {
-    src: "src/pages/IslamicCalendarPage.tsx",
-    marker: "const hijriMonths",
+    src: "src/lib/islamicCalendar/hijri.ts",
+    marker: "HIJRI_MONTHS_BN",
     out: "hijri-months.json",
     expect: 12,
     label: "hijri months",
   },
   {
-    src: "src/pages/IslamicCalendarPage.tsx",
-    marker: "const importantDates",
+    src: "src/lib/islamicCalendar/events.ts",
+    marker: "ISLAMIC_EVENTS",
     out: "islamic-important-dates.json",
-    expect: null, // informational list; count may grow
+    expect: null, // informational list; count may grow with the catalog
     label: "important Islamic dates",
     min: 1,
   },

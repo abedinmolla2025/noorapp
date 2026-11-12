@@ -37,6 +37,28 @@ const HadithPage = lazy(() => import("./pages/HadithPage"));
 const HadithBookPlaceholder = lazy(() => import("./pages/hadith/HadithBookPlaceholder"));
 const HadithDetailPage = lazy(() => import("./pages/hadith/HadithDetailPage"));
 const IslamicCalendarPage = lazy(() => import("./pages/IslamicCalendarPage"));
+// Demo routes are gated behind VITE_ENABLE_DEMO_ROUTES (default off).
+// The local preview build sets it to "true"; the production build leaves
+// it unset, so the bundler drops these imports and no demo chunk ships.
+// Vite replaces import.meta.env.* at build time, so the false branch is
+// eliminated statically. NOTE: the demo files must still exist in the
+// repo — the bundler resolves the imports before dropping the dead
+// branch — they just never ship in the production output.
+const DEMO_ROUTES_ENABLED =
+  import.meta.env.VITE_ENABLE_DEMO_ROUTES === "true";
+const DemoDisabled = () => null;
+const DemoDailyContentPage = DEMO_ROUTES_ENABLED
+  ? lazy(() => import("./pages/demo/DemoDailyContent"))
+  : DemoDisabled;
+const VisualEngineDemoPage = DEMO_ROUTES_ENABLED
+  ? lazy(() => import("./pages/demo/VisualEngineDemo"))
+  : DemoDisabled;
+const EnginesDemoPage = DEMO_ROUTES_ENABLED
+  ? lazy(() => import("./pages/demo/EnginesDemo"))
+  : DemoDisabled;
+const ReviewDecisionPacketPage = DEMO_ROUTES_ENABLED
+  ? lazy(() => import("./pages/demo/ReviewDecisionPacket"))
+  : DemoDisabled;
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const BackendStatusPage = lazy(() => import("./pages/BackendStatusPage"));
@@ -122,6 +144,17 @@ const AppRoutes = () => {
           <Route path="/hadith/:bookId" element={<HadithBookPlaceholder />} />
 
           <Route path="/calendar" element={<IslamicCalendarPage />} />
+          {/* Local demo preview only — gated behind VITE_ENABLE_DEMO_ROUTES
+              (default off). Never linked from the app; never in the
+              production bundle unless the flag is set at build time. */}
+          {DEMO_ROUTES_ENABLED && (
+            <>
+              <Route path="/demo/daily-content" element={<DemoDailyContentPage />} />
+              <Route path="/demo/daily-content/visuals" element={<VisualEngineDemoPage />} />
+              <Route path="/demo/daily-content/engines" element={<EnginesDemoPage />} />
+              <Route path="/demo/daily-content/review" element={<ReviewDecisionPacketPage />} />
+            </>
+          )}
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/notifications" element={<NotificationsPage />} />
           <Route path="/quiz" element={<QuizPage />} />
