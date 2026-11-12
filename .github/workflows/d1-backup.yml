@@ -1,0 +1,225 @@
+# D-1 Backup — manual GitHub Actions workflow (REVISION 4, 2026-11-11)
+#
+# Purpose: dump the PRODUCTION database (noor-backend) with the real
+# Supabase CLI, encrypt the three dump files, and upload them as an
+# artifact. This file lives at .github/workflows/d1-backup.yml.
+# Nothing here runs on its own: the owner adds this file to the
+# repository, creates the secrets, and presses Run workflow.
+#
+# SCOPE — READ FIRST: the three files are a DATABASE DUMP ONLY
+# (user schemas, roles, data). They are NOT a full Supabase backup.
+# The CLI excludes Supabase-managed schemas (auth, storage, and
+# extension-created schemas) automatically. NOT in these files:
+# Auth users, Auth configuration, Storage buckets, Storage objects,
+# Edge Functions, custom role passwords. Those need separate
+# recovery scopes (see D1-INDEPENDENT-REVIEW-REPORT.md).
+#
+# Revision 3 (independent review, 2026-11-10) — changes from Revision 2:
+#   1. CLI pinned to supabase@3.1.0 (latest stable, verified) with a
+#      version assertion after install. No unpinned "latest".
+#   2. Dump commands use --remote="<db-url>" (v4-ready syntax).
+#      --db-url still works in v3.1.0 but prints a deprecation
+#      warning and is removed in v4; it is NOT used here.
+#   3. set -euo pipefail at the top of every shell script.
+#   4. Dump validation extended: footers (truncation), COPY balance,
+#      coverage of the 5 expected tables in schema AND data,
+#      CREATE POLICY present, CREATE ROLE present, and a check that
+#      no managed-schema table (auth/storage) leaked into the dump.
+#   5. Scope-correct language everywhere; the summary lists the
+#      tables actually found in the dump.
+#
+# Revision 4 (final security hardening, 2026-11-11) — changes from
+# Revision 3 (Finding A only; everything else is unchanged):
+#   1. Exact database URL validation replaces the substring guard.
+#      The URL is parsed with a strict regex and each part is
+#      checked separately: hostname must be exactly
+#      db.<ref>.supabase.co (session pooler), port must be 5432,
+#      username must be exactly postgres.<ref>, password must be
+#      non-empty, database must be postgres. The other project's
+#      ref must not appear anywhere in the URL. The old substring
+#      guard accepted a suffix/prefix host attack, a ref hidden in
+#      the password or query, a wrong port, and a wrong username —
+#      all five bypasses are proven in D1-SECURITY-FINDINGS-V4.md.
+#      The URL and the password are never echoed; only the
+#      validated host (public knowledge) is printed.
+#
+# Secrets required (repo Settings -> Secrets and variables -> Actions):
+#   PROD_DB_URL            Session-pooler connection string (port 5432)
+#                          for production project llicfiepatzgllmjhzbw.
+#                          NEVER typed in chat, never in a file.
+#   BACKUP_GPG_PASSPHRASE  Passphrase for encrypting the dump files.
+#                          The owner chooses it; it is never shared.
+#
+# Safety: the job fails unless the confirm input is true, the CLI
+# version is exactly 3.1.0, both secrets exist, and PROD_DB_URL is
+# exactly the production session-pooler URL (host, port, username,
+# password, database all checked separately; the rehearsal ref must
+# not appear anywhere in it). If the passphrase secret is missing,
+# the job fails rather than uploading raw dumps (fail-closed).
+# GitHub masks secret values in logs. The artifact holds production
+# data: download it, store it off-site, then delete the artifact
+# from GitHub.
+#
+# Permissions: contents: read only (the minimum this job needs).
+#
+# This file has NOT been run end-to-end (a run needs the file in the
+# repo + the secrets, both owner actions). The dump commands were
+# proven supported in CLI 3.1.0 by --dry-run tests (see
+# D1-CLI-COMPATIBILITY-2026-11-10.md); the real Docker stage is
+# expected to work on the GitHub runner but remains UNVERIFIED.
+
+name: D-1 Backup (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirm: dump the PRODUCTION database (noor-backend) and upload encrypted artifacts"
+        type: boolean
+        required: true
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  dump:
+    runs-on: ubuntu-latest
+    env:
+      PROD_DB_URL: ${{ secrets.PROD_DB_URL }}
+      BACKUP_GPG_PASSPHRASE: ${{ secrets.BACKUP_GPG_PASSPHRASE }}
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      RUN_NUMBER: ${{ github.run_number }}
+    steps:
+      - name: Confirm input
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "true" ]; then
+            echo "confirm input is not true; refusing to run."
+            exit 1
+          fi
+
+      - name: Require secrets
+        run: |
+          set -euo pipefail
+          if [ -z "$PROD_DB_URL" ]; then echo "PROD_DB_URL secret is missing."; exit 1; fi
+          if [ -z "$BACKUP_GPG_PASSPHRASE" ]; then echo "BACKUP_GPG_PASSPHRASE secret is missing."; exit 1; fi
+
+      - name: Guard - exact PROD_DB_URL validation (noor-backend only)
+        run: |
+          set -euo pipefail
+          # Revision 4: the URL is parsed exactly, not matched by
+          # substring. The old substring guard accepted a suffix or
+          # prefix host attack, a ref hidden in the password or
+          # query, a wrong port, and a wrong username. Each part
+          # below is checked separately. The URL and the password
+          # are never echoed; only the validated host (public
+          # knowledge) is printed.
+          EXPECTED_REF="llicfiepatzgllmjhzbw"
+          OTHER_REF="cazdbxxffvdnsdatjsrx"
+          EXPECTED_HOST="db.${EXPECTED_REF}.supabase.co"
+          EXPECTED_USER="postgres.${EXPECTED_REF}"
+          URL="$PROD_DB_URL"
+          case "$URL" in
+            *[[:space:]]*) echo "Malformed database URL (whitespace). Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            *"$OTHER_REF"*) echo "URL contains the other project's ref. Refusing."; exit 1 ;;
+          esac
+          URL_RE='^postgres(ql)?://([^:/?#@]+)(:([^@/?#]*))?@([^:/?#]+)(:([0-9]+))?(/[^?#]*)?(\?[^#]*)?$'
+          if ! [[ "$URL" =~ $URL_RE ]]; then
+            echo "Malformed database URL. Refusing."
+            exit 1
+          fi
+          DB_USER="${BASH_REMATCH[2]}"
+          DB_PASS="${BASH_REMATCH[4]}"
+          DB_HOST="${BASH_REMATCH[5]}"
+          DB_PORT="${BASH_REMATCH[7]}"
+          DB_PATH="${BASH_REMATCH[8]}"
+          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host. Refusing."; exit 1; }
+          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port (must be 5432). Refusing."; exit 1; }
+          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username. Refusing."; exit 1; }
+          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
+          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name (must be postgres). Refusing."; exit 1; }
+          echo "Target host OK (noor-backend, $DB_HOST)."
+
+      - name: Install Supabase CLI (pinned 3.1.0)
+        run: |
+          set -euo pipefail
+          npm install -g supabase@3.1.0
+          INSTALLED="$(supabase --version)"
+          [ "$INSTALLED" = "3.1.0" ] || { echo "Unexpected CLI version: $INSTALLED (expected 3.1.0)."; exit 1; }
+          echo "Supabase CLI $INSTALLED"
+
+      - name: Dump (CLI 3.1.0, three files, --remote)
+        run: |
+          set -euo pipefail
+          mkdir -p backup
+          supabase db dump --remote="$PROD_DB_URL" -f backup/roles.sql --role-only
+          supabase db dump --remote="$PROD_DB_URL" -f backup/schema.sql
+          supabase db dump --remote="$PROD_DB_URL" -f backup/data.sql --use-copy --data-only
+
+      - name: Validate dump files (integrity + coverage)
+        run: |
+          set -euo pipefail
+          ls -lh backup/
+          test -s backup/roles.sql || { echo "roles.sql is empty."; exit 1; }
+          test -s backup/schema.sql || { echo "schema.sql is empty."; exit 1; }
+          test -s backup/data.sql || { echo "data.sql is empty."; exit 1; }
+          grep -q "PostgreSQL database dump complete" backup/schema.sql || { echo "schema.sql is truncated (no dump-complete footer)."; exit 1; }
+          grep -q "PostgreSQL database dump complete" backup/data.sql || { echo "data.sql is truncated (no dump-complete footer)."; exit 1; }
+          grep -q "PostgreSQL database cluster dump complete" backup/roles.sql || { echo "roles.sql is truncated (no dump-complete footer)."; exit 1; }
+          COPY_COUNT="$(grep -c "^COPY " backup/data.sql || true)"
+          DOT_COUNT="$(grep -c '^\\\.$' backup/data.sql || true)"
+          [ "$COPY_COUNT" -gt 0 ] || { echo "data.sql has no COPY lines."; exit 1; }
+          [ "$COPY_COUNT" -eq "$DOT_COUNT" ] || { echo "data.sql COPY blocks are unbalanced ($COPY_COUNT COPY vs $DOT_COUNT terminators) - truncated."; exit 1; }
+          grep -q "CREATE TABLE" backup/schema.sql || { echo "schema.sql has no CREATE TABLE."; exit 1; }
+          grep -q "CREATE POLICY" backup/schema.sql || { echo "schema.sql has no CREATE POLICY."; exit 1; }
+          grep -q "CREATE ROLE" backup/roles.sql || { echo "roles.sql has no CREATE ROLE."; exit 1; }
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g' | sort -u > /tmp/schema_tables.txt
+          grep -oE '^COPY [^ (]+' backup/data.sql | sed 's/^COPY //; s/"//g' | sort -u > /tmp/data_tables.txt
+          for t in hadiths admin_content daily_content_publications daily_content_recommendations islamic_calendar_corrections; do
+            grep -qxF "public.$t" /tmp/schema_tables.txt || { echo "schema.sql is missing CREATE TABLE public.$t."; exit 1; }
+            grep -qxF "public.$t" /tmp/data_tables.txt || { echo "data.sql is missing COPY public.$t."; exit 1; }
+          done
+          if grep -qE 'CREATE TABLE (IF NOT EXISTS )?"?(auth|storage)"?\.' backup/schema.sql; then echo "schema.sql contains managed-schema tables (auth/storage) - unexpected."; exit 1; fi
+          echo "Dump validation passed: 3 files non-empty, footers present, COPY blocks balanced ($COPY_COUNT), all 5 expected tables present in schema and data."
+
+      - name: SHA-256 manifest + encrypt
+        run: |
+          set -euo pipefail
+          cd backup
+          echo "# Supabase CLI 3.1.0" > MANIFEST-SHA256.txt
+          sha256sum roles.sql schema.sql data.sql >> MANIFEST-SHA256.txt
+          cat MANIFEST-SHA256.txt
+          for f in roles.sql schema.sql data.sql; do
+            printf '%s' "$BACKUP_GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --symmetric --cipher-algo AES256 "$f"
+          done
+          sha256sum roles.sql.gpg schema.sql.gpg data.sql.gpg >> MANIFEST-SHA256.txt
+          rm -f roles.sql schema.sql data.sql
+          ls -lh
+
+      - name: Upload encrypted artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: d1-backup
+          path: backup/
+          retention-days: 30
+
+      - name: Summary
+        run: |
+          set -euo pipefail
+          TABLES="$(tr '\n' ',' < /tmp/schema_tables.txt | sed 's/,$//')"
+          {
+            echo "## D-1 Backup - run $RUN_NUMBER"
+            echo ""
+            echo "Supabase CLI 3.1.0 (pinned). Encrypted artifacts uploaded (30-day retention). Download them, store off-site, then delete the artifact from GitHub."
+            echo ""
+            echo "Tables in this dump: $TABLES"
+            echo ""
+            echo "SCOPE: DATABASE DUMP ONLY. This backup covers user schemas, roles, and data. It does NOT cover Auth users, Auth configuration, Storage buckets, Storage objects, Edge Functions, or custom role passwords."
+            echo ""
+            echo '```'
+            cat backup/MANIFEST-SHA256.txt
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
