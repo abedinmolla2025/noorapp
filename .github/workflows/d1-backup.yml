@@ -43,6 +43,21 @@
 #      The URL and the password are never echoed; only the
 #      validated host (public knowledge) is printed.
 #
+# Revision 5 (connection-format correction, 2026-11-12) — changes from
+# Revision 4 (guard correction + table-list correction):
+#   1. The host check now pins the EXACT session-pooler host
+#      verified from the Dashboard on 2026-11-12:
+#      aws-1-ap-southeast-2.pooler.supabase.com (port 5432).
+#      Revision 4 combined the direct host db.<ref>.supabase.co
+#      with the pooler username postgres.<ref> — a combination
+#      that matches no real Supabase option. Any other host is
+#      refused. The project ref is verified via the username
+#      (postgres.<ref>), because the pooler host carries no ref.
+#   2. Expected tables are the verified production inventory
+#      (hadiths, admin_content, daily_content_publications). The two
+#      Gate 1 tables are not in production yet (migrations 070001 /
+#      070002 never applied); add them when their migrations are applied.
+#
 # Secrets required (repo Settings -> Secrets and variables -> Actions):
 #   PROD_DB_URL            Session-pooler connection string (port 5432)
 #                          for production project llicfiepatzgllmjhzbw.
@@ -108,16 +123,27 @@ jobs:
       - name: Guard - exact PROD_DB_URL validation (noor-backend only)
         run: |
           set -euo pipefail
-          # Revision 4: the URL is parsed exactly, not matched by
+          # Revision 5: the URL is parsed exactly, not matched by
           # substring. The old substring guard accepted a suffix or
           # prefix host attack, a ref hidden in the password or
           # query, a wrong port, and a wrong username. Each part
           # below is checked separately. The URL and the password
           # are never echoed; only the validated host (public
           # knowledge) is printed.
+          # Revision 5 (2026-11-12) pins the exact host: Revision 4
+          # required the DIRECT-connection host db.<ref>.supabase.co
+          # together with the pooler username postgres.<ref> — a
+          # combination that matches no real Supabase option. The
+          # session-pooler host below is the exact value verified
+          # from the Dashboard on 2026-11-12:
+          # aws-1-ap-southeast-2.pooler.supabase.com. Any other
+          # host — including another pooler cluster — is refused.
+          # The pooler host carries no project ref, so the ref is
+          # verified via the username (postgres.<ref>) and the other
+          # project's ref must not appear anywhere in the URL.
           EXPECTED_REF="llicfiepatzgllmjhzbw"
           OTHER_REF="cazdbxxffvdnsdatjsrx"
-          EXPECTED_HOST="db.${EXPECTED_REF}.supabase.co"
+          EXPECTED_HOST="aws-1-ap-southeast-2.pooler.supabase.com"
           EXPECTED_USER="postgres.${EXPECTED_REF}"
           URL="$PROD_DB_URL"
           case "$URL" in
@@ -178,12 +204,19 @@ jobs:
           grep -q "CREATE ROLE" backup/roles.sql || { echo "roles.sql has no CREATE ROLE."; exit 1; }
           grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g' | sort -u > /tmp/schema_tables.txt
           grep -oE '^COPY [^ (]+' backup/data.sql | sed 's/^COPY //; s/"//g' | sort -u > /tmp/data_tables.txt
-          for t in hadiths admin_content daily_content_publications daily_content_recommendations islamic_calendar_corrections; do
+          # Revision 5: expected tables are the production inventory
+          # verified 2026-11-12 (owner-run count queries + live
+          # PostgREST 404 PGRST205 for the missing tables).
+          # daily_content_recommendations (migration 070002) and
+          # islamic_calendar_corrections (migration 070001) do not
+          # exist in production yet; add them to this list when their
+          # migrations are applied (each needs its own authorization).
+          for t in hadiths admin_content daily_content_publications; do
             grep -qxF "public.$t" /tmp/schema_tables.txt || { echo "schema.sql is missing CREATE TABLE public.$t."; exit 1; }
             grep -qxF "public.$t" /tmp/data_tables.txt || { echo "data.sql is missing COPY public.$t."; exit 1; }
           done
           if grep -qE 'CREATE TABLE (IF NOT EXISTS )?"?(auth|storage)"?\.' backup/schema.sql; then echo "schema.sql contains managed-schema tables (auth/storage) - unexpected."; exit 1; fi
-          echo "Dump validation passed: 3 files non-empty, footers present, COPY blocks balanced ($COPY_COUNT), all 5 expected tables present in schema and data."
+          echo "Dump validation passed: 3 files non-empty, footers present, COPY blocks balanced ($COPY_COUNT), all 3 expected tables present in schema and data."
 
       - name: SHA-256 manifest + encrypt
         run: |
