@@ -191,10 +191,10 @@ jobs:
                 # credentials (cron secrets as Bearer; browser preference
                 # calls send no Authorization header). The JWT-mode guard
                 # step already asserted the matching config.toml entries.
-                supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --no-verify-jwt
+                supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --no-verify-jwt --yes
                 ;;
               *)
-                supabase functions deploy "$fn" --project-ref "$EXPECTED_REF"
+                supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --yes
                 ;;
             esac
           done
