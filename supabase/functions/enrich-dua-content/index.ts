@@ -1,9 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
 import {
-  httpErrorResponse,
-  requireAdmin,
-  requireSecret,
-} from "../_shared/require-admin.ts";
+  generateToolCall,
+  isProviderLevelError,
+} from "../_shared/ai-adapter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,87 +44,60 @@ type EnrichedPayload = {
   related_dua_titles: string[];
 };
 
-async function callAi(userText: string, attempt = 0): Promise<EnrichedPayload> {
-  // Fail closed: the Lovable key is a secret and must never be hardcoded.
-  const lovableApiKey = requireSecret("LOVABLE_API_KEY");
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userText },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "save_dua_enrichment",
-            description: "Save enriched contextual metadata for a dua.",
-            parameters: {
+async function callAi(userText: string): Promise<EnrichedPayload> {
+  // Phase 3: the Adapter owns the provider call (Gemini free primary,
+  // Groq free secondary), retries, timeouts, and error classification.
+  // The tool schema and the server-side validation below are unchanged.
+  // Virtue/fadilah claims are still never generated (the prompt forbids
+  // them) and never merged into live fields (approve path below).
+  const result = await generateToolCall({
+    systemPrompt: SYSTEM_PROMPT,
+    userText,
+    tool: {
+      name: "save_dua_enrichment",
+      description: "Save enriched contextual metadata for a dua.",
+      parameters: {
+        type: "object",
+        properties: {
+          when_to_recite_bn: { type: "string" },
+          when_to_recite_en: { type: "string" },
+          when_to_recite_hi: { type: "string" },
+          when_to_recite_ur: { type: "string" },
+          faq: {
+            type: "array",
+            minItems: 3,
+            maxItems: 3,
+            items: {
               type: "object",
-              properties: {
-                when_to_recite_bn: { type: "string" },
-                when_to_recite_en: { type: "string" },
-                when_to_recite_hi: { type: "string" },
-                when_to_recite_ur: { type: "string" },
-                faq: {
-                  type: "array",
-                  minItems: 3,
-                  maxItems: 3,
-                  items: {
-                    type: "object",
-                    properties: { q: { type: "string" }, a: { type: "string" } },
-                    required: ["q", "a"],
-                    additionalProperties: false,
-                  },
-                },
-                hadith_reference: { type: ["string", "null"] },
-                quran_reference: { type: ["string", "null"] },
-                related_dua_titles: {
-                  type: "array",
-                  minItems: 3,
-                  maxItems: 5,
-                  items: { type: "string" },
-                },
-              },
-              required: [
-                "when_to_recite_bn",
-                "when_to_recite_en",
-                "when_to_recite_hi",
-                "when_to_recite_ur",
-                "faq",
-                "hadith_reference",
-                "quran_reference",
-                "related_dua_titles",
-              ],
+              properties: { q: { type: "string" }, a: { type: "string" } },
+              required: ["q", "a"],
               additionalProperties: false,
             },
           },
+          hadith_reference: { type: ["string", "null"] },
+          quran_reference: { type: ["string", "null"] },
+          related_dua_titles: {
+            type: "array",
+            minItems: 3,
+            maxItems: 5,
+            items: { type: "string" },
+          },
         },
-      ],
-      tool_choice: { type: "function", function: { name: "save_dua_enrichment" } },
-    }),
+        required: [
+          "when_to_recite_bn",
+          "when_to_recite_en",
+          "when_to_recite_hi",
+          "when_to_recite_ur",
+          "faq",
+          "hadith_reference",
+          "quran_reference",
+          "related_dua_titles",
+        ],
+        additionalProperties: false,
+      },
+    },
   });
-
-  if (resp.status === 429 && attempt < 2) {
-    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-    return callAi(userText, attempt + 1);
-  }
-  if (!resp.ok) {
-    const t = await resp.text();
-    if (resp.status === 429) throw new Error("RATE_LIMIT");
-    if (resp.status === 402) throw new Error("CREDITS_EXHAUSTED");
-    throw new Error(`AI_ERROR ${resp.status} ${t.slice(0, 200)}`);
-  }
-  const data = await resp.json();
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!toolCall) throw new Error("NO_TOOL_CALL");
-  return JSON.parse(toolCall.function.arguments) as EnrichedPayload;
+  return result.args as EnrichedPayload;
 }
 
 function validateQuranRef(ref: string | null): string | null {
@@ -305,7 +278,12 @@ Deno.serve(async (req) => {
       } catch (e: any) {
         failed++;
         errors.push(`${row.id}: ${e?.message ?? e}`);
-        if (String(e?.message).includes("RATE_LIMIT") || String(e?.message).includes("CREDITS_EXHAUSTED")) {
+        // Phase 3: a provider-level failure (rate limit, quota, provider
+        // down, auth, payment) will hit every remaining row the same way,
+        // so stop the batch early. A per-row failure (schema/policy) only
+        // fails that row. This replaces the old RATE_LIMIT /
+        // CREDITS_EXHAUSTED message check.
+        if (isProviderLevelError(e)) {
           break;
         }
       }

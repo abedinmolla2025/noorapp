@@ -1,4 +1,9 @@
-// fix-dua-content admin-gate tests — Phase 2 consolidation (2026-11-11).
+// fix-dua-content admin-gate tests — Phase 2 consolidation (2026-11-11),
+// re-stubbed for Phase 3 (2026-11-13): the handler now calls the Adapter
+// (Gemini free primary / Groq free secondary) instead of the pre-migration
+// gateway, so the stub returns Gemini-shaped tool-call responses and the
+// env carries GEMINI_API_KEY / GROQ_API_KEY. A handler-level process test
+// proves one mocked Gemini call fixes an incomplete row and writes it.
 //
 // Ports the P0 gate from noorapp-ai-security (commit 35eb536) into the
 // Phase 2 worktree: `await requireAdmin(req)` at the start of the handler
@@ -83,22 +88,46 @@ writeFileSync(join(hDir, "fix-dua-content", "index.ts"), edgeSrc);
 const adminSrc = readFileSync(join(funcsRoot, "_shared", "require-admin.ts"), "utf8")
   .replace("https://esm.sh/@supabase/supabase-js@2", "../fake-supabase.mjs");
 writeFileSync(join(hDir, "_shared", "require-admin.ts"), adminSrc);
+// Phase 3: the handler imports the Adapter; stage its real files too.
+for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts"]) {
+  writeFileSync(join(hDir, "_shared", f), readFileSync(join(funcsRoot, "_shared", f), "utf8"));
+}
 writeFileSync(join(hDir, "fake-supabase.mjs"), FAKE_SUPABASE);
 
 const env = {
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_ANON_KEY: "test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
-  LOVABLE_API_KEY: "test-lovable-key",
+  GEMINI_API_KEY: "test-gemini-key",
+  GROQ_API_KEY: "test-groq-key",
 };
 let handler = null;
 globalThis.Deno = {
   env: { get: (k) => (k in env ? env[k] : undefined) },
   serve: (fn) => { handler = fn; },
 };
-// The stats path never calls the AI gateway; fail loudly if any test
-// reaches it (no real network in tests).
-globalThis.fetch = async () => { throw new Error("unexpected network fetch in gate test"); };
+// Stubbed Gemini (the Adapter's primary): a queue of per-row tool-call
+// outputs. Records every call; gate tests assert it was never reached.
+const geminiQueue = [];
+const fetchCalls = [];
+globalThis.fetch = async (url, opts) => {
+  fetchCalls.push({ url, body: opts?.body ? JSON.parse(opts.body) : null });
+  assert.equal(url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent");
+  const out = geminiQueue.shift() ?? {
+    content_pronunciation: "আল্লা-হুম্মা ইন্নাকা আফুউন\nতুহিব্বুল আফওয়া ফা'ফু আন্নি\nআমিন।",
+    content: "হে আল্লাহ, তুমি ক্ষমাশীল এবং ক্ষমা করতে ভালোবাসো, তাই আমাকে ক্ষমা করে দাও। এই দোয়া আমরা পড়ি ক্ষমা চাওয়ার জন্য।",
+  };
+  const body = {
+    candidates: [{ content: { parts: [{ functionCall: { name: "save_dua_content", args: out } }] }, finishReason: "STOP" }],
+    usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 600, totalTokenCount: 1800 },
+  };
+  return {
+    ok: true, status: 200,
+    headers: { get: () => null },
+    text: async () => JSON.stringify(body),
+    json: async () => body,
+  };
+};
 await import(pathToFileURL(join(hDir, "fix-dua-content", "index.ts")).href);
 const fakeSupabase = await import(pathToFileURL(join(hDir, "fake-supabase.mjs")).href);
 assert.ok(handler, "Deno.serve handler was not captured");
@@ -163,6 +192,31 @@ await checkAsync("no-auth process -> 401, zero writes (process would write + cal
   const r = await call({ action: "process", batchSize: 1 }, null);
   assert.equal(r.status, 401);
   assert.equal(fakeSupabase.state.writes.length, 0);
+  assert.equal(fetchCalls.length, 0, "the gate must block before any AI call");
+});
+await checkAsync("admin process -> one mocked Gemini call fixes the incomplete row and writes it (G15/G16)", async () => {
+  fakeSupabase.__reset(seed());
+  geminiQueue.length = 0;
+  fetchCalls.length = 0;
+  const pron = "আল্লা-হুম্মা ইন্নাকা আফুউন্ তুহিব্বুল আফওয়া ফা'ফু আন্নী। ইয়া আল্লাহ, তুমি ক্ষমাশীল, আমাকে ক্ষমা করে দাও। আমিন।";
+  const meaning = "হে আল্লাহ, তুমি ক্ষমাশীল এবং ক্ষমা করতে ভালোবাসো, তাই আমাকে ক্ষমা করে দাও। এই দোয়া আমরা পড়ি ক্ষমা চাওয়ার জন্য এবং তোমার রহমতের আশায়।";
+  assert.ok(pron.length >= 100, `fixture pronunciation must be >= 100 chars, got ${pron.length}`);
+  assert.ok(meaning.length >= 120, `fixture meaning must be >= 120 chars, got ${meaning.length}`);
+  geminiQueue.push({ content_pronunciation: pron, content: meaning });
+  const r = await call({ action: "process", batchSize: 10 }, "Bearer valid-admin-jwt");
+  assert.equal(r.status, 200);
+  assert.equal(r.data.processed, 1, `expected 1 processed, got ${JSON.stringify(r.data)}`);
+  assert.equal(r.data.failed, 0);
+  assert.equal(r.data.pending, 0);
+  assert.equal(r.data.done, true);
+  assert.equal(fetchCalls.length, 1, "exactly one provider call for one row");
+  assert.equal(fetchCalls[0].url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent");
+  const row = fakeSupabase.state.tables.admin_content.find((x) => x.id === "dua-incomplete");
+  assert.equal(row.content_pronunciation, pron);
+  assert.equal(row.content, meaning);
+  const complete = fakeSupabase.state.tables.admin_content.find((x) => x.id === "dua-complete");
+  assert.equal(complete.content_pronunciation, "প".repeat(150), "the complete row must not be rewritten");
+  assert.equal(fakeSupabase.state.writes.filter((w) => w.op === "update").length, 1);
 });
 
 rmSync(stageDir, { recursive: true, force: true });

@@ -1,9 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
-import {
-  httpErrorResponse,
-  requireAdmin,
-  requireSecret,
-} from "../_shared/require-admin.ts";
+import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
+import { generateToolCall } from "../_shared/ai-adapter.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -109,73 +106,41 @@ async function generateForDua(args: {
   bengali: string | null;
   category: string | null;
   kind?: "dua" | "story";
-}, attempt = 0): Promise<{ explanation_bn: string; explanation_en: string; explanation_hi: string; explanation_ur: string }> {
+}): Promise<{ explanation_bn: string; explanation_en: string; explanation_hi: string; explanation_ur: string }> {
   const isStory = args.kind === "story";
   const userText = isStory
     ? `গল্পের নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nগল্পের বাংলা টেক্সট:\n${(args.bengali || "(টেক্সট নেই)").slice(0, 4000)}\n\nএই গল্পের জন্য explanation (ব্যাখ্যা) তৈরি করো।`
     : `দোয়ার নাম: ${args.title || "(নাম নেই)"}\nবিভাগ: ${args.category || "সাধারণ"}\n\nআরবি:\n${args.arabic || "(আরবি নেই)"}\n\nবাংলা অর্থ:\n${args.bengali || "(অনুবাদ নেই, আরবি থেকে বের করো)"}\n\nএই দোয়ার জন্য বাংলা explanation_bn তৈরি করো।`;
 
-  // Fail closed: the Lovable key is a secret and must never be hardcoded.
-  const lovableApiKey = requireSecret("LOVABLE_API_KEY");
-
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: isStory ? STORY_SYSTEM_PROMPT : SYSTEM_PROMPT },
-        { role: "user", content: userText },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "save_dua_seo",
-            description: "Save the multilingual SEO explanation for a dua (Bengali + English + Hindi + Urdu).",
-            parameters: {
-              type: "object",
-              properties: {
-                explanation_bn: { type: "string" },
-                explanation_en: { type: "string" },
-                explanation_hi: { type: "string" },
-                explanation_ur: { type: "string" },
-              },
-              required: [
-                "explanation_bn",
-                "explanation_en",
-                "explanation_hi",
-                "explanation_ur",
-              ],
-              additionalProperties: false,
-            },
-          },
+  // Phase 3: the Adapter owns the provider call (Gemini free primary,
+  // Groq free secondary), retries, timeouts, and error classification.
+  // The tool schema, the virtue gate below, and the write guards are
+  // unchanged — benefits_* are still never requested or written.
+  const result = await generateToolCall({
+    systemPrompt: isStory ? STORY_SYSTEM_PROMPT : SYSTEM_PROMPT,
+    userText,
+    tool: {
+      name: "save_dua_seo",
+      description: "Save the multilingual SEO explanation for a dua (Bengali + English + Hindi + Urdu).",
+      parameters: {
+        type: "object",
+        properties: {
+          explanation_bn: { type: "string" },
+          explanation_en: { type: "string" },
+          explanation_hi: { type: "string" },
+          explanation_ur: { type: "string" },
         },
-      ],
-      tool_choice: { type: "function", function: { name: "save_dua_seo" } },
-    }),
+        required: [
+          "explanation_bn",
+          "explanation_en",
+          "explanation_hi",
+          "explanation_ur",
+        ],
+        additionalProperties: false,
+      },
+    },
   });
-
-  if (!resp.ok) {
-    const t = await resp.text();
-    if (resp.status === 429) {
-      if (attempt < 2) {
-        const waitMs = 1500 * Math.pow(2, attempt);
-        await new Promise((r) => setTimeout(r, waitMs));
-        return generateForDua(args, attempt + 1);
-      }
-      throw new Error("RATE_LIMIT");
-    }
-    if (resp.status === 402) throw new Error("PAYMENT_REQUIRED");
-    throw new Error(`AI ${resp.status}: ${t.slice(0, 200)}`);
-  }
-  const data = await resp.json();
-  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call?.function?.arguments) throw new Error("no tool call returned");
-  const parsed = JSON.parse(call.function.arguments);
+  const parsed = result.args;
   if (!parsed.explanation_bn) {
     throw new Error("invalid tool args");
   }

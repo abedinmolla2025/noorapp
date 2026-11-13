@@ -1,10 +1,14 @@
-// generate-dua-seo G-1 blocklist-validation tests — Phase 2 (2026-11-10).
+// generate-dua-seo G-1 blocklist-validation tests — Phase 2 (2026-11-10),
+// Part 2 re-stubbed for Phase 3 (2026-11-13): the handler now calls the
+// Adapter (Gemini free primary / Groq free secondary) instead of the
+// pre-migration gateway, so the stub returns Gemini-shaped tool-call
+// responses and the env carries GEMINI_API_KEY / GROQ_API_KEY.
 //
 // Part 1: unit tests of validateGeneratedOutput / containsVirtueLanguage
 // (VIRTUE_BLOCKLIST), extracted verbatim from index.ts (NODE_TESTABLE
 // markers) and imported as .ts (Node 24 type-strips).
 // Part 2: handler-level tests of the REAL staged index.ts (P0 base +
-// G-1 candidate) with a fake Supabase + stubbed Lovable gateway:
+// G-1 candidate) with a fake Supabase + stubbed Gemini (via the Adapter):
 // proves benefits_* are NEVER written to live rows even when the
 // model returns virtue-laden benefits, and that a virtue-laden
 // explanation blocks the whole row (zero writes, failed++, error
@@ -167,33 +171,44 @@ writeFileSync(join(hDir, "generate-dua-seo", "index.ts"), g1Src);
 const adminSrc = readFileSync(join(funcsRoot, "_shared", "require-admin.ts"), "utf8")
   .replace("https://esm.sh/@supabase/supabase-js@2", "../fake-supabase.mjs");
 writeFileSync(join(hDir, "_shared", "require-admin.ts"), adminSrc);
+// Phase 3: the handler imports the Adapter; stage its real files too.
+for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts"]) {
+  writeFileSync(join(hDir, "_shared", f), readFileSync(join(funcsRoot, "_shared", f), "utf8"));
+}
 writeFileSync(join(hDir, "fake-supabase.mjs"), FAKE_SUPABASE);
 
 const env = {
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_ANON_KEY: "test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
-  LOVABLE_API_KEY: "test-lovable-key",
+  GEMINI_API_KEY: "test-gemini-key",
+  GROQ_API_KEY: "test-groq-key",
 };
 let handler = null;
 globalThis.Deno = {
   env: { get: (k) => (k in env ? env[k] : undefined) },
   serve: (fn) => { handler = fn; },
 };
-// Stubbed Lovable gateway: a queue of per-row tool-call outputs.
+// Stubbed Gemini (the Adapter's primary): a queue of per-row tool-call
+// outputs. The Adapter calls the real Gemini endpoint shape; assert it.
 const gatewayQueue = [];
 globalThis.fetch = async (url) => {
-  assert.equal(url, "https://ai.gateway.lovable.dev/v1/chat/completions");
+  assert.equal(url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent");
   const out = gatewayQueue.shift() ?? {
     explanation_bn: "clean bn", benefits_bn: ["clean benefit"],
     explanation_en: "clean en", benefits_en: ["clean benefit"],
     explanation_hi: "clean hi", benefits_hi: ["clean benefit"],
     explanation_ur: "clean ur", benefits_ur: ["clean benefit"],
   };
+  const body = {
+    candidates: [{ content: { parts: [{ functionCall: { name: "save_dua_seo", args: out } }] }, finishReason: "STOP" }],
+    usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 600, totalTokenCount: 1800 },
+  };
   return {
     ok: true, status: 200,
-    text: async () => "",
-    json: async () => ({ choices: [{ message: { tool_calls: [{ function: { arguments: JSON.stringify(out) } }] } }] }),
+    headers: { get: () => null },
+    text: async () => JSON.stringify(body),
+    json: async () => body,
   };
 };
 await import(pathToFileURL(join(hDir, "generate-dua-seo", "index.ts")).href);

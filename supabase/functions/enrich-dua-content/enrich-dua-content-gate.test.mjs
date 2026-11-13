@@ -1,4 +1,10 @@
-// enrich-dua-content admin-gate tests — Phase 2 consolidation (2026-11-11).
+// enrich-dua-content admin-gate tests — Phase 2 consolidation (2026-11-11),
+// re-stubbed for Phase 3 (2026-11-13): the handler now calls the Adapter
+// (Gemini free primary / Groq free secondary) instead of the pre-migration
+// gateway, so the stub returns Gemini-shaped tool-call responses and the
+// env carries GEMINI_API_KEY / GROQ_API_KEY. A handler-level process test
+// proves one mocked Gemini call enriches an eligible row into
+// pending_review without ever writing a virtue claim.
 //
 // Ports the P0 gate from noorapp-ai-security (commit 35eb536) into the
 // Phase 2 worktree: `await requireAdmin(req)` at the start of the handler
@@ -43,6 +49,12 @@ function matches(row, filters) {
       for (const [k, want] of Object.entries(f.val)) { if (v[k] !== want) return false; }
     }
     if (f.op === "in" && !f.val.includes(v)) return false;
+    if (f.op === "neq" && v === f.val) return false;
+    if (f.op === "not-cs") {
+      // .not(col, "cs", val): the row matches only when the column does
+      // NOT contain all of val's entries.
+      if (v && typeof v === "object" && Object.entries(f.val).every(([k, want]) => v[k] === want)) return false;
+    }
   }
   return true;
 }
@@ -53,6 +65,8 @@ class Builder {
   is(c, v) { this.filters.push({ op: "is", col: c, val: v }); return this; }
   contains(c, v) { this.filters.push({ op: "contains", col: c, val: v }); return this; }
   in(c, v) { this.filters.push({ op: "in", col: c, val: v }); return this; }
+  neq(c, v) { this.filters.push({ op: "neq", col: c, val: v }); return this; }
+  not(c, op, v) { this.filters.push({ op: "not-" + op, col: c, val: v }); return this; }
   limit(n) { this.limitN = n; return this; }
   rows() { let rs = (state.tables[this.table] ?? []).filter((r) => matches(r, this.filters)); if (this.limitN != null) rs = rs.slice(0, this.limitN); return rs; }
   async maybeSingle() { const rs = this.rows(); return { data: rs[0] ?? null, error: null }; }
@@ -91,22 +105,52 @@ writeFileSync(join(hDir, "enrich-dua-content", "index.ts"), edgeSrc);
 const adminSrc = readFileSync(join(funcsRoot, "_shared", "require-admin.ts"), "utf8")
   .replace("https://esm.sh/@supabase/supabase-js@2", "../fake-supabase.mjs");
 writeFileSync(join(hDir, "_shared", "require-admin.ts"), adminSrc);
+// Phase 3: the handler imports the Adapter; stage its real files too.
+for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts"]) {
+  writeFileSync(join(hDir, "_shared", f), readFileSync(join(funcsRoot, "_shared", f), "utf8"));
+}
 writeFileSync(join(hDir, "fake-supabase.mjs"), FAKE_SUPABASE);
 
 const env = {
   SUPABASE_URL: "https://test.supabase.co",
   SUPABASE_ANON_KEY: "test-anon-key",
   SUPABASE_SERVICE_ROLE_KEY: "test-service-key",
-  LOVABLE_API_KEY: "test-lovable-key",
+  GEMINI_API_KEY: "test-gemini-key",
+  GROQ_API_KEY: "test-groq-key",
 };
 let handler = null;
 globalThis.Deno = {
   env: { get: (k) => (k in env ? env[k] : undefined) },
   serve: (fn) => { handler = fn; },
 };
-// The stats path never calls the AI gateway; fail loudly if any test
-// reaches it (no real network in tests).
-globalThis.fetch = async () => { throw new Error("unexpected network fetch in gate test"); };
+// Stubbed Gemini (the Adapter's primary): a queue of per-row tool-call
+// outputs. Records every call; gate tests assert it was never reached.
+const geminiQueue = [];
+const fetchCalls = [];
+globalThis.fetch = async (url, opts) => {
+  fetchCalls.push({ url, body: opts?.body ? JSON.parse(opts.body) : null });
+  assert.equal(url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent");
+  const out = geminiQueue.shift() ?? {
+    when_to_recite_bn: "সকালে ও সন্ধ্যায় পড়া যায়।",
+    when_to_recite_en: "Can be recited in the morning and evening.",
+    when_to_recite_hi: "सुबह और शाम पढ़ा जा सकता है।",
+    when_to_recite_ur: "صبح اور شام پڑھا جا سکتا ہے۔",
+    faq: [{ q: "কখন পড়বো?", a: "সকালে ও সন্ধ্যায়।" }, { q: "কে পড়বে?", a: "যে কেউ।" }, { q: "কতবার?", a: "প্রতিদিন।" }],
+    hadith_reference: null,
+    quran_reference: null,
+    related_dua_titles: [],
+  };
+  const body = {
+    candidates: [{ content: { parts: [{ functionCall: { name: "save_dua_enrichment", args: out } }] }, finishReason: "STOP" }],
+    usageMetadata: { promptTokenCount: 1200, candidatesTokenCount: 600, totalTokenCount: 1800 },
+  };
+  return {
+    ok: true, status: 200,
+    headers: { get: () => null },
+    text: async () => JSON.stringify(body),
+    json: async () => body,
+  };
+};
 await import(pathToFileURL(join(hDir, "enrich-dua-content", "index.ts")).href);
 const fakeSupabase = await import(pathToFileURL(join(hDir, "fake-supabase.mjs")).href);
 assert.ok(handler, "Deno.serve handler was not captured");
@@ -114,8 +158,12 @@ assert.ok(handler, "Deno.serve handler was not captured");
 function seed() {
   return {
     admin_content: [
-      { id: "dua-1", content_type: "dua", when_to_recite_bn: "x", metadata: {} },
-      { id: "dua-2", content_type: "dua", when_to_recite_bn: null, metadata: { enrichment_status: "pending_review" } },
+      { id: "dua-1", title: "Dua One", content_type: "dua", content_arabic: "AR", content: "BN", when_to_recite_bn: "x", metadata: {} },
+      { id: "dua-2", title: "Dua Two", content_type: "dua", content_arabic: "AR", content: "BN", when_to_recite_bn: null, metadata: { enrichment_status: "pending_review" } },
+      // dua-3 is the only process-eligible row: when_to_recite_bn null
+      // and no pending_review metadata (the .not("metadata","cs",...)
+      // filter excludes dua-2; the is-null filter excludes dua-1).
+      { id: "dua-3", title: "Dua Three", category: "general", content_type: "dua", content_arabic: "AR", content: "BN", when_to_recite_bn: null, metadata: {} },
     ],
   };
 }
@@ -154,8 +202,8 @@ await checkAsync("admin JWT stats -> 200 with expected counts (past the gate)", 
   fakeSupabase.__reset(seed());
   const r = await call({ action: "stats" }, "Bearer valid-admin-jwt");
   assert.equal(r.status, 200);
-  assert.equal(r.data.total, 2);
-  assert.equal(r.data.pending, 1);
+  assert.equal(r.data.total, 3);
+  assert.equal(r.data.pending, 2);
   assert.equal(r.data.awaitingReview, 1);
   assert.equal(fakeSupabase.state.writes.length, 0);
 });
@@ -170,6 +218,42 @@ await checkAsync("no-auth process -> 401, zero writes (process would write + cal
   const r = await call({ action: "process", batchSize: 1 }, null);
   assert.equal(r.status, 401);
   assert.equal(fakeSupabase.state.writes.length, 0);
+  assert.equal(fetchCalls.length, 0, "the gate must block before any AI call");
+});
+await checkAsync("admin process -> one mocked Gemini call enriches the eligible row into pending_review, no virtue fields (G14/G15/G16)", async () => {
+  fakeSupabase.__reset(seed());
+  geminiQueue.length = 0;
+  fetchCalls.length = 0;
+  geminiQueue.push({
+    when_to_recite_bn: "সকালে ও সন্ধ্যায় পড়া যায়।",
+    when_to_recite_en: "Can be recited in the morning and evening.",
+    when_to_recite_hi: "सुबह और शाम पढ़ा जा सकता है।",
+    when_to_recite_ur: "صبح اور شام پڑھا جا سکتا ہے۔",
+    faq: [{ q: "কখন পড়বো?", a: "সকালে ও সন্ধ্যায়।" }, { q: "কে পড়বে?", a: "যে কেউ।" }, { q: "কতবার?", a: "প্রতিদিন।" }],
+    hadith_reference: null,
+    quran_reference: "2:286",
+    related_dua_titles: [],
+  });
+  const r = await call({ action: "process", batchSize: 10 }, "Bearer valid-admin-jwt");
+  assert.equal(r.status, 200);
+  assert.equal(r.data.processed, 1, `expected 1 processed, got ${JSON.stringify(r.data)}`);
+  assert.equal(r.data.failed, 0);
+  assert.equal(r.data.done, true);
+  assert.equal(fetchCalls.length, 1, "exactly one provider call for one row");
+  assert.equal(fetchCalls[0].url, "https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent");
+  const row = fakeSupabase.state.tables.admin_content.find((x) => x.id === "dua-3");
+  assert.equal(row.metadata.enrichment_status, "pending_review");
+  assert.equal(row.metadata.enrichment_pending.when_to_recite_bn, "সকালে ও সন্ধ্যায় পড়া যায়।");
+  assert.equal(row.metadata.enrichment_pending.quran_reference, "2:286");
+  assert.equal(row.metadata.enrichment_pending.hadith_reference, null);
+  // G14: the pending payload carries no virtue/benefit fields at all.
+  const pendingKeys = Object.keys(row.metadata.enrichment_pending);
+  assert.ok(pendingKeys.every((k) => !/benefit|virtue|fadilah|fadhilah|reward|sawab/i.test(k)), `no virtue keys allowed: ${pendingKeys.join(",")}`);
+  // The live when_to_recite_bn field stays null until an admin approves.
+  assert.equal(row.when_to_recite_bn, null);
+  const untouched = fakeSupabase.state.tables.admin_content.find((x) => x.id === "dua-1");
+  assert.equal(untouched.metadata.enrichment_status, undefined);
+  assert.equal(fakeSupabase.state.writes.filter((w) => w.op === "update").length, 1);
 });
 
 rmSync(stageDir, { recursive: true, force: true });
