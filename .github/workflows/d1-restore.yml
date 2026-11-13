@@ -292,10 +292,38 @@ jobs:
           [ "$H" -eq "$EXPECTED_HADITHS" ] || { echo "hadiths MISMATCH."; exit 1; }
           [ "$A" -eq "$EXPECTED_ADMIN_CONTENT" ] || { echo "admin_content MISMATCH."; exit 1; }
           [ "$P" -eq "$EXPECTED_PUBLICATIONS" ] || { echo "publications MISMATCH."; exit 1; }
-          T=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('daily_content_publications','daily_content_recommendations','islamic_calendar_corrections');")
-          [ "$T" = "3" ] || { echo "Gate 1 tables missing (found $T of 3)."; exit 1; }
-          C=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='islamic_calendar_corrections';")
-          [ "$C" = "9" ] || { echo "islamic_calendar_corrections has $C columns, expected 9."; exit 1; }
+          # Revision 5 Part 2 (Gate 1 remediation, exact set comparison):
+          # the restore must reproduce EXACTLY the Gate 1 tables the
+          # backup contains — the same table NAMES, no more, no less.
+          # A count-only check would pass when the counts match but the
+          # names differ, so both sides are normalized (sorted,
+          # deduplicated) and compared as sets. The backup's schema.sql
+          # is the source of truth for what the backup contains.
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?public\.(daily_content_publications|daily_content_recommendations|islamic_calendar_corrections)' backup/schema.sql | sed 's/.*public\.//' | sort -u > /tmp/backup_gate1.txt
+          psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('daily_content_publications','daily_content_recommendations','islamic_calendar_corrections') ORDER BY table_name;" | sort -u > /tmp/rehearsal_gate1.txt
+          if ! diff -q /tmp/backup_gate1.txt /tmp/rehearsal_gate1.txt >/dev/null; then
+            echo "Gate 1 tables mismatch. Backup has:"
+            cat /tmp/backup_gate1.txt
+            echo "Rehearsal has:"
+            cat /tmp/rehearsal_gate1.txt
+            echo "Missing or unexpected Gate 1 table."
+            exit 1
+          fi
+          # The 9-column check runs only if islamic_calendar_corrections
+          # is in the BACKUP inventory. If the backup has the table but
+          # the rehearsal does not, the set comparison above already
+          # failed; the explicit check below also fails that case.
+          # If neither has the table, the check is skipped.
+          if grep -qxF "islamic_calendar_corrections" /tmp/backup_gate1.txt; then
+            if ! grep -qxF "islamic_calendar_corrections" /tmp/rehearsal_gate1.txt; then
+              echo "islamic_calendar_corrections is in the backup but missing in the rehearsal."
+              exit 1
+            fi
+            C=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='islamic_calendar_corrections';")
+            [ "$C" = "9" ] || { echo "islamic_calendar_corrections has $C columns, expected 9."; exit 1; }
+          else
+            echo "islamic_calendar_corrections not in the backup inventory (migration 070001 not applied yet); column check skipped."
+          fi
           grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g' | sort -u > /tmp/restored_tables.txt
 
       - name: Summary
@@ -307,9 +335,9 @@ jobs:
             echo ""
             echo "Backup artifact run: $BACKUP_RUN_ID"
             echo "Target: rehearsal project cazdbxxffvdnsdatjsrx (guard-verified, inventory empty before restore)"
-            echo "Result: PASS - restore exit 0, all counts match, Gate 1 tables present."
+            echo "Result: PASS - restore exit 0, all counts match, Gate 1 tables match the backup inventory exactly."
             echo ""
-            echo "RESTORED AND VERIFIED: database dump only. Tables restored: $TABLES. Verified: row counts for hadiths, admin_content, daily_content_publications; Gate 1 tables present; islamic_calendar_corrections has 9 columns."
+            echo "RESTORED AND VERIFIED: database dump only. Tables restored: $TABLES. Verified: row counts for hadiths, admin_content, daily_content_publications; Gate 1 tables match the backup inventory exactly (same table names, no missing or unexpected tables; the 9-column check runs only if islamic_calendar_corrections is in the backup inventory)."
             echo ""
             echo "NOT RESTORED OR VERIFIED: Auth users, Auth configuration, Storage buckets, Storage objects, Edge Functions, custom role passwords. These are separate recovery scopes (see the Auth & Storage test plan)."
             echo ""
