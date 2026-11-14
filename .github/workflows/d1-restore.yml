@@ -1,4 +1,4 @@
-# D-1 Restore Rehearsal — manual GitHub Actions workflow (REVISION 4, 2026-11-11)
+# D-1 Restore Rehearsal — manual GitHub Actions workflow (REVISION 6, 2026-11-14)
 #
 # Purpose: restore a D-1 backup artifact into the REHEARSAL project
 # ONLY (cazdbxxffvdnsdatjsrx) and verify it. Production is never the
@@ -65,6 +65,26 @@
 #      guard accepts only the rehearsal host. (Same correction as
 #      d1-backup.yml Revision 5; the two guards are identical except
 #      for the project ref and the host value.)
+#
+# Revision 6 (pre-restore artifact check, 2026-11-14) — changes from
+# Revision 5 (this step only; everything else is unchanged):
+#   1. The "Decrypt + verify manifest + sanity check" step now also
+#      refuses an artifact whose data.sql contains data for
+#      Supabase-managed tables the postgres user cannot write to on
+#      restore. Op 2 run #1 failed at data.sql:37361 with
+#      'permission denied for table buckets_vectors' after loading
+#      76 COPY blocks; the single transaction rolled everything
+#      back. The check runs before any database connection, so a
+#      bad artifact fails fast with a clear message instead of a
+#      ~4-minute restore that rolls back. A backup made with
+#      d1-backup.yml Revision 10 or later excludes these tables;
+#      an older artifact cannot be restored.
+#   2. The check mirrors the backup validation (Revision 10): it
+#      fails on COPY into any auth/storage table, and on either
+#      excluded table name (storage.buckets_vectors,
+#      storage.vector_indexes) appearing anywhere in data.sql.
+#      It does NOT change the restore command, the guard, the
+#      inventory check, or the count verification.
 #
 # Secrets required (repo Settings -> Secrets and variables -> Actions):
 #   REHEARSAL_DB_URL       Session-pooler connection string (port 5432)
@@ -250,6 +270,18 @@ jobs:
           test -s data.sql || { echo "data.sql is empty after decrypt."; exit 1; }
           grep -q "CREATE TABLE" schema.sql || { echo "schema.sql has no CREATE TABLE."; exit 1; }
           grep -q "COPY " data.sql || { echo "data.sql has no COPY lines."; exit 1; }
+          # Revision 6 (2026-11-14): pre-restore artifact check —
+          # refuse an artifact whose data.sql contains data for
+          # Supabase-managed tables the postgres user cannot write
+          # to on restore (Op 2 run #1 failed at data.sql:37361
+          # with 'permission denied for table buckets_vectors').
+          # This runs before any database connection, so a bad
+          # artifact fails fast here instead of after a ~4-minute
+          # restore that rolls back. Use a backup made with
+          # d1-backup.yml Revision 10 or later.
+          if grep -qE '^COPY "?(auth|storage)"?\.' data.sql; then echo "data.sql contains COPY into managed-schema tables (auth/storage) - this artifact cannot be restored. Use a backup made with d1-backup.yml Revision 10 or later."; exit 1; fi
+          if grep -qE 'storage\.buckets_vectors|storage\.vector_indexes' data.sql; then echo "data.sql contains an excluded managed storage table (storage.buckets_vectors or storage.vector_indexes) - this artifact cannot be restored. Use a backup made with d1-backup.yml Revision 10 or later."; exit 1; fi
+          echo "Artifact check passed: data.sql contains no COPY into managed-schema tables (auth/storage) and no excluded managed storage table."
 
       - name: Check target inventory is empty (fail-closed)
         run: |
