@@ -222,7 +222,7 @@ jobs:
             echo "PGHOST=$DB_HOST"
             echo "PGPORT=$DB_PORT"
             echo "PGUSER=$DB_USER"
-            echo "PGPASSWORD=<redacted>"
+            echo "PGPASSWORD=$DB_PASS"
             echo "PGDATABASE=postgres"
           } >> "$GITHUB_ENV"
           echo "PG* connection vars set (host $DB_HOST, user $DB_USER)."
