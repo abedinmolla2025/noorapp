@@ -278,7 +278,14 @@ jobs:
           # failed on it). Fail if data.sql copies into any
           # auth/storage table, so this class of leak is caught at
           # backup time.
-          if grep -qE '^COPY "?(auth|storage)"?\.' backup/data.sql; then echo "data.sql contains COPY into managed-schema tables (auth/storage) - unexpected."; exit 1; fi
+          # Revision 11 (2026-11-14): diagnostic — Op 1 run #10 failed
+          # at this check without naming the leaking table. Print the
+          # leaking COPY lines before failing, so the next run names
+          # the tables. Pass/fail behaviour is unchanged: any
+          # auth/storage COPY still fails the run. The printed lines
+          # name only the table and columns (COPY statement lines);
+          # no data rows are printed.
+          if grep -qE '^COPY "?(auth|storage)"?\.' backup/data.sql; then echo "data.sql contains COPY into managed-schema tables (auth/storage) - unexpected. Leaking COPY lines:"; grep -E '^COPY "?(auth|storage)"?\.' backup/data.sql; exit 1; fi
           # Revision 10 (2026-11-14): exclusion verification — the
           # two managed storage tables must be absent from data.sql
           # entirely (not just absent from COPY lines). This names
