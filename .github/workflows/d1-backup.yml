@@ -231,9 +231,9 @@ jobs:
           # complete CLI dump (run #7: 52M data.sql, 115K schema.sql,
           # both complete, refused on the schema.sql footer). The
           # schema/roles content is still validated by the CREATE
-          # TABLE / CREATE POLICY / CREATE ROLE and table-coverage
-          # checks below; a truncated data dump is still caught by
-          # this footer check and the COPY-block balance check.
+          # TABLE / CREATE POLICY and table-coverage checks below; a
+          # truncated data dump is still caught by this footer check
+          # and the COPY-block balance check.
           grep -q "PostgreSQL database dump complete" backup/data.sql || { echo "data.sql is truncated (no dump-complete footer)."; exit 1; }
           COPY_COUNT="$(grep -c "^COPY " backup/data.sql || true)"
           DOT_COUNT="$(grep -c '^\\\.$' backup/data.sql || true)"
@@ -241,7 +241,15 @@ jobs:
           [ "$COPY_COUNT" -eq "$DOT_COUNT" ] || { echo "data.sql COPY blocks are unbalanced ($COPY_COUNT COPY vs $DOT_COUNT terminators) - truncated."; exit 1; }
           grep -q "CREATE TABLE" backup/schema.sql || { echo "schema.sql has no CREATE TABLE."; exit 1; }
           grep -q "CREATE POLICY" backup/schema.sql || { echo "schema.sql has no CREATE POLICY."; exit 1; }
-          grep -q "CREATE ROLE" backup/roles.sql || { echo "roles.sql has no CREATE ROLE."; exit 1; }
+          # Revision 9 (2026-11-14): NO 'CREATE ROLE' presence check
+          # on roles.sql. The CLI's --role-only dump exports CUSTOM
+          # roles only and filters out cloud-internal/managed roles,
+          # so a project with no custom roles legitimately produces a
+          # roles.sql with no CREATE ROLE (run #8: 297-byte roles.sql,
+          # CLI exit 0, refused on this check). The non-empty check
+          # above still guards against a missing/empty roles file,
+          # and the restore rehearsal (Op 2) is the real test of
+          # whether roles.sql is sufficient.
           grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g' | sort -u > /tmp/schema_tables.txt
           grep -oE '^COPY [^ (]+' backup/data.sql | sed 's/^COPY //; s/"//g' | sort -u > /tmp/data_tables.txt
           # Revision 5: expected tables are the production inventory
