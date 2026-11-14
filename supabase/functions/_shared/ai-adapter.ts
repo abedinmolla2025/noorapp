@@ -4,10 +4,15 @@
 // never build a provider URL, never read a provider key, and never call
 // fetch for AI themselves.
 //
-// Providers (free-only, owner decision 2026-11-13): Gemini free tier
-// (primary) + Groq free plan (secondary). No other provider exists in
-// this module, and there is no paid provider, model, or tier in the
-// configuration, so no code path can switch to one.
+// Providers (free-only, owner decision 2026-11-13; primary swapped
+// 2026-11-14): Groq free plan (primary) + Gemini free tier
+// (secondary, kept for future use — its free tier is currently
+// unavailable for the owner's Google account and no billing will be
+// enabled). No other provider exists in this module, and there is no
+// paid provider, model, or tier in the configuration, so no code path
+// can switch to one. Which provider is primary comes from AI_CONFIG,
+// never from a hardcoded name: the Adapter tries AI_CONFIG.primary
+// first and AI_CONFIG.secondary once, for retryable/quota errors only.
 //
 // Rules implemented here (AI-FAILOVER-REVISED.md):
 // - At most 4 provider calls per request (primary + 2 retries + 1
@@ -663,8 +668,9 @@ export function isProviderLevelError(e: unknown): boolean {
 }
 
 /**
- * One forced tool call through the Adapter: primary (Gemini) with bounded
- * retries, then one attempt on the secondary (Groq) — only for retryable
+ * One forced tool call through the Adapter: the configured primary
+ * (AI_CONFIG.primary) with bounded retries, then one attempt on the
+ * configured secondary (AI_CONFIG.secondary) — only for retryable
  * or quota errors. Returns the parsed tool-call arguments. Throws
  * AiError on any failure (never returns a partial result).
  */
@@ -710,7 +716,12 @@ export async function generateToolCall(
     attempt: number,
   ): Promise<AiToolCallSuccess> => {
     const started = now();
-    const isPrimary = provider === "gemini";
+    // Role (primary/secondary) comes from AI_CONFIG, never from the
+    // provider name — the primary is whichever provider AI_CONFIG
+    // names. The CLIENT and RESPONSE PARSER, by contrast, are tied to
+    // the provider itself (Gemini's envelope vs Groq's OpenAI-compatible
+    // envelope), so they are selected by provider name.
+    const isPrimary = provider === AI_CONFIG.primary.id;
     const cfg = isPrimary ? AI_CONFIG.primary : AI_CONFIG.secondary;
     const key = isPrimary ? primaryKey : secondaryKey;
     const timeoutMs =
@@ -718,7 +729,7 @@ export async function generateToolCall(
       cfg.timeoutMs;
     const fetchImpl = req.fetchImpl;
     let outcome: ProviderHttpOutcome;
-    if (isPrimary) {
+    if (provider === "gemini") {
       outcome = await callGemini({
         apiKey: key,
         systemPrompt: req.systemPrompt,
@@ -766,7 +777,7 @@ export async function generateToolCall(
         });
         throw e;
       }
-      const parsed = isPrimary
+      const parsed = provider === "gemini"
         ? parseGeminiResponse(json)
         : parseGroqResponse(json);
       if (!parsed.ok) {
@@ -828,29 +839,32 @@ export async function generateToolCall(
     throw err;
   };
 
-  // PRIMARY (up to 1 + maxPrimaryRetries attempts).
+  // PRIMARY (up to 1 + maxPrimaryRetries attempts). The primary is
+  // whichever provider AI_CONFIG names — never a hardcoded name.
+  const primaryId = AI_CONFIG.primary.id;
+  const secondaryId = AI_CONFIG.secondary.id;
   for (let attempt = 0; attempt <= maxPrimaryRetries; attempt++) {
-    if (isQuotaBlocked("gemini", now())) {
+    if (isQuotaBlocked(primaryId, now())) {
       lastError = new AiError({
         kind: "quotaExhausted",
         code: "FREE_QUOTA_EXHAUSTED",
         message:
-          "Gemini daily free quota exhausted (recorded earlier on this instance) — try again after the reset window",
-        provider: "gemini",
+          `${providerLabel(primaryId)} daily free quota exhausted (recorded earlier on this instance) — try again after the reset window`,
+        provider: primaryId,
         status: null,
         retryable: false,
         failover: true,
-        resetAtMs: getQuotaBlockedUntil("gemini") ?? null,
+        resetAtMs: getQuotaBlockedUntil(primaryId) ?? null,
       });
       break;
     }
-    if (isBreakerOpen("gemini", now())) {
+    if (isBreakerOpen(primaryId, now())) {
       lastError = new AiError({
         kind: "retryable",
         code: "PROVIDER_TEMPORARILY_UNAVAILABLE",
         message:
-          "Gemini circuit breaker is open on this instance — trying the secondary",
-        provider: "gemini",
+          `${providerLabel(primaryId)} circuit breaker is open on this instance — trying the secondary`,
+        provider: primaryId,
         status: null,
         retryable: true,
         failover: true,
@@ -858,18 +872,18 @@ export async function generateToolCall(
       break;
     }
     try {
-      return await attemptProvider("gemini", attempt);
+      return await attemptProvider(primaryId, attempt);
     } catch (e) {
       if (!(e instanceof AiError)) throw e;
       lastError = e;
       if (e.code === "FREE_QUOTA_EXHAUSTED") {
-        setQuotaBlocked("gemini", e.resetAtMs, now());
+        setQuotaBlocked(primaryId, e.resetAtMs, now());
         break;
       }
       // auth / badRequest / schema / policy / unknown / 402: no retry,
       // no failover — return immediately.
       if (!e.retryable) throw e;
-      recordProviderFailure("gemini", now());
+      recordProviderFailure(primaryId, now());
       if (attempt < maxPrimaryRetries) {
         await sleep(backoffDelayMs(attempt, random, e.retryAfterMs));
       }
@@ -881,15 +895,15 @@ export async function generateToolCall(
     lastError &&
     (lastError.retryable || lastError.code === "FREE_QUOTA_EXHAUSTED")
   ) {
-    if (!isQuotaBlocked("groq", now()) && !isBreakerOpen("groq", now())) {
+    if (!isQuotaBlocked(secondaryId, now()) && !isBreakerOpen(secondaryId, now())) {
       try {
-        return await attemptProvider("groq", 0);
+        return await attemptProvider(secondaryId, 0);
       } catch (e) {
         if (!(e instanceof AiError)) throw e;
         if (e.code === "FREE_QUOTA_EXHAUSTED") {
-          setQuotaBlocked("groq", e.resetAtMs, now());
+          setQuotaBlocked(secondaryId, e.resetAtMs, now());
         }
-        if (e.retryable) recordProviderFailure("groq", now());
+        if (e.retryable) recordProviderFailure(secondaryId, now());
         e.previousErrors = [lastError, ...e.previousErrors];
         lastError = e;
       }

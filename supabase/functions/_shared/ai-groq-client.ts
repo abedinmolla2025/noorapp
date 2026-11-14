@@ -19,7 +19,7 @@
 // (failover §1a). Like the Gemini client, this client never throws for
 // an HTTP error; it returns the raw outcome and the Adapter classifies.
 
-import { AI_CONFIG } from "./ai-config.ts";
+import { providerConfig } from "./ai-config.ts";
 import type { ProviderUsage, ToolDefinition } from "./ai-config.ts";
 
 export type GroqCallOptions = {
@@ -50,7 +50,7 @@ export type ParsedToolCall =
   | { ok: false; kind: "schema" | "policy"; message: string };
 
 export function groqUrl(): string {
-  return `${AI_CONFIG.secondary.baseUrl}/chat/completions`;
+  return `${providerConfig("groq").baseUrl}/chat/completions`;
 }
 
 export function buildGroqRequest(opts: {
@@ -60,7 +60,7 @@ export function buildGroqRequest(opts: {
   maxOutputTokens: number;
 }): Record<string, unknown> {
   return {
-    model: AI_CONFIG.secondary.model,
+    model: providerConfig("groq").model,
     messages: [
       { role: "system", content: opts.systemPrompt },
       { role: "user", content: opts.userText },

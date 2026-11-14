@@ -19,7 +19,7 @@
 // failure. Response parsing is a pure function, unit-tested with
 // fixtures built from the official API reference shapes.
 
-import { AI_CONFIG } from "./ai-config.ts";
+import { providerConfig } from "./ai-config.ts";
 import type { ProviderUsage, ToolDefinition } from "./ai-config.ts";
 
 export type GeminiCallOptions = {
@@ -50,7 +50,8 @@ export type ParsedToolCall =
   | { ok: false; kind: "schema" | "policy"; message: string };
 
 export function geminiUrl(): string {
-  return `${AI_CONFIG.primary.baseUrl}/models/${AI_CONFIG.primary.model}:generateContent`;
+  const cfg = providerConfig("gemini");
+  return `${cfg.baseUrl}/models/${cfg.model}:generateContent`;
 }
 
 // Gemini's function-calling API does NOT support the JSON Schema
