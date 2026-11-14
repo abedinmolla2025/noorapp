@@ -1,4 +1,4 @@
-# D-1 Restore Production — manual GitHub Actions workflow (REVISION 4, 2026-11-14)
+# D-1 Restore Production — manual GitHub Actions workflow (REVISION 5, 2026-11-14)
 #
 # Purpose: RECOVERY ONLY. Restore a D-1 backup artifact into the
 # PRODUCTION project (llicfiepatzgllmjhzbw) and verify it. Created
@@ -33,6 +33,11 @@
 #      user objects outside the platform schemas — true now
 #      because the public schema is empty. If it finds anything,
 #      the job refuses (safe) and the object list is printed.
+# Revision 5 (2026-11-14): pg_dump's data.sql itself starts
+#   with 'SET session_replication_role = replica;' (run #4
+#   failed at data.sql:1). Strip those SET/RESET lines from the
+#   decrypted data.sql in the Restore step, after the manifest
+#   check; the FKs are already dropped, so the SET is redundant.
 # Revision 4 (2026-11-14): DISABLE TRIGGER ALL also needs
 #   superuser for system (RI) triggers (run #3 failed on
 #   public.admin_ads). Replaced with FK drop/re-add: capture FK
@@ -342,6 +347,24 @@ jobs:
           # dollar-quoted strings ($q$) for literals so they
           # contain no single quotes and are safe inside the bash
           # single-quoted arguments.
+          # Revision 5 (2026-11-14): pg_dump's data.sql ITSELF
+          # starts with 'SET session_replication_role = replica;'
+          # (line 1) and ends with a matching restore of that
+          # setting. The production postgres role cannot set it
+          # (run #4 failed at data.sql:1, after the FK capture and
+          # drop had already succeeded). Strip those SET/RESET
+          # lines from the decrypted data.sql before applying it.
+          # This runs AFTER the Decrypt step already verified the
+          # manifest SHA-256 of the original files, so the
+          # integrity check is unaffected. The strip is safe: the
+          # FKs are already dropped (Revision 4), so the SET is
+          # redundant for FK purposes, and the regex anchors on
+          # lines that START with SET/RESET of this parameter, so
+          # no COPY data row can ever match it. User triggers will
+          # fire during COPY (as on a normal INSERT); the data was
+          # originally created through the same triggers.
+          sed -i -E -e '/^SET[[:space:]]+session_replication_role[[:space:]]*=/d' -e '/^RESET[[:space:]]+session_replication_role/d' backup/data.sql
+          echo "Stripped session_replication_role SET/RESET lines from data.sql."
           psql --single-transaction --variable ON_ERROR_STOP=1 \
             --file backup/schema.sql \
             --command 'CREATE TEMP TABLE _d1_fk_restore AS SELECT c.conrelid::regclass::text AS tbl, c.conname AS conname, pg_get_constraintdef(c.oid) AS def FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.contype = $q$f$q$ AND n.nspname = $q$public$q$;' \
