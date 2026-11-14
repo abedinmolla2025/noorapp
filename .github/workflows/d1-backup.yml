@@ -215,14 +215,29 @@ jobs:
           mkdir -p backup
           supabase db dump --remote="$PROD_DB_URL" -f backup/roles.sql --role-only
           supabase db dump --remote="$PROD_DB_URL" -f backup/schema.sql
-          # Revision 10 (2026-11-14): exclude the Supabase-managed
-          # storage tables from the data dump. The CLI's --data-only
-          # dump includes their data, but the postgres user cannot
-          # write to them on restore (Op 2 run #1 failed at
-          # data.sql:37361 with 'permission denied for table
-          # buckets_vectors'). This is the official Supabase docs
-          # prescription (supabase.com/docs/guides/deployment/ci/backups).
-          supabase db dump --remote="$PROD_DB_URL" -f backup/data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
+          # Revision 12 (2026-11-14): exclude ALL Supabase-managed
+          # tables from the data dump — 26 auth + 7 storage (33 total).
+          # The CLI's --data-only dump includes their data, but the
+          # postgres user cannot write to them on restore (Op 2 run #1
+          # failed on storage.buckets_vectors). Revision 10 excluded
+          # only the two storage tables the docs name; Op 1 run #10
+          # then failed the leakage check, and the Revision 11
+          # diagnostic (run #11) named the remaining 31 tables.
+          # Each -x below is an exact schema.table from that
+          # diagnostic evidence — no table is guessed.
+          supabase db dump --remote="$PROD_DB_URL" -f backup/data.sql --use-copy --data-only \
+            -x "auth.audit_log_entries" -x "auth.custom_oauth_providers" -x "auth.flow_state" \
+            -x "auth.identities" -x "auth.instances" -x "auth.mfa_amr_claims" \
+            -x "auth.mfa_challenges" -x "auth.mfa_factors" -x "auth.mfa_recovery_code_sets" \
+            -x "auth.mfa_recovery_codes" -x "auth.oauth_authorizations" -x "auth.oauth_client_states" \
+            -x "auth.oauth_clients" -x "auth.oauth_consents" -x "auth.one_time_tokens" \
+            -x "auth.refresh_tokens" -x "auth.saml_providers" -x "auth.saml_relay_states" \
+            -x "auth.scim_tokens" -x "auth.scim_users" -x "auth.sessions" \
+            -x "auth.sso_domains" -x "auth.sso_providers" -x "auth.users" \
+            -x "auth.webauthn_challenges" -x "auth.webauthn_credentials" \
+            -x "storage.bucket_lifecycle_states" -x "storage.buckets" -x "storage.buckets_analytics" \
+            -x "storage.buckets_vectors" -x "storage.lifecycle_abandoned_artifacts" \
+            -x "storage.objects" -x "storage.vector_indexes"
 
       - name: Validate dump files (integrity + coverage)
         run: |
@@ -286,13 +301,14 @@ jobs:
           # name only the table and columns (COPY statement lines);
           # no data rows are printed.
           if grep -qE '^COPY "?(auth|storage)"?\.' backup/data.sql; then echo "data.sql contains COPY into managed-schema tables (auth/storage) - unexpected. Leaking COPY lines:"; grep -E '^COPY "?(auth|storage)"?\.' backup/data.sql; exit 1; fi
-          # Revision 10 (2026-11-14): exclusion verification — the
-          # two managed storage tables must be absent from data.sql
-          # entirely (not just absent from COPY lines). This names
-          # the excluded tables explicitly in the evidence; the
-          # broad COPY check above would already fail on them.
-          if grep -qE 'storage\.buckets_vectors|storage\.vector_indexes' backup/data.sql; then echo "data.sql contains an excluded managed storage table (storage.buckets_vectors or storage.vector_indexes) - unexpected."; exit 1; fi
-          echo "Exclusion verified: storage.buckets_vectors and storage.vector_indexes are absent from data.sql."
+          # Revision 12 (2026-11-14): exclusion verification — all 33
+          # excluded tables (26 auth + 7 storage, named by the Op 1
+          # run #11 diagnostic) must be absent from data.sql entirely
+          # (not just absent from COPY lines). The broad COPY check
+          # above would already fail on any of them; this names the
+          # excluded tables explicitly in the evidence.
+          if grep -qE 'auth\.(audit_log_entries|custom_oauth_providers|flow_state|identities|instances|mfa_amr_claims|mfa_challenges|mfa_factors|mfa_recovery_code_sets|mfa_recovery_codes|oauth_authorizations|oauth_client_states|oauth_clients|oauth_consents|one_time_tokens|refresh_tokens|saml_providers|saml_relay_states|scim_tokens|scim_users|sessions|sso_domains|sso_providers|users|webauthn_challenges|webauthn_credentials)|storage\.(bucket_lifecycle_states|buckets|buckets_analytics|buckets_vectors|lifecycle_abandoned_artifacts|objects|vector_indexes)' backup/data.sql; then echo "data.sql contains an excluded managed table - unexpected."; exit 1; fi
+          echo "Exclusion verified: all 33 excluded managed tables (26 auth + 7 storage) are absent from data.sql."
           echo "Dump validation passed: 3 files non-empty, data footer present, COPY blocks balanced ($COPY_COUNT), all 3 expected tables present in schema and data."
 
       - name: SHA-256 manifest + encrypt
@@ -300,7 +316,7 @@ jobs:
           set -euo pipefail
           cd backup
           echo "# Supabase CLI 3.1.0" > MANIFEST-SHA256.txt
-          echo "# Excluded from data dump (Revision 10): storage.buckets_vectors, storage.vector_indexes" >> MANIFEST-SHA256.txt
+          echo "# Excluded from data dump (Revision 12): 33 managed tables — auth: audit_log_entries, custom_oauth_providers, flow_state, identities, instances, mfa_amr_claims, mfa_challenges, mfa_factors, mfa_recovery_code_sets, mfa_recovery_codes, oauth_authorizations, oauth_client_states, oauth_clients, oauth_consents, one_time_tokens, refresh_tokens, saml_providers, saml_relay_states, scim_tokens, scim_users, sessions, sso_domains, sso_providers, users, webauthn_challenges, webauthn_credentials; storage: bucket_lifecycle_states, buckets, buckets_analytics, buckets_vectors, lifecycle_abandoned_artifacts, objects, vector_indexes" >> MANIFEST-SHA256.txt
           sha256sum roles.sql schema.sql data.sql >> MANIFEST-SHA256.txt
           cat MANIFEST-SHA256.txt
           for f in roles.sql schema.sql data.sql; do
@@ -330,7 +346,7 @@ jobs:
             echo ""
             echo "SCOPE: DATABASE DUMP ONLY. This backup covers user schemas, roles, and data. It does NOT cover Auth users, Auth configuration, Storage buckets, Storage objects, Edge Functions, or custom role passwords."
             echo ""
-            echo "Excluded from the data dump (Revision 10): storage.buckets_vectors, storage.vector_indexes (Supabase-managed storage tables; the postgres user cannot write to them on restore). Exclusion verified in validation."
+            echo "Excluded from the data dump (Revision 12): 33 Supabase-managed tables — 26 auth + 7 storage (the postgres user cannot write to them on restore). Exclusion verified in validation."
             echo ""
             echo '```'
             cat backup/MANIFEST-SHA256.txt
