@@ -141,13 +141,23 @@ jobs:
           # The pooler host carries no project ref, so the ref is
           # verified via the username (postgres.<ref>) and the other
           # project's ref must not appear anywhere in the URL.
+          # Revision 6 (2026-11-14): trim leading/trailing whitespace
+          # (a paste artifact) instead of refusing on it, and print
+          # the ACTUAL parsed host/port/user on a mismatch — those
+          # are public knowledge (a DNS hostname, a port number, a
+          # username), never the password — so a failed run's log
+          # shows exactly what the secret contains. The URL and the
+          # password are still never echoed.
           EXPECTED_REF="llicfiepatzgllmjhzbw"
           OTHER_REF="cazdbxxffvdnsdatjsrx"
           EXPECTED_HOST="aws-1-ap-southeast-2.pooler.supabase.com"
           EXPECTED_USER="postgres.${EXPECTED_REF}"
           URL="$PROD_DB_URL"
+          # Trim leading/trailing whitespace (spaces, tabs, newlines).
+          URL="${URL#"${URL%%[![:space:]]*}"}"
+          URL="${URL%"${URL##*[![:space:]]}"}"
           case "$URL" in
-            *[[:space:]]*) echo "Malformed database URL (whitespace). Refusing."; exit 1 ;;
+            *[[:space:]]*) echo "Malformed database URL (whitespace inside the URL). Refusing."; exit 1 ;;
           esac
           case "$URL" in
             *"$OTHER_REF"*) echo "URL contains the other project's ref. Refusing."; exit 1 ;;
@@ -162,9 +172,9 @@ jobs:
           DB_HOST="${BASH_REMATCH[5]}"
           DB_PORT="${BASH_REMATCH[7]}"
           DB_PATH="${BASH_REMATCH[8]}"
-          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host. Refusing."; exit 1; }
-          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port (must be 5432). Refusing."; exit 1; }
-          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username. Refusing."; exit 1; }
+          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
+          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
+          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
           [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
           [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name (must be postgres). Refusing."; exit 1; }
           echo "Target host OK (noor-backend, $DB_HOST)."
