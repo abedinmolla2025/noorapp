@@ -1,4 +1,4 @@
-# D-1 Restore Production — manual GitHub Actions workflow (REVISION 2, 2026-11-14)
+# D-1 Restore Production — manual GitHub Actions workflow (REVISION 3, 2026-11-14)
 #
 # Purpose: RECOVERY ONLY. Restore a D-1 backup artifact into the
 # PRODUCTION project (llicfiepatzgllmjhzbw) and verify it. Created
@@ -33,6 +33,13 @@
 #      user objects outside the platform schemas — true now
 #      because the public schema is empty. If it finds anything,
 #      the job refuses (safe) and the object list is printed.
+# Revision 3 (2026-11-14): 'SET session_replication_role =
+#   replica' needs a true superuser and the production postgres
+#   role cannot set it (run #2 failed there). Replaced with a
+#   non-superuser trigger toggle: DISABLE TRIGGER ALL on every
+#   public table before data.sql, ENABLE TRIGGER ALL after it
+#   (table ownership only). The rehearsal restore still uses
+#   the SET form, which works there.
 # Revision 2 (2026-11-14): psql cannot parse a connection URI
 #   whose password contains a raw '@' (production restore run #1
 #   failed at the inventory check with "could not translate host
@@ -307,10 +314,29 @@ jobs:
           # would CREATE ROLE for roles that already exist and
           # fail the transaction. Only schema.sql + data.sql are
           # applied (the public schema and its data).
+          # Revision 3 (2026-11-14): do NOT use
+          # 'SET session_replication_role = replica' — it requires
+          # a true superuser, and the production postgres role
+          # cannot set it (run #2 failed there, before any data
+          # loaded). The rehearsal postgres CAN set it, which is
+          # why Op 2 run #2 worked — the two projects differ.
+          # Instead, disable ALL triggers on every public table
+          # before data.sql and re-enable them after it. ALTER
+          # TABLE ... DISABLE/ENABLE TRIGGER ALL needs only table
+          # ownership (postgres owns every table schema.sql
+          # creates), not superuser. This handles the circular FK
+          # between admin_content and content_versions, which is
+          # why the replication-role SET was there. Both toggles
+          # run inside the same single transaction, so a failure
+          # anywhere rolls the DISABLE back too. The DO blocks
+          # use dollar-quoted strings ($body$ / $q$) so the whole
+          # --command contains no single quotes and is safe inside
+          # the bash single-quoted argument.
           psql --single-transaction --variable ON_ERROR_STOP=1 \
             --file backup/schema.sql \
-            --command 'SET session_replication_role = replica' \
-            --file backup/data.sql
+            --command 'DO $body$ DECLARE r record; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = $q$public$q$ LOOP EXECUTE format($q$ALTER TABLE public.%I DISABLE TRIGGER ALL$q$, r.tablename); END LOOP; END $body$;' \
+            --file backup/data.sql \
+            --command 'DO $body$ DECLARE r record; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = $q$public$q$ LOOP EXECUTE format($q$ALTER TABLE public.%I ENABLE TRIGGER ALL$q$, r.tablename); END LOOP; END $body$;'
 
       - name: Verify counts
         run: |
