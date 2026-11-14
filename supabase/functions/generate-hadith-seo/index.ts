@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
 import { generateToolCall } from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -19,6 +20,7 @@ const SYSTEM_PROMPT = [
   "lessons_bn: ৩–৫টি ছোট bullet point, প্রতিটি ৮–১৫ শব্দ।",
   "প্রতিটি হাদিসের জন্য কন্টেন্ট unique হতে হবে।",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
+  BENGALI_EDITORIAL_RULES,
 ].join("\n");
 
 async function generateForHadith(arabic: string, bengali: string | null): Promise<{ explanation_bn: string; lessons_bn: string[] }> {

@@ -4,6 +4,7 @@ import {
   generateToolCall,
   isProviderLevelError,
 } from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -30,6 +31,8 @@ const SYSTEM_PROMPT = [
   "hadith_reference: OPTIONAL. Only include if you are certain of an EXACT authentic reference from Sahih Bukhari / Sahih Muslim / Jami' at-Tirmidhi / Sunan Abi Dawud / Sunan an-Nasa'i / Sunan Ibn Majah, formatted like 'Sahih Bukhari 6407'. If not certain, return null. NEVER FABRICATE.",
   "quran_reference: OPTIONAL. Only include if you know the exact Surah:Ayah (e.g. '2:286'). If not certain, return null.",
   "related_dua_titles: 3-5 EXACT titles (in Bengali) of thematically related duas — these will be matched against our DB and dropped if not found.",
+  "Write all Bengali output (when_to_recite_bn, faq, related_dua_titles) following these rules:",
+  BENGALI_EDITORIAL_RULES,
   "Return ONLY the tool call.",
 ].join("\n");
 

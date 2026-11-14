@@ -37,6 +37,7 @@ import {
   requireAdmin,
 } from "../_shared/require-admin.ts";
 import { generateToolCall } from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -85,7 +86,8 @@ const SYSTEM_PROMPT = [
   "- Rank ONLY the candidates listed. Never invent a record, a reference, or a title.",
   "- Copy the ref EXACTLY as listed for each candidate, including the 'content:' or 'hadith:' prefix (for example content:dua-when-it-rains, hadith:bukhari-9-534). NEVER return a bare slug, a book name, a chapter number, or a human-readable reference — only the exact ref string from the list. A ref that does not match the list exactly will be rejected.",
   "- Return references only (kind + ref). NEVER write out Arabic or Bengali religious text.",
-  "- reasonBn: one short Bengali sentence (max 200 characters) saying WHY the record fits today. Plain and factual.",
+  "- reasonBn: one short Bengali sentence (max 200 characters) saying WHY the record fits today. Plain and factual. Write it in natural, fluent Bengali following these rules:",
+  BENGALI_EDITORIAL_RULES,
   "- NEVER claim a virtue (fadilah), a reward (sawab), a guaranteed outcome, an authenticity grade, a prayer count, or a religious ruling.",
   "- NEVER claim which night Laylatul Qadr falls on. The Qadr period is the last ten nights of Ramadan; no single night is fixed.",
   "- NEVER say a hadith is authentic or weak. A collection name (e.g. 'Sahih al-Bukhari') is a book title, not a grade.",

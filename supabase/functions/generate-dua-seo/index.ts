@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
 import { generateToolCall } from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -21,6 +22,7 @@ const STORY_SYSTEM_PROMPT = [
   "প্রতিটি গল্পের জন্য কন্টেন্ট unique হতে হবে।",
   "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words)।",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
+  BENGALI_EDITORIAL_RULES,
 ].join("\n");
 
 const SYSTEM_PROMPT = [
@@ -33,6 +35,7 @@ const SYSTEM_PROMPT = [
   "প্রতিটি দোয়ার জন্য কন্টেন্ট unique হতে হবে।",
   "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words)। অনুবাদ অর্থ-বিশ্বস্ত ও স্বাভাবিক হতে হবে।",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
+  BENGALI_EDITORIAL_RULES,
 ].join("\n");
 
 // --- NODE_TESTABLE_BEGIN ---

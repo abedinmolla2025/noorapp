@@ -110,7 +110,7 @@ const adminSrc = readFileSync(join(funcsRoot, "_shared", "require-admin.ts"), "u
   .replace("https://esm.sh/@supabase/supabase-js@2", "../fake-supabase.mjs");
 writeFileSync(join(hDir, "_shared", "require-admin.ts"), adminSrc);
 // Phase 3: the handler imports the Adapter; stage its real files too.
-for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts"]) {
+for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts", "bengali-editorial.ts"]) {
   writeFileSync(join(hDir, "_shared", f), readFileSync(join(funcsRoot, "_shared", f), "utf8"));
 }
 writeFileSync(join(hDir, "fake-supabase.mjs"), FAKE_SUPABASE);

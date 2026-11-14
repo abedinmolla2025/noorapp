@@ -134,7 +134,7 @@ for (const [src, dest] of [
   fs.writeFileSync(dest, rewriteEsm(fs.readFileSync(src, "utf8")));
 }
 // Phase 3: the handler imports the Adapter; stage its real files too.
-for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts"]) {
+for (const f of ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts", "bengali-editorial.ts"]) {
   fs.writeFileSync(path.join(sharedDir, f), fs.readFileSync(path.join(root, "supabase", "functions", "_shared", f), "utf8"));
 }
 
