@@ -368,10 +368,59 @@ check("G2 buildGeminiRequest: exact shape (systemInstruction, contents, function
   assert.equal(req.contents[0].role, "user");
   assert.equal(req.contents[0].parts[0].text, "user");
   assert.equal(req.tools[0].functionDeclarations[0].name, "save_test");
-  assert.deepEqual(req.tools[0].functionDeclarations[0].parameters, TEST_TOOL.parameters);
+  // Gemini rejects `additionalProperties` in function parameters (HTTP 400,
+  // proven live 2026-11-14 Phase D run #1), so buildGeminiRequest strips
+  // it. The parameters must equal TEST_TOOL.parameters minus that field.
+  const { additionalProperties: _dropped, ...expectedParams } = TEST_TOOL.parameters;
+  assert.deepEqual(req.tools[0].functionDeclarations[0].parameters, expectedParams);
   assert.equal(req.toolConfig.functionCallingConfig.mode, "ANY");
   assert.deepEqual(req.toolConfig.functionCallingConfig.allowedFunctionNames, ["save_test"]);
   assert.equal(req.generationConfig.maxOutputTokens, 4096);
+});
+check("G2 buildGeminiRequest: strips additionalProperties recursively and does not mutate the tool schema", () => {
+  const nested = {
+    name: "save_nested",
+    description: "Nested tool.",
+    parameters: {
+      type: "object",
+      properties: {
+        faq: {
+          type: "array",
+          items: {
+            type: "object",
+            properties: { q: { type: "string" }, a: { type: "string" } },
+            additionalProperties: false,
+          },
+        },
+      },
+      required: ["faq"],
+      additionalProperties: false,
+    },
+  };
+  const before = JSON.stringify(nested.parameters);
+  const req = geminiClient.buildGeminiRequest({
+    systemPrompt: "sys",
+    userText: "user",
+    tool: nested,
+    maxOutputTokens: 100,
+  });
+  const paramsText = JSON.stringify(req.tools[0].functionDeclarations[0].parameters);
+  assert.equal(paramsText.includes("additionalProperties"), false);
+  assert.deepEqual(req.tools[0].functionDeclarations[0].parameters, {
+    type: "object",
+    properties: {
+      faq: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: { q: { type: "string" }, a: { type: "string" } },
+        },
+      },
+    },
+    required: ["faq"],
+  });
+  // The original tool schema must be untouched (the client deep-clones).
+  assert.equal(JSON.stringify(nested.parameters), before);
 });
 check("G2 buildGroqRequest: exact shape (model, messages, tools, tool_choice required, max_tokens)", () => {
   const req = groqClient.buildGroqRequest({

@@ -53,6 +53,32 @@ export function geminiUrl(): string {
   return `${AI_CONFIG.primary.baseUrl}/models/${AI_CONFIG.primary.model}:generateContent`;
 }
 
+// Gemini's function-calling API does NOT support the JSON Schema
+// `additionalProperties` field in function parameters. It rejects the
+// whole request with HTTP 400:
+//   "Invalid JSON payload received. Unknown name \"additionalProperties\"
+//    at 'tools[0].function_declarations[0].parameters': Cannot find field."
+// (Proven live 2026-11-14, Phase D rehearsal tests run #1: all four
+// process calls failed on this.) The tool schemas in the functions
+// legitimately use `additionalProperties: false` (valid JSON Schema,
+// and the Groq/OpenAI path accepts it), so the Gemini client strips
+// the field — recursively, at every nesting level — before sending.
+// The original schema object is never mutated (deep clone first).
+export function stripAdditionalProperties(value: unknown): unknown {
+  if (Array.isArray(value)) {
+    return value.map((item) => stripAdditionalProperties(item));
+  }
+  if (value !== null && typeof value === "object") {
+    const out: Record<string, unknown> = {};
+    for (const [key, child] of Object.entries(value as Record<string, unknown>)) {
+      if (key === "additionalProperties") continue;
+      out[key] = stripAdditionalProperties(child);
+    }
+    return out;
+  }
+  return value;
+}
+
 export function buildGeminiRequest(opts: {
   systemPrompt: string;
   userText: string;
@@ -68,7 +94,9 @@ export function buildGeminiRequest(opts: {
           {
             name: opts.tool.name,
             description: opts.tool.description,
-            parameters: opts.tool.parameters,
+            // Gemini rejects `additionalProperties` in function parameters
+            // (HTTP 400); strip it recursively before sending.
+            parameters: stripAdditionalProperties(opts.tool.parameters),
           },
         ],
       },
