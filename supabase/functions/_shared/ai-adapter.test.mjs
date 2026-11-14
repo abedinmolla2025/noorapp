@@ -264,6 +264,18 @@ check("G1 normalizeError: 403 -> auth / PROVIDER_AUTH_FAILED", () => {
   assert.equal(e.retryable, false);
   assert.equal(e.failover, false);
 });
+check("G1 normalizeError: 401/403 message carries the provider's rejection reason (first 200 chars of its error body)", () => {
+  // Phase D runs #2–#5 all returned the same bare 403 across two
+  // different keys; without the provider's own reason a key problem
+  // cannot be told apart from "API not enabled" or a restriction.
+  const body = '{"error":{"code":403,"message":"Generative Language API has not been used in project 123 before or it is disabled.","status":"PERMISSION_DENIED"}}';
+  const e = adapter.normalizeError("gemini", outcome(403, {}, body), 0, nowMs);
+  assert.equal(e.code, "PROVIDER_AUTH_FAILED");
+  assert.ok(e.message.includes("Generative Language API has not been used"));
+  assert.ok(e.message.includes("PERMISSION_DENIED"));
+  assert.equal(e.retryable, false);
+  assert.equal(e.failover, false);
+});
 check("G1 normalizeError: 400 -> badRequest / BAD_REQUEST", () => {
   const e = adapter.normalizeError("gemini", outcome(400, {}, "bad request"), 0, nowMs);
   assert.equal(e.kind, "badRequest");

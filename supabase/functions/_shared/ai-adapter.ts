@@ -369,10 +369,17 @@ export function normalizeError(
   }
   const status = outcome.status;
   if (status === 401 || status === 403) {
+    // Include the provider's own rejection reason (first 200 chars of
+    // its error body). The body is the provider's error JSON — it never
+    // contains the API key (the key travels in a header, never in a
+    // body). Without this, every 403 looks identical and a key problem
+    // cannot be told apart from "API not enabled", "model not
+    // available", or a restriction. Proven need: Phase D runs #2–#5
+    // all returned the same bare 403 across two different keys.
     return new AiError({
       kind: "auth",
       code: "PROVIDER_AUTH_FAILED",
-      message: `${label} rejected the API key (HTTP ${status}) — fix the key configuration; no retry, no failover`,
+      message: `${label} rejected the API key (HTTP ${status}): ${bodySlice(outcome.bodyText)} — fix the key configuration; no retry, no failover`,
       provider,
       status,
       retryable: false,
