@@ -1,0 +1,345 @@
+# D-1 Restore Rehearsal — manual GitHub Actions workflow (REVISION 4, 2026-11-11)
+#
+# Purpose: restore a D-1 backup artifact into the REHEARSAL project
+# ONLY (cazdbxxffvdnsdatjsrx) and verify it. Production is never the
+# target and never appears in this file's secrets. This file lives at
+# .github/workflows/d1-restore.yml in the repository.
+#
+# SCOPE — READ FIRST: this job restores and verifies the DATABASE
+# DUMP ONLY (user schemas, roles, data). It does NOT restore or
+# verify Auth users, Auth configuration, Storage buckets, Storage
+# objects, Edge Functions, or custom role passwords. A PASS here
+# means the database restore worked — nothing more. The rehearsal
+# admin login is NOT proof that Auth users were restored (the dump
+# never contained them); Auth and Storage have separate test plans.
+#
+# Revision 3 (independent review, 2026-11-10) — changes from Revision 2:
+#   1. set -euo pipefail at the top of every shell script.
+#   2. Target-inventory check REPLACED the 8-table check: the job
+#      now lists EVERY user table, view, and routine outside the
+#      Supabase platform schemas (the exact exclusion list comes
+#      from the CLI 3.1.0 --dry-run output) and fails if ANY exist.
+#      Platform schemas are never mistaken for user schemas. The
+#      8-table check's limits are documented in the review report.
+#      (Why this matters: the CLI rewrites CREATE TABLE to
+#      CREATE TABLE IF NOT EXISTS, so a restore into a non-empty
+#      target would MERGE silently instead of failing.)
+#   3. The PASS summary now lists the exact tables restored and
+#      verified, and the exact scopes NOT restored or verified.
+#   4. The Production-URL guard is unchanged (fail-closed).
+#   5. No ${{ }} inside any shell script (as in Revision 2);
+#      expected counts are non-negative integers only; count
+#      comparison is numeric (-eq).
+#
+# Revision 4 (final security hardening, 2026-11-11) — changes from
+# Revision 3 (Findings A and B only; everything else unchanged):
+#   1. Exact database URL validation replaces the substring guard
+#      (Finding A). The URL is parsed with a strict regex and each
+#      part is checked separately: hostname must be exactly
+#      db.cazdbxxffvdnsdatjsrx.supabase.co (session pooler), port
+#      must be 5432, username must be exactly
+#      postgres.cazdbxxffvdnsdatjsrx, password must be non-empty,
+#      database must be postgres. The production ref must not
+#      appear anywhere in the URL. The old guard accepted a
+#      suffix/prefix host attack, a ref hidden in the password or
+#      query, a wrong port, and a wrong username — all five
+#      bypasses are proven in D1-SECURITY-FINDINGS-V4.md. The URL
+#      and the password are never echoed; only the validated host
+#      (public knowledge) is printed.
+#   2. Complete rehearsal object inventory replaces the
+#      tables/views/routines check (Finding B). The query now
+#      covers tables, views, materialized views, foreign tables,
+#      routines, user-defined types, sequences, custom schemas,
+#      and extensions installed outside platform schemas — and it
+#      excludes extension-owned objects (pg_depend deptype 'e')
+#      and auto-created range-support functions (deptype 'i'), so
+#      platform objects are never mistaken for user objects. Any
+#      unknown user-owned object fails the job (fail-closed).
+#
+# Revision 5 (connection-format correction, 2026-11-12) — changes from
+# Revision 4 (guard correction only):
+#   1. The host check now pins the EXACT session-pooler host of the
+#      REHEARSAL project, verified from the Dashboard on 2026-11-12:
+#      aws-1-ap-southeast-1.pooler.supabase.com (port 5432).
+#      The production host must NEVER be used here: the rehearsal
+#      guard accepts only the rehearsal host. (Same correction as
+#      d1-backup.yml Revision 5; the two guards are identical except
+#      for the project ref and the host value.)
+#
+# Secrets required (repo Settings -> Secrets and variables -> Actions):
+#   REHEARSAL_DB_URL       Session-pooler connection string (port 5432)
+#                          for rehearsal project cazdbxxffvdnsdatjsrx.
+#                          NEVER typed in chat, never in a file.
+#   BACKUP_GPG_PASSPHRASE  The same passphrase used to encrypt the
+#                          backup artifact. Never shared.
+#
+# Inputs (entered when pressing Run workflow):
+#   confirm                Must be true, or the job refuses to run.
+#   backup_run_id          The backup run's ID (digits only), from its
+#                          URL: github.com/<owner>/<repo>/actions/runs/<ID>
+#   expected_hadiths / expected_admin_content / expected_publications
+#                          Fresh counts from the PRODUCTION SQL Editor
+#                          (read-only queries), entered at run time.
+#                          Non-negative integers only. No defaults —
+#                          stale counts must never pass.
+#
+# Safety: the job fails unless the confirm input is true, the run ID
+# is numeric, all expected counts are non-negative integers, both
+# secrets exist, REHEARSAL_DB_URL is exactly the rehearsal
+# session-pooler URL (host, port, username, password, database all
+# checked separately; the production ref must not appear anywhere
+# in it), and the target inventory is empty. The restore runs in a
+# single transaction with ON_ERROR_STOP=1, so any error rolls
+# everything back. After the restore, the manifest hashes are
+# verified (six hashes: three .sql + three .gpg) and the counts
+# must match the fresh production counts exactly — any mismatch FAILS
+# the job. The admin-login check (risk R-09) cannot run in Actions;
+# it stays an owner-run Dashboard step after this job passes, and it
+# proves only that the rehearsal project's own Auth works — NOT that
+# Auth users were restored.
+#
+# This file has NOT been run end-to-end (a run needs the file in the
+# repo + the secrets + a backup artifact, all owner actions). The
+# restore command and the verification queries were proven locally in
+# the Phase 1 cloud execution.
+
+name: D-1 Restore Rehearsal (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirm: restore the backup artifact into the REHEARSAL project only (cazdbxxffvdnsdatjsrx)"
+        type: boolean
+        required: true
+        default: false
+      backup_run_id:
+        description: "Backup run ID (digits only), from its URL: github.com/<owner>/<repo>/actions/runs/<ID>"
+        type: string
+        required: true
+      expected_hadiths:
+        description: "Expected hadiths count (fresh from the production SQL Editor, non-negative integer)"
+        type: string
+        required: true
+      expected_admin_content:
+        description: "Expected admin_content count (fresh from the production SQL Editor, non-negative integer)"
+        type: string
+        required: true
+      expected_publications:
+        description: "Expected daily_content_publications count (fresh from the production SQL Editor, non-negative integer)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_DB_URL: ${{ secrets.REHEARSAL_DB_URL }}
+      BACKUP_GPG_PASSPHRASE: ${{ secrets.BACKUP_GPG_PASSPHRASE }}
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      BACKUP_RUN_ID: ${{ inputs.backup_run_id }}
+      EXPECTED_HADITHS: ${{ inputs.expected_hadiths }}
+      EXPECTED_ADMIN_CONTENT: ${{ inputs.expected_admin_content }}
+      EXPECTED_PUBLICATIONS: ${{ inputs.expected_publications }}
+      RUN_NUMBER: ${{ github.run_number }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "true" ]; then
+            echo "confirm input is not true; refusing to run."
+            exit 1
+          fi
+          case "$BACKUP_RUN_ID" in
+            ''|*[!0-9]*) echo "backup_run_id must be a numeric run ID."; exit 1 ;;
+          esac
+          for v in "$EXPECTED_HADITHS" "$EXPECTED_ADMIN_CONTENT" "$EXPECTED_PUBLICATIONS"; do
+            case "$v" in
+              ''|*[!0-9]*) echo "expected counts must be non-negative integers."; exit 1 ;;
+            esac
+          done
+          echo "Inputs valid: backup_run_id=$BACKUP_RUN_ID, expected counts are non-negative integers."
+
+      - name: Require secrets
+        run: |
+          set -euo pipefail
+          if [ -z "$REHEARSAL_DB_URL" ]; then echo "REHEARSAL_DB_URL secret is missing."; exit 1; fi
+          if [ -z "$BACKUP_GPG_PASSPHRASE" ]; then echo "BACKUP_GPG_PASSPHRASE secret is missing."; exit 1; fi
+
+      - name: Guard - exact REHEARSAL_DB_URL validation (rehearsal only)
+        run: |
+          set -euo pipefail
+          # Revision 5: the URL is parsed exactly, not matched by
+          # substring. The old substring guard accepted a suffix or
+          # prefix host attack, a ref hidden in the password or
+          # query, a wrong port, and a wrong username. Each part
+          # below is checked separately. The URL and the password
+          # are never echoed; only the validated host (public
+          # knowledge) is printed.
+          # Revision 5 (2026-11-12) pins the exact host: Revision 4
+          # required the DIRECT-connection host db.<ref>.supabase.co
+          # together with the pooler username postgres.<ref> — a
+          # combination that matches no real Supabase option. The
+          # session-pooler host is pinned in EXPECTED_HOST below —
+          # the exact value verified from the Dashboard on
+          # 2026-11-12: aws-1-ap-southeast-1.pooler.supabase.com.
+          # Never use the production host here — the rehearsal guard
+          # accepts only the rehearsal host. The pooler host carries
+          # no project ref, so the ref is verified via the username
+          # (postgres.<ref>) and the other project's ref must not
+          # appear anywhere in the URL.
+          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
+          OTHER_REF="llicfiepatzgllmjhzbw"
+          EXPECTED_HOST="aws-1-ap-southeast-1.pooler.supabase.com"
+          EXPECTED_USER="postgres.${EXPECTED_REF}"
+          URL="$REHEARSAL_DB_URL"
+          case "$URL" in
+            *[[:space:]]*) echo "Malformed database URL (whitespace). Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            *"$OTHER_REF"*) echo "URL contains the production ref. Refusing."; exit 1 ;;
+          esac
+          URL_RE='^postgres(ql)?://([^:/?#@]+)(:([^@/?#]*))?@([^:/?#]+)(:([0-9]+))?(/[^?#]*)?(\?[^#]*)?$'
+          if ! [[ "$URL" =~ $URL_RE ]]; then
+            echo "Malformed database URL. Refusing."
+            exit 1
+          fi
+          DB_USER="${BASH_REMATCH[2]}"
+          DB_PASS="${BASH_REMATCH[4]}"
+          DB_HOST="${BASH_REMATCH[5]}"
+          DB_PORT="${BASH_REMATCH[7]}"
+          DB_PATH="${BASH_REMATCH[8]}"
+          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host. Refusing."; exit 1; }
+          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port (must be 5432). Refusing."; exit 1; }
+          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username. Refusing."; exit 1; }
+          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
+          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name (must be postgres). Refusing."; exit 1; }
+          echo "Target host OK (rehearsal, $DB_HOST)."
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client gnupg
+
+      # NOTE: run-id is an action input, not a shell command. It is
+      # validated as digits-only by the "Validate inputs" step above,
+      # before this step runs.
+      - name: Download backup artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: d1-backup
+          path: backup
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decrypt + verify manifest + sanity check
+        run: |
+          set -euo pipefail
+          cd backup
+          for f in roles.sql.gpg schema.sql.gpg data.sql.gpg; do
+            test -s "$f" || { echo "$f is missing or empty."; exit 1; }
+            printf '%s' "$BACKUP_GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --decrypt "$f" > "${f%.gpg}"
+          done
+          sha256sum -c MANIFEST-SHA256.txt
+          test -s roles.sql || { echo "roles.sql is empty after decrypt."; exit 1; }
+          test -s schema.sql || { echo "schema.sql is empty after decrypt."; exit 1; }
+          test -s data.sql || { echo "data.sql is empty after decrypt."; exit 1; }
+          grep -q "CREATE TABLE" schema.sql || { echo "schema.sql has no CREATE TABLE."; exit 1; }
+          grep -q "COPY " data.sql || { echo "data.sql has no COPY lines."; exit 1; }
+
+      - name: Check target inventory is empty (fail-closed)
+        run: |
+          set -euo pipefail
+          # Revision 4: complete object inventory (Finding B). The
+          # query lists every user-owned object outside the
+          # Supabase platform schemas: tables, views, materialized
+          # views, foreign tables, routines, user-defined types,
+          # sequences, custom schemas, and extensions installed
+          # outside platform schemas. Extension-owned objects
+          # (pg_depend deptype 'e') and auto-created range-support
+          # functions (deptype 'i') are excluded, so platform
+          # objects are never mistaken for user objects. Any
+          # unknown user-owned object fails the job. The readable
+          # form of this query is D1-INVENTORY-QUERY-V4.sql.
+          USER_OBJECTS=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "WITH p(re) AS (VALUES ('^(information_schema|pg_.*|_analytics|_realtime|_supavisor|auth|etl|extensions|pgbouncer|realtime|storage|supabase_functions|supabase_migrations|cron|dbdev|graphql|graphql_public|net|pgmq|pgsodium|pgsodium_masks|pgtle|repack|tiger|tiger_data|timescaledb_.*|_timescaledb_.*|topology|vault)\$')) SELECT COALESCE(string_agg(name || ' (' || kind || ')', ', ' ORDER BY kind, name), '') FROM ( SELECT n.nspname || '.' || c.relname AS name, 'table' AS kind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'r' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'view' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'v' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'materialized view' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'm' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'foreign table' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'f' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'sequence' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'S' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || pr.proname, 'routine' FROM pg_proc pr JOIN pg_namespace n ON n.oid = pr.pronamespace, p WHERE n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = pr.oid AND d.deptype = 'e') AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = pr.oid AND d.deptype = 'i') UNION ALL SELECT n.nspname || '.' || t.typname, 'type' FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace, p WHERE t.typtype IN ('b','c','d','e','r') AND t.typelem = 0 AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = t.typrelid AND c.relkind <> 'c') AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_type'::regclass AND d.objid = t.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname, 'schema' FROM pg_namespace n, p WHERE n.nspname !~ p.re AND n.nspname <> 'public' UNION ALL SELECT e.extname || ' in ' || n.nspname, 'extension' FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace, p WHERE n.nspname !~ p.re ) s;")
+          if [ -n "$USER_OBJECTS" ]; then
+            echo "Target is NOT empty - user objects already exist: $USER_OBJECTS. Refusing to restore."
+            exit 1
+          fi
+          echo "Target inventory is empty - no user tables, views, materialized views, foreign tables, routines, types, sequences, custom schemas, or extensions outside Supabase platform schemas."
+
+      - name: Restore (single transaction)
+        run: |
+          set -euo pipefail
+          psql --single-transaction --variable ON_ERROR_STOP=1 \
+            --file backup/roles.sql --file backup/schema.sql \
+            --command 'SET session_replication_role = replica' \
+            --file backup/data.sql --dbname "$REHEARSAL_DB_URL"
+
+      - name: Verify counts
+        run: |
+          set -euo pipefail
+          H=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM public.hadiths;")
+          A=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM public.admin_content;")
+          P=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM public.daily_content_publications;")
+          echo "hadiths=$H (expected $EXPECTED_HADITHS)"
+          echo "admin_content=$A (expected $EXPECTED_ADMIN_CONTENT)"
+          echo "daily_content_publications=$P (expected $EXPECTED_PUBLICATIONS)"
+          [ "$H" -eq "$EXPECTED_HADITHS" ] || { echo "hadiths MISMATCH."; exit 1; }
+          [ "$A" -eq "$EXPECTED_ADMIN_CONTENT" ] || { echo "admin_content MISMATCH."; exit 1; }
+          [ "$P" -eq "$EXPECTED_PUBLICATIONS" ] || { echo "publications MISMATCH."; exit 1; }
+          # Revision 5 Part 2 (Gate 1 remediation, exact set comparison):
+          # the restore must reproduce EXACTLY the Gate 1 tables the
+          # backup contains — the same table NAMES, no more, no less.
+          # A count-only check would pass when the counts match but the
+          # names differ, so both sides are normalized (sorted,
+          # deduplicated) and compared as sets. The backup's schema.sql
+          # is the source of truth for what the backup contains.
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?public\.(daily_content_publications|daily_content_recommendations|islamic_calendar_corrections)' backup/schema.sql | sed 's/.*public\.//' | sort -u > /tmp/backup_gate1.txt
+          psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('daily_content_publications','daily_content_recommendations','islamic_calendar_corrections') ORDER BY table_name;" | sort -u > /tmp/rehearsal_gate1.txt
+          if ! diff -q /tmp/backup_gate1.txt /tmp/rehearsal_gate1.txt >/dev/null; then
+            echo "Gate 1 tables mismatch. Backup has:"
+            cat /tmp/backup_gate1.txt
+            echo "Rehearsal has:"
+            cat /tmp/rehearsal_gate1.txt
+            echo "Missing or unexpected Gate 1 table."
+            exit 1
+          fi
+          # The 9-column check runs only if islamic_calendar_corrections
+          # is in the BACKUP inventory. If the backup has the table but
+          # the rehearsal does not, the set comparison above already
+          # failed; the explicit check below also fails that case.
+          # If neither has the table, the check is skipped.
+          if grep -qxF "islamic_calendar_corrections" /tmp/backup_gate1.txt; then
+            if ! grep -qxF "islamic_calendar_corrections" /tmp/rehearsal_gate1.txt; then
+              echo "islamic_calendar_corrections is in the backup but missing in the rehearsal."
+              exit 1
+            fi
+            C=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='islamic_calendar_corrections';")
+            [ "$C" = "9" ] || { echo "islamic_calendar_corrections has $C columns, expected 9."; exit 1; }
+          else
+            echo "islamic_calendar_corrections not in the backup inventory (migration 070001 not applied yet); column check skipped."
+          fi
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g' | sort -u > /tmp/restored_tables.txt
+
+      - name: Summary
+        run: |
+          set -euo pipefail
+          TABLES="$(tr '\n' ',' < /tmp/restored_tables.txt | sed 's/,$//')"
+          {
+            echo "## D-1 Restore Rehearsal - run $RUN_NUMBER"
+            echo ""
+            echo "Backup artifact run: $BACKUP_RUN_ID"
+            echo "Target: rehearsal project cazdbxxffvdnsdatjsrx (guard-verified, inventory empty before restore)"
+            echo "Result: PASS - restore exit 0, all counts match, Gate 1 tables match the backup inventory exactly."
+            echo ""
+            echo "RESTORED AND VERIFIED: database dump only. Tables restored: $TABLES. Verified: row counts for hadiths, admin_content, daily_content_publications; Gate 1 tables match the backup inventory exactly (same table names, no missing or unexpected tables; the 9-column check runs only if islamic_calendar_corrections is in the backup inventory)."
+            echo ""
+            echo "NOT RESTORED OR VERIFIED: Auth users, Auth configuration, Storage buckets, Storage objects, Edge Functions, custom role passwords. These are separate recovery scopes (see the Auth & Storage test plan)."
+            echo ""
+            echo "Remaining owner steps: log in to the rehearsal Dashboard as an admin once (this proves only that the rehearsal project's own Auth works - NOT that Auth users were restored) and run the Auth & Storage test plan."
+          } >> "$GITHUB_STEP_SUMMARY"
