@@ -122,7 +122,7 @@ jobs:
           call "8. generate-hadith-seo process" "generate-hadith-seo" '{"action":"process","batchSize":1}'
 
           # --- Group C: recommend ---
-          call "9. recommend generate"      "recommend-daily-content" '{"action":"generate","context":{"gregorianKey":"2026-11-14","hijri":{"year":1448,"month":6,"day":3},"confirmation":"calculated","activeEventSlugs":[],"ramadanStage":null},"kolkataDate":"2026-11-14","maxCards":3}'
+          call "9. recommend recommend"      "recommend-daily-content" '{"action":"recommend","context":{"gregorianKey":"2026-11-14","hijri":{"year":1448,"month":6,"day":3},"confirmation":"calculated","activeEventSlugs":[],"ramadanStage":null},"kolkataDate":"2026-11-14","maxCards":3}'
           call "10. recommend list_pending" "recommend-daily-content" '{"action":"list_pending"}'
 
           # --- Summary ---
