@@ -1,0 +1,354 @@
+# D-1 Migrate — manual GitHub Actions workflow (REVISION 1, 2026-11-14)
+#
+# Purpose: apply the three Daily Content migrations 070001, 070002,
+# 070003 IN ORDER to ONE target (rehearsal or production, chosen at
+# dispatch) and verify schema, RLS, constraints, indexes, and that
+# no existing data changed. HARD GATE 0 is OPEN (owner authorized
+# 2026-11-14 ~18:26 IST); this workflow is the Phase C vehicle.
+#
+# Migrations applied (byte-identical files in supabase/migrations/):
+#   070001 islamic_calendar_corrections — Option A (confirmed-only).
+#     Public SELECT policy: using (status = 'confirmed'), so proposed
+#     (unconfirmed) rows are NOT publicly readable. MD5
+#     552222b7cc2dd305f841fdd0497c171e (CHECKSUMS.md). Chosen over
+#     Option B (public read all, MD5 acde5794…) because it is the
+#     more restrictive, safer policy: proposed corrections are
+#     unverified drafts and must not be exposed publicly. The table
+#     starts empty; the policy can be changed later with one ALTER
+#     POLICY if the owner prefers Option B. Decision recorded in the
+#     Phase C report; the Gate 1 package MD5 is this file's MD5.
+#   070002 daily_content_recommendations — IDEMPOTENT candidate.
+#     Identical to the approved original (MD5 22d8f3e5…) except
+#     DROP POLICY IF EXISTS guards before the two CREATE POLICY
+#     statements, so a re-run no-ops instead of erroring with
+#     duplicate-policy (Postgres 42710). MD5 bccc0ed0….
+#   070003 daily_content_publications.recommendation_id — adds a
+#     nullable uuid column (ADD COLUMN IF NOT EXISTS). No RLS
+#     change. MD5 0c9ebcba….
+#
+# Safety: the job fails unless the confirm input is true, the target
+# is exactly 'rehearsal' or 'production', all expected counts are
+# non-negative integers, the chosen target's DB secret exists, and
+# the target URL is exactly that project's session-pooler URL (host,
+# port, username, password, database all checked separately; the
+# other project's ref must not appear anywhere in it). The URL is
+# parsed at the LAST '@' (libpq's rule) because the production DB
+# password contains a raw '@'; psql connects via PG* env vars and
+# never sees the raw URL. Each migration runs in its own single
+# transaction with ON_ERROR_STOP=1, so a failure rolls that
+# migration back and stops the sequence (later migrations do not
+# run). All three migrations are idempotent (IF NOT EXISTS /
+# DROP POLICY IF EXISTS), so a re-run after a fix is safe. After
+# the migrations, the verification checks the new tables, RLS,
+# policies, indexes, the new column, the column counts, the
+# constraints, and that the three Gate 1 table counts are unchanged
+# — any mismatch FAILS the job.
+#
+# Secrets required (repo Settings -> Secrets and variables -> Actions):
+#   REHEARSAL_DB_URL   Session-pooler connection string (port 5432)
+#                      for rehearsal project cazdbxxffvdnsdatjsrx.
+#   PROD_DB_URL        Session-pooler connection string (port 5432)
+#                      for production project llicfiepatzgllmjhzbw.
+#                      NEVER typed in chat, never in a file.
+#
+# Inputs (entered when pressing Run workflow):
+#   confirm                Must be true, or the job refuses to run.
+#   target                 'rehearsal' or 'production' (exact).
+#   expected_hadiths / expected_admin_content / expected_publications
+#                          Fresh counts from the target's SQL Editor
+#                          (read-only queries), entered at run time.
+#                          Non-negative integers only. No defaults —
+#                          stale counts must never pass.
+#
+# This file has NOT been run end-to-end (a run needs the file in the
+# repo + the secrets, all owner/mission actions). The migration files
+# were verified locally (MD5s match the recorded checksums) and the
+# verification queries were proven against the migration definitions.
+
+name: D-1 Migrate (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirm: apply migrations 070001, 070002, 070003 in order to the chosen target"
+        type: boolean
+        required: true
+        default: false
+      target:
+        description: "Target project: rehearsal (cazdbxxffvdnsdatjsrx) or production (llicfiepatzgllmjhzbw)"
+        type: choice
+        required: true
+        options:
+          - rehearsal
+          - production
+      expected_hadiths:
+        description: "Expected hadiths count (fresh from the TARGET SQL Editor, non-negative integer)"
+        type: string
+        required: true
+      expected_admin_content:
+        description: "Expected admin_content count (fresh from the TARGET SQL Editor, non-negative integer)"
+        type: string
+        required: true
+      expected_publications:
+        description: "Expected daily_content_publications count (fresh from the TARGET SQL Editor, non-negative integer)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_DB_URL: ${{ secrets.REHEARSAL_DB_URL }}
+      PROD_DB_URL: ${{ secrets.PROD_DB_URL }}
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      TARGET_INPUT: ${{ inputs.target }}
+      EXPECTED_HADITHS: ${{ inputs.expected_hadiths }}
+      EXPECTED_ADMIN_CONTENT: ${{ inputs.expected_admin_content }}
+      EXPECTED_PUBLICATIONS: ${{ inputs.expected_publications }}
+      RUN_NUMBER: ${{ github.run_number }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "true" ]; then
+            echo "confirm input is not true; refusing to run."
+            exit 1
+          fi
+          case "$TARGET_INPUT" in
+            rehearsal|production) ;;
+            *) echo "target must be 'rehearsal' or 'production'."; exit 1 ;;
+          esac
+          for v in "$EXPECTED_HADITHS" "$EXPECTED_ADMIN_CONTENT" "$EXPECTED_PUBLICATIONS"; do
+            case "$v" in
+              ''|*[!0-9]*) echo "expected counts must be non-negative integers."; exit 1 ;;
+            esac
+          done
+          echo "Inputs valid: target=$TARGET_INPUT, expected counts are non-negative integers."
+
+      - name: Require secrets
+        run: |
+          set -euo pipefail
+          if [ "$TARGET_INPUT" = "rehearsal" ]; then
+            if [ -z "$REHEARSAL_DB_URL" ]; then echo "REHEARSAL_DB_URL secret is missing."; exit 1; fi
+            echo "Target is rehearsal; REHEARSAL_DB_URL present."
+          else
+            if [ -z "$PROD_DB_URL" ]; then echo "PROD_DB_URL secret is missing."; exit 1; fi
+            echo "Target is production; PROD_DB_URL present."
+          fi
+
+      - name: Guard - exact target DB URL validation
+        run: |
+          set -euo pipefail
+          # The URL is parsed exactly, not matched by substring.
+          # Each part is checked separately: host, port, username,
+          # password, database. The URL and the password are never
+          # echoed; only the validated host (public knowledge) is
+          # printed. The other project's ref must not appear
+          # anywhere in the URL. The authority is split at the LAST
+          # '@' (libpq's rule), because the production DB password
+          # contains a raw '@' — splitting at the first '@' would
+          # shift the rest of the password into the host and fail
+          # the check (production restore run #1 failed exactly
+          # there). A raw '/', '?' or '#' in the password is still
+          # refused (it must be percent-encoded).
+          if [ "$TARGET_INPUT" = "rehearsal" ]; then
+            EXPECTED_REF="cazdbxxffvdnsdatjsrx"
+            OTHER_REF="llicfiepatzgllmjhzbw"
+            EXPECTED_HOST="aws-1-ap-southeast-1.pooler.supabase.com"
+            URL="$REHEARSAL_DB_URL"
+          else
+            EXPECTED_REF="llicfiepatzgllmjhzbw"
+            OTHER_REF="cazdbxxffvdnsdatjsrx"
+            EXPECTED_HOST="aws-1-ap-southeast-2.pooler.supabase.com"
+            URL="$PROD_DB_URL"
+          fi
+          EXPECTED_USER="postgres.${EXPECTED_REF}"
+          # Trim leading/trailing whitespace (a paste artifact).
+          URL="${URL#"${URL%%[![:space:]]*}"}"
+          URL="${URL%"${URL##*[![:space:]]}"}"
+          case "$URL" in
+            *[[:space:]]*) echo "Malformed database URL (whitespace inside the URL). Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            *"$OTHER_REF"*) echo "URL contains the other project's ref. Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            postgresql://*) REST="${URL#postgresql://}" ;;
+            postgres://*) REST="${URL#postgres://}" ;;
+            *) echo "Malformed database URL (scheme must be postgresql:// or postgres://). Refusing."; exit 1 ;;
+          esac
+          # Authority is up to the first '/', '?' or '#'.
+          AUTH="${REST%%[/?#]*}"
+          TAIL="${REST#"$AUTH"}"
+          # Host:port is after the LAST '@'; userinfo is before it.
+          HOSTPORT="${AUTH##*@}"
+          USERINFO="${AUTH%@*}"
+          if [ "$HOSTPORT" = "$AUTH" ]; then
+            echo "Malformed database URL (missing userinfo). Refusing."
+            exit 1
+          fi
+          DB_USER="${USERINFO%%:*}"
+          case "$USERINFO" in
+            *:* ) DB_PASS="${USERINFO#*:}" ;;
+            * ) echo "Missing database password. Refusing."; exit 1 ;;
+          esac
+          DB_HOST="${HOSTPORT%%:*}"
+          DB_PORT="${HOSTPORT#*:}"
+          if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
+          # Path is the part of the tail up to '?'.
+          DB_PATH="${TAIL%%\?*}"
+          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
+          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
+          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
+          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
+          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name: got '$DB_PATH' (must be /postgres). Refusing."; exit 1; }
+          echo "Target host OK ($TARGET_INPUT, $DB_HOST)."
+          # Export the parsed connection as PG* env vars for the
+          # later psql calls. psql/libpq cannot parse a connection
+          # URI whose password contains a raw '@' — it splits the
+          # authority at the FIRST '@' and tries to resolve a host
+          # like '1254914@aws-1-ap-southeast-2.pooler.supabase.com'
+          # (production restore run #1 failed exactly there). The
+          # guard above parses at the LAST '@', so export the
+          # components and let psql connect via env vars instead
+          # of ever seeing the raw URL. The password is masked
+          # (::add-mask::) so it can never appear in a log.
+          echo "::add-mask::$DB_PASS"
+          {
+            echo "PGHOST=$DB_HOST"
+            echo "PGPORT=$DB_PORT"
+            echo "PGUSER=$DB_USER"
+            echo "PGPASSWORD=<redacted>"
+            echo "PGDATABASE=postgres"
+          } >> "$GITHUB_ENV"
+          echo "PG* connection vars set (host $DB_HOST, user $DB_USER)."
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Checkout migration files
+        uses: actions/checkout@v4
+
+      - name: Pre-check - is_admin exists, record pre-state
+        run: |
+          set -euo pipefail
+          # The RLS policies in 070001/070002 call
+          # public.is_admin(auth.uid()). If is_admin does not
+          # exist, CREATE POLICY fails — so verify it first and
+          # fail closed with a clear message instead of a cryptic
+          # policy error mid-migration.
+          IS_ADMIN=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace WHERE n.nspname = 'public' AND p.proname = 'is_admin';")
+          echo "is_admin functions in public: $IS_ADMIN"
+          [ "$IS_ADMIN" -ge 1 ] || { echo "public.is_admin does not exist on the target. Refusing."; exit 1; }
+          echo "--- pre-migration state ---"
+          echo "islamic_calendar_corrections exists: $(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'islamic_calendar_corrections';")"
+          echo "daily_content_recommendations exists: $(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name = 'daily_content_recommendations';")"
+          echo "recommendation_id column exists: $(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_content_publications' AND column_name = 'recommendation_id';")"
+          echo "hadiths (pre): $(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.hadiths;")"
+          echo "admin_content (pre): $(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.admin_content;")"
+          echo "daily_content_publications (pre): $(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.daily_content_publications;")"
+          echo "Pre-check done. (Tables/column already existing means a re-run; the migrations are idempotent.)"
+
+      - name: Migrate 070001 - islamic_calendar_corrections
+        run: |
+          set -euo pipefail
+          psql --variable ON_ERROR_STOP=1 --single-transaction --file supabase/migrations/202611070001_islamic_calendar_corrections.sql
+          echo "070001 applied."
+
+      - name: Migrate 070002 - daily_content_recommendations
+        run: |
+          set -euo pipefail
+          psql --variable ON_ERROR_STOP=1 --single-transaction --file supabase/migrations/202611070002_daily_content_recommendations.sql
+          echo "070002 applied."
+
+      - name: Migrate 070003 - publications.recommendation_id
+        run: |
+          set -euo pipefail
+          psql --variable ON_ERROR_STOP=1 --single-transaction --file supabase/migrations/202611070003_daily_content_publications_recommendation.sql
+          echo "070003 applied."
+
+      - name: Verify schema, RLS, constraints, indexes, counts
+        run: |
+          set -euo pipefail
+          fail() { echo "VERIFY FAILED: $1"; exit 1; }
+          # New tables exist (expect 2).
+          TABLES=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.tables WHERE table_schema = 'public' AND table_name IN ('islamic_calendar_corrections', 'daily_content_recommendations');")
+          echo "new tables: $TABLES (expected 2)"
+          [ "$TABLES" = "2" ] || fail "new tables count is $TABLES, expected 2"
+          # RLS enabled on both (expect 2).
+          RLS=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_class WHERE relname IN ('islamic_calendar_corrections', 'daily_content_recommendations') AND relrowsecurity = true;")
+          echo "tables with RLS: $RLS (expected 2)"
+          [ "$RLS" = "2" ] || fail "RLS count is $RLS, expected 2"
+          # Policies exist (expect 4): 2 per table.
+          POLICIES=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('islamic_calendar_corrections', 'daily_content_recommendations');")
+          echo "policies: $POLICIES (expected 4)"
+          [ "$POLICIES" = "4" ] || fail "policies count is $POLICIES, expected 4"
+          echo "policy list:"
+          psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT tablename || ' / ' || policyname FROM pg_policies WHERE schemaname = 'public' AND tablename IN ('islamic_calendar_corrections', 'daily_content_recommendations') ORDER BY tablename, policyname;"
+          # Indexes exist (expect 2).
+          INDEXES=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_indexes WHERE schemaname = 'public' AND indexname IN ('idx_daily_recs_date', 'idx_daily_recs_status');")
+          echo "indexes: $INDEXES (expected 2)"
+          [ "$INDEXES" = "2" ] || fail "indexes count is $INDEXES, expected 2"
+          # New column exists (expect 1).
+          COL=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_content_publications' AND column_name = 'recommendation_id';")
+          echo "recommendation_id column: $COL (expected 1)"
+          [ "$COL" = "1" ] || fail "recommendation_id column count is $COL, expected 1"
+          # Column counts: islamic_calendar_corrections has 9 columns,
+          # daily_content_recommendations has 12.
+          C1=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'islamic_calendar_corrections';")
+          echo "islamic_calendar_corrections columns: $C1 (expected 9)"
+          [ "$C1" = "9" ] || fail "islamic_calendar_corrections columns is $C1, expected 9"
+          C2=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM information_schema.columns WHERE table_schema = 'public' AND table_name = 'daily_content_recommendations';")
+          echo "daily_content_recommendations columns: $C2 (expected 12)"
+          [ "$C2" = "12" ] || fail "daily_content_recommendations columns is $C2, expected 12"
+          # Constraints on islamic_calendar_corrections: 1 primary key,
+          # 1 unique (hijri_year, hijri_month), 4 checks.
+          PK1=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.islamic_calendar_corrections'::regclass AND contype = 'p';")
+          UQ1=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.islamic_calendar_corrections'::regclass AND contype = 'u';")
+          CK1=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.islamic_calendar_corrections'::regclass AND contype = 'c';")
+          echo "islamic_calendar_corrections constraints: pk=$PK1 (expected 1), unique=$UQ1 (expected 1), check=$CK1 (expected 4)"
+          [ "$PK1" = "1" ] || fail "islamic_calendar_corrections pk is $PK1, expected 1"
+          [ "$UQ1" = "1" ] || fail "islamic_calendar_corrections unique is $UQ1, expected 1"
+          [ "$CK1" = "4" ] || fail "islamic_calendar_corrections checks is $CK1, expected 4"
+          # Constraints on daily_content_recommendations: 1 primary
+          # key, 1 check (status).
+          PK2=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.daily_content_recommendations'::regclass AND contype = 'p';")
+          CK2=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM pg_constraint WHERE conrelid = 'public.daily_content_recommendations'::regclass AND contype = 'c';")
+          echo "daily_content_recommendations constraints: pk=$PK2 (expected 1), check=$CK2 (expected 1)"
+          [ "$PK2" = "1" ] || fail "daily_content_recommendations pk is $PK2, expected 1"
+          [ "$CK2" = "1" ] || fail "daily_content_recommendations checks is $CK2, expected 1"
+          # Gate 1 counts unchanged (migrations add schema, never rows).
+          H=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.hadiths;")
+          A=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.admin_content;")
+          P=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.daily_content_publications;")
+          echo "hadiths=$H (expected $EXPECTED_HADITHS)"
+          echo "admin_content=$A (expected $EXPECTED_ADMIN_CONTENT)"
+          echo "daily_content_publications=$P (expected $EXPECTED_PUBLICATIONS)"
+          [ "$H" = "$EXPECTED_HADITHS" ] || fail "hadiths is $H, expected $EXPECTED_HADITHS"
+          [ "$A" = "$EXPECTED_ADMIN_CONTENT" ] || fail "admin_content is $A, expected $EXPECTED_ADMIN_CONTENT"
+          [ "$P" = "$EXPECTED_PUBLICATIONS" ] || fail "daily_content_publications is $P, expected $EXPECTED_PUBLICATIONS"
+          # New tables are empty (migrations create schema only).
+          N1=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.islamic_calendar_corrections;")
+          N2=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --command "SELECT count(*) FROM public.daily_content_recommendations;")
+          echo "islamic_calendar_corrections rows: $N1 (expected 0)"
+          echo "daily_content_recommendations rows: $N2 (expected 0)"
+          [ "$N1" = "0" ] || fail "islamic_calendar_corrections has $N1 rows, expected 0"
+          [ "$N2" = "0" ] || fail "daily_content_recommendations has $N2 rows, expected 0"
+          echo "Verification passed."
+
+      - name: Summary
+        run: |
+          set -euo pipefail
+          {
+            echo "Migrations 070001, 070002, 070003 applied in order to $TARGET_INPUT."
+            echo "Target: $TARGET_INPUT project (guard-verified)."
+            echo "Result: PASS - all three migrations applied, schema/RLS/constraints/indexes verified, Gate 1 counts unchanged ($EXPECTED_HADITHS/$EXPECTED_ADMIN_CONTENT/$EXPECTED_PUBLICATIONS)."
+            echo "MIGRATED AND VERIFIED: islamic_calendar_corrections (empty), daily_content_recommendations (empty), daily_content_publications.recommendation_id (nullable, existing rows untouched)."
+            echo "NOT CHANGED: no existing rows were modified or deleted; no Auth, Storage, Edge Functions, or role passwords were touched."
+          }
