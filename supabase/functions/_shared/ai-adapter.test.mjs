@@ -890,6 +890,24 @@ check("G19 mock-only: only the two free providers exist in the configuration; no
   assert.equal(testEnv.GROQ_API_KEY, "test-groq-key");
 });
 
+// ---------------------------------------------------------------- G20: error surfacing
+// The enrich 500 "Unknown error" (all Phase D runs #1–#7): Supabase /
+// PostgREST errors are plain objects, not Error instances, and
+// httpErrorResponse returned "Unknown error" for them. errorMessage
+// must surface the real message so the cause is diagnosable.
+await checkAsync("G20 errorMessage: a Supabase-style plain-object error surfaces its message, never 'Unknown error'", async () => {
+  const reqAdmin = await import(pathToFileURL(join(stageDir, "_shared", "require-admin.ts")).href);
+  const supabaseErr = { message: "column \"foo\" does not exist", details: "x", hint: "y", code: "42703" };
+  assert.equal(reqAdmin.errorMessage(supabaseErr), "column \"foo\" does not exist");
+  assert.equal(reqAdmin.errorMessage(new Error("plain error")), "plain error");
+  assert.equal(reqAdmin.errorMessage("a string"), "a string");
+  assert.equal(reqAdmin.errorMessage(null), "Unknown error");
+  assert.equal(reqAdmin.errorMessage(undefined), "Unknown error");
+  const resp = reqAdmin.httpErrorResponse(supabaseErr, {});
+  assert.equal(resp.status, 500);
+  assert.equal(JSON.parse(await resp.text()).error, "column \"foo\" does not exist");
+});
+
 console.log = origLog;
 rmSync(stageDir, { recursive: true, force: true });
 console.log(`\nai-adapter tests: ${passed} passed, ${failed} failed`);

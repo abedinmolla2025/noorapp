@@ -147,6 +147,33 @@ export async function requireAdmin(req: Request): Promise<string> {
 }
 
 /**
+ * Extract a readable message from any thrown value. Supabase /
+ * PostgREST errors are plain objects ({ message, details, hint,
+ * code }), NOT Error instances — returning "Unknown error" for them
+ * hid the real cause. Proven need: enrich-dua-content returned 500
+ * {"error":"Unknown error"} in all seven Phase D test runs while the
+ * other functions surfaced their real provider errors. The message
+ * is the provider/database error text only; it never contains a
+ * secret (secrets are never in error objects).
+ */
+export function errorMessage(err: unknown): string {
+  if (err instanceof Error) return err.message;
+  if (typeof err === "string" && err) return err;
+  if (err && typeof err === "object") {
+    const o = err as Record<string, unknown>;
+    if (typeof o.message === "string" && o.message) return o.message;
+    if (typeof o.details === "string" && o.details) return o.details;
+    try {
+      const s = JSON.stringify(err);
+      if (s && s !== "{}") return s.slice(0, 200);
+    } catch {
+      // fall through to "Unknown error"
+    }
+  }
+  return "Unknown error";
+}
+
+/**
  * Convert an HttpError (or any unexpected error) into a JSON error Response.
  * Unexpected errors always map to 500 (fail closed, never leak details).
  */
@@ -155,7 +182,7 @@ export function httpErrorResponse(
   corsHeaders: Record<string, string> = {},
 ): Response {
   const status = err instanceof HttpError ? err.status : 500;
-  const message = err instanceof Error ? err.message : "Unknown error";
+  const message = errorMessage(err);
   return new Response(JSON.stringify({ error: message }), {
     status,
     headers: { ...corsHeaders, "Content-Type": "application/json" },
