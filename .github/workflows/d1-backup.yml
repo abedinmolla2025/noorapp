@@ -215,7 +215,14 @@ jobs:
           mkdir -p backup
           supabase db dump --remote="$PROD_DB_URL" -f backup/roles.sql --role-only
           supabase db dump --remote="$PROD_DB_URL" -f backup/schema.sql
-          supabase db dump --remote="$PROD_DB_URL" -f backup/data.sql --use-copy --data-only
+          # Revision 10 (2026-11-14): exclude the Supabase-managed
+          # storage tables from the data dump. The CLI's --data-only
+          # dump includes their data, but the postgres user cannot
+          # write to them on restore (Op 2 run #1 failed at
+          # data.sql:37361 with 'permission denied for table
+          # buckets_vectors'). This is the official Supabase docs
+          # prescription (supabase.com/docs/guides/deployment/ci/backups).
+          supabase db dump --remote="$PROD_DB_URL" -f backup/data.sql --use-copy --data-only -x "storage.buckets_vectors" -x "storage.vector_indexes"
 
       - name: Validate dump files (integrity + coverage)
         run: |
@@ -264,6 +271,21 @@ jobs:
             grep -qxF "public.$t" /tmp/data_tables.txt || { echo "data.sql is missing COPY public.$t."; exit 1; }
           done
           if grep -qE 'CREATE TABLE (IF NOT EXISTS )?"?(auth|storage)"?\.' backup/schema.sql; then echo "schema.sql contains managed-schema tables (auth/storage) - unexpected."; exit 1; fi
+          # Revision 10 (2026-11-14): the schema check above cannot
+          # catch a managed-schema leak in the DATA dump — the schema
+          # dump correctly contains no storage tables, but the data
+          # dump included COPY storage.buckets_vectors (Op 2 run #1
+          # failed on it). Fail if data.sql copies into any
+          # auth/storage table, so this class of leak is caught at
+          # backup time.
+          if grep -qE '^COPY "?(auth|storage)"?\.' backup/data.sql; then echo "data.sql contains COPY into managed-schema tables (auth/storage) - unexpected."; exit 1; fi
+          # Revision 10 (2026-11-14): exclusion verification — the
+          # two managed storage tables must be absent from data.sql
+          # entirely (not just absent from COPY lines). This names
+          # the excluded tables explicitly in the evidence; the
+          # broad COPY check above would already fail on them.
+          if grep -qE 'storage\.buckets_vectors|storage\.vector_indexes' backup/data.sql; then echo "data.sql contains an excluded managed storage table (storage.buckets_vectors or storage.vector_indexes) - unexpected."; exit 1; fi
+          echo "Exclusion verified: storage.buckets_vectors and storage.vector_indexes are absent from data.sql."
           echo "Dump validation passed: 3 files non-empty, data footer present, COPY blocks balanced ($COPY_COUNT), all 3 expected tables present in schema and data."
 
       - name: SHA-256 manifest + encrypt
@@ -271,6 +293,7 @@ jobs:
           set -euo pipefail
           cd backup
           echo "# Supabase CLI 3.1.0" > MANIFEST-SHA256.txt
+          echo "# Excluded from data dump (Revision 10): storage.buckets_vectors, storage.vector_indexes" >> MANIFEST-SHA256.txt
           sha256sum roles.sql schema.sql data.sql >> MANIFEST-SHA256.txt
           cat MANIFEST-SHA256.txt
           for f in roles.sql schema.sql data.sql; do
@@ -299,6 +322,8 @@ jobs:
             echo "Tables in this dump: $TABLES"
             echo ""
             echo "SCOPE: DATABASE DUMP ONLY. This backup covers user schemas, roles, and data. It does NOT cover Auth users, Auth configuration, Storage buckets, Storage objects, Edge Functions, or custom role passwords."
+            echo ""
+            echo "Excluded from the data dump (Revision 10): storage.buckets_vectors, storage.vector_indexes (Supabase-managed storage tables; the postgres user cannot write to them on restore). Exclusion verified in validation."
             echo ""
             echo '```'
             cat backup/MANIFEST-SHA256.txt
