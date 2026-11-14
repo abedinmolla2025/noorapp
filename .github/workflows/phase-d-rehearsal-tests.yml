@@ -1,0 +1,137 @@
+# Phase D Rehearsal AI Tests (manual)
+#
+# Runs the authenticated Phase 5 / G17 tests against the REHEARSAL
+# project (cazdbxxffvdnsdatjsrx) from the GitHub runner, because the
+# owner's phone browser cannot reach supabase.co at all (Test
+# connection fails with "Failed to fetch" on both Wi-Fi and mobile
+# data; the endpoint + CORS are verified reachable from a server).
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_ANON_KEY        - rehearsal publishable (anon) key
+#   REHEARSAL_ADMIN_EMAIL     - rehearsal-admin@noorapp.test
+#   REHEARSAL_ADMIN_PASSWORD  - the password set for that user
+#
+# The JWT obtained at sign-in is masked with ::add-mask:: immediately
+# and is NEVER echoed, logged, or written to any file. It lives only
+# in a shell variable inside the single test step. The sign-in
+# response is never logged whole (it contains tokens); only the
+# user id is printed. Test responses (function results) ARE logged —
+# they contain no credentials.
+#
+# Tests run in order: 4 stats (no AI), 4 process (AI, 1 row each),
+# recommend generate + list_pending. All 10 run even if one fails;
+# the step exits non-zero if any test failed, so the run conclusion
+# reflects the outcome. Nothing is published; recommend only inserts
+# a pending_review row in rehearsal.
+
+name: Phase D Rehearsal AI Tests (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the authenticated rehearsal AI tests'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+    steps:
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true; aborting."
+            exit 1
+          fi
+          echo "Confirmed. Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Require secrets
+        run: |
+          MISSING=0
+          if [ -z "${{ secrets.REHEARSAL_ANON_KEY }}" ]; then echo "Missing secret: REHEARSAL_ANON_KEY"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_EMAIL }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_EMAIL"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_PASSWORD }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_PASSWORD"; MISSING=1; fi
+          if [ "$MISSING" = "1" ]; then exit 1; fi
+          echo "All three secrets are present (values never shown)."
+
+      - name: Sign in and run all 10 tests
+        run: |
+          set -u
+          FAILURES=0
+
+          # --- Sign in (get JWT). The JWT is masked at once and never echoed. ---
+          RESP=$(curl -s -X POST "$REHEARSAL_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${{ secrets.REHEARSAL_ADMIN_EMAIL }}\",\"password\":\"${{ secrets.REHEARSAL_ADMIN_PASSWORD }}\"}")
+          JWT=$(echo "$RESP" | jq -r '.access_token // empty')
+          REFRESH=$(echo "$RESP" | jq -r '.refresh_token // empty')
+          if [ -n "$JWT" ]; then echo "::add-mask::$JWT"; fi
+          if [ -n "$REFRESH" ]; then echo "::add-mask::$REFRESH"; fi
+          if [ -z "$JWT" ] || [ "$JWT" = "null" ]; then
+            echo "Sign-in FAILED. Response with tokens removed:"
+            echo "$RESP" | jq 'del(.access_token, .refresh_token)'
+            exit 1
+          fi
+          USER_ID=$(echo "$RESP" | jq -r '.user.id // empty')
+          echo "Signed in. User id: $USER_ID (JWT masked, never shown)."
+          unset RESP REFRESH
+
+          # --- Helper: call one function, print status + body, count failures. ---
+          call() {
+            NAME="$1"; FN="$2"; BODY="$3"
+            echo ""
+            echo "=== $NAME ($FN) ==="
+            echo "Request body: $BODY"
+            OUT=$(curl -s -w "\n%{http_code}" -X POST "$REHEARSAL_URL/functions/v1/$FN" \
+              -H "Authorization: Bearer $JWT" \
+              -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+              -H "Content-Type: application/json" \
+              -d "$BODY")
+            CODE=$(echo "$OUT" | tail -n 1)
+            RESP_BODY=$(echo "$OUT" | sed '$d')
+            echo "HTTP status: $CODE"
+            echo "Response:"
+            echo "$RESP_BODY" | head -c 3000
+            echo ""
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 300 ]; then
+              echo "Result: PASS ($CODE)"
+            else
+              echo "Result: FAIL ($CODE)"
+              FAILURES=$((FAILURES + 1))
+            fi
+          }
+
+          # --- Group A: stats (no AI) ---
+          call "1. enrich stats"            "enrich-dua-content"     '{"action":"stats"}'
+          call "2. fix stats"               "fix-dua-content"        '{"action":"stats"}'
+          call "3. generate-dua-seo stats"   "generate-dua-seo"       '{"action":"stats"}'
+          call "4. generate-hadith-seo stats" "generate-hadith-seo"   '{"action":"stats"}'
+
+          # --- Group B: process (AI, 1 row each) ---
+          call "5. enrich process"          "enrich-dua-content"     '{"action":"process","batchSize":1}'
+          call "6. fix process"             "fix-dua-content"        '{"action":"process","batchSize":1}'
+          call "7. generate-dua-seo process" "generate-dua-seo"       '{"action":"process","batchSize":1}'
+          call "8. generate-hadith-seo process" "generate-hadith-seo" '{"action":"process","batchSize":1}'
+
+          # --- Group C: recommend ---
+          call "9. recommend generate"      "recommend-daily-content" '{"action":"generate","context":{"gregorianKey":"2026-11-14","hijri":{"year":1448,"month":6,"day":3},"confirmation":"calculated","activeEventSlugs":[],"ramadanStage":null},"kolkataDate":"2026-11-14","maxCards":3}'
+          call "10. recommend list_pending" "recommend-daily-content" '{"action":"list_pending"}'
+
+          # --- Summary ---
+          echo ""
+          echo "=== SUMMARY ==="
+          echo "Tests run: 10. Failures: $FAILURES."
+          unset JWT
+          if [ "$FAILURES" -gt 0 ]; then
+            echo "Result: FAIL - $FAILURES of 10 tests failed. See the per-test output above."
+            exit 1
+          fi
+          echo "Result: PASS - all 10 tests returned 2xx."
