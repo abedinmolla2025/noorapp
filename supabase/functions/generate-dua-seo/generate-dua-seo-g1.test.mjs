@@ -95,6 +95,25 @@ check("multiple blocked fields are all reported", () => {
 check("empty / missing explanations -> ok (nothing to block)", () => {
   assert.deepEqual(validateGeneratedOutput({}), { ok: true, blockedFields: [] });
 });
+check("prompt forbids virtue language explicitly in English, for all four languages (run #10 regression)", () => {
+  // Run #10 (2026-11-14): Gemini generated virtue language in
+  // explanation_en and the validator blocked the row
+  // ("virtue_language_blocked (explanation_en)"). The prohibition was
+  // Bengali-only, so the model did not reliably apply it to the
+  // English output. The fix names the forbidden English terms
+  // explicitly and states the rule applies to all four languages.
+  // The validator (VIRTUE_BLOCKLIST) is UNCHANGED — this test pins
+  // the prompt fix, not a weaker validator.
+  const phrase = "virtue, reward, forgiven, forgiveness of sins, paradise, hellfire, guaranteed reward";
+  assert.ok(src.includes(phrase), "prompt must name the forbidden English virtue terms");
+  assert.ok(src.includes("চারটি ভাষার ব্যাখ্যাতেই সমানভাবে প্রযোজ্য"), "prompt must state the rule applies to all four languages");
+  // The phrase must appear in BOTH prompts (dua + story).
+  const count = src.split(phrase).length - 1;
+  assert.equal(count, 2, `expected the English prohibition in both prompts, found ${count}`);
+  // The tool description must also carry the prohibition (it is part of
+  // the tool-call context the model sees).
+  assert.ok(src.includes("No virtue, reward, forgiveness, paradise, or guaranteed-outcome claim in ANY language"), "tool description must carry the prohibition");
+});
 
 // ---------------------------------------------------------------- Part 2
 const FAKE_SUPABASE = `
@@ -290,6 +309,41 @@ await checkAsync("handler: stats pending counts explanations only (benefits-null
   assert.equal(r.status, 200);
   assert.equal(r.data.total, 2);
   assert.equal(r.data.pending, 0);
+});
+await checkAsync("handler: virtue language in explanation_en blocks the row, zero writes (run #10 regression)", async () => {
+  // Run #10 (2026-11-14): the live Gemini call returned an English
+  // explanation containing virtue language and the validator blocked
+  // the row ("virtue_language_blocked (explanation_en)"). This test
+  // reproduces that exact failure mode with the stubbed AI and proves
+  // the validator still catches English virtue language — the prompt
+  // fix does NOT weaken the gate.
+  fakeSupabase.__reset(seed());
+  gatewayQueue.length = 0;
+  gatewayQueue.push(
+    { // dua-clean: clean in all four languages.
+      explanation_bn: "এই দোয়ার অর্থ হলো সাহায্য চাওয়া।",
+      explanation_en: "A request for help.",
+      explanation_hi: "मदद की प्रार्थना।",
+      explanation_ur: "مدد کی درخواست۔",
+    },
+    { // dua-virtue: clean Bengali, but the ENGLISH explanation carries
+      // virtue language — the run #10 shape.
+      explanation_bn: "এই দোয়ার অর্থ হলো সাহায্য চাওয়া।",
+      explanation_en: "The virtue of this dua is immense; whoever recites it will be forgiven and granted paradise.",
+      explanation_hi: "मदद की प्रार्थना।",
+      explanation_ur: "مدد کی درخواست۔",
+    },
+  );
+  const r = await call({ action: "process", batchSize: 10 }, "Bearer valid-admin-jwt");
+  assert.equal(r.status, 200);
+  assert.equal(r.data.processed, 1, `expected 1 processed, got ${JSON.stringify(r.data)}`);
+  assert.equal(r.data.failed, 1);
+  assert.ok(String(r.data.errors?.[0] ?? "").includes("virtue_language_blocked (explanation_en)"), `error must name the blocked field: ${JSON.stringify(r.data.errors)}`);
+  const virtueRow = fakeSupabase.state.tables.admin_content.find((x) => x.id === "dua-virtue");
+  assert.equal(virtueRow.explanation_bn, null, "blocked row: zero writes to explanation_bn");
+  assert.equal(virtueRow.explanation_en, null, "blocked row: zero writes to explanation_en");
+  assert.equal(virtueRow.explanation_hi, null, "blocked row: zero writes to explanation_hi");
+  assert.equal(virtueRow.explanation_ur, null, "blocked row: zero writes to explanation_ur");
 });
 
 rmSync(stageDir, { recursive: true, force: true });

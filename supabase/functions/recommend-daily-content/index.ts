@@ -83,6 +83,7 @@ const SYSTEM_PROMPT = [
   "Your only job: rank the eligible Quran/Hadith/Dua records you are given, by relevance to today's Islamic context.",
   "Rules:",
   "- Rank ONLY the candidates listed. Never invent a record, a reference, or a title.",
+  "- Copy the ref EXACTLY as listed for each candidate, including the 'content:' or 'hadith:' prefix (for example content:dua-when-it-rains, hadith:bukhari-9-534). NEVER return a bare slug, a book name, a chapter number, or a human-readable reference — only the exact ref string from the list. A ref that does not match the list exactly will be rejected.",
   "- Return references only (kind + ref). NEVER write out Arabic or Bengali religious text.",
   "- reasonBn: one short Bengali sentence (max 200 characters) saying WHY the record fits today. Plain and factual.",
   "- NEVER claim a virtue (fadilah), a reward (sawab), a guaranteed outcome, an authenticity grade, a prayer count, or a religious ruling.",
@@ -267,7 +268,7 @@ async function callAi(userText: string): Promise<{ recommendations: AiRecommenda
               type: "object",
               properties: {
                 kind: { type: "string", enum: ["hadith", "content"] },
-                ref: { type: "string" },
+                ref: { type: "string", description: "The exact ref string from the candidate list, copied verbatim including the 'content:' or 'hadith:' prefix (for example content:dua-when-it-rains, hadith:bukhari-9-534). Never a bare slug, book name, or human-readable reference." },
                 relevance: { type: "number", minimum: 0, maximum: 1 },
                 reasonBn: { type: "string", maxLength: MAX_REASON_CHARS },
               },
@@ -550,6 +551,7 @@ Deno.serve(async (req) => {
       "",
       "[TASK]",
       `Rank the candidates most relevant to today's Islamic context. Return at most ${maxCards} recommendations as the tool call, most relevant first.`,
+      "Return the ref EXACTLY as listed above (including the 'content:' or 'hadith:' prefix). Do not shorten, translate, or reformat it — a ref that does not match the list exactly will be rejected.",
     ].join("\n");
 
     const ai = await callAi(userText);

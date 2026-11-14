@@ -52,8 +52,12 @@ function matches(row, filters) {
     if (f.op === "neq" && v === f.val) return false;
     if (f.op === "not-cs") {
       // .not(col, "cs", val): the row matches only when the column does
-      // NOT contain all of val's entries.
-      if (v && typeof v === "object" && Object.entries(f.val).every(([k, want]) => v[k] === want)) return false;
+      // NOT contain all of val's entries. postgrest-js's .not() does NOT
+      // JSON-encode objects, so the production code passes a JSON string
+      // (commit 2b66453, the enrich run #8 fix); parse it here the way
+      // PostgREST does, so the fake stays faithful to the real filter.
+      const want = typeof f.val === "string" ? JSON.parse(f.val) : f.val;
+      if (v && typeof v === "object" && Object.entries(want).every(([k, w]) => v[k] === w)) return false;
     }
   }
   return true;

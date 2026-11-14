@@ -346,6 +346,41 @@ t("invented ref -> dropped, valid kept", async () => {
   eq(r.body.dropped.length, 1, "dropped");
   eq(r.body.dropped[0].reason, "not an eligible candidate for this date", "drop reason");
 });
+t("bare slug (no content:/hadith: prefix) -> dropped, exact ref kept (run #7-#10 regression)", async () => {
+  // Runs #7-#10: the AI returned bare slugs ("ayatul-kursi",
+  // "dua-for-guidance") and human-readable refs ("সূরা বাক্বারাহ
+  // ২:২৫৫", "বুখারী ৬৩১২") instead of the exact ref strings
+  // (content:<slug> / hadith:<id>), so validation dropped all of
+  // them and no recommendation persisted. The fix instructs the AI
+  // to copy the ref EXACTLY. The server-side validation is UNCHANGED
+  // — this test proves it still rejects a bare slug.
+  setup({
+    gateway: [
+      aiResponse([
+        { kind: "content", ref: "dua-when-it-rains", relevance: 0.99, reasonBn: "বৃষ্টির সময়ের দোয়া।" },
+        { kind: "content", ref: "content:dua-for-children", relevance: 0.9, reasonBn: "সন্তানের জন্য দোয়া।" },
+      ]),
+    ],
+  });
+  const r = await callEdge(recommendBody());
+  eq(r.status, 200, "status");
+  eq(r.body.recommendations.length, 1, "kept");
+  eq(r.body.recommendations[0].ref, "content:dua-for-children", "kept ref");
+  eq(r.body.dropped.length, 1, "dropped");
+  eq(r.body.dropped[0].ref, "dua-when-it-rains", "dropped ref");
+  eq(r.body.dropped[0].reason, "not an eligible candidate for this date", "drop reason");
+});
+t("prompt constrains the AI to exact refs from the candidate list (run #7-#10 regression)", async () => {
+  // The fix for runs #7-#10 is prompt-side: the AI must copy the ref
+  // EXACTLY as listed, including the 'content:' / 'hadith:' prefix.
+  // This test pins that instruction in the SYSTEM_PROMPT, the tool
+  // schema, and the TASK section. The validation loop is unchanged.
+  const src = fs.readFileSync(path.join(root, "supabase", "functions", "recommend-daily-content", "index.ts"), "utf8");
+  if (!src.includes("Copy the ref EXACTLY as listed")) throw new Error("SYSTEM_PROMPT must require the exact ref");
+  if (!src.includes("content:dua-when-it-rains, hadith:bukhari-9-534")) throw new Error("prompt must show the exact ref format");
+  if (!src.includes("copied verbatim including the 'content:' or 'hadith:' prefix")) throw new Error("tool ref description must require the exact ref");
+  if (!src.includes("Do not shorten, translate, or reformat it")) throw new Error("TASK must reinforce the exact ref");
+});
 t("duplicate ref -> deduped", async () => {
   setup({
     gateway: [

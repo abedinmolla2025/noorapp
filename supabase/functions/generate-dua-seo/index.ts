@@ -16,6 +16,7 @@ const STORY_SYSTEM_PROMPT = [
   "প্রতিটি ইসলামিক গল্পের জন্য সহজ, প্রাঞ্জল বাংলায় ব্যাখ্যা ও শিক্ষা লিখবে।",
   "explanation_bn: ১০০–১৫০ শব্দ; গল্পের প্রেক্ষাপট, ঘটনা ও নৈতিক বার্তা ব্যাখ্যা করো।",
   "কোনো ফজিলত, সওয়াব, উপকার বা পরকালীন ফলাফলের দাবি তৈরি করবে না — benefits/virtue/reward ধরনের কোনো কন্টেন্ট দেবে না।",
+  "এই নিষেধ চারটি ভাষার ব্যাখ্যাতেই সমানভাবে প্রযোজ্য (explanation_bn/en/hi/ur)। English ব্যাখ্যায় virtue, reward, forgiven, forgiveness of sins, paradise, hellfire, guaranteed reward — এই ধরনের কোনো শব্দ বা ধারণা থাকবে না। শুধু গল্পের অর্থ, প্রেক্ষাপট ও নৈতিক শিক্ষা লেখো; কোনো ফলাফল, প্রতিদান বা পরকালীন লাভের প্রতিশ্রুতি দেবে না।",
   "কোনো বানোয়াট বর্ণনা বা দুর্বল রেওয়ায়াত যোগ করবে না।",
   "প্রতিটি গল্পের জন্য কন্টেন্ট unique হতে হবে।",
   "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words)।",
@@ -28,6 +29,7 @@ const SYSTEM_PROMPT = [
   "explanation_bn: ১০০–১৫০ শব্দ, সহজ বাংলা; দোয়ার অর্থ, প্রেক্ষাপট ও বাস্তব শিক্ষা ব্যাখ্যা করো।",
   "স্বাভাবিকভাবে অন্তত একবার এই phrase গুলোর কোনো একটি ব্যবহার করো: \"আমরা শিখি\", \"ইসলামে শিক্ষা\"।",
   "কোনো ফজিলত, সওয়াব, উপকার বা পরকালীন ফলাফলের দাবি তৈরি করবে না — benefits/virtue/reward ধরনের কোনো কন্টেন্ট দেবে না।",
+  "এই নিষেধ চারটি ভাষার ব্যাখ্যাতেই সমানভাবে প্রযোজ্য (explanation_bn/en/hi/ur)। English ব্যাখ্যায় virtue, reward, forgiven, forgiveness of sins, paradise, hellfire, guaranteed reward — এই ধরনের কোনো শব্দ বা ধারণা থাকবে না। শুধু দোয়ার অর্থ, প্রেক্ষাপট ও বাস্তব শিক্ষা লেখো; কোনো ফলাফল, প্রতিদান বা পরকালীন লাভের প্রতিশ্রুতি দেবে না।",
   "প্রতিটি দোয়ার জন্য কন্টেন্ট unique হতে হবে।",
   "একই কন্টেন্টের English (en), Hindi (hi) এবং Urdu (ur) অনুবাদও দাও — explanation_en/hi/ur (১০০–১৫০ words)। অনুবাদ অর্থ-বিশ্বস্ত ও স্বাভাবিক হতে হবে।",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
@@ -121,14 +123,14 @@ async function generateForDua(args: {
     userText,
     tool: {
       name: "save_dua_seo",
-      description: "Save the multilingual SEO explanation for a dua (Bengali + English + Hindi + Urdu).",
+      description: "Save the multilingual SEO explanation for a dua (Bengali + English + Hindi + Urdu). No virtue, reward, forgiveness, paradise, or guaranteed-outcome claim in ANY language — describe only meaning, context, and practical lesson.",
       parameters: {
         type: "object",
         properties: {
-          explanation_bn: { type: "string" },
-          explanation_en: { type: "string" },
-          explanation_hi: { type: "string" },
-          explanation_ur: { type: "string" },
+          explanation_bn: { type: "string", description: "Bengali explanation, 100-150 words. No virtue/reward claim (ফজিলত/সওয়াব)." },
+          explanation_en: { type: "string", description: "English explanation, 100-150 words. No virtue, reward, forgiven, forgiveness of sins, paradise, hellfire, or guaranteed reward — describe only meaning, context, and practical lesson." },
+          explanation_hi: { type: "string", description: "Hindi explanation, 100-150 words. No virtue/reward claim." },
+          explanation_ur: { type: "string", description: "Urdu explanation, 100-150 words. No virtue/reward claim." },
         },
         required: [
           "explanation_bn",
