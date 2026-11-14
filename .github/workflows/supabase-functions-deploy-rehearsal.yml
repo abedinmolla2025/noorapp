@@ -1,0 +1,176 @@
+# Rehearsal-only deploy of the Phase 3 AI Adapter Edge Functions.
+#
+# Purpose: deploy the 5 migrated Edge Functions (Lovable removal, Phase 3)
+# to the REHEARSAL Supabase project ONLY, without needing Supabase access
+# from the agent environment. The deploy runs in GitHub Actions with the
+# Supabase CLI, using the owner-created repo secret SUPABASE_ACCESS_TOKEN.
+#
+# Status: prepared 2026-11-14 for owner approval (Phase 4 gate). NOT
+# dispatched. Do not dispatch until the owner approves it in its own
+# message, and do not add this file to main without its own approval —
+# the file must be on main for the GitHub UI to offer the Run workflow
+# button, and adding it is a main change.
+#
+# What this workflow NEVER does:
+#   - never targets production (the guard below pins the rehearsal
+#     project ref as a literal; there is no production target, no
+#     fallback, and no input that can change the target);
+#   - never disables JWT verification;
+#   - no database migration, no data write, no Cron registration,
+#     no publication, no push notification;
+#   - no secret is echoed, no `set -x`, no env dump anywhere.
+#     GitHub also auto-masks the secret in logs.
+#
+# Design notes (each is a deliberate safety choice):
+#   1. The project-ref guard is a LITERAL string comparison only.
+#      It deliberately does NOT cross-check supabase/config.toml
+#      project_id: on the checked-out phase3 branch that value is
+#      the production project BY DESIGN, and that check would fail
+#      every rehearsal run. The literal guard is the single source
+#      of truth for the target.
+#   2. No GitHub Environment is used: no `rehearsal` environment
+#      exists in this repo (verified 2026-11-14 via gh api; the only
+#      environments are the Vercel Preview/Production ones). The
+#      workflow_dispatch confirm input (DEPLOY-REHEARSAL) is the
+#      explicit approval. The owner may optionally create a
+#      `rehearsal` environment with required reviewers later and add
+#      `environment: rehearsal` to the job — the workflow does not
+#      depend on it.
+#   3. The 5 functions have no supabase/config.toml entries, so the
+#      CLI deploys them with its default (JWT verification ON). The
+#      smoke check therefore expects the gateway's 401 JSON, but it
+#      ACCEPTS the function's own requireAdmin 401 JSON as well and
+#      records which layer rejected the call — an OFF mode is a
+#      finding to report, not a deploy failure (the function gate
+#      still holds). Any other 401 body fails the run.
+#   4. The shared `_shared/` Adapter code deploys automatically as
+#      a dependency of the 5 functions; it is not deployed separately.
+#
+# Functions deployed (Phase 3, branch muse/phase3-adapter-2026-11-13):
+#   enrich-dua-content, fix-dua-content, generate-dua-seo,
+#   generate-hadith-seo, recommend-daily-content
+# Deliberately NOT deployed by this workflow: every other function.
+# In particular daily-content and scheduler-dispatch are NOT deployed
+# here — they belong to the production deploy workflow only, and
+# deploying them to rehearsal is out of scope for Phase 5.
+#
+# Prerequisites (owner actions, each its own approval):
+#   1. This file enters the repo via the GitHub web upload (browser):
+#      a git push of a workflow file is rejected because the available
+#      token lacks the `workflow` scope (proven twice). Upload it to
+#      .github/workflows/ on main.
+#   2. Repo secret SUPABASE_ACCESS_TOKEN already exists by name
+#      (created 2026-11-12; value never accessed). No new secret
+#      is needed for this workflow.
+#   3. The owner dispatches it from the GitHub UI (Actions ->
+#      this workflow -> Run workflow) and types DEPLOY-REHEARSAL.
+#      The available token cannot dispatch (no `workflow` scope).
+
+name: Deploy AI Adapter Edge Functions to Rehearsal
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY-REHEARSAL to deploy the 5 migrated functions to the REHEARSAL project only'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-rehearsal:
+    runs-on: ubuntu-latest
+    if: ${{ inputs.confirm == 'DEPLOY-REHEARSAL' }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: muse/phase3-adapter-2026-11-13
+
+      - name: Install pinned Supabase CLI
+        run: |
+          set -euo pipefail
+          npm install -g supabase@3.1.0
+          CLI_VERSION="$(supabase --version)"
+          echo "Supabase CLI version: $CLI_VERSION"
+          case "$CLI_VERSION" in
+            *3.1.0*) ;;
+            *) echo "Unexpected CLI version (want 3.1.0). Refusing."; exit 1 ;;
+          esac
+
+      - name: Project-ref guard (rehearsal only)
+        run: |
+          set -euo pipefail
+          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
+          [ "$EXPECTED_REF" = "cazdbxxffvdnsdatjsrx" ] || { echo "Ref guard failed."; exit 1; }
+          echo "Project-ref guard passed: $EXPECTED_REF (rehearsal only)"
+          echo "EXPECTED_REF=$EXPECTED_REF" >> "$GITHUB_ENV"
+
+      - name: Deploy migrated functions to rehearsal
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
+            [ -d "supabase/functions/$fn" ] || { echo "Missing function directory: $fn. Refusing."; exit 1; }
+            echo "Deploying $fn to rehearsal ..."
+            supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --yes
+          done
+          echo "All 5 functions deployed to rehearsal."
+
+      - name: Verify deployed function versions
+        env:
+          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
+        run: |
+          set -euo pipefail
+          supabase functions list --project-ref "$EXPECTED_REF" > /tmp/functions-list.txt
+          cat /tmp/functions-list.txt
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
+            grep -q "$fn" /tmp/functions-list.txt || { echo "Function not listed after deploy: $fn. Refusing."; exit 1; }
+          done
+          echo "All 5 functions present in the deployed list."
+
+      - name: Smoke check — unauthenticated calls must return exactly 401 with a known body
+        run: |
+          set -euo pipefail
+          BASE="https://cazdbxxffvdnsdatjsrx.supabase.co/functions/v1"
+          check_401() {
+            fn="$1"; body="$2"
+            resp=$(curl -s --max-time 30 -w '\n%{http_code}' -X POST "$BASE/$fn" -H 'Content-Type: application/json' -d "$body")
+            code="${resp##*$'\n'}"
+            resp_body="${resp%$'\n'*}"
+            echo "$fn unauthenticated status: $code (want 401)"
+            [ "$code" = "401" ] || { echo "GATE NOT LIVE on $fn (got $code). Failing."; exit 1; }
+            # The 401 BODY proves which layer rejected the call, so it
+            # is asserted, not just the status. Two known shapes:
+            #  - gateway JSON (verify_jwt ON): {"code":...,"message":...}
+            #  - the function's own requireAdmin JSON (verify_jwt OFF):
+            #    {"error":"Missing or malformed Authorization header"}
+            # Either proves the function is deployed and gated; the
+            # mode is recorded, not failed on. Any other body fails.
+            case "$resp_body" in
+              *'"error":"Missing or malformed Authorization header"'*)
+                echo "$fn 401 body is the function's own JSON (verify_jwt OFF as deployed; function gate holds)."
+                ;;
+              *'"code"'*)
+                echo "$fn 401 body is the gateway JSON (verify_jwt ON as deployed)."
+                ;;
+              *)
+                echo "GATE BODY MISMATCH on $fn: unexpected 401 body '$resp_body'. Failing."; exit 1
+                ;;
+            esac
+          }
+          # requireAdmin functions: any body 401s before body parsing.
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
+            check_401 "$fn" '{}'
+          done
+          echo "Smoke check passed: all 5 functions return 401 unauthenticated on rehearsal."
+
+      - name: Post-deploy notes (no further action in this run)
+        run: |
+          echo "Rehearsal deploy complete. Real-provider tests (G17),"
+          echo "Bengali quality checks, and quota verification are NOT"
+          echo "part of this workflow — they run as a separate Phase 5"
+          echo "verification step after this run succeeds."
+          echo "Production was not touched by this workflow."
