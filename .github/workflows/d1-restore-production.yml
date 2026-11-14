@@ -1,4 +1,4 @@
-# D-1 Restore Production — manual GitHub Actions workflow (REVISION 3, 2026-11-14)
+# D-1 Restore Production — manual GitHub Actions workflow (REVISION 4, 2026-11-14)
 #
 # Purpose: RECOVERY ONLY. Restore a D-1 backup artifact into the
 # PRODUCTION project (llicfiepatzgllmjhzbw) and verify it. Created
@@ -33,6 +33,11 @@
 #      user objects outside the platform schemas — true now
 #      because the public schema is empty. If it finds anything,
 #      the job refuses (safe) and the object list is printed.
+# Revision 4 (2026-11-14): DISABLE TRIGGER ALL also needs
+#   superuser for system (RI) triggers (run #3 failed on
+#   public.admin_ads). Replaced with FK drop/re-add: capture FK
+#   definitions with pg_get_constraintdef, drop all FKs in
+#   public, COPY, re-add them (table ownership only).
 # Revision 3 (2026-11-14): 'SET session_replication_role =
 #   replica' needs a true superuser and the production postgres
 #   role cannot set it (run #2 failed there). Replaced with a
@@ -314,29 +319,35 @@ jobs:
           # would CREATE ROLE for roles that already exist and
           # fail the transaction. Only schema.sql + data.sql are
           # applied (the public schema and its data).
-          # Revision 3 (2026-11-14): do NOT use
-          # 'SET session_replication_role = replica' — it requires
-          # a true superuser, and the production postgres role
-          # cannot set it (run #2 failed there, before any data
-          # loaded). The rehearsal postgres CAN set it, which is
-          # why Op 2 run #2 worked — the two projects differ.
-          # Instead, disable ALL triggers on every public table
-          # before data.sql and re-enable them after it. ALTER
-          # TABLE ... DISABLE/ENABLE TRIGGER ALL needs only table
-          # ownership (postgres owns every table schema.sql
-          # creates), not superuser. This handles the circular FK
-          # between admin_content and content_versions, which is
-          # why the replication-role SET was there. Both toggles
-          # run inside the same single transaction, so a failure
-          # anywhere rolls the DISABLE back too. The DO blocks
-          # use dollar-quoted strings ($body$ / $q$) so the whole
-          # --command contains no single quotes and is safe inside
-          # the bash single-quoted argument.
+          # Revision 4 (2026-11-14): the trigger toggle from
+          # Revision 3 ALSO needs superuser — 'DISABLE TRIGGER
+          # ALL' cannot disable system (RI/FK) triggers, and run
+          # #3 failed on public.admin_ads with 'permission denied:
+          # RI_ConstraintTrigger_a_62316 is a system trigger'.
+          # So neither superuser mechanism works on production
+          # (no SET session_replication_role, no DISABLE TRIGGER
+          # ALL). The non-superuser way to load data past FKs is
+          # to DROP the foreign keys, COPY, then re-ADD them.
+          # That needs only table ownership (postgres owns every
+          # table schema.sql creates). The FK definitions are
+          # captured first into a temp table with
+          # pg_get_constraintdef (exact DDL), so the re-add is
+          # byte-faithful. This handles the circular FK between
+          # admin_content and content_versions and any other FK
+          # ordering problem. Everything runs inside the same
+          # single transaction: a failure anywhere (including a
+          # re-add that fails validation) rolls the whole restore
+          # back, so production is never left half-restored or
+          # without its FKs. The --command arguments use
+          # dollar-quoted strings ($q$) for literals so they
+          # contain no single quotes and are safe inside the bash
+          # single-quoted arguments.
           psql --single-transaction --variable ON_ERROR_STOP=1 \
             --file backup/schema.sql \
-            --command 'DO $body$ DECLARE r record; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = $q$public$q$ LOOP EXECUTE format($q$ALTER TABLE public.%I DISABLE TRIGGER ALL$q$, r.tablename); END LOOP; END $body$;' \
+            --command 'CREATE TEMP TABLE _d1_fk_restore AS SELECT c.conrelid::regclass::text AS tbl, c.conname AS conname, pg_get_constraintdef(c.oid) AS def FROM pg_constraint c JOIN pg_namespace n ON n.oid = c.connamespace WHERE c.contype = $q$f$q$ AND n.nspname = $q$public$q$;' \
+            --command 'DO $body$ DECLARE r record; BEGIN FOR r IN SELECT tbl, conname FROM _d1_fk_restore LOOP EXECUTE format($q$ALTER TABLE %s DROP CONSTRAINT %I$q$, r.tbl, r.conname); END LOOP; END $body$;' \
             --file backup/data.sql \
-            --command 'DO $body$ DECLARE r record; BEGIN FOR r IN SELECT tablename FROM pg_tables WHERE schemaname = $q$public$q$ LOOP EXECUTE format($q$ALTER TABLE public.%I ENABLE TRIGGER ALL$q$, r.tablename); END LOOP; END $body$;'
+            --command 'DO $body$ DECLARE r record; BEGIN FOR r IN SELECT tbl, conname, def FROM _d1_fk_restore LOOP EXECUTE format($q$ALTER TABLE %s ADD CONSTRAINT %I %s$q$, r.tbl, r.conname, r.def); END LOOP; END $body$;'
 
       - name: Verify counts
         run: |
