@@ -49,27 +49,30 @@ export function providerConfig(provider: ProviderId) {
 }
 
 export const AI_CONFIG = {
-  // PRIMARY is Groq (owner decision 2026-11-14): the Gemini API free
-  // tier is NOT available for the owner's Google account — it is
-  // unavailable across multiple newly created projects, and the owner
-  // will not enable billing (free-only policy, INR 0). Do NOT create
-  // new Gemini projects or keys to work around this. Groq is the
-  // primary until a working Gemini free-tier key exists; the Gemini
-  // client, secret name, and failover path below are KEPT so Gemini
-  // can be restored as primary later by swapping these two blocks.
+  // PRIMARY is Gemini (owner decision 2026-11-14 21:39 IST): the owner
+  // set a NEW Gemini free-tier API key in the rehearsal GEMINI_API_KEY
+  // secret and asked for a live test of Gemini as primary with Groq as
+  // fallback. HISTORY: the Gemini API free tier was NOT available for
+  // the owner's Google account across multiple newly created projects
+  // (403 "free tier is not available"), and the owner will not enable
+  // billing (free-only policy, INR 0). If this new key also 403s, the
+  // adapter returns PROVIDER_AUTH_FAILED with NO failover (auth
+  // failures never fail over, per Phase 2.2) — the correct outcome is
+  // then to restore Groq as primary by swapping these two blocks back.
+  // No paid fallback exists in either direction.
   primary: {
-    id: "groq" as ProviderId,
-    model: "openai/gpt-oss-120b",
-    baseUrl: "https://api.groq.com/openai/v1",
-    secretName: "GROQ_API_KEY",
-    timeoutMs: 90_000,
-  },
-  secondary: {
     id: "gemini" as ProviderId,
     model: "gemini-3-flash-preview",
     baseUrl: "https://generativelanguage.googleapis.com/v1beta",
     secretName: "GEMINI_API_KEY",
     timeoutMs: 60_000,
+  },
+  secondary: {
+    id: "groq" as ProviderId,
+    model: "openai/gpt-oss-120b",
+    baseUrl: "https://api.groq.com/openai/v1",
+    secretName: "GROQ_API_KEY",
+    timeoutMs: 90_000,
   },
   // Health-probe timeout (architecture §6: free signals only; the probe
   // itself is NOT a model call and is not used in Phase 3).
