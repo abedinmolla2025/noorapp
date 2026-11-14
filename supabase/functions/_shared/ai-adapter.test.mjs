@@ -221,6 +221,50 @@ function groqError(status, message, headers) {
   };
 }
 
+// ---------------------------------------------------------------- role-aware helpers
+// The config is swappable — Gemini or Groq may be primary. The tests must
+// pass under either role assignment, so they derive the roles from
+// AI_CONFIG instead of hardcoding "groq is primary". The per-provider
+// response shapes are fixed (Gemini envelope vs Groq OpenAI-compatible
+// envelope); only the ROLE changes, so these helpers pick the right shape
+// for the current role. (2026-11-14: the config swap to Gemini primary
+// broke 15 role-assuming tests; this is the fix.)
+const PRIMARY = AI_CONFIG.primary.id;
+const SECONDARY = AI_CONFIG.secondary.id;
+const PRIMARY_URL = PRIMARY === "gemini" ? GEMINI_URL : GROQ_URL;
+const SECONDARY_URL = SECONDARY === "gemini" ? GEMINI_URL : GROQ_URL;
+function primaryOk(args, usage) {
+  return PRIMARY === "gemini" ? geminiOk(args, usage) : groqOk(args, usage);
+}
+function secondaryOk(args, usage) {
+  return SECONDARY === "gemini" ? geminiOk(args, usage) : groqOk(args, usage);
+}
+function primaryError(status, message, extra) {
+  // extra is a RetryInfo delay for Gemini, headers for Groq.
+  return PRIMARY === "gemini"
+    ? geminiError(status, message, extra)
+    : groqError(status, message, extra);
+}
+function secondaryError(status, message, extra) {
+  return SECONDARY === "gemini"
+    ? geminiError(status, message, extra)
+    : groqError(status, message, extra);
+}
+function primaryNoToolCall() {
+  // A 200 with no tool call, in the PRIMARY's response shape.
+  return PRIMARY === "gemini"
+    ? { status: 200, body: { candidates: [{ content: { parts: [{ text: "free text, no call" }] }, finishReason: "STOP" }] } }
+    : { status: 200, body: { choices: [{ message: { content: "free text, no call" }, finish_reason: "stop" }] } };
+}
+function makeRoleRoutedMock(primaryFn, secondaryFn) {
+  // makeRoutedMock routes by URL (geminiFn for GEMINI_URL, groqFn for
+  // GROQ_URL); this wrapper takes the functions by ROLE instead.
+  return makeRoutedMock(
+    PRIMARY === "gemini" ? primaryFn : secondaryFn,
+    PRIMARY === "gemini" ? secondaryFn : primaryFn,
+  );
+}
+
 let nowMs = 1_700_000_000_000; // fixed clock for breaker/quota assertions
 const sleeps = [];
 async function callAdapter(mock, overrides = {}) {
@@ -320,12 +364,17 @@ check("G1 parseGroqResponse: invalid JSON args -> schema", () => {
 
 // ---------------------------------------------------------------- config values
 check("config: docs' proposed values are the implementer's choice (90/60/10s, 2+1, 1500±25%, 5/5min/60s, 8000/4096, 20, INR 0)", () => {
-  assert.equal(AI_CONFIG.primary.model, "openai/gpt-oss-120b");
-  assert.equal(AI_CONFIG.secondary.model, "gemini-3-flash-preview");
-  assert.equal(AI_CONFIG.primary.secretName, "GROQ_API_KEY");
-  assert.equal(AI_CONFIG.secondary.secretName, "GEMINI_API_KEY");
-  assert.equal(AI_CONFIG.primary.timeoutMs, 90_000);
-  assert.equal(AI_CONFIG.secondary.timeoutMs, 60_000);
+  // Per-PROVIDER values (role-independent — they must not change when the
+  // primary/secondary roles are swapped). providerConfig looks a provider
+  // up by ID, never by role.
+  assert.equal(configMod.providerConfig("groq").model, "openai/gpt-oss-120b");
+  assert.equal(configMod.providerConfig("gemini").model, "gemini-3-flash-preview");
+  assert.equal(configMod.providerConfig("groq").secretName, "GROQ_API_KEY");
+  assert.equal(configMod.providerConfig("gemini").secretName, "GEMINI_API_KEY");
+  assert.equal(configMod.providerConfig("groq").timeoutMs, 90_000);
+  assert.equal(configMod.providerConfig("gemini").timeoutMs, 60_000);
+  // The two roles are the two providers, in either order.
+  assert.deepEqual([AI_CONFIG.primary.id, AI_CONFIG.secondary.id].sort(), ["gemini", "groq"]);
   assert.equal(AI_CONFIG.probeTimeoutMs, 10_000);
   assert.equal(AI_CONFIG.maxPrimaryRetries, 2);
   assert.equal(AI_CONFIG.secondaryAttempts, 1);
@@ -463,34 +512,31 @@ check("G2 usage extraction: Gemini usageMetadata + Groq usage", () => {
 });
 
 // ---------------------------------------------------------------- G3: forced tool call
-await checkAsync("G3 Groq forced tool call returns schema-valid args", async () => {
+await checkAsync("G3 primary forced tool call returns schema-valid args", async () => {
   resetTest();
-  const mock = makeMock([groqOk({ explanation_bn: "ব্যাখ্যা" })]);
+  const mock = makeMock([primaryOk({ explanation_bn: "ব্যাখ্যা" })]);
   const r = await callAdapter(mock);
   assert.deepEqual(r.args, { explanation_bn: "ব্যাখ্যা" });
-  assert.equal(r.provider, "groq");
+  assert.equal(r.provider, PRIMARY);
   assert.equal(r.calls, 1);
-  assert.equal(mock.calls[0].url, GROQ_URL);
+  assert.equal(mock.calls[0].url, PRIMARY_URL);
 });
-await checkAsync("G3 Gemini forced tool call returns schema-valid args (after primary 503s)", async () => {
+await checkAsync("G3 secondary forced tool call returns schema-valid args (after primary 503s)", async () => {
   resetTest();
   const mock = makeMock([
-    groqError(503, "unavailable"),
-    groqError(503, "unavailable"),
-    groqError(503, "unavailable"),
-    geminiOk({ explanation_bn: "ব্যাখ্যা" }),
+    primaryError(503, "unavailable"),
+    primaryError(503, "unavailable"),
+    primaryError(503, "unavailable"),
+    secondaryOk({ explanation_bn: "ব্যাখ্যা" }),
   ]);
   const r = await callAdapter(mock);
   assert.deepEqual(r.args, { explanation_bn: "ব্যাখ্যা" });
-  assert.equal(r.provider, "gemini");
+  assert.equal(r.provider, SECONDARY);
   assert.equal(r.calls, 4);
 });
 await checkAsync("G3 missing tool call -> SCHEMA_ERROR, secondary never called", async () => {
   resetTest();
-  const mock = makeMock([{
-    status: 200,
-    body: { choices: [{ message: { content: "free text, no call" }, finish_reason: "stop" }] },
-  }]);
+  const mock = makeMock([primaryNoToolCall()]);
   await assert.rejects(
     callAdapter(mock),
     (e) => e instanceof adapter.AiError && e.code === "SCHEMA_ERROR" && e.message.includes("no tool call returned"),
@@ -543,11 +589,11 @@ await checkAsync("G5 hung primary aborts at the timeout and maps to retryable (4
 await checkAsync("G6 brief 429 retries and succeeds on the primary", async () => {
   resetTest();
   const mock = makeMock([
-    groqError(429, "rate limited"),
-    groqOk({ explanation_bn: "ok" }),
+    primaryError(429, "rate limited"),
+    primaryOk({ explanation_bn: "ok" }),
   ]);
   const r = await callAdapter(mock);
-  assert.equal(r.provider, "groq");
+  assert.equal(r.provider, PRIMARY);
   assert.equal(r.calls, 2);
   assert.equal(sleeps.length, 1);
 });
@@ -555,64 +601,75 @@ await checkAsync("G6 retry-after is honoured (and capped at 30s)", async () => {
   resetTest();
   const mock = makeMock([
     { status: 429, headers: { "retry-after": "2" }, body: { error: { code: 429, message: "slow down", status: "RESOURCE_EXHAUSTED", details: [] } } },
-    groqOk({ explanation_bn: "ok" }),
+    primaryOk({ explanation_bn: "ok" }),
   ]);
   const r = await callAdapter(mock);
-  assert.equal(r.provider, "groq");
+  assert.equal(r.provider, PRIMARY);
   assert.equal(sleeps[0], 2000);
   assert.equal(adapter.backoffDelayMs(0, () => 0.5, 120_000), 30_000);
 });
 await checkAsync("G6 503 fails over to the secondary", async () => {
   resetTest();
   const mock = makeMock([
-    groqError(503, "unavailable"),
-    groqError(503, "unavailable"),
-    groqError(503, "unavailable"),
-    geminiOk({ explanation_bn: "ok" }),
+    primaryError(503, "unavailable"),
+    primaryError(503, "unavailable"),
+    primaryError(503, "unavailable"),
+    secondaryOk({ explanation_bn: "ok" }),
   ]);
   const r = await callAdapter(mock);
-  assert.equal(r.provider, "gemini");
+  assert.equal(r.provider, SECONDARY);
   assert.equal(r.calls, 4);
 });
 
 // ---------------------------------------------------------------- G7: auth no-failover
-await checkAsync("G7 Groq 401 -> PROVIDER_AUTH_FAILED, secondary never called", async () => {
+await checkAsync("G7 primary 401 -> PROVIDER_AUTH_FAILED, secondary never called", async () => {
   resetTest();
-  const mock = makeMock([groqError(401, "bad key")]);
+  const mock = makeMock([primaryError(401, "bad key")]);
   await assert.rejects(
     callAdapter(mock),
     (e) => e instanceof adapter.AiError && e.code === "PROVIDER_AUTH_FAILED",
   );
   assert.equal(mock.calls.length, 1);
-  assert.ok(mock.calls.every((c) => c.url === GROQ_URL));
+  assert.ok(mock.calls.every((c) => c.url === PRIMARY_URL));
 });
-await checkAsync("G7 Groq 403 -> PROVIDER_AUTH_FAILED, secondary never called", async () => {
+await checkAsync("G7 primary 403 -> PROVIDER_AUTH_FAILED carrying the provider's reason, secondary never called", async () => {
+  // When the primary answers 403, the error must carry the provider's own
+  // reason — never a paid fallback. For Gemini the reason is the free-tier
+  // message (owner decision 2026-11-14: no billing on this account).
   resetTest();
-  const mock = makeMock([groqError(403, "forbidden")]);
+  const reason = PRIMARY === "gemini"
+    ? "The Gemini API free tier is not available for this project. To use the Gemini API, please set up billing to upgrade to the paid tier."
+    : "forbidden";
+  const mock = makeMock([primaryError(403, reason)]);
   await assert.rejects(
     callAdapter(mock),
-    (e) => e instanceof adapter.AiError && e.code === "PROVIDER_AUTH_FAILED",
+    (e) =>
+      e instanceof adapter.AiError &&
+      e.code === "PROVIDER_AUTH_FAILED" &&
+      e.message.includes(PRIMARY === "gemini" ? "free tier is not available" : "forbidden"),
   );
   assert.equal(mock.calls.length, 1);
+  assert.ok(mock.calls.every((c) => c.url === PRIMARY_URL));
 });
-await checkAsync("G7 Gemini 403 as secondary -> PROVIDER_AUTH_FAILED carrying the provider's reason (free tier unavailable)", async () => {
-  // Owner decision 2026-11-14: the Gemini free tier is unavailable for
-  // the owner's Google account (no billing). When the primary (Groq)
-  // fails retryable and the secondary (Gemini) answers 403, the error
-  // must say Gemini is unavailable — never a paid fallback.
+await checkAsync("G7 secondary 403 after primary 503s -> PROVIDER_AUTH_FAILED carrying the secondary's reason", async () => {
+  // When the primary fails retryable and the secondary answers 403, the
+  // error must say the secondary is unavailable — never a paid fallback.
   resetTest();
+  const reason = SECONDARY === "gemini"
+    ? "The Gemini API free tier is not available for this project. To use the Gemini API, please set up billing to upgrade to the paid tier."
+    : "forbidden";
   const mock = makeMock([
-    groqError(503, "unavailable"),
-    groqError(503, "unavailable"),
-    groqError(503, "unavailable"),
-    geminiError(403, "The Gemini API free tier is not available for this project. To use the Gemini API, please set up billing to upgrade to the paid tier."),
+    primaryError(503, "unavailable"),
+    primaryError(503, "unavailable"),
+    primaryError(503, "unavailable"),
+    secondaryError(403, reason),
   ]);
   await assert.rejects(
     callAdapter(mock),
     (e) =>
       e instanceof adapter.AiError &&
       e.code === "PROVIDER_AUTH_FAILED" &&
-      e.message.includes("free tier is not available"),
+      e.message.includes(SECONDARY === "gemini" ? "free tier is not available" : "forbidden"),
   );
   assert.equal(mock.calls.length, 4);
 });
@@ -642,44 +699,44 @@ await checkAsync("G8 missing GROQ_API_KEY -> 500 naming the key, zero provider c
 // ---------------------------------------------------------------- G9: circuit breaker
 await checkAsync("G9 breaker: 5 failures open it; next call skips the primary; cooldown probe closes it", async () => {
   resetTest();
-  const mock = makeRoutedMock(
-    () => geminiOk({ explanation_bn: "ok" }),
-    () => groqError(503, "unavailable"),
+  const mock = makeRoleRoutedMock(
+    () => primaryError(503, "unavailable"),
+    () => secondaryOk({ explanation_bn: "ok" }),
   );
   // Call 1: 3 primary failures + 1 secondary success.
   let r = await callAdapter(mock);
-  assert.equal(r.provider, "gemini");
-  assert.equal(mock.calls.filter((c) => c.url === GROQ_URL).length, 3);
+  assert.equal(r.provider, SECONDARY);
+  assert.equal(mock.calls.filter((c) => c.url === PRIMARY_URL).length, 3);
   // Call 2: 2 more primary failures (5th trips the breaker) + secondary.
   r = await callAdapter(mock);
-  assert.equal(r.provider, "gemini");
-  assert.equal(mock.calls.filter((c) => c.url === GROQ_URL).length, 5);
-  const state = adapter.getBreakerState("groq");
+  assert.equal(r.provider, SECONDARY);
+  assert.equal(mock.calls.filter((c) => c.url === PRIMARY_URL).length, 5);
+  const state = adapter.getBreakerState(PRIMARY);
   assert.ok(state && state.openedUntilMs > nowMs, "breaker must be open after 5 failures");
   // Call 3 (breaker open): zero primary calls, straight to the secondary.
   const before = mock.calls.length;
   r = await callAdapter(mock);
-  assert.equal(r.provider, "gemini");
+  assert.equal(r.provider, SECONDARY);
   assert.equal(mock.calls.length - before, 1);
-  assert.equal(mock.calls[mock.calls.length - 1].url, GEMINI_URL);
+  assert.equal(mock.calls[mock.calls.length - 1].url, SECONDARY_URL);
   // Past the 60 s cooldown, the half-open probe tries the primary once.
   nowMs += 61_000;
-  const mock2 = makeRoutedMock(
-    () => geminiOk({ explanation_bn: "ok" }),
-    () => groqOk({ explanation_bn: "recovered" }),
+  const mock2 = makeRoleRoutedMock(
+    () => primaryOk({ explanation_bn: "recovered" }),
+    () => secondaryOk({ explanation_bn: "ok" }),
   );
   r = await callAdapter(mock2);
-  assert.equal(r.provider, "groq");
+  assert.equal(r.provider, PRIMARY);
   assert.deepEqual(r.args, { explanation_bn: "recovered" });
-  assert.equal(adapter.getBreakerState("groq"), undefined);
+  assert.equal(adapter.getBreakerState(PRIMARY), undefined);
 });
 
 // ---------------------------------------------------------------- G10: correlation ID + no parallel calls
 await checkAsync("G10 same correlation ID on retry; at most 1 in-flight call per request", async () => {
   resetTest();
   const mock = makeMock([
-    groqError(429, "rate limited"),
-    groqOk({ explanation_bn: "ok" }),
+    primaryError(429, "rate limited"),
+    primaryOk({ explanation_bn: "ok" }),
   ]);
   const r = await callAdapter(mock, { correlationId: "corr-xyz" });
   assert.equal(r.correlationId, "corr-xyz");
@@ -706,7 +763,7 @@ await checkAsync("G11 at most 4 provider calls per request", async () => {
 await checkAsync("G12 mocked Bengali response validates (required fields, word counts)", async () => {
   resetTest();
   const bn = "এই দোয়ার অর্থ হলো আল্লাহর কাছে সাহায্য চাওয়া এবং ধৈর্য ধরে তাঁর রহমতের আশা করা। আমরা শিখি প্রতিটি কঠিন সময়ে আল্লাহর উপর ভরসা রাখতে।";
-  const mock = makeMock([groqOk({
+  const mock = makeMock([primaryOk({
     explanation_bn: bn,
     lessons_bn: ["ধৈর্য ধরতে শিখি", "আল্লাহর উপর ভরসা রাখি", "সাহায্য চাইতে শিখি"],
   })]);
@@ -721,10 +778,12 @@ await checkAsync("G12 mocked Bengali response validates (required fields, word c
 await checkAsync("G13 Arabic input is byte-identical in the request; no Arabic is generated", async () => {
   resetTest();
   const arabic = "اللَّهُمَّ إِنَّكَ عَفُوٌّ تُحِبُّ الْعَفْوَ فَاعْفُ عَنِّي";
-  const mock = makeMock([groqOk({ explanation_bn: "ব্যাখ্যা" })]);
+  const mock = makeMock([primaryOk({ explanation_bn: "ব্যাখ্যা" })]);
   const r = await callAdapter(mock, { userText: `আরবি:\n${arabic}\n\nব্যাখ্যা লেখো।` });
-  const sentText = mock.calls[0].body.messages[1].content;
-  assert.ok(sentText.includes(arabic), "the exact Arabic input must reach the provider");
+  // The request body shape differs by provider (Groq: messages[], Gemini:
+  // contents[]), so check the whole serialised body for the exact Arabic.
+  const sentBody = JSON.stringify(mock.calls[0].body);
+  assert.ok(sentBody.includes(arabic), "the exact Arabic input must reach the provider");
   assert.equal(/[\u0600-\u06FF]/.test(JSON.stringify(r.args)), false);
 });
 
@@ -841,20 +900,28 @@ check("G18 classify429 bare 429: attempt 0 -> FREE_RATE_LIMITED, attempt 1 -> PR
 });
 await checkAsync("G18 integration: daily-quota 429 on both providers stops the batch, records the reset, second call makes zero provider calls", async () => {
   resetTest();
+  // The quota signal differs by provider: Groq sends x-ratelimit headers,
+  // Gemini sends a RetryInfo delay in the error body. Pass the right
+  // signal for whichever provider currently holds each role.
+  const primaryQuotaExtra = PRIMARY === "gemini" ? "7200s" : {
+    "x-ratelimit-remaining-requests": "0",
+    "x-ratelimit-reset-requests": "6h0m0s",
+  };
+  const secondaryQuotaExtra = SECONDARY === "gemini" ? "7200s" : {
+    "x-ratelimit-remaining-requests": "0",
+    "x-ratelimit-reset-requests": "6h0m0s",
+  };
   const mock = makeMock([
-    groqError(429, "quota exhausted", {
-      "x-ratelimit-remaining-requests": "0",
-      "x-ratelimit-reset-requests": "6h0m0s",
-    }),
-    geminiError(429, "quota exhausted", "7200s"),
+    primaryError(429, "quota exhausted", primaryQuotaExtra),
+    secondaryError(429, "quota exhausted", secondaryQuotaExtra),
   ]);
   await assert.rejects(
     callAdapter(mock),
     (e) => e instanceof adapter.AiError && e.code === "FREE_QUOTA_EXHAUSTED",
   );
   assert.equal(mock.calls.length, 2);
-  assert.ok(adapter.getQuotaBlockedUntil("groq") > nowMs);
-  assert.ok(adapter.getQuotaBlockedUntil("gemini") > nowMs);
+  assert.ok(adapter.getQuotaBlockedUntil(PRIMARY) > nowMs);
+  assert.ok(adapter.getQuotaBlockedUntil(SECONDARY) > nowMs);
   // Second call: both providers are quota-blocked on this instance — zero calls.
   await assert.rejects(
     callAdapter(mock),
@@ -865,19 +932,19 @@ await checkAsync("G18 integration: daily-quota 429 on both providers stops the b
 await checkAsync("G18 integration: ambiguous 429 becomes provider-wide on the second attempt, then the secondary succeeds", async () => {
   resetTest();
   const mock = makeMock([
-    groqError(429, "rate limited"),
-    groqError(429, "rate limited"),
-    groqError(429, "rate limited"),
-    geminiOk({ explanation_bn: "ok" }),
+    primaryError(429, "rate limited"),
+    primaryError(429, "rate limited"),
+    primaryError(429, "rate limited"),
+    secondaryOk({ explanation_bn: "ok" }),
   ]);
   const r = await callAdapter(mock);
-  assert.equal(r.provider, "gemini");
+  assert.equal(r.provider, SECONDARY);
   assert.equal(r.calls, 4);
 });
 
 // ---------------------------------------------------------------- G19: mock-only
 check("G19 mock-only: only the two free providers exist in the configuration; no paid provider, no Lovable, no Anthropic", () => {
-  assert.deepEqual([AI_CONFIG.primary.id, AI_CONFIG.secondary.id], ["groq", "gemini"]);
+  assert.deepEqual([AI_CONFIG.primary.id, AI_CONFIG.secondary.id].sort(), ["gemini", "groq"]);
   const src = ["ai-config.ts", "ai-adapter.ts", "ai-gemini-client.ts", "ai-groq-client.ts"]
     .map((f) => readFileSync(join(funcsRoot, "_shared", f), "utf8"))
     .join("\n");
