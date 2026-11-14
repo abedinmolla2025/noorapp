@@ -331,7 +331,20 @@ jobs:
           # names differ, so both sides are normalized (sorted,
           # deduplicated) and compared as sets. The backup's schema.sql
           # is the source of truth for what the backup contains.
-          grep -oE 'CREATE TABLE (IF NOT EXISTS )?public\.(daily_content_publications|daily_content_recommendations|islamic_calendar_corrections)' backup/schema.sql | sed 's/.*public\.//' | sort -u > /tmp/backup_gate1.txt
+          # Revision 7 (2026-11-14): the old grep required the
+          # UNQUOTED form 'CREATE TABLE public.<table>' — if the
+          # schema.sql quotes the identifiers (e.g.
+          # 'CREATE TABLE "public"."daily_content_publications"'),
+          # grep found nothing, exited 1, and 'set -euo pipefail'
+          # killed the step silently (Op 2 run #2 failed here after
+          # the counts matched 7220/1495/0). Use the same extraction
+          # the Op 1 validation uses (proven on this schema.sql):
+          # it strips quotes, then the 'public.' prefix, then
+          # filters to the Gate 1 names. The trailing '|| true'
+          # keeps an empty result (no Gate 1 tables in the backup)
+          # from killing the script — an empty file then diffs
+          # correctly against the rehearsal list.
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g; s/^public\.//' | grep -xE 'daily_content_publications|daily_content_recommendations|islamic_calendar_corrections' | sort -u > /tmp/backup_gate1.txt || true
           psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$REHEARSAL_DB_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('daily_content_publications','daily_content_recommendations','islamic_calendar_corrections') ORDER BY table_name;" | sort -u > /tmp/rehearsal_gate1.txt
           if ! diff -q /tmp/backup_gate1.txt /tmp/rehearsal_gate1.txt >/dev/null; then
             echo "Gate 1 tables mismatch. Backup has:"
