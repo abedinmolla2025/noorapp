@@ -116,7 +116,40 @@ jobs:
           }
 
           # Duas + stories with AI explanations (published rows).
-          fetch "admin_content" "admin_content?select=id,title,content_type,status,explanation_bn,explanation_en,when_to_recite_bn&status=eq.published&order=id.asc&limit=1000"
+          # PostgREST returns at most 1000 rows per request, and the
+          # table has ~1,495 published rows, so fetch two pages and
+          # combine them into one admin_content.json.
+          echo ""
+          echo "=== admin_content (page 1: offset 0) ==="
+          HTTP1=$(curl -s -w "\n%{http_code}" "$REHEARSAL_URL/rest/v1/admin_content?select=id,title,content_type,status,explanation_bn,explanation_en,when_to_recite_bn&status=eq.published&order=id.asc&limit=1000&offset=0" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/json")
+          CODE1=$(echo "$HTTP1" | tail -n 1)
+          BODY1=$(echo "$HTTP1" | sed '$d')
+          echo "HTTP status: $CODE1"
+          echo ""
+          echo "=== admin_content (page 2: offset 1000) ==="
+          HTTP2=$(curl -s -w "\n%{http_code}" "$REHEARSAL_URL/rest/v1/admin_content?select=id,title,content_type,status,explanation_bn,explanation_en,when_to_recite_bn&status=eq.published&order=id.asc&limit=1000&offset=1000" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Authorization: Bearer $JWT" \
+            -H "Accept: application/json")
+          CODE2=$(echo "$HTTP2" | tail -n 1)
+          BODY2=$(echo "$HTTP2" | sed '$d')
+          echo "HTTP status: $CODE2"
+          if [ "$CODE1" -ge 200 ] && [ "$CODE1" -lt 300 ] && [ "$CODE2" -ge 200 ] && [ "$CODE2" -lt 300 ]; then
+            echo "$BODY1" > audit-data/admin_content_p1.json
+            echo "$BODY2" > audit-data/admin_content_p2.json
+            jq -s 'add' audit-data/admin_content_p1.json audit-data/admin_content_p2.json > audit-data/admin_content.json
+            rm audit-data/admin_content_p1.json audit-data/admin_content_p2.json
+            COUNT=$(jq -r 'length' audit-data/admin_content.json)
+            echo "Rows fetched (both pages combined): $COUNT"
+          else
+            echo "ERROR — admin_content fetch failed (page 1: $CODE1, page 2: $CODE2)."
+            echo "$BODY1" | head -c 500; echo ""
+            echo "$BODY2" | head -c 500; echo ""
+            exit 1
+          fi
           # Hadiths with an AI explanation (explanation_bn not null).
           fetch "hadiths" "hadiths?select=id,book_key,hadith_number,explanation_bn,lessons_bn&explanation_bn=not.is.null&order=id.asc&limit=1000"
           # Saved recommendations (their reasonBn values are AI Bengali).
