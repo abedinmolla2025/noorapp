@@ -22,7 +22,10 @@
 # recommend generate + list_pending. All 10 run even if one fails;
 # the step exits non-zero if any test failed, so the run conclusion
 # reflects the outcome. Nothing is published; recommend only inserts
-# a pending_review row in rehearsal.
+# a pending_review row in rehearsal, and only when the dispatcher
+# sets save_recommendation=true (default false — the run is
+# stateless). The saved row is verified by list_pending (test 10),
+# which reads it back from the database.
 
 name: Phase D Rehearsal AI Tests (manual)
 
@@ -32,6 +35,11 @@ on:
       confirm:
         description: 'Type true to run the authenticated rehearsal AI tests'
         required: true
+        type: boolean
+        default: false
+      save_recommendation:
+        description: 'Save the recommendation as a pending_review row in rehearsal (controlled persistence test)'
+        required: false
         type: boolean
         default: false
 
@@ -99,7 +107,7 @@ jobs:
             RESP_BODY=$(echo "$OUT" | sed '$d')
             echo "HTTP status: $CODE"
             echo "Response:"
-            echo "$RESP_BODY" | head -c 3000
+            echo "$RESP_BODY" | head -c 8000
             echo ""
             if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 300 ]; then
               echo "Result: PASS ($CODE)"
@@ -122,7 +130,12 @@ jobs:
           call "8. generate-hadith-seo process" "generate-hadith-seo" '{"action":"process","batchSize":1}'
 
           # --- Group C: recommend ---
-          call "9. recommend recommend"      "recommend-daily-content" '{"action":"recommend","context":{"gregorianKey":"2026-11-14","hijri":{"year":1448,"month":6,"day":3},"confirmation":"calculated","activeEventSlugs":[],"ramadanStage":null},"kolkataDate":"2026-11-14","maxCards":3}'
+          # save_recommendation (default false) persists the validated
+          # output as a pending_review row in rehearsal ONLY. It never
+          # publishes, notifies, or schedules anything. When true, test
+          # 10 (list_pending) reads the saved row back from the
+          # database — that read is the persistence proof.
+          call "9. recommend recommend"      "recommend-daily-content" '{"action":"recommend","context":{"gregorianKey":"2026-11-14","hijri":{"year":1448,"month":6,"day":3},"confirmation":"calculated","activeEventSlugs":[],"ramadanStage":null},"kolkataDate":"2026-11-14","maxCards":3,"save":${{ inputs.save_recommendation }}}'
           call "10. recommend list_pending" "recommend-daily-content" '{"action":"list_pending"}'
 
           # --- Summary ---
