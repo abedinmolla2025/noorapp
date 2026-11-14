@@ -162,21 +162,43 @@ jobs:
           case "$URL" in
             *"$OTHER_REF"*) echo "URL contains the other project's ref. Refusing."; exit 1 ;;
           esac
-          URL_RE='^postgres(ql)?://([^:/?#@]+)(:([^@/?#]*))?@([^:/?#]+)(:([0-9]+))?(/[^?#]*)?(\?[^#]*)?$'
-          if ! [[ "$URL" =~ $URL_RE ]]; then
-            echo "Malformed database URL. Refusing."
+          # Revision 7 (2026-11-14): split the authority at the LAST
+          # '@' (libpq does the same), so a password containing '@'
+          # no longer shifts the rest of the password into the host.
+          # The user is the part before the FIRST ':' in the
+          # userinfo; the password is everything after it up to the
+          # last '@'. A raw '/', '?' or '#' in the password is still
+          # refused (it must be percent-encoded).
+          case "$URL" in
+            postgresql://*) REST="${URL#postgresql://}" ;;
+            postgres://*) REST="${URL#postgres://}" ;;
+            *) echo "Malformed database URL (scheme must be postgresql:// or postgres://). Refusing."; exit 1 ;;
+          esac
+          # Authority is up to the first '/', '?' or '#'.
+          AUTH="${REST%%[/?#]*}"
+          TAIL="${REST#"$AUTH"}"
+          # Host:port is after the LAST '@'; userinfo is before it.
+          HOSTPORT="${AUTH##*@}"
+          USERINFO="${AUTH%@*}"
+          if [ "$HOSTPORT" = "$AUTH" ]; then
+            echo "Malformed database URL (missing userinfo). Refusing."
             exit 1
           fi
-          DB_USER="${BASH_REMATCH[2]}"
-          DB_PASS="${BASH_REMATCH[4]}"
-          DB_HOST="${BASH_REMATCH[5]}"
-          DB_PORT="${BASH_REMATCH[7]}"
-          DB_PATH="${BASH_REMATCH[8]}"
+          DB_USER="${USERINFO%%:*}"
+          case "$USERINFO" in
+            *:* ) DB_PASS="${USERINFO#*:}" ;;
+            * ) echo "Missing database password. Refusing."; exit 1 ;;
+          esac
+          DB_HOST="${HOSTPORT%%:*}"
+          DB_PORT="${HOSTPORT#*:}"
+          if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
+          # Path is the part of the tail up to '?'.
+          DB_PATH="${TAIL%%\?*}"
           [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
           [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
           [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
           [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
-          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name (must be postgres). Refusing."; exit 1; }
+          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name: got '$DB_PATH' (must be /postgres). Refusing."; exit 1; }
           echo "Target host OK (noor-backend, $DB_HOST)."
 
       - name: Install Supabase CLI (pinned 3.1.0)
