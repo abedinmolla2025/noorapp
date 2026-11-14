@@ -1,0 +1,360 @@
+# D-1 Restore Production — manual GitHub Actions workflow (REVISION 1, 2026-11-14)
+#
+# Purpose: RECOVERY ONLY. Restore a D-1 backup artifact into the
+# PRODUCTION project (llicfiepatzgllmjhzbw) and verify it. Created
+# 2026-11-14 after the production public schema was dropped by
+# accident (owner ran the rehearsal reset SQL on the production
+# project noor-backend). The production public schema is currently
+# EMPTY (recreated with grants only), so this restore rebuilds it
+# from the clean run #13 backup artifact. This file lives at
+# .github/workflows/d1-restore-production.yml in the repository.
+#
+# THIS WORKFLOW MUST ONLY BE DISPATCHED FOR THIS RECOVERY, or with
+# a separate explicit owner approval naming it. It targets
+# PRODUCTION — the one project the rehearsal restore workflow
+# (d1-restore.yml) is built never to touch. Do NOT dispatch it for
+# a rehearsal restore; use d1-restore.yml for that.
+#
+# Differences from d1-restore.yml (Revision 7), and why:
+#   1. Guard pins the PRODUCTION session pooler
+#      (aws-1-ap-southeast-2.pooler.supabase.com, user
+#      postgres.llicfiepatzgllmjhzbw) and rejects the rehearsal
+#      ref. It uses the backup workflow's Revision 7 parsing
+#      (split at the LAST '@', as libpq does) because the
+#      production DB password contains a raw '@' — the rehearsal
+#      restore's regex guard cannot parse it.
+#   2. roles.sql is NOT restored. The drop removed only the public
+#      schema; database roles were never dropped and are intact in
+#      production. Restoring roles.sql would CREATE ROLE for roles
+#      that already exist and fail the transaction. Only
+#      schema.sql + data.sql are applied.
+#   3. The inventory check is the same fail-closed query, run
+#      against PRODUCTION. It passes only if production holds no
+#      user objects outside the platform schemas — true now
+#      because the public schema is empty. If it finds anything,
+#      the job refuses (safe) and the object list is printed.
+#   4. Everything else is identical to d1-restore.yml Revision 7:
+#      the same artifact download, the same decrypt + manifest +
+#      pre-restore artifact check (fails on any auth/storage COPY),
+#      the same single-transaction restore, and the same Verify
+#      counts step including the Revision 7 quote-tolerant Gate 1
+#      extraction. The expected counts are the fresh production
+#      counts (7220/1495/0, owner-run 2026-11-14).
+#
+# SCOPE — READ FIRST: this job restores and verifies the DATABASE
+# DUMP ONLY (user schemas, data). It does NOT restore or verify
+# Auth users, Auth configuration, Storage buckets, Storage
+# objects, Edge Functions, or custom role passwords. A PASS here
+# means the database restore worked — nothing more. Auth and
+# Storage were NOT affected by the drop (they live in their own
+# schemas) and need no restore; they have separate test plans.
+#
+# Secrets required (repo Settings -> Secrets and variables -> Actions):
+#   PROD_DB_URL            Session-pooler connection string (port 5432)
+#                          for production project llicfiepatzgllmjhzbw.
+#                          NEVER typed in chat, never in a file.
+#   BACKUP_GPG_PASSPHRASE  The same passphrase used to encrypt the
+#                          backup artifact. Never shared.
+#
+# Inputs (entered when pressing Run workflow):
+#   confirm                Must be true, or the job refuses to run.
+#   backup_run_id          The backup run's ID (digits only), from its
+#                          URL: github.com/<owner>/<repo>/actions/runs/<ID>
+#   expected_hadiths / expected_admin_content / expected_publications
+#                          Fresh counts from the PRODUCTION SQL Editor
+#                          (read-only queries), entered at run time.
+#                          Non-negative integers only. No defaults —
+#                          stale counts must never pass.
+#
+# Safety: the job fails unless the confirm input is true, the run ID
+# is numeric, all expected counts are non-negative integers, both
+# secrets exist, PROD_DB_URL is exactly the production
+# session-pooler URL (host, port, username, password, database all
+# checked separately; the rehearsal ref must not appear anywhere
+# in it), and the target inventory is empty. The restore runs in a
+# single transaction with ON_ERROR_STOP=1, so any error rolls
+# everything back. After the restore, the manifest hashes are
+# verified and the counts must match the fresh production counts
+# exactly — any mismatch FAILS the job.
+
+name: D-1 Restore Production (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: "Confirm: restore the backup artifact into the PRODUCTION project (llicfiepatzgllmjhzbw) — RECOVERY ONLY"
+        type: boolean
+        required: true
+        default: false
+      backup_run_id:
+        description: "Backup run ID (digits only), from its URL: github.com/<owner>/<repo>/actions/runs/<ID>"
+        type: string
+        required: true
+      expected_hadiths:
+        description: "Expected hadiths count (fresh from the production SQL Editor, non-negative integer)"
+        type: string
+        required: true
+      expected_admin_content:
+        description: "Expected admin_content count (fresh from the production SQL Editor, non-negative integer)"
+        type: string
+        required: true
+      expected_publications:
+        description: "Expected daily_content_publications count (fresh from the production SQL Editor, non-negative integer)"
+        type: string
+        required: true
+
+permissions:
+  contents: read
+  actions: read
+
+jobs:
+  restore:
+    runs-on: ubuntu-latest
+    env:
+      PROD_DB_URL: ${{ secrets.PROD_DB_URL }}
+      BACKUP_GPG_PASSPHRASE: ${{ secrets.BACKUP_GPG_PASSPHRASE }}
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      BACKUP_RUN_ID: ${{ inputs.backup_run_id }}
+      EXPECTED_HADITHS: ${{ inputs.expected_hadiths }}
+      EXPECTED_ADMIN_CONTENT: ${{ inputs.expected_admin_content }}
+      EXPECTED_PUBLICATIONS: ${{ inputs.expected_publications }}
+      RUN_NUMBER: ${{ github.run_number }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "true" ]; then
+            echo "confirm input is not true; refusing to run."
+            exit 1
+          fi
+          case "$BACKUP_RUN_ID" in
+            ''|*[!0-9]*) echo "backup_run_id must be a numeric run ID."; exit 1 ;;
+          esac
+          for v in "$EXPECTED_HADITHS" "$EXPECTED_ADMIN_CONTENT" "$EXPECTED_PUBLICATIONS"; do
+            case "$v" in
+              ''|*[!0-9]*) echo "expected counts must be non-negative integers."; exit 1 ;;
+            esac
+          done
+          echo "Inputs valid: backup_run_id=$BACKUP_RUN_ID, expected counts are non-negative integers."
+
+      - name: Require secrets
+        run: |
+          set -euo pipefail
+          if [ -z "$PROD_DB_URL" ]; then echo "PROD_DB_URL secret is missing."; exit 1; fi
+          if [ -z "$BACKUP_GPG_PASSPHRASE" ]; then echo "BACKUP_GPG_PASSPHRASE secret is missing."; exit 1; fi
+
+      - name: Guard - exact PROD_DB_URL validation (production only)
+        run: |
+          set -euo pipefail
+          # Production guard, adapted from d1-backup.yml Revision 7.
+          # The URL is parsed exactly, not matched by substring.
+          # Each part is checked separately: host, port, username,
+          # password, database. The URL and the password are never
+          # echoed; only the validated host (public knowledge) is
+          # printed. The rehearsal ref must not appear anywhere.
+          # The authority is split at the LAST '@' (libpq does the
+          # same), because the production DB password contains a
+          # raw '@' — splitting at the first '@' would shift the
+          # rest of the password into the host and fail the check.
+          # A raw '/', '?' or '#' in the password is still refused
+          # (it must be percent-encoded).
+          EXPECTED_REF="llicfiepatzgllmjhzbw"
+          OTHER_REF="cazdbxxffvdnsdatjsrx"
+          EXPECTED_HOST="aws-1-ap-southeast-2.pooler.supabase.com"
+          EXPECTED_USER="postgres.${EXPECTED_REF}"
+          URL="$PROD_DB_URL"
+          # Trim leading/trailing whitespace (a paste artifact).
+          URL="${URL#"${URL%%[![:space:]]*}"}"
+          URL="${URL%"${URL##*[![:space:]]}"}"
+          case "$URL" in
+            *[[:space:]]*) echo "Malformed database URL (whitespace inside the URL). Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            *"$OTHER_REF"*) echo "URL contains the rehearsal ref. Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            postgresql://*) REST="${URL#postgresql://}" ;;
+            postgres://*) REST="${URL#postgres://}" ;;
+            *) echo "Malformed database URL (scheme must be postgresql:// or postgres://). Refusing."; exit 1 ;;
+          esac
+          # Authority is up to the first '/', '?' or '#'.
+          AUTH="${REST%%[/?#]*}"
+          TAIL="${REST#"$AUTH"}"
+          # Host:port is after the LAST '@'; userinfo is before it.
+          HOSTPORT="${AUTH##*@}"
+          USERINFO="${AUTH%@*}"
+          if [ "$HOSTPORT" = "$AUTH" ]; then
+            echo "Malformed database URL (missing userinfo). Refusing."
+            exit 1
+          fi
+          DB_USER="${USERINFO%%:*}"
+          case "$USERINFO" in
+            *:* ) DB_PASS="${USERINFO#*:}" ;;
+            * ) echo "Missing database password. Refusing."; exit 1 ;;
+          esac
+          DB_HOST="${HOSTPORT%%:*}"
+          DB_PORT="${HOSTPORT#*:}"
+          if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
+          # Path is the part of the tail up to '?'.
+          DB_PATH="${TAIL%%\?*}"
+          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
+          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
+          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
+          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
+          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name: got '$DB_PATH' (must be /postgres). Refusing."; exit 1; }
+          echo "Target host OK (production, $DB_HOST)."
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client gnupg
+
+      # NOTE: run-id is an action input, not a shell command. It is
+      # validated as digits-only by the "Validate inputs" step above,
+      # before this step runs.
+      - name: Download backup artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: d1-backup
+          path: backup
+          run-id: ${{ inputs.backup_run_id }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Decrypt + verify manifest + sanity check
+        run: |
+          set -euo pipefail
+          cd backup
+          for f in roles.sql.gpg schema.sql.gpg data.sql.gpg; do
+            test -s "$f" || { echo "$f is missing or empty."; exit 1; }
+            printf '%s' "$BACKUP_GPG_PASSPHRASE" | gpg --batch --yes --passphrase-fd 0 --decrypt "$f" > "${f%.gpg}"
+          done
+          sha256sum -c MANIFEST-SHA256.txt
+          test -s roles.sql || { echo "roles.sql is empty after decrypt."; exit 1; }
+          test -s schema.sql || { echo "schema.sql is empty after decrypt."; exit 1; }
+          test -s data.sql || { echo "data.sql is empty after decrypt."; exit 1; }
+          grep -q "CREATE TABLE" schema.sql || { echo "schema.sql has no CREATE TABLE."; exit 1; }
+          grep -q "COPY " data.sql || { echo "data.sql has no COPY lines."; exit 1; }
+          # Revision 6 (2026-11-14): pre-restore artifact check —
+          # refuse an artifact whose data.sql contains data for
+          # Supabase-managed tables the postgres user cannot write
+          # to on restore (Op 2 run #1 failed at data.sql:37361
+          # with 'permission denied for table buckets_vectors').
+          # This runs before any database connection, so a bad
+          # artifact fails fast here instead of after a ~4-minute
+          # restore that rolls back. Use a backup made with
+          # d1-backup.yml Revision 10 or later.
+          if grep -qE '^COPY "?(auth|storage)"?\.' data.sql; then echo "data.sql contains COPY into managed-schema tables (auth/storage) - this artifact cannot be restored. Use a backup made with d1-backup.yml Revision 10 or later."; exit 1; fi
+          if grep -qE 'storage\.buckets_vectors|storage\.vector_indexes' data.sql; then echo "data.sql contains an excluded managed storage table (storage.buckets_vectors or storage.vector_indexes) - this artifact cannot be restored. Use a backup made with d1-backup.yml Revision 10 or later."; exit 1; fi
+          echo "Artifact check passed: data.sql contains no COPY into managed-schema tables (auth/storage) and no excluded managed storage table."
+
+      - name: Check target inventory is empty (fail-closed)
+        run: |
+          set -euo pipefail
+          # Revision 4: complete object inventory (Finding B). The
+          # query lists every user-owned object outside the
+          # Supabase platform schemas: tables, views, materialized
+          # views, foreign tables, routines, user-defined types,
+          # sequences, custom schemas, and extensions installed
+          # outside platform schemas. Extension-owned objects
+          # (pg_depend deptype 'e') and auto-created range-support
+          # functions (deptype 'i') are excluded, so platform
+          # objects are never mistaken for user objects. Any
+          # unknown user-owned object fails the job. The readable
+          # form of this query is D1-INVENTORY-QUERY-V4.sql.
+          USER_OBJECTS=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$PROD_DB_URL" -c "WITH p(re) AS (VALUES ('^(information_schema|pg_.*|_analytics|_realtime|_supavisor|auth|etl|extensions|pgbouncer|realtime|storage|supabase_functions|supabase_migrations|cron|dbdev|graphql|graphql_public|net|pgmq|pgsodium|pgsodium_masks|pgtle|repack|tiger|tiger_data|timescaledb_.*|_timescaledb_.*|topology|vault)\$')) SELECT COALESCE(string_agg(name || ' (' || kind || ')', ', ' ORDER BY kind, name), '') FROM ( SELECT n.nspname || '.' || c.relname AS name, 'table' AS kind FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'r' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'view' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'v' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'materialized view' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'm' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'foreign table' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'f' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || c.relname, 'sequence' FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace, p WHERE c.relkind = 'S' AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_class'::regclass AND d.objid = c.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname || '.' || pr.proname, 'routine' FROM pg_proc pr JOIN pg_namespace n ON n.oid = pr.pronamespace, p WHERE n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = pr.oid AND d.deptype = 'e') AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_proc'::regclass AND d.objid = pr.oid AND d.deptype = 'i') UNION ALL SELECT n.nspname || '.' || t.typname, 'type' FROM pg_type t JOIN pg_namespace n ON n.oid = t.typnamespace, p WHERE t.typtype IN ('b','c','d','e','r') AND t.typelem = 0 AND n.nspname !~ p.re AND NOT EXISTS (SELECT 1 FROM pg_class c WHERE c.oid = t.typrelid AND c.relkind <> 'c') AND NOT EXISTS (SELECT 1 FROM pg_depend d WHERE d.classid = 'pg_type'::regclass AND d.objid = t.oid AND d.deptype = 'e') UNION ALL SELECT n.nspname, 'schema' FROM pg_namespace n, p WHERE n.nspname !~ p.re AND n.nspname <> 'public' UNION ALL SELECT e.extname || ' in ' || n.nspname, 'extension' FROM pg_extension e JOIN pg_namespace n ON n.oid = e.extnamespace, p WHERE n.nspname !~ p.re ) s;")
+          if [ -n "$USER_OBJECTS" ]; then
+            echo "Target is NOT empty - user objects already exist: $USER_OBJECTS. Refusing to restore."
+            exit 1
+          fi
+          echo "Target inventory is empty - no user tables, views, materialized views, foreign tables, routines, types, sequences, custom schemas, or extensions outside Supabase platform schemas."
+
+      - name: Restore (single transaction)
+        run: |
+          set -euo pipefail
+          # roles.sql is NOT restored: the drop removed only the
+          # public schema, and database roles were never dropped —
+          # they are intact in production. Restoring roles.sql
+          # would CREATE ROLE for roles that already exist and
+          # fail the transaction. Only schema.sql + data.sql are
+          # applied (the public schema and its data).
+          psql --single-transaction --variable ON_ERROR_STOP=1 \
+            --file backup/schema.sql \
+            --command 'SET session_replication_role = replica' \
+            --file backup/data.sql --dbname "$PROD_DB_URL"
+
+      - name: Verify counts
+        run: |
+          set -euo pipefail
+          H=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$PROD_DB_URL" -c "SELECT count(*) FROM public.hadiths;")
+          A=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$PROD_DB_URL" -c "SELECT count(*) FROM public.admin_content;")
+          P=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$PROD_DB_URL" -c "SELECT count(*) FROM public.daily_content_publications;")
+          echo "hadiths=$H (expected $EXPECTED_HADITHS)"
+          echo "admin_content=$A (expected $EXPECTED_ADMIN_CONTENT)"
+          echo "daily_content_publications=$P (expected $EXPECTED_PUBLICATIONS)"
+          [ "$H" -eq "$EXPECTED_HADITHS" ] || { echo "hadiths MISMATCH."; exit 1; }
+          [ "$A" -eq "$EXPECTED_ADMIN_CONTENT" ] || { echo "admin_content MISMATCH."; exit 1; }
+          [ "$P" -eq "$EXPECTED_PUBLICATIONS" ] || { echo "publications MISMATCH."; exit 1; }
+          # Revision 5 Part 2 (Gate 1 remediation, exact set comparison):
+          # the restore must reproduce EXACTLY the Gate 1 tables the
+          # backup contains — the same table NAMES, no more, no less.
+          # A count-only check would pass when the counts match but the
+          # names differ, so both sides are normalized (sorted,
+          # deduplicated) and compared as sets. The backup's schema.sql
+          # is the source of truth for what the backup contains.
+          # Revision 7 (2026-11-14): the old grep required the
+          # UNQUOTED form 'CREATE TABLE public.<table>' — if the
+          # schema.sql quotes the identifiers (e.g.
+          # 'CREATE TABLE "public"."daily_content_publications"'),
+          # grep found nothing, exited 1, and 'set -euo pipefail'
+          # killed the step silently (Op 2 run #2 failed here after
+          # the counts matched 7220/1495/0). Use the same extraction
+          # the Op 1 validation uses (proven on this schema.sql):
+          # it strips quotes, then the 'public.' prefix, then
+          # filters to the Gate 1 names. The trailing '|| true'
+          # keeps an empty result (no Gate 1 tables in the backup)
+          # from killing the script — an empty file then diffs
+          # correctly against the rehearsal list.
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g; s/^public\.//' | grep -xE 'daily_content_publications|daily_content_recommendations|islamic_calendar_corrections' | sort -u > /tmp/backup_gate1.txt || true
+          psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$PROD_DB_URL" -c "SELECT table_name FROM information_schema.tables WHERE table_schema='public' AND table_name IN ('daily_content_publications','daily_content_recommendations','islamic_calendar_corrections') ORDER BY table_name;" | sort -u > /tmp/production_gate1.txt
+          if ! diff -q /tmp/backup_gate1.txt /tmp/production_gate1.txt >/dev/null; then
+            echo "Gate 1 tables mismatch. Backup has:"
+            cat /tmp/backup_gate1.txt
+            echo "Production has:"
+            cat /tmp/production_gate1.txt
+            echo "Missing or unexpected Gate 1 table."
+            exit 1
+          fi
+          # The 9-column check runs only if islamic_calendar_corrections
+          # is in the BACKUP inventory. If the backup has the table but
+          # the rehearsal does not, the set comparison above already
+          # failed; the explicit check below also fails that case.
+          # If neither has the table, the check is skipped.
+          if grep -qxF "islamic_calendar_corrections" /tmp/backup_gate1.txt; then
+            if ! grep -qxF "islamic_calendar_corrections" /tmp/production_gate1.txt; then
+              echo "islamic_calendar_corrections is in the backup but missing in production."
+              exit 1
+            fi
+            C=$(psql --variable ON_ERROR_STOP=1 --tuples-only --no-align --dbname "$PROD_DB_URL" -c "SELECT count(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='islamic_calendar_corrections';")
+            [ "$C" = "9" ] || { echo "islamic_calendar_corrections has $C columns, expected 9."; exit 1; }
+          else
+            echo "islamic_calendar_corrections not in the backup inventory (migration 070001 not applied yet); column check skipped."
+          fi
+          grep -oE 'CREATE TABLE (IF NOT EXISTS )?[^ (]+' backup/schema.sql | sed 's/CREATE TABLE //; s/IF NOT EXISTS //; s/"//g' | sort -u > /tmp/restored_tables.txt
+
+      - name: Summary
+        run: |
+          set -euo pipefail
+          TABLES="$(tr '\n' ',' < /tmp/restored_tables.txt | sed 's/,$//')"
+          {
+            echo "## D-1 Restore Production (RECOVERY) - run $RUN_NUMBER"
+            echo ""
+            echo "Backup artifact run: $BACKUP_RUN_ID"
+            echo "Target: PRODUCTION project llicfiepatzgllmjhzbw (guard-verified, inventory empty before restore)"
+            echo "Result: PASS - restore exit 0, all counts match, Gate 1 tables match the backup inventory exactly."
+            echo ""
+            echo "RESTORED AND VERIFIED: database dump only. Tables restored: $TABLES. Verified: row counts for hadiths, admin_content, daily_content_publications; Gate 1 tables match the backup inventory exactly (same table names, no missing or unexpected tables; the 9-column check runs only if islamic_calendar_corrections is in the backup inventory)."
+            echo ""
+            echo "NOT RESTORED OR VERIFIED: Auth users, Auth configuration, Storage buckets, Storage objects, Edge Functions, custom role passwords. These are separate recovery scopes (see the Auth & Storage test plan)."
+            echo ""
+            echo "Remaining owner steps: verify the production site (noorapp.in) loads its data, and run the production smoke check."
+          } >> "$GITHUB_STEP_SUMMARY"
