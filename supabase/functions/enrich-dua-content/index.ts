@@ -221,7 +221,13 @@ Deno.serve(async (req) => {
       .select("id, title, title_en, category, content_arabic, content, metadata")
       .eq("content_type", "dua")
       .is("when_to_recite_bn", null)
-      .not("metadata", "cs", { enrichment_status: "pending_review" })
+      // NOTE: the value MUST be a JSON string here. postgrest-js's
+      // .not() interpolates the value raw (`not.cs.${value}`) and does
+      // NOT JSON-encode objects — an object becomes "[object Object]"
+      // and Postgres rejects it with "invalid input syntax for type
+      // json" (Phase D run #8). .contains() does JSON.stringify
+      // objects, which is why list_pending's .contains() works.
+      .not("metadata", "cs", JSON.stringify({ enrichment_status: "pending_review" }))
       .limit(batchSize);
     if (rowsErr) throw rowsErr;
 
