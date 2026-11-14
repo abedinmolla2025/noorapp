@@ -1,0 +1,135 @@
+# Bengali Content Audit (manual, rehearsal-only)
+#
+# Fetches the AI-generated Bengali content from the REHEARSAL
+# project (cazdbxxffvdnsdatjsrx) via PostgREST and uploads it as a
+# workflow artifact for offline analysis. The agent analyses the
+# artifact locally and writes NOORAPP-BENGALI-CONTENT-AUDIT.md.
+# This workflow READS ONLY — it never writes, publishes, notifies,
+# or schedules anything.
+#
+# What it fetches (published rows only):
+#   admin_content (dua + story): id, title, content_type, status,
+#     explanation_bn, explanation_en, when_to_recite_bn
+#   hadiths (rows with an AI explanation): id, book_key,
+#     hadith_number, explanation_bn, lessons_bn
+#   daily_content_recommendations (pending rows): id, kolkata_date,
+#     recommendations, dropped, status
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_ANON_KEY        - rehearsal publishable (anon) key
+#   REHEARSAL_ADMIN_EMAIL     - rehearsal-admin@noorapp.test
+#   REHEARSAL_ADMIN_PASSWORD  - the password set for that user
+#
+# The JWT obtained at sign-in is masked with ::add-mask::
+# immediately and is NEVER echoed, logged, or written to any file.
+# The fetched content (Bengali text) IS saved to the artifact —
+# it contains no credentials. The artifact is named
+# "bengali-audit-data" and expires with the run.
+#
+# If PostgREST returns no rows or an error (e.g. RLS), the step
+# reports the exact error and exits non-zero so the failure is
+# visible — it does not silently produce an empty audit.
+
+name: Bengali Content Audit (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to fetch the rehearsal Bengali content for audit'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+    steps:
+      - name: Validate inputs
+        run: |
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true; aborting."
+            exit 1
+          fi
+          echo "Confirmed. Target: rehearsal only (cazdbxxffvdnsdatjsrx). Read-only."
+
+      - name: Require secrets
+        run: |
+          MISSING=0
+          if [ -z "${{ secrets.REHEARSAL_ANON_KEY }}" ]; then echo "Missing secret: REHEARSAL_ANON_KEY"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_EMAIL }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_EMAIL"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_PASSWORD }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_PASSWORD"; MISSING=1; fi
+          if [ "$MISSING" = "1" ]; then exit 1; fi
+          echo "All three secrets are present (values never shown)."
+
+      - name: Sign in and fetch Bengali content
+        run: |
+          set -u
+          mkdir -p audit-data
+
+          # --- Sign in (get JWT). The JWT is masked at once and never echoed. ---
+          RESP=$(curl -s -X POST "$REHEARSAL_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${{ secrets.REHEARSAL_ADMIN_EMAIL }}\",\"password\":\"${{ secrets.REHEARSAL_ADMIN_PASSWORD }}\"}")
+          JWT=$(echo "$RESP" | jq -r '.access_token // empty')
+          REFRESH=$(echo "$RESP" | jq -r '.refresh_token // empty')
+          if [ -n "$JWT" ]; then echo "::add-mask::$JWT"; fi
+          if [ -n "$REFRESH" ]; then echo "::add-mask::$REFRESH"; fi
+          if [ -z "$JWT" ] || [ "$JWT" = "null" ]; then
+            echo "Sign-in FAILED. Response with tokens removed:"
+            echo "$RESP" | jq 'del(.access_token, .refresh_token)'
+            exit 1
+          fi
+          USER_ID=$(echo "$RESP" | jq -r '.user.id // empty')
+          echo "Signed in. User id: $USER_ID (JWT masked, never shown)."
+          unset RESP REFRESH
+
+          # --- Helper: fetch one PostgREST resource, save it, report the count. ---
+          fetch() {
+            NAME="$1"; URL="$2"
+            echo ""
+            echo "=== $NAME ==="
+            echo "GET $REHEARSAL_URL/rest/v1/$URL"
+            HTTP=$(curl -s -w "\n%{http_code}" "$REHEARSAL_URL/rest/v1/$URL" \
+              -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+              -H "Authorization: Bearer $JWT" \
+              -H "Accept: application/json")
+            CODE=$(echo "$HTTP" | tail -n 1)
+            BODY=$(echo "$HTTP" | sed '$d')
+            echo "$BODY" > "audit-data/$NAME.json"
+            echo "HTTP status: $CODE"
+            if [ "$CODE" -ge 200 ] && [ "$CODE" -lt 300 ]; then
+              COUNT=$(echo "$BODY" | jq -r 'if type == "array" then length else 0 end' 2>/dev/null || echo "?")
+              echo "Rows fetched: $COUNT"
+            else
+              echo "ERROR — PostgREST returned $CODE:"
+              echo "$BODY" | head -c 1000
+              echo ""
+              return 1
+            fi
+          }
+
+          # Duas + stories with AI explanations (published rows).
+          fetch "admin_content" "admin_content?select=id,title,content_type,status,explanation_bn,explanation_en,when_to_recite_bn&status=eq.published&order=id.asc&limit=1000"
+          # Hadiths with an AI explanation (explanation_bn not null).
+          fetch "hadiths" "hadiths?select=id,book_key,hadith_number,explanation_bn,lessons_bn&explanation_bn=not.is.null&order=id.asc&limit=1000"
+          # Saved recommendations (their reasonBn values are AI Bengali).
+          fetch "recommendations" "daily_content_recommendations?select=id,kolkata_date,hijri_key,recommendations,dropped,status&order=created_at.desc&limit=50"
+
+          echo ""
+          echo "=== Files ==="
+          ls -la audit-data/
+          unset JWT
+
+      - name: Upload audit data
+        uses: actions/upload-artifact@v4
+        with:
+          name: bengali-audit-data
+          path: audit-data/
+          retention-days: 30
