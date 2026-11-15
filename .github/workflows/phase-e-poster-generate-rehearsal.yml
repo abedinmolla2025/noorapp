@@ -1,63 +1,65 @@
-# Poster generation (REHEARSAL ONLY)
+# Daily Content Poster Generation (rehearsal)
 #
-# Generates a poster for ONE already-approved daily-content publication
-# in the REHEARSAL project (cazdbxxffvdnsdatjsrx) and uploads it to the
-# rehearsal bucket `daily-content-posters`.
+# Stage 1–3 of the 4-stage Daily Content pipeline, rehearsal only:
+# 1. POSTER GENERATION — render the real OgShareCard component
+# (Dua OG visual identity) headlessly with Playwright/Chromium,
+# from the PUBLISHED publication row (verbatim text, never invented).
+# 2. IMAGE QC — the render page runs checkOgCardBatch + a verbatim
+# character check against the published card; the render script
+# verifies exact export dimensions + non-trivial file size.
+# A QC failure stops the pipeline: no upload, no URL persisted.
+# 3. POSTER ASSET FINALIZATION — upload the PNG(s) to the
+# `daily-content-posters` Storage bucket (deterministic path
+# <kolkata_date>/<format>.png, upsert) and persist the finalized
+# asset (asset ID, storage path, public URL, SHA-256 checksum,
+# QC status) on the publication row via the daily-content
+# `set_poster` action.
 #
-# The generator is a deterministic placeholder: it renders a 1080x1080
-# SVG with the publication title (layout + palette fixed by
-# src/scripts/generate_poster.py) and the caller-chosen scene mode, then
-# converts it to PNG with rsvg-convert. It makes NO model or API call
-# and therefore cannot produce a real illustrated poster; it exists to
-# exercise the full pipeline (publish -> generate -> upload -> verify)
-# end to end before a real generator is wired in. A model-backed
-# generator needs a separate owner-approved workflow.
+# Stage 4 (Downstream Distribution — homepage image, push image,
+# WhatsApp/Native Share, Facebook Page) reads the finalized asset.
+# It is NOT in this workflow: no downstream consumer runs here.
 #
-# REHEARSAL ONLY. There is no target input and no production path in this
-# file: the DB guard refuses any URL that is not the rehearsal pooler
-# (aws-1-ap-southeast-1, postgres.cazdbxxffvdnsdatjsrx), and the storage
-# guard checks the project ref before any upload. A production run
-# needs a separate owner-approved workflow.
+# REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx.
+# Manual dispatch only (no schedule — scheduled runs only fire from
+# the default branch; a 00:45 UTC schedule is a one-line addition for
+# the merge-to-main step). The workflow never touches production.
 #
-# By default this is a DRY RUN: it generates the poster and reports its
-# checksum, but uploads nothing and updates no database row. Pass
-# dry_run=false only to write the result to the rehearsal bucket and row.
+# Idempotency: the pre-check exits 0 (nothing to do) when the
+# publication already has a QC-passed poster; Storage uploads use
+# deterministic paths with upsert; `set_poster` refuses to overwrite
+# a passed poster without force. Re-running for the same date is safe.
+#
+# Failure: any render/upload/QC failure records `poster_qc_status=
+# 'failed'` + a short reason on the publication row (never a poster
+# URL) and exits non-zero. The publication stays `published`
+# (text-only). Downstream MUST NOT proceed on a failed poster.
 #
 # Secrets required (repository secrets, created by the owner):
-#   REHEARSAL_DB_URL — the rehearsal session-pooler connection string.
-#     The URL is validated exactly (host/user/port/db, last-'@' rule —
-#     see the guard step) and never echoed; only the validated host is
-#     printed. The password is masked with ::add-mask::.
-#   REHEARSAL_SUPABASE_URL — the rehearsal project URL, e.g.
-#     https://cazdbxxffvdnsdatjsrx.supabase.co
-#   REHEARSAL_SERVICE_ROLE_KEY — the rehearsal service-role key, used
-#     ONLY by the Supabase CLI for the rehearsal upload (never echoed).
+# REHEARSAL_ANON_KEY, REHEARSAL_ADMIN_EMAIL, REHEARSAL_ADMIN_PASSWORD
+# (Storage upload as admin), REHEARSAL_CRON_SECRET (set_poster call).
+# Secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file.
 
-name: Poster Generation (rehearsal only)
+name: Daily Content Poster Generation (rehearsal)
 
 on:
   workflow_dispatch:
     inputs:
-      publication_id:
-        description: 'Publication UUID to generate a poster for'
-        required: true
-        type: string
-      scene_mode:
-        description: 'Scene mode (auto | minimal | rich)'
-        required: true
-        type: choice
-        options: [auto, minimal, rich]
-        default: auto
-      dry_run:
-        description: 'Dry run (generate only, no upload, no DB update)'
+      confirm:
+        description: 'Type true to generate the poster for the rehearsal publication'
         required: true
         type: boolean
-        default: true
-      bucket_path:
-        description: 'Storage path inside daily-content-posters (required unless dry_run)'
+        default: false
+      kolkata_date:
+        description: 'Kolkata date (YYYY-MM-DD) of the published publication; empty = today'
         required: false
         type: string
         default: ''
+      formats:
+        description: 'Comma-separated formats to render (portrait,square,wide,story)'
+        required: false
+        type: string
+        default: 'portrait,square'
 
 permissions:
   contents: read
@@ -66,203 +68,256 @@ jobs:
   generate-poster:
     runs-on: ubuntu-latest
     env:
-      REHEARSAL_DB_URL: ${{ secrets.REHEARSAL_DB_URL }}
-      REHEARSAL_SUPABASE_URL: ${{ secrets.REHEARSAL_SUPABASE_URL }}
-      REHEARSAL_SERVICE_ROLE_KEY: ${{ secrets.REHEARSAL_SERVICE_ROLE_KEY }}
-      PUBLICATION_ID: ${{ inputs.publication_id }}
-      SCENE_MODE: ${{ inputs.scene_mode }}
-      DRY_RUN: ${{ inputs.dry_run }}
-      BUCKET_PATH: ${{ inputs.bucket_path }}
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+      REHEARSAL_ANON_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
+      REHEARSAL_ADMIN_EMAIL: ${{ secrets.REHEARSAL_ADMIN_EMAIL }}
+      REHEARSAL_ADMIN_PASSWORD: ${{ secrets.REHEARSAL_ADMIN_PASSWORD }}
+      REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
     steps:
-      - name: Validate inputs
+      - name: Validate inputs and secrets
         run: |
           set -euo pipefail
-          case "$PUBLICATION_ID" in
-            ''|*[!0-9a-fA-F-]*) echo "publication_id must be a UUID."; exit 1 ;;
-          esac
-          case "$SCENE_MODE" in
-            auto|minimal|rich) ;;
-            *) echo "scene_mode must be auto, minimal or rich."; exit 1 ;;
-          esac
-          if [ "$DRY_RUN" = "false" ] && [ -z "$BUCKET_PATH" ]; then
-            echo "bucket_path is required when dry_run is false."; exit 1
-          fi
-          if [ "$DRY_RUN" = "true" ] && [ -n "$BUCKET_PATH" ]; then
-            echo "Dry-run must not set BUCKET_PATH."
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
             exit 1
           fi
-          case "$BUCKET_PATH" in
-            *'..'*|/*|*' '*) echo "bucket_path must be a relative path without spaces or '..'."; exit 1 ;;
-          esac
-          echo "Inputs valid."
-
-      - name: Require secrets
-        run: |
-          set -euo pipefail
-          if [ -z "$REHEARSAL_DB_URL" ]; then echo "REHEARSAL_DB_URL secret is missing."; exit 1; fi
-          if [ -z "$REHEARSAL_SUPABASE_URL" ]; then echo "REHEARSAL_SUPABASE_URL secret is missing."; exit 1; fi
-          if [ -z "$REHEARSAL_SERVICE_ROLE_KEY" ]; then echo "REHEARSAL_SERVICE_ROLE_KEY secret is missing."; exit 1; fi
-          echo "Required secrets present."
-
-      - name: Guard - exact rehearsal DB URL validation
-        run: |
-          set -euo pipefail
-          # Same exact-parse guard as d1-migrate.yml (rehearsal leg):
-          # host, port, username, password, database checked separately;
-          # the other project's ref must not appear anywhere in the URL;
-          # the authority is split at the LAST '@' (libpq's rule).
-          # The URL and the password are never echoed; only the validated
-          # host (public knowledge) is printed.
-          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
-          OTHER_REF="llicfiepatzgllmjhzbw"
-          EXPECTED_HOST="aws-1-ap-southeast-1.pooler.supabase.com"
-          URL="$REHEARSAL_DB_URL"
-          EXPECTED_USER="postgres.${EXPECTED_REF}"
-          URL="${URL#"${URL%%[![:space:]]*}"}"
-          URL="${URL%"${URL##*[![:space:]]}"}"
-          case "$URL" in
-            *[[:space:]]*) echo "Malformed database URL (whitespace inside the URL). Refusing."; exit 1 ;;
-          esac
-          case "$URL" in
-            *"$OTHER_REF"*) echo "URL contains the production ref. Refusing."; exit 1 ;;
-          esac
-          case "$URL" in
-            postgresql://*) REST="${URL#postgresql://}" ;;
-            postgres://*) REST="${URL#postgres://}" ;;
-            *) echo "Malformed database URL (scheme must be postgresql:// or postgres://). Refusing."; exit 1 ;;
-          esac
-          AUTH="${REST%%[/?#]*}"
-          TAIL="${REST#"$AUTH"}"
-          HOSTPORT="${AUTH##*@}"
-          USERINFO="${AUTH%@*}"
-          if [ "$HOSTPORT" = "$AUTH" ]; then
-            echo "Malformed database URL (missing userinfo). Refusing."
-            exit 1
+          for s in REHEARSAL_ANON_KEY REHEARSAL_ADMIN_EMAIL REHEARSAL_ADMIN_PASSWORD REHEARSAL_CRON_SECRET; do
+            if [ -z "${!s}" ]; then echo "$s secret is not set."; exit 1; fi
+          done
+          echo "::add-mask::$REHEARSAL_ANON_KEY"
+          echo "::add-mask::$REHEARSAL_ADMIN_PASSWORD"
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            case "${{ inputs.kolkata_date }}" in
+              ????-??-??) ;;
+              *) echo "kolkata_date must be YYYY-MM-DD."; exit 1 ;;
+            esac
           fi
-          DB_USER="${USERINFO%%:*}"
-          case "$USERINFO" in
-            *:* ) DB_PASS="${USERINFO#*:}" ;;
-            * ) echo "Missing database password. Refusing."; exit 1 ;;
-          esac
-          DB_HOST="${HOSTPORT%%:*}"
-          DB_PORT="${HOSTPORT#*:}"
-          if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
-          DB_PATH="${TAIL%%\?*}"
-          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
-          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
-          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
-          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
-          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name: got '$DB_PATH' (must be /postgres). Refusing."; exit 1; }
-          echo "Target host OK (rehearsal, $DB_HOST)."
-          echo "::add-mask::$DB_PASS"
-          {
-            echo "PGHOST=$DB_HOST"
-            echo "PGPORT=$DB_PORT"
-            echo "PGUSER=$DB_USER"
-            echo "PGPASSWORD=<redacted>"
-            echo "PGDATABASE=postgres"
-          } >> "$GITHUB_ENV"
-          echo "PG* connection vars set (host $DB_HOST, user $DB_USER)."
+          echo "Inputs validated; secrets present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
 
-      - name: Guard - rehearsal Supabase URL
-        run: |
-          set -euo pipefail
-          EXPECTED_URL="https://cazdbxxffvdnsdatjsrx.supabase.co"
-          if [ "$REHEARSAL_SUPABASE_URL" != "$EXPECTED_URL" ]; then
-            echo "REHEARSAL_SUPABASE_URL must be $EXPECTED_URL. Refusing."
-            exit 1
-          fi
-          echo "Supabase URL OK (rehearsal)."
-
-      - name: Checkout generator + SQL
+      - name: Checkout poster branch code
         uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
         with:
-          sparse-checkout: |
-            src/scripts/generate_poster.py
-            supabase/migrations/202611150001_daily_content_posters.sql
-          sparse-checkout-cone-mode: false
+          node-version: '22'
+          cache: npm
 
-      - name: Install tools
+      - name: Install dependencies
         run: |
           set -euo pipefail
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client librsvg2-bin
-          node --version
-          python3 --version
+          npm ci --no-audit --no-fund
 
-      - name: Fetch publication
+      - name: Install Playwright Chromium
         run: |
           set -euo pipefail
-          export PGSSLMODE=require
-          ROW=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only --field-separator='|' -c "select id, status, title_en from public.daily_content_publications where id='$PUBLICATION_ID'::uuid;")
-          [ -n "$ROW" ] || { echo "No publication found for id $PUBLICATION_ID."; exit 1; }
-          TITLE=$(printf '%s' "$ROW" | cut -d'|' -f3)
-          STATUS=$(printf '%s' "$ROW" | cut -d'|' -f2)
-          [ -n "$TITLE" ] || { echo "Publication $PUBLICATION_ID has no title_en."; exit 1; }
-          echo "Publication $PUBLICATION_ID: $TITLE (status $STATUS)"
-          printf '%s' "$TITLE" > title.txt
-          echo "TITLE<<EOF" >> "$GITHUB_ENV"
-          cat title.txt >> "$GITHUB_ENV"
-          echo "EOF" >> "$GITHUB_ENV"
+          npx playwright install --with-deps chromium
 
-      - name: Generate poster (placeholder SVG -> PNG)
+      - name: Resolve date and pre-check publication
+        id: precheck
         run: |
           set -euo pipefail
-          python3 src/scripts/generate_poster.py --title-file title.txt --scene-mode "$SCENE_MODE" --out poster.svg
-          rsvg-convert -w 1080 -h 1080 poster.svg -o poster.png
-          file poster.png
-          identify poster.png 2>/dev/null || true
-          CHECKSUM=$(sha256sum poster.png | cut -d' ' -f1)
-          echo "poster.png sha256: $CHECKSUM"
-          echo "POSTER_CHECKSUM=$CHECKSUM" >> "$GITHUB_ENV"
-          echo "POSTER_BYTES=$(stat -c%s poster.png)" >> "$GITHUB_ENV"
-
-      - name: Upload to rehearsal bucket
-        if: inputs.dry_run == false
-        run: |
-          set -euo pipefail
-          echo "::add-mask::$REHEARSAL_SERVICE_ROLE_KEY"
-          npx --yes supabase@2.39.2 --version
-          echo "$REHEARSAL_SERVICE_ROLE_KEY" | npx --yes supabase@2.39.2 link --project-ref cazdbxxffvdnsdatjsrx
-          npx --yes supabase@2.39.2 storage ls daily-content-posters --experimental 2>&1 | head -20
-          npx --yes supabase@2.39.2 storage cp poster.png "daily-content-posters/$BUCKET_PATH" --experimental
-          echo "Uploaded to daily-content-posters/$BUCKET_PATH"
-
-      - name: Update publication row (non-dry-run only)
-        if: inputs.dry_run == false
-        run: |
-          set -euo pipefail
-          export PGSSLMODE=require
-          POSTER_URL="https://cazdbxxffvdnsdatjsrx.supabase.co/storage/v1/object/public/daily-content-posters/$BUCKET_PATH"
-          SCENE_ID=$(python3 - <<'PY'
-          import hashlib, pathlib
-          title = pathlib.Path("title.txt").read_text(encoding="utf-8").strip()
-          print(f"scene-{(hashlib.sha256(title.encode()).hexdigest()[:4])}")
-          PY
-          )
-          echo "Scene ID $SCENE_ID"
-          psql --variable ON_ERROR_STOP=1 --single-transaction <<SQL
-          update public.daily_content_publications
-             set poster_storage_path = '$BUCKET_PATH',
-                 poster_url = '$POSTER_URL',
-                 poster_checksum = '$POSTER_CHECKSUM',
-                 poster_scene_id = '$SCENE_ID',
-                 poster_qc_status = 'pending',
-                 poster_generated_at = now()
-           where id = '$PUBLICATION_ID'::uuid;
-          SQL
-          echo "Publication row updated."
-
-      - name: Verify
-        run: |
-          set -euo pipefail
-          export PGSSLMODE=require
-          if [ "$DRY_RUN" = "true" ]; then
-            echo "DRY RUN: poster generated, checksum $POSTER_CHECKSUM, size $POSTER_BYTES bytes. Nothing uploaded, no row updated."
-            exit 0
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            DATE="${{ inputs.kolkata_date }}"
+          else
+            DATE=$(TZ=Asia/Kolkata date +%F)
           fi
-          ROW=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only --field-separator='|' -c "select poster_storage_path, poster_url, poster_checksum, poster_scene_id, poster_qc_status from public.daily_content_publications where id='$PUBLICATION_ID'::uuid;")
-          echo "Row: $ROW"
-          [ "$(printf '%s' "$ROW" | cut -d'|' -f1)" = "$BUCKET_PATH" ] || { echo "poster_storage_path mismatch."; exit 1; }
-          [ "$(printf '%s' "$ROW" | cut -d'|' -f3)" = "$POSTER_CHECKSUM" ] || { echo "poster_checksum mismatch."; exit 1; }
-          [ "$(printf '%s' "$ROW" | cut -d'|' -f5)" = "pending" ] || { echo "poster_qc_status is not pending."; exit 1; }
-          echo "Verified: poster uploaded and row updated for $PUBLICATION_ID."
+          echo "kolkata_date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Date: $DATE"
+          ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,hadith_source_line" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY")
+          echo "$ROW" | python3 -c "
+            import json, sys
+            rows = json.load(sys.stdin)
+            if not rows:
+              print('NO PUBLISHED PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+            r = rows[0]
+            if r.get('status') != 'published':
+              print('Publication status is', r.get('status'), '— not published. Nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+            if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
+              print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
+              sys.exit(4)
+            print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
+          " || {
+            CODE=$?
+            if [ "$CODE" = "3" ] || [ "$CODE" = "4" ]; then
+              echo "precheck_skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$CODE"
+          }
+
+      - name: Build app (demo routes enabled, rehearsal Supabase)
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          VITE_ENABLE_DEMO_ROUTES: 'true'
+          VITE_SUPABASE_URL: ${{ env.REHEARSAL_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          npm run build
+          test -f dist/app.html || { echo "dist/app.html missing after build."; exit 1; }
+          echo "Build OK (demo routes enabled for the poster-render route)."
+
+      - name: Render + upload + finalize (per format)
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+          FORMATS: ${{ inputs.formats }}
+        run: |
+          set -euo pipefail
+          # Serve the built app (SPA fallback to app.html).
+          node scripts/daily-content/poster/serve-dist.mjs 4173 > /tmp/serve-dist.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render; then break; fi
+            sleep 1
+          done
+          curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render || { echo "Static server did not come up."; cat /tmp/serve-dist.log; exit 1; }
+          echo "Static server up (pid $SERVER_PID)."
+
+          mkdir -p poster-out
+          FAILED=""
+          for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
+            case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT"; continue ;; esac
+            echo "=== format: $FORMAT ==="
+            PNG="poster-out/poster-$DATE-$FORMAT.png"
+            if ! node scripts/daily-content/poster/render-poster.mjs \
+              --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT" \
+              --out "$PNG" > "poster-out/render-$FORMAT.json"; then
+              echo "Render FAILED for $FORMAT:"
+              cat "poster-out/render-$FORMAT.json"
+              FAILED="$FAILED $FORMAT"
+              continue
+            fi
+            cat "poster-out/render-$FORMAT.json"
+            echo "---"
+            if ! node scripts/daily-content/poster/upload-poster.mjs \
+              --file "$PNG" \
+              --object-path "$DATE/$FORMAT.png" \
+              --supabase-url "$REHEARSAL_URL" \
+              --anon-key "$REHEARSAL_ANON_KEY" \
+              --admin-email "$REHEARSAL_ADMIN_EMAIL" \
+              --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
+              echo "Upload FAILED for $FORMAT:"
+              cat "poster-out/upload-$FORMAT.json"
+              FAILED="$FAILED $FORMAT"
+              continue
+            fi
+            cat "poster-out/upload-$FORMAT.json"
+            echo "---"
+          done
+          if [ -n "$FAILED" ]; then
+            echo "FAILED formats:$FAILED — recording poster failure on the publication row and stopping."
+            REASON="render_or_upload_failed:${FAILED# }"
+            RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+              -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
+            echo "$RESP" | head -c 2000
+            echo ""
+            echo "poster_failed=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "All formats rendered + uploaded."
+          echo "poster_failed=false" >> "$GITHUB_OUTPUT"
+
+      - name: Finalize asset via set_poster
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+          FORMATS: ${{ inputs.formats }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEOF'
+            import json, os
+            date = os.environ["DATE"]
+            formats = [f.strip() for f in os.environ["FORMATS"].split(",") if f.strip()]
+            urls, checksums, scene = {}, {}, None
+            for fmt in formats:
+              with open(f"poster-out/render-{fmt}.json") as f:
+                r = json.load(f)
+                assert r.get("ok"), f"render {fmt} not ok"
+              if scene is None:
+                scene = r["backgroundId"]
+              elif scene != r["backgroundId"]:
+                raise SystemExit(f"scene mismatch across formats: {scene} vs {r['backgroundId']}")
+            with open(f"poster-out/upload-{fmt}.json") as f:
+              u = json.load(f)
+              assert u.get("ok"), f"upload {fmt} not ok"
+              urls[fmt] = u["publicUrl"]
+              checksums[fmt] = u["checksum"]
+            assert "portrait" in urls, "portrait (primary) is required"
+            body = {
+              "action": "set_poster",
+              "kolkata_date": date,
+              "poster_qc_status": "passed",
+              "poster_asset_id": f"poster:{date}",
+              "poster_storage_path": f"daily-content-posters/{date}/portrait.png",
+              "poster_url": urls["portrait"],
+              "poster_urls": urls,
+              "poster_checksum": checksums["portrait"],
+              "poster_checksums": checksums,
+              "poster_scene_id": scene,
+            }
+            with open("poster-out/set-poster-body.json", "w") as f:
+              json.dump(body, f)
+            print("set_poster body prepared; scene:", scene)
+          PYEOF
+          RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d @poster-out/set-poster-body.json)
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "$BODY_OUT" | head -c 2000
+          echo ""
+          [ "$CODE" = "200" ] || { echo "set_poster did not return 200."; exit 1; }
+          echo "$BODY_OUT" | python3 -c "
+            import json, sys
+            d = json.load(sys.stdin)
+            assert d.get('ok') is True, d
+            print('set_poster result:', d)
+          "
+
+      - name: Verify finalized asset on the publication row
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=kolkata_date,status,poster_asset_id,poster_storage_path,poster_url,poster_urls,poster_checksum,poster_scene_id,poster_qc_status,poster_generated_at" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY" \
+            | python3 -c "
+            import json, sys
+            rows = json.load(sys.stdin)
+            assert rows, 'publication row missing after set_poster'
+            r = rows[0]
+            assert r.get('status') == 'published', r
+            assert r.get('poster_qc_status') == 'passed', r
+            assert r.get('poster_url'), r
+            assert r.get('poster_checksum'), r
+            assert r.get('poster_asset_id') == 'poster:' + '$DATE', r
+            print('FINALIZED ASSET VERIFIED:')
+            print(' asset_id:', r['poster_asset_id'])
+            print(' storage_path:', r['poster_storage_path'])
+            print(' poster_url:', r['poster_url'])
+            print(' checksum:', r['poster_checksum'])
+            print(' scene:', r['poster_scene_id'])
+            print(' qc_status:', r['poster_qc_status'])
+            print(' generated_at:', r['poster_generated_at'])
+          "
+
+      - name: Upload poster PNGs as artifacts
+        if: always() && steps.precheck.outputs.precheck_skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: poster-${{ steps.precheck.outputs.kolkata_date }}
+          path: poster-out/*.png
+          retention-days: 30
