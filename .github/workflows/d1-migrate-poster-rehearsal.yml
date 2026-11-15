@@ -1,0 +1,200 @@
+# Poster migration (REHEARSAL ONLY)
+#
+# Applies ONE migration to the REHEARSAL project only
+# (cazdbxxffvdnsdatjsrx):
+#   202611150001_daily_content_posters.sql
+#     - Storage bucket `daily-content-posters` (public read, admin-only
+#       upload/update/delete) + its 4 storage policies
+#     - Poster columns on daily_content_publications:
+#       poster_asset_id, poster_storage_path, poster_url, poster_urls,
+#       poster_checksum, poster_checksums, poster_scene_id,
+#       poster_qc_status, poster_error, poster_generated_at
+#
+# REHEARSAL ONLY. There is no target input and no production path in this
+# file: the ref guard below refuses any URL that is not the rehearsal
+# pooler (aws-1-ap-southeast-1, postgres.cazdbxxffvdnsdatjsrx). A
+# production application needs a separate owner-approved workflow.
+#
+# The migration is idempotent (IF NOT EXISTS / ON CONFLICT / pg_policies
+# guards), so re-running is safe. It adds schema only — no rows are
+# modified. Post-checks verify the bucket, the policies, the columns,
+# and that the Gate 1 table counts are unchanged.
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_DB_URL — the rehearsal session-pooler connection string.
+#     The URL is validated exactly (host/user/port/db, last-'@' rule —
+#     see the guard step) and never echoed; only the validated host is
+#     printed. The password is masked with ::add-mask::.
+
+name: Poster Migration (rehearsal only)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to apply the poster migration to REHEARSAL only'
+        required: true
+        type: boolean
+        default: false
+      expected_hadiths:
+        description: 'Expected hadiths row count (unchanged by this migration)'
+        required: true
+        type: string
+        default: '7220'
+      expected_admin_content:
+        description: 'Expected admin_content row count (unchanged by this migration)'
+        required: true
+        type: string
+        default: '1495'
+      expected_publications:
+        description: 'Expected daily_content_publications row count (unchanged by this migration)'
+        required: true
+        type: string
+        default: '1'
+
+permissions:
+  contents: read
+
+jobs:
+  migrate-poster:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_DB_URL: ${{ secrets.REHEARSAL_DB_URL }}
+      CONFIRM_INPUT: ${{ inputs.confirm }}
+      EXPECTED_HADITHS: ${{ inputs.expected_hadiths }}
+      EXPECTED_ADMIN_CONTENT: ${{ inputs.expected_admin_content }}
+      EXPECTED_PUBLICATIONS: ${{ inputs.expected_publications }}
+    steps:
+      - name: Validate inputs
+        run: |
+          set -euo pipefail
+          if [ "$CONFIRM_INPUT" != "true" ]; then
+            echo "confirm input is not true; refusing to run."
+            exit 1
+          fi
+          for v in "$EXPECTED_HADITHS" "$EXPECTED_ADMIN_CONTENT" "$EXPECTED_PUBLICATIONS"; do
+            case "$v" in
+              ''|*[!0-9]*) echo "expected counts must be non-negative integers."; exit 1 ;;
+            esac
+          done
+          echo "Inputs valid: rehearsal only, expected counts are non-negative integers."
+
+      - name: Require secrets
+        run: |
+          set -euo pipefail
+          if [ -z "$REHEARSAL_DB_URL" ]; then echo "REHEARSAL_DB_URL secret is missing."; exit 1; fi
+          echo "REHEARSAL_DB_URL present."
+
+      - name: Guard - exact rehearsal DB URL validation
+        run: |
+          set -euo pipefail
+          # Same exact-parse guard as d1-migrate.yml (rehearsal leg):
+          # host, port, username, password, database checked separately;
+          # the other project's ref must not appear anywhere in the URL;
+          # the authority is split at the LAST '@' (libpq's rule).
+          # The URL and the password are never echoed; only the validated
+          # host (public knowledge) is printed.
+          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
+          OTHER_REF="llicfiepatzgllmjhzbw"
+          EXPECTED_HOST="aws-1-ap-southeast-1.pooler.supabase.com"
+          URL="$REHEARSAL_DB_URL"
+          EXPECTED_USER="postgres.${EXPECTED_REF}"
+          URL="${URL#"${URL%%[![:space:]]*}"}"
+          URL="${URL%"${URL##*[![:space:]]}"}"
+          case "$URL" in
+            *[[:space:]]*) echo "Malformed database URL (whitespace inside the URL). Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            *"$OTHER_REF"*) echo "URL contains the production ref. Refusing."; exit 1 ;;
+          esac
+          case "$URL" in
+            postgresql://*) REST="${URL#postgresql://}" ;;
+            postgres://*) REST="${URL#postgres://}" ;;
+            *) echo "Malformed database URL (scheme must be postgresql:// or postgres://). Refusing."; exit 1 ;;
+          esac
+          AUTH="${REST%%[/?#]*}"
+          TAIL="${REST#"$AUTH"}"
+          HOSTPORT="${AUTH##*@}"
+          USERINFO="${AUTH%@*}"
+          if [ "$HOSTPORT" = "$AUTH" ]; then
+            echo "Malformed database URL (missing userinfo). Refusing."
+            exit 1
+          fi
+          DB_USER="${USERINFO%%:*}"
+          case "$USERINFO" in
+            *:* ) DB_PASS="${USERINFO#*:}" ;;
+            * ) echo "Missing database password. Refusing."; exit 1 ;;
+          esac
+          DB_HOST="${HOSTPORT%%:*}"
+          DB_PORT="${HOSTPORT#*:}"
+          if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
+          DB_PATH="${TAIL%%\?*}"
+          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
+          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
+          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
+          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
+          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name: got '$DB_PATH' (must be /postgres). Refusing."; exit 1; }
+          echo "Target host OK (rehearsal, $DB_HOST)."
+          echo "::add-mask::$DB_PASS"
+          {
+            echo "PGHOST=$DB_HOST"
+            echo "PGPORT=$DB_PORT"
+            echo "PGUSER=$DB_USER"
+            echo "PGPASSWORD=<redacted>"
+            echo "PGDATABASE=postgres"
+          } >> "$GITHUB_ENV"
+          echo "PG* connection vars set (host $DB_HOST, user $DB_USER)."
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client
+
+      - name: Checkout migration file
+        uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            supabase/migrations/202611150001_daily_content_posters.sql
+          sparse-checkout-cone-mode: false
+
+      - name: Pre-migration state
+        run: |
+          set -euo pipefail
+          echo "--- pre-migration state ---"
+          psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
+            "select count(*) from public.daily_content_publications;" | sed 's/^/publications: /'
+          psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
+            "select count(*) from information_schema.columns where table_schema='public' and table_name='daily_content_publications' and column_name like 'poster%';" | sed 's/^/poster columns already present: /'
+          psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
+            "select count(*) from storage.buckets where id='daily-content-posters';" | sed 's/^/poster bucket already present: /'
+
+      - name: Migrate - poster bucket + columns
+        run: |
+          set -euo pipefail
+          psql --variable ON_ERROR_STOP=1 --single-transaction --file supabase/migrations/202611150001_daily_content_posters.sql
+          echo "Poster migration applied."
+
+      - name: Post-checks
+        run: |
+          set -euo pipefail
+          echo "--- post-checks ---"
+          BUCKET=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
+            "select public from storage.buckets where id='daily-content-posters';")
+          [ "$BUCKET" = "t" ] || { echo "Poster bucket missing or not public."; exit 1; }
+          echo "Bucket daily-content-posters present and public."
+          POLICIES=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
+            "select count(*) from pg_policies where tablename='objects' and policyname like '%daily poster%';")
+          [ "$POLICIES" = "4" ] || { echo "Expected 4 daily-poster storage policies, got $POLICIES."; exit 1; }
+          echo "4 daily-poster storage policies present."
+          COLS=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
+            "select count(*) from information_schema.columns where table_schema='public' and table_name='daily_content_publications' and column_name in ('poster_asset_id','poster_storage_path','poster_url','poster_urls','poster_checksum','poster_checksums','poster_scene_id','poster_qc_status','poster_error','poster_generated_at');")
+          [ "$COLS" = "10" ] || { echo "Expected 10 poster columns, got $COLS."; exit 1; }
+          echo "10 poster columns present on daily_content_publications."
+          H=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c "select count(*) from public.hadiths;")
+          A=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c "select count(*) from public.admin_content;")
+          P=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c "select count(*) from public.daily_content_publications;")
+          echo "Counts: hadiths=$H (expected $EXPECTED_HADITHS), admin_content=$A (expected $EXPECTED_ADMIN_CONTENT), publications=$P (expected $EXPECTED_PUBLICATIONS)"
+          [ "$H" = "$EXPECTED_HADITHS" ] || { echo "hadiths count changed! Refusing to report success."; exit 1; }
+          [ "$A" = "$EXPECTED_ADMIN_CONTENT" ] || { echo "admin_content count changed! Refusing to report success."; exit 1; }
+          [ "$P" = "$EXPECTED_PUBLICATIONS" ] || { echo "publications count changed! Refusing to report success."; exit 1; }
+          echo "Poster migration applied to REHEARSAL only. No rows modified; counts unchanged."
