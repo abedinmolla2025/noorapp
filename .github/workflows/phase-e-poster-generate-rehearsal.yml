@@ -29,6 +29,13 @@
 # deterministic paths with upsert; `set_poster` refuses to overwrite
 # a passed poster without force. Re-running for the same date is safe.
 #
+# Comparison mode (`compare: true`, layout a/b/c): renders the
+# Bengali-first variants side by side WITHOUT touching the publication
+# row — the pre-check's idempotent skip is bypassed, PNGs upload to
+# `<kolkata_date>/compare/<layout>-<format>.png`, and the set_poster
+# finalization + verification steps are skipped. Nothing is finalized
+# until the owner chooses a layout.
+#
 # Failure: any render/upload/QC failure records `poster_qc_status=
 # 'failed'` + a short reason on the publication row (never a poster
 # URL) and exits non-zero. The publication stays `published`
@@ -60,6 +67,17 @@ on:
         required: false
         type: string
         default: 'portrait,square'
+      layout:
+        description: 'Poster layout: legacy (Arabic-first) or a/b/c (Bengali-first comparison variants)'
+        required: false
+        type: choice
+        default: 'legacy'
+        options: [legacy, a, b, c]
+      compare:
+        description: 'Comparison mode: render to <date>/compare/<layout>-<format>.png and skip set_poster finalization (never touches the publication row)'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -117,6 +135,9 @@ jobs:
 
       - name: Resolve date and pre-check publication
         id: precheck
+        env:
+          COMPARE: ${{ inputs.compare }}
+          LAYOUT: ${{ inputs.layout }}
         run: |
           set -euo pipefail
           if [ -n "${{ inputs.kolkata_date }}" ]; then
@@ -124,12 +145,16 @@ jobs:
           else
             DATE=$(TZ=Asia/Kolkata date +%F)
           fi
+          if [ "$COMPARE" = "true" ] && [ "$LAYOUT" = "legacy" ]; then
+            echo "compare=true requires a Bengali-first layout (a, b or c), not legacy."
+            exit 1
+          fi
           echo "kolkata_date=$DATE" >> "$GITHUB_OUTPUT"
           echo "Date: $DATE"
           ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,hadith_source_line" \
             -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY")
           echo "$ROW" | python3 -c "
-          import json, sys
+          import json, sys, os
           rows = json.load(sys.stdin)
           if not rows:
               print('NO PUBLISHED PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
@@ -139,8 +164,11 @@ jobs:
               print('Publication status is', r.get('status'), '— not published. Nothing to poster. Exiting cleanly.')
               sys.exit(3)
           if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
-              print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
-              sys.exit(4)
+              if os.environ.get('COMPARE') == 'true':
+                  print('COMPARE mode: existing passed poster ignored — rendering a comparison copy.')
+              else:
+                  print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
+                  sys.exit(4)
           print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
           " || {
             CODE=$?
@@ -168,6 +196,8 @@ jobs:
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
           FORMATS: ${{ inputs.formats }}
+          LAYOUT: ${{ inputs.layout }}
+          COMPARE: ${{ inputs.compare }}
         run: |
           set -euo pipefail
           # Serve the built app (SPA fallback to app.html).
@@ -188,7 +218,7 @@ jobs:
             echo "=== format: $FORMAT ==="
             PNG="poster-out/poster-$DATE-$FORMAT.png"
             if ! node scripts/daily-content/poster/render-poster.mjs \
-                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT" \
+                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT&layout=$LAYOUT" \
                 --out "$PNG" > "poster-out/render-$FORMAT.json"; then
               echo "Render FAILED for $FORMAT:"
               cat "poster-out/render-$FORMAT.json"
@@ -197,9 +227,14 @@ jobs:
             fi
             cat "poster-out/render-$FORMAT.json"
             echo "---"
+            if [ "$COMPARE" = "true" ]; then
+              OBJECT_PATH="$DATE/compare/$LAYOUT-$FORMAT.png"
+            else
+              OBJECT_PATH="$DATE/$FORMAT.png"
+            fi
             if ! node scripts/daily-content/poster/upload-poster.mjs \
                 --file "$PNG" \
-                --object-path "$DATE/$FORMAT.png" \
+                --object-path "$OBJECT_PATH" \
                 --supabase-url "$REHEARSAL_URL" \
                 --anon-key "$REHEARSAL_ANON_KEY" \
                 --admin-email "$REHEARSAL_ADMIN_EMAIL" \
@@ -213,14 +248,19 @@ jobs:
             echo "---"
           done
           if [ -n "$FAILED" ]; then
-            echo "FAILED formats:$FAILED — recording poster failure on the publication row and stopping."
-            REASON="render_or_upload_failed:${FAILED# }"
-            RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
-              -H 'Content-Type: application/json' \
-              -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
-              -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
-            echo "$RESP" | head -c 2000
-            echo ""
+            echo "FAILED formats:$FAILED — stopping."
+            if [ "$COMPARE" != "true" ]; then
+              echo "Recording poster failure on the publication row."
+              REASON="render_or_upload_failed:${FAILED# }"
+              RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+                -H 'Content-Type: application/json' \
+                -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+                -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
+              echo "$RESP" | head -c 2000
+              echo ""
+            else
+              echo "COMPARE mode: publication row untouched (no failure recorded)."
+            fi
             echo "poster_failed=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
@@ -228,7 +268,7 @@ jobs:
           echo "poster_failed=false" >> "$GITHUB_OUTPUT"
 
       - name: Finalize asset via set_poster
-        if: steps.precheck.outputs.precheck_skip != 'true'
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
           FORMATS: ${{ inputs.formats }}
@@ -287,7 +327,7 @@ jobs:
           "
 
       - name: Verify finalized asset on the publication row
-        if: steps.precheck.outputs.precheck_skip != 'true'
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
         run: |
@@ -318,6 +358,6 @@ jobs:
         if: always() && steps.precheck.outputs.precheck_skip != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: poster-${{ steps.precheck.outputs.kolkata_date }}
+          name: poster-${{ steps.precheck.outputs.kolkata_date }}-${{ inputs.layout }}
           path: poster-out/*.png
           retention-days: 30
