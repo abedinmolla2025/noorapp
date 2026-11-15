@@ -112,12 +112,12 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
-          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content daily-content; do
             [ -d "supabase/functions/$fn" ] || { echo "Missing function directory: $fn. Refusing."; exit 1; }
             echo "Deploying $fn to rehearsal ..."
             supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --yes
           done
-          echo "All 5 functions deployed to rehearsal."
+          echo "All 6 functions deployed to rehearsal."
 
       - name: Verify deployed function versions
         env:
@@ -126,10 +126,10 @@ jobs:
           set -euo pipefail
           supabase functions list --project-ref "$EXPECTED_REF" > /tmp/functions-list.txt
           cat /tmp/functions-list.txt
-          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content daily-content; do
             grep -q "$fn" /tmp/functions-list.txt || { echo "Function not listed after deploy: $fn. Refusing."; exit 1; }
           done
-          echo "All 5 functions present in the deployed list."
+          echo "All 6 functions present in the deployed list."
 
       - name: Smoke check — unauthenticated calls must return exactly 401 with a known body
         run: |
@@ -143,15 +143,20 @@ jobs:
             echo "$fn unauthenticated status: $code (want 401)"
             [ "$code" = "401" ] || { echo "GATE NOT LIVE on $fn (got $code). Failing."; exit 1; }
             # The 401 BODY proves which layer rejected the call, so it
-            # is asserted, not just the status. Two known shapes:
+            # is asserted, not just the status. Three known shapes:
             #  - gateway JSON (verify_jwt ON): {"code":...,"message":...}
             #  - the function's own requireAdmin JSON (verify_jwt OFF):
             #    {"error":"Missing or malformed Authorization header"}
+            #  - the daily-content CRON-secret gate (verify_jwt OFF):
+            #    {"ok":false,"error":"Unauthorized"}
             # Either proves the function is deployed and gated; the
             # mode is recorded, not failed on. Any other body fails.
             case "$resp_body" in
               *'"error":"Missing or malformed Authorization header"'*)
                 echo "$fn 401 body is the function's own JSON (verify_jwt OFF as deployed; function gate holds)."
+                ;;
+              *'"error":"Unauthorized"'*)
+                echo "$fn 401 body is the daily-content CRON-secret gate (verify_jwt OFF as deployed; function gate holds)."
                 ;;
               *'"code"'*)
                 echo "$fn 401 body is the gateway JSON (verify_jwt ON as deployed)."
@@ -162,10 +167,11 @@ jobs:
             esac
           }
           # requireAdmin functions: any body 401s before body parsing.
-          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
+          # daily-content also 401s unauthenticated, via its CRON-secret gate.
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content daily-content; do
             check_401 "$fn" '{}'
           done
-          echo "Smoke check passed: all 5 functions return 401 unauthenticated on rehearsal."
+          echo "Smoke check passed: all 6 functions return 401 unauthenticated on rehearsal."
 
       - name: Post-deploy notes (no further action in this run)
         run: |
