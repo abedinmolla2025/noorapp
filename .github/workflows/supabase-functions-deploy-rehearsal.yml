@@ -84,9 +84,12 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.confirm == 'DEPLOY-REHEARSAL' }}
     steps:
+      # Checkout the DISPATCH branch (no ref pin): the workflow must deploy
+      # the code it was dispatched from. A hardcoded ref here once shipped
+      # stale code — the same bug class the production deploy workflow had
+      # (fixed in 42de009: the hardcoded `ref: muse/phase2-security-2026-11-10`
+      # deployed stale phase2 code in runs #3-#5). Never pin a branch ref here.
       - uses: actions/checkout@v4
-        with:
-          ref: muse/phase3-adapter-2026-11-13
 
       - name: Install pinned Supabase CLI
         run: |
