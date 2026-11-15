@@ -236,20 +236,20 @@ jobs:
           fi
           printf '%s' "$CONTENT_JSON" > /tmp/content.json
           CONTENT_TEXT=$(python3 -c "
-import json, sys
-lines = json.load(open('/tmp/content.json'))
-if not isinstance(lines, list) or not lines:
-    sys.exit('content JSON is not a non-empty list')
-parts = []
-for line in lines:
-    if not isinstance(line, dict) or not line.get('content'):
-        continue
-    parts.append(f\"{line['content']}\\n\\nSource: {line['source']}\\nType: {line['type']}\" + \"\\n\\n---\\n\\n\")
-text = ''.join(parts).strip()
-if not text:
-    sys.exit('no usable content lines')
-print(text)
-")
+          import json, sys
+          lines = json.load(open('/tmp/content.json'))
+          if not isinstance(lines, list) or not lines:
+              sys.exit('content JSON is not a non-empty list')
+          parts = []
+          for line in lines:
+              if not isinstance(line, dict) or not line.get('content'):
+                  continue
+              parts.append(f"{line['content']}\n\nSource: {line['source']}\nType: {line['type']}" + "\n\n---\n\n")
+          text = ''.join(parts).strip()
+          if not text:
+              sys.exit('no usable content lines')
+          print(text)
+          ")
           # Prompt template (scene) + literal content. The prompt is
           # text-only: no external images, no fetched content.
           SCENE_TMPL=$(cut -f4 /tmp/scene_row.tsv)
