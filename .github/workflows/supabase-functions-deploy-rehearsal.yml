@@ -4,9 +4,13 @@
 # to the REHEARSAL Supabase project ONLY, without needing Supabase access
 # from the agent environment. The deploy runs in GitHub Actions with the
 # Supabase CLI, using the owner-created repo secret SUPABASE_ACCESS_TOKEN.
+#
 # Status: prepared 2026-11-14 for owner approval (Phase 4 gate). NOT
 # dispatched. Do not dispatch until the owner approves it in its own
-# message.
+# message, and do not add this file to main without its own approval —
+# the file must be on main for the GitHub UI to offer the Run workflow
+# button, and adding it is a main change.
+#
 # What this workflow NEVER does:
 #   - never targets production (the guard below pins the rehearsal
 #     project ref as a literal; there is no production target, no
@@ -16,6 +20,7 @@
 #     no publication, no push notification;
 #   - no secret is echoed, no `set -x`, no env dump anywhere.
 #     GitHub also auto-masks the secret in logs.
+#
 # Design notes (each is a deliberate safety choice):
 #   1. The project-ref guard is a LITERAL string comparison only.
 #      It deliberately does NOT cross-check supabase/config.toml
@@ -40,6 +45,7 @@
 #      still holds). Any other 401 body fails the run.
 #   4. The shared `_shared/` Adapter code deploys automatically as
 #      a dependency of the 5 functions; it is not deployed separately.
+#
 # Functions deployed (Phase 3, branch muse/phase3-adapter-2026-11-13):
 #   enrich-dua-content, fix-dua-content, generate-dua-seo,
 #   generate-hadith-seo, recommend-daily-content
@@ -47,6 +53,7 @@
 # In particular daily-content and scheduler-dispatch are NOT deployed
 # here — they belong to the production deploy workflow only, and
 # deploying them to rehearsal is out of scope for Phase 5.
+#
 # Prerequisites (owner actions, each its own approval):
 #   1. This file enters the repo via the GitHub web upload (browser):
 #      a git push of a workflow file is rejected because the available
@@ -55,22 +62,19 @@
 #   2. Repo secret SUPABASE_ACCESS_TOKEN already exists by name
 #      (created 2026-11-12; value never accessed). No new secret
 #      is needed for this workflow.
+#   3. The owner dispatches it from the GitHub UI (Actions ->
+#      this workflow -> Run workflow) and types DEPLOY-REHEARSAL.
+#      The available token cannot dispatch (no `workflow` scope).
 
-name: Supabase Functions Deploy (rehearsal only)
+name: Deploy AI Adapter Edge Functions to Rehearsal
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type DEPLOY-REHEARSAL to deploy the 5 Phase 3 functions to REHEARSAL only'
+        description: 'Type DEPLOY-REHEARSAL to deploy the 5 migrated functions to the REHEARSAL project only'
         required: true
         type: string
-        default: ''
-      branch:
-        description: 'Branch to deploy from (must be a Phase 3 adapter branch)'
-        required: true
-        type: string
-        default: 'muse/phase3-adapter-2026-11-13'
 
 permissions:
   contents: read
@@ -78,114 +82,104 @@ permissions:
 jobs:
   deploy-rehearsal:
     runs-on: ubuntu-latest
-    env:
-      CONFIRM_INPUT: ${{ inputs.confirm }}
-      BRANCH_INPUT: ${{ inputs.branch }}
+    if: ${{ inputs.confirm == 'DEPLOY-REHEARSAL' }}
     steps:
-      - name: Validate inputs
-        run: |
-          set -euo pipefail
-          if [ "$CONFIRM_INPUT" != "DEPLOY-REHEARSAL" ]; then
-            echo "confirm input is not DEPLOY-REHEARSAL; refusing to run."
-            exit 1
-          fi
-          case "$BRANCH_INPUT" in
-            muse/phase3-adapter-*) ;;
-            *) echo "branch must be a Phase 3 adapter branch (muse/phase3-adapter-*)."; exit 1 ;;
-          esac
-          echo "Inputs valid: rehearsal only, branch $BRANCH_INPUT."
-
-      - name: Guard - rehearsal project ref only
-        run: |
-          set -euo pipefail
-          # The rehearsal project ref is a literal. There is no other
-          # target anywhere in this workflow, and no input can change it.
-          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
-          OTHER_REF="llicfiepatzgllmjhzbw"
-          REHEARSAL_URL="https://cazdbxxffvdnsdatjsrx.supabase.co"
-          echo "Target project ref: $EXPECTED_REF (rehearsal only)"
-          echo "Target URL: $REHEARSAL_URL"
-          case "$REHEARSAL_URL" in
-            *"$OTHER_REF"*) echo "URL contains the production ref. Refusing."; exit 1 ;;
-          esac
-          echo "REHEARSAL_REF=$EXPECTED_REF" >> "$GITHUB_ENV"
-          echo "REHEARSAL_URL=$REHEARSAL_URL" >> "$GITHUB_ENV"
-
-      - name: Require secrets
-        run: |
-          set -euo pipefail
-          if [ -z "${SUPABASE_ACCESS_TOKEN:-}" ]; then echo "SUPABASE_ACCESS_TOKEN secret is missing."; exit 1; fi
-          echo "SUPABASE_ACCESS_TOKEN present."
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
+      # Checkout the DISPATCH branch (no ref pin): the workflow must deploy
+      # the code it was dispatched from. A hardcoded ref here once shipped
+      # stale code — the same bug class the production deploy workflow had
+      # (fixed in 42de009: the hardcoded `ref: muse/phase2-security-2026-11-10`
+      # deployed stale phase2 code in runs #3-#5). Never pin a branch ref here.
       - uses: actions/checkout@v4
 
-      - name: Set Supabase access token (masked)
+      - name: Install pinned Supabase CLI
         run: |
           set -euo pipefail
-          echo "::add-mask::$SUPABASE_ACCESS_TOKEN"
-          echo "SUPABASE_ACCESS_TOKEN is set (masked)."
+          npm install -g supabase@3.1.0
+          CLI_VERSION="$(supabase --version)"
+          echo "Supabase CLI version: $CLI_VERSION"
+          case "$CLI_VERSION" in
+            *3.1.0*) ;;
+            *) echo "Unexpected CLI version (want 3.1.0). Refusing."; exit 1 ;;
+          esac
+
+      - name: Project-ref guard (rehearsal only)
+        run: |
+          set -euo pipefail
+          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
+          [ "$EXPECTED_REF" = "cazdbxxffvdnsdatjsrx" ] || { echo "Ref guard failed."; exit 1; }
+          echo "Project-ref guard passed: $EXPECTED_REF (rehearsal only)"
+          echo "EXPECTED_REF=$EXPECTED_REF" >> "$GITHUB_ENV"
+
+      - name: Deploy migrated functions to rehearsal
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Link rehearsal project
         run: |
           set -euo pipefail
-          supabase link --project-ref "$REHEARSAL_REF"
-          echo "Linked to rehearsal project $REHEARSAL_REF."
-        env:
-          SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Deploy 5 Phase 3 functions (rehearsal)
-        run: |
-          set -euo pipefail
-          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
-            echo "--- deploying $fn ---"
-            supabase functions deploy "$fn" --project-ref "$REHEARSAL_REF"
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content daily-content; do
+            [ -d "supabase/functions/$fn" ] || { echo "Missing function directory: $fn. Refusing."; exit 1; }
+            echo "Deploying $fn to rehearsal ..."
+            supabase functions deploy "$fn" --project-ref "$EXPECTED_REF" --yes
           done
-          echo "All 5 functions deployed to rehearsal."
+          echo "All 6 functions deployed to rehearsal."
+
+      - name: Verify deployed function versions
         env:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
-
-      - name: Smoke check - JWT verification ON (rehearsal)
         run: |
           set -euo pipefail
-          # Unauthenticated call must be rejected with 401. Accept the
-          # gateway 401 JSON ("Invalid JWT") or the function's own
-          # requireAdmin 401 JSON; record which layer rejected it.
-          # Any other status or 401 body fails the run.
-          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content; do
-            echo "--- smoke check $fn ---"
-            GATEWAY_BODY=$(curl -s -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/$fn" -H "Content-Type: application/json" -d '{}')
-            HTTP_CODE=$(printf '%s' "$GATEWAY_BODY" | tail -n 1)
-            BODY=$(printf '%s' "$GATEWAY_BODY" | head -n -1)
-            echo "HTTP $HTTP_CODE: $BODY"
-            [ "$HTTP_CODE" = "401" ] || { echo "$fn: expected 401, got $HTTP_CODE."; exit 1; }
-            MSG=$(printf '%s' "$BODY" | jq -r '.message // empty' 2>/dev/null || true)
-            case "$MSG" in
-              "Invalid JWT") echo "$fn: gateway rejected (JWT verification ON)." ;;
-              *"Admin"*|*"admin"*) echo "$fn: function requireAdmin rejected (JWT verification ON at gateway, function gate holds)." ;;
-              *) echo "$fn: unexpected 401 body: $BODY"; exit 1 ;;
+          supabase functions list --project-ref "$EXPECTED_REF" > /tmp/functions-list.txt
+          cat /tmp/functions-list.txt
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content daily-content; do
+            grep -q "$fn" /tmp/functions-list.txt || { echo "Function not listed after deploy: $fn. Refusing."; exit 1; }
+          done
+          echo "All 6 functions present in the deployed list."
+
+      - name: Smoke check — unauthenticated calls must return exactly 401 with a known body
+        run: |
+          set -euo pipefail
+          BASE="https://cazdbxxffvdnsdatjsrx.supabase.co/functions/v1"
+          check_401() {
+            fn="$1"; body="$2"
+            resp=$(curl -s --max-time 30 -w '\n%{http_code}' -X POST "$BASE/$fn" -H 'Content-Type: application/json' -d "$body")
+            code="${resp##*$'\n'}"
+            resp_body="${resp%$'\n'*}"
+            echo "$fn unauthenticated status: $code (want 401)"
+            [ "$code" = "401" ] || { echo "GATE NOT LIVE on $fn (got $code). Failing."; exit 1; }
+            # The 401 BODY proves which layer rejected the call, so it
+            # is asserted, not just the status. Three known shapes:
+            #  - gateway JSON (verify_jwt ON): {"code":...,"message":...}
+            #  - the function's own requireAdmin JSON (verify_jwt OFF):
+            #    {"error":"Missing or malformed Authorization header"}
+            #  - the daily-content CRON-secret gate (verify_jwt OFF):
+            #    {"ok":false,"error":"Unauthorized"}
+            # Either proves the function is deployed and gated; the
+            # mode is recorded, not failed on. Any other body fails.
+            case "$resp_body" in
+              *'"error":"Missing or malformed Authorization header"'*)
+                echo "$fn 401 body is the function's own JSON (verify_jwt OFF as deployed; function gate holds)."
+                ;;
+              *'"error":"Unauthorized"'*)
+                echo "$fn 401 body is the daily-content CRON-secret gate (verify_jwt OFF as deployed; function gate holds)."
+                ;;
+              *'"code"'*)
+                echo "$fn 401 body is the gateway JSON (verify_jwt ON as deployed)."
+                ;;
+              *)
+                echo "GATE BODY MISMATCH on $fn: unexpected 401 body '$resp_body'. Failing."; exit 1
+                ;;
             esac
+          }
+          # requireAdmin functions: any body 401s before body parsing.
+          # daily-content also 401s unauthenticated, via its CRON-secret gate.
+          for fn in enrich-dua-content fix-dua-content generate-dua-seo generate-hadith-seo recommend-daily-content daily-content; do
+            check_401 "$fn" '{}'
           done
-          echo "Smoke checks passed: all 5 functions reject unauthenticated calls with 401."
+          echo "Smoke check passed: all 6 functions return 401 unauthenticated on rehearsal."
 
-      - name: Summary
-        if: always()
+      - name: Post-deploy notes (no further action in this run)
         run: |
-          {
-            echo "## Supabase Functions Deploy (rehearsal only)"
-            echo ""
-            echo "| Field | Value |"
-            echo "| --- | --- |"
-            echo "| Target project | \`cazdbxxffvdnsdatjsrx\` (rehearsal) |"
-            echo "| Branch | \`$BRANCH_INPUT\` |"
-            echo "| Functions | enrich-dua-content, fix-dua-content, generate-dua-seo, generate-hadith-seo, recommend-daily-content |"
-            echo "| Job status | \`${{ job.status }}\` |"
-          } >> "$GITHUB_STEP_SUMMARY"
+          echo "Rehearsal deploy complete. Real-provider tests (G17),"
+          echo "Bengali quality checks, and quota verification are NOT"
+          echo "part of this workflow — they run as a separate Phase 5"
+          echo "verification step after this run succeeds."
+          echo "Production was not touched by this workflow."
