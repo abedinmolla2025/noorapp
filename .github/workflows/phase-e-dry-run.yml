@@ -1,0 +1,104 @@
+# Phase E Daily Content Dry Run (manual)
+#
+# Runs the daily-content planner in DRY-RUN mode against the REHEARSAL
+# project (cazdbxxffvdnsdatjsrx) from the GitHub runner, because the
+# owner's phone browser cannot reach supabase.co at all.
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_CRON_SECRET - the CRON_SECRET set as an Edge Function
+#     secret in the rehearsal project (a long random string, chosen by
+#     the owner; never shared in chat). The same value must be set in
+#     the rehearsal Supabase project AND here as a GitHub secret.
+#
+# The secret is masked with ::add-mask:: immediately and is NEVER
+# echoed, logged, or written to any file. It lives only in a shell
+# variable inside the single test step. The dry-run response (the plan)
+# IS logged — it contains no credentials.
+#
+# dry_run:true plans everything, writes nothing, sends nothing (the
+# function returns before any gate, publication, or push). The test
+# verifies: the call is authorised (401 means the secret is wrong or
+# missing), the response is ok + dry_run:true, the plan has a hadith,
+# content cards, and Islamic context, and the plan's provenance
+# (source: "seeded" when no approved run exists, or
+# "approved-recommendation" when one does) is reported. Nothing is
+# published; no notification is sent; no cron is enabled.
+
+name: Phase E Daily Content Dry Run (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the rehearsal daily-content dry run'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+    steps:
+      - name: Validate inputs and secret
+        run: |
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true; aborting."
+            exit 1
+          fi
+          if [ -z "${{ secrets.REHEARSAL_CRON_SECRET }}" ]; then
+            echo "REHEARSAL_CRON_SECRET is not set as a repository secret."
+            echo "The owner must set it (same value as the CRON_SECRET Edge"
+            echo "Function secret in the rehearsal project) before this run."
+            exit 1
+          fi
+          echo "Inputs validated; secret is present (value never shown)."
+
+      - name: Daily-content dry run (rehearsal)
+        env:
+          REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d '{"dry_run": true}')
+          CODE="${RESP##*$'\n'}"
+          BODY="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          if [ "$CODE" = "401" ]; then
+            echo "Unauthorised (401): the CRON_SECRET does not match the rehearsal project's secret."
+            echo "Check that REHEARSAL_CRON_SECRET equals the CRON_SECRET Edge Function secret in rehearsal."
+            exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE. Body: $BODY"; exit 1; }
+          echo "$BODY" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, 'ok is not true: %s' % d
+          assert d.get('dry_run') is True, 'dry_run is not true: %s' % d
+          plan = d.get('plan') or {}
+          hadith = plan.get('hadith')
+          cards = plan.get('cards') or plan.get('contentCards') or []
+          ctx = plan.get('context')
+          print('Plan source:', plan.get('source'))
+          print('Hadith source:', plan.get('hadithSource'))
+          print('Cards source:', plan.get('cardsSource'))
+          print('Recommendation id:', plan.get('recommendationId'))
+          print('Hadith present:', bool(hadith))
+          print('Cards count:', len(cards))
+          print('Context present:', bool(ctx))
+          assert hadith, 'plan has no hadith'
+          assert cards, 'plan has no content cards'
+          assert ctx, 'plan has no Islamic context'
+          print('DRY RUN PASS: plan complete, nothing written, nothing sent.')
+          "
+          echo "--- Full dry-run response (plan only, no credentials) ---"
+          echo "$BODY" | head -c 8000
+          echo ""
+          echo "Dry run complete. No publication, no notification, no cron."
