@@ -1,78 +1,65 @@
-# Poster generation (REHEARSAL ONLY)
+# Daily Content Poster Generation (rehearsal)
 #
-# Generates one daily-content poster for a chosen publication and uploads
-# it to the REHEARSAL storage bucket `daily-content-posters` only.
+# Stage 1–3 of the 4-stage Daily Content pipeline, rehearsal only:
+#   1. POSTER GENERATION — render the real OgShareCard component
+#      (Dua OG visual identity) headlessly with Playwright/Chromium,
+#      from the PUBLISHED publication row (verbatim text, never invented).
+#   2. IMAGE QC — the render page runs checkOgCardBatch + a verbatim
+#      character check against the published card; the render script
+#      verifies exact export dimensions + non-trivial file size.
+#      A QC failure stops the pipeline: no upload, no URL persisted.
+#   3. POSTER ASSET FINALIZATION — upload the PNG(s) to the
+#      `daily-content-posters` Storage bucket (deterministic path
+#      <kolkata_date>/<format>.png, upsert) and persist the finalized
+#      asset (asset ID, storage path, public URL, SHA-256 checksum,
+#      QC status) on the publication row via the daily-content
+#      `set_poster` action.
 #
-# Flow
-#   1. Read the publication row and its recommended scene from the
-#      REHEARSAL database (rehearsal pooler only — same exact-parse guard
-#      as the migration workflow).
-#   2. Build a literal, text-only poster prompt from the publication
-#      content stored in that row (no external content is fetched, no
-#      source material is altered).
-#   3. Generate the poster with Google Imagen (`gemini-2.5-flash-image`)
-#      via the Google GenAI API. The model is called through a small
-#      Python helper — no third-party poster service is involved.
-#   4. Verify the image locally: format, dimensions, non-blank pixels,
-#      and a SHA-256 checksum recorded in the manifest.
-#   5. Upload to the rehearsal bucket `daily-content-posters` and record
-#      the storage path / public URL / checksum on the publication row
-#      (`poster_*` columns, plus `poster_qc_status = 'generated'`).
+# Stage 4 (Downstream Distribution — homepage image, push image,
+# WhatsApp/Native Share, Facebook Page) reads the finalized asset.
+# It is NOT in this workflow: no downstream consumer runs here.
 #
-# Manual dispatch only — there is no schedule in this file, so nothing
-# runs by itself. A fresh run overwrites nothing: a new storage path is
-# used for every run (`date + publication id + run id`), and the previous
-# poster columns are only replaced after the new upload succeeds.
+# REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx.
+# Manual dispatch only (no schedule — scheduled runs only fire from
+# the default branch; a 00:45 UTC schedule is a one-line addition for
+# the merge-to-main step). The workflow never touches production.
 #
-# REHEARSAL ONLY: the ref guard refuses any URL that is not the rehearsal
-# pooler (aws-1-ap-southeast-1, postgres.cazdbxxffvdnsdatjsrx), and the
-# bucket name is fixed to `daily-content-posters`. There is no target
-# input and no production path in this file.
+# Idempotency: the pre-check exits 0 (nothing to do) when the
+# publication already has a QC-passed poster; Storage uploads use
+# deterministic paths with upsert; `set_poster` refuses to overwrite
+# a passed poster without force. Re-running for the same date is safe.
+#
+# Failure: any render/upload/QC failure records `poster_qc_status=
+# 'failed'` + a short reason on the publication row (never a poster
+# URL) and exits non-zero. The publication stays `published`
+# (text-only). Downstream MUST NOT proceed on a failed poster.
 #
 # Secrets required (repository secrets, created by the owner):
-#   REHEARSAL_DB_URL — rehearsal session-pooler connection string.
-#     Validated exactly (host/user/port/db, last-'@' rule); never echoed.
-#   GEMINI_API_KEY   — Google AI Studio key for the Imagen call. Used
-#     only in the generate step; never echoed or written to the manifest.
-#
-# Cost: one Imagen generation per run (Google AI Studio pricing applies;
-# the `gemini-2.5-flash-image` model is the image model priced per image).
-#
-# Inputs: `publication_id` (default: the rehearsal test publication
-# `2026-11-14`), `scene_id` (optional — defaults to the scene recorded
-# on the publication row), and `confirm` (must be `true`).
-# The publication row must have `poster_scene_id` set (or a `scene_id`
-# supplied) and the scene must exist in `scenes` / `daily_poster_scenes`.
+#   REHEARSAL_ANON_KEY, REHEARSAL_ADMIN_EMAIL, REHEARSAL_ADMIN_PASSWORD
+#   (Storage upload as admin), REHEARSAL_CRON_SECRET (set_poster call).
+# Secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file.
 
-name: Poster Generation (rehearsal only)
+name: Daily Content Poster Generation (rehearsal)
 
 on:
   workflow_dispatch:
     inputs:
       confirm:
-        description: 'Type true to generate a poster for REHEARSAL only'
+        description: 'Type true to generate the poster for the rehearsal publication'
         required: true
         type: boolean
         default: false
-      publication_id:
-        description: 'Publication id (YYYY-MM-DD) to generate a poster for'
-        required: true
-        type: string
-        default: '2026-11-14'
-      scene_id:
-        description: 'Optional scene id (defaults to the scene recorded on the publication row)'
+      kolkata_date:
+        description: 'Kolkata date (YYYY-MM-DD) of the published publication; empty = today'
         required: false
         type: string
         default: ''
-      size:
-        description: 'Poster size (portrait 9:16)'
+      formats:
+        description: 'Comma-separated formats to render (portrait,square,wide,story)'
         required: false
-        type: choice
-        default: '1024x1792'
-        options:
-          - '1024x1792'
-          - '768x1344'
-          - '1080x1920'
+        type: string
+        default: 'portrait,square'
 
 permissions:
   contents: read
@@ -81,355 +68,256 @@ jobs:
   generate-poster:
     runs-on: ubuntu-latest
     env:
-      REHEARSAL_DB_URL: ${{ secrets.REHEARSAL_DB_URL }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      CONFIRM_INPUT: ${{ inputs.confirm }}
-      PUBLICATION_ID: ${{ inputs.publication_id }}
-      SCENE_ID_INPUT: ${{ inputs.scene_id }}
-      SIZE_INPUT: ${{ inputs.size }}
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+      REHEARSAL_ANON_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
+      REHEARSAL_ADMIN_EMAIL: ${{ secrets.REHEARSAL_ADMIN_EMAIL }}
+      REHEARSAL_ADMIN_PASSWORD: ${{ secrets.REHEARSAL_ADMIN_PASSWORD }}
+      REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
     steps:
-      - name: Validate inputs
+      - name: Validate inputs and secrets
         run: |
           set -euo pipefail
-          if [ "$CONFIRM_INPUT" != "true" ]; then
-            echo "confirm input is not true; refusing to run."
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
             exit 1
           fi
-          case "$PUBLICATION_ID" in
-            ????-??-??) ;;
-            *) echo "publication_id must be YYYY-MM-DD."; exit 1 ;;
-          esac
-          case "$SIZE_INPUT" in
-            1024x1792|768x1344|1080x1920) ;;
-            *) echo "size must be one of 1024x1792, 768x1344, 1080x1920."; exit 1 ;;
-          esac
-          echo "Inputs valid: rehearsal only, publication $PUBLICATION_ID, size $SIZE_INPUT."
-
-      - name: Require secrets
-        run: |
-          set -euo pipefail
-          if [ -z "$REHEARSAL_DB_URL" ]; then echo "REHEARSAL_DB_URL secret is missing."; exit 1; fi
-          if [ -z "$GEMINI_API_KEY" ]; then echo "GEMINI_API_KEY secret is missing."; exit 1; fi
-          echo "Secrets present."
-
-      - name: Guard - exact rehearsal DB URL validation
-        run: |
-          set -euo pipefail
-          # Same exact-parse guard as the migration workflow: host, port,
-          # username, password, database checked separately; the other
-          # project's ref must not appear anywhere in the URL; the
-          # authority is split at the LAST '@' (libpq's rule). The URL
-          # and the password are never echoed; only the validated host
-          # (public knowledge) is printed.
-          EXPECTED_REF="cazdbxxffvdnsdatjsrx"
-          OTHER_REF="llicfiepatzgllmjhzbw"
-          EXPECTED_HOST="aws-1-ap-southeast-1.pooler.supabase.com"
-          URL="$REHEARSAL_DB_URL"
-          EXPECTED_USER="postgres.${EXPECTED_REF}"
-          URL="${URL#"${URL%%[![:space:]]*}"}"
-          URL="${URL%"${URL##*[![:space:]]}"}"
-          case "$URL" in
-            *[[:space:]]*) echo "Malformed database URL (whitespace inside the URL). Refusing."; exit 1 ;;
-          esac
-          case "$URL" in
-            *"$OTHER_REF"*) echo "URL contains the production ref. Refusing."; exit 1 ;;
-          esac
-          case "$URL" in
-            postgresql://*) REST="${URL#postgresql://}" ;;
-            postgres://*) REST="${URL#postgres://}" ;;
-            *) echo "Malformed database URL (scheme must be postgresql:// or postgres://). Refusing."; exit 1 ;;
-          esac
-          AUTH="${REST%%[/?#]*}"
-          TAIL="${REST#"$AUTH"}"
-          HOSTPORT="${AUTH##*@}"
-          USERINFO="${AUTH%@*}"
-          if [ "$HOSTPORT" = "$AUTH" ]; then
-            echo "Malformed database URL (missing userinfo). Refusing."
-            exit 1
+          for s in REHEARSAL_ANON_KEY REHEARSAL_ADMIN_EMAIL REHEARSAL_ADMIN_PASSWORD REHEARSAL_CRON_SECRET; do
+            if [ -z "${!s}" ]; then echo "$s secret is not set."; exit 1; fi
+          done
+          echo "::add-mask::$REHEARSAL_ANON_KEY"
+          echo "::add-mask::$REHEARSAL_ADMIN_PASSWORD"
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            case "${{ inputs.kolkata_date }}" in
+              ????-??-??) ;;
+              *) echo "kolkata_date must be YYYY-MM-DD."; exit 1 ;;
+            esac
           fi
-          DB_USER="${USERINFO%%:*}"
-          case "$USERINFO" in
-            *:* ) DB_PASS="${USERINFO#*:}" ;;
-            * ) echo "Missing database password. Refusing."; exit 1 ;;
-          esac
-          DB_HOST="${HOSTPORT%%:*}"
-          DB_PORT="${HOSTPORT#*:}"
-          if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
-          DB_PATH="${TAIL%%\?*}"
-          [ "$DB_HOST" = "$EXPECTED_HOST" ] || { echo "Unexpected database host: got '$DB_HOST', expected '$EXPECTED_HOST'. Refusing."; exit 1; }
-          [ "$DB_PORT" = "5432" ] || { echo "Unexpected database port: got '$DB_PORT' (must be 5432). Refusing."; exit 1; }
-          [ "$DB_USER" = "$EXPECTED_USER" ] || { echo "Unexpected database username: got '$DB_USER', expected '$EXPECTED_USER'. Refusing."; exit 1; }
-          [ -n "$DB_PASS" ] || { echo "Missing database password. Refusing."; exit 1; }
-          [ "$DB_PATH" = "/postgres" ] || { echo "Unexpected database name: got '$DB_PATH' (must be /postgres). Refusing."; exit 1; }
-          echo "Target host OK (rehearsal, $DB_HOST)."
-          echo "::add-mask::$DB_PASS"
-          {
-            echo "PGHOST=$DB_HOST"
-            echo "PGPORT=$DB_PORT"
-            echo "PGUSER=$DB_USER"
-            echo "PGPASSWORD=<redacted>"
-            echo "PGDATABASE=postgres"
-          } >> "$GITHUB_ENV"
-          echo "::add-mask::$GEMINI_API_KEY"
-          echo "PG* connection vars set (host $DB_HOST, user $DB_USER)."
+          echo "Inputs validated; secrets present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
 
-      - name: Install tools
-        run: |
-          set -euo pipefail
-          sudo apt-get update -qq && sudo apt-get install -y -qq postgresql-client jq python3-pip
-          python3 -m pip install --quiet google-genai pillow
-
-      - name: Checkout poster scripts
+      - name: Checkout poster branch code
         uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
         with:
-          sparse-checkout: |
-            scripts/poster
-          sparse-checkout-cone-mode: false
+          node-version: '22'
+          cache: npm
 
-      - name: Load publication + scene (rehearsal)
-        id: load
+      - name: Install dependencies
         run: |
           set -euo pipefail
-          export PGPASSWORD="$REHEARSAL_DB_PASSWORD"
-          # psql reads PGPASSWORD from the environment; the password is
-          # exported from the validated URL in the guard step above.
-          # (The guard writes PGPASSWORD=<redacted> to $GITHUB_ENV, so
-          # the real password must come from the URL secret here.)
-          # NOTE: PGPASSWORD is set from REHEARSAL_DB_URL below, not from
-          # a separate secret.
-          # Extract the password from the validated URL (last-'@' rule).
-          AUTH="${REHEARSAL_DB_URL#*://}"
-          AUTH="${AUTH%%[/?#]*}"
-          USERINFO="${AUTH%@*}"
-          export PGPASSWORD="${USERINFO#*:}"
-          # Publication row: id, status, poster columns, content JSON.
-          ROW=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -F $'\t' -c \
-            "select id, status, coalesce(poster_scene_id,''), coalesce(poster_qc_status,''), coalesce(content::text,'') from public.daily_content_publications where id = '$PUBLICATION_ID';")
-          [ -n "$ROW" ] || { echo "No publication row for id '$PUBLICATION_ID' in rehearsal."; exit 1; }
-          echo "$ROW" > /tmp/publication_row.tsv
-          STATUS=$(cut -f2 /tmp/publication_row.tsv)
-          SCENE_ID=$(cut -f3 /tmp/publication_row.tsv)
-          QC=$(cut -f4 /tmp/publication_row.tsv)
-          echo "Publication $PUBLICATION_ID: status=$STATUS, poster_scene_id=${SCENE_ID:-<none>}, poster_qc_status=${QC:-<none>}"
-          if [ -n "$SCENE_ID_INPUT" ]; then
-            SCENE_ID="$SCENE_ID_INPUT"
-            echo "Scene overridden by input: $SCENE_ID"
-          fi
-          if [ "$SCENE_ID" = "" ] || [ "$SCENE_ID" = "null" ]; then
-            echo "No scene recorded on the publication row and no scene_id input given. Refusing."
-            exit 1
-          fi
-          SCENE_ID=$(echo "$SCENE_ID" | tr -d '[:space:]')
-          # Scene row: look in daily_poster_scenes first, then scenes.
-          SCENE_ROW=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -F $'\t' -c \
-            "select id, coalesce(name,''), coalesce(description,''), coalesce(prompt_template,'') from public.daily_poster_scenes where id = '$SCENE_ID' union all select id, coalesce(name,''), coalesce(description,''), coalesce(prompt_template,'') from public.scenes where id = '$SCENE_ID' limit 1;")
-          [ -n "$SCENE_ROW" ] || { echo "Scene '$SCENE_ID' not found in daily_poster_scenes or scenes (rehearsal)."; exit 1; }
-          echo "$SCENE_ROW" > /tmp/scene_row.tsv
-          SCENE_NAME=$(cut -f2 /tmp/scene_row.tsv)
-          echo "Scene: $SCENE_ID (${SCENE_NAME:-<unnamed>})"
-          # Build the poster prompt from the publication content JSON.
-          # content is a JSON array of lines: [{content, source, source_reference, type}].
-          CONTENT_JSON=$(cut -f5 /tmp/publication_row.tsv)
-          if [ -z "$CONTENT_JSON" ] || [ "$CONTENT_JSON" = "null" ]; then
-            echo "Publication row has no content JSON. Refusing."
-            exit 1
-          fi
-          printf '%s' "$CONTENT_JSON" > /tmp/content.json
-          CONTENT_TEXT=$(python3 -c "
-          import json, sys
-          lines = json.load(open('/tmp/content.json'))
-          if not isinstance(lines, list) or not lines:
-              sys.exit('content JSON is not a non-empty list')
-          parts = []
-          for line in lines:
-              if not isinstance(line, dict) or not line.get('content'):
-                  continue
-              parts.append(f"{line['content']}\n\nSource: {line['source']}\nType: {line['type']}" + "\n\n---\n\n")
-          text = ''.join(parts).strip()
-          if not text:
-              sys.exit('no usable content lines')
-          print(text)
-          ")
-          # Prompt template (scene) + literal content. The prompt is
-          # text-only: no external images, no fetched content.
-          SCENE_TMPL=$(cut -f4 /tmp/scene_row.tsv)
-          if [ -n "$SCENE_TMPL" ]; then
-            POSTER_PROMPT="$SCENE_TMPL"$'\n\n'"$CONTENT_TEXT"
+          npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+
+      - name: Resolve date and pre-check publication
+        id: precheck
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            DATE="${{ inputs.kolkata_date }}"
           else
-            POSTER_PROMPT="Create a serene, respectful Islamic daily-content poster (9:16 portrait, no people, no faces, no animals, no text overlays except the exact wording below). Use soft light, calm colours, and generous empty space."$'\n\n'"$CONTENT_TEXT"
+            DATE=$(TZ=Asia/Kolkata date +%F)
           fi
-          printf '%s' "$POSTER_PROMPT" > /tmp/poster_prompt.txt
-          echo "Poster prompt built (${#POSTER_PROMPT} chars)."
-          # Export the values the generate step needs, as JSON-encoded
-          # strings so newlines survive the environment file.
-          SCENE_JSON=$(printf '%s' "$SCENE_CONTENT" | jq -Rs 'tojson')
-          # (SCENE_CONTENT is not defined; the scene template is already
-          #  in the prompt file — keep the export minimal and correct.)
-          CONTENT_JSON_ENC=$(printf '%s' "$CONTENT_JSON" | jq -Rs 'tojson')
-          POSTER_PROMPT_ENC=$(printf '%s' "$POSTER_PROMPT" | jq -Rs 'tojson')
-          {
-            echo "SCENE_ID=$SCENE_ID"
-            echo "SCENE_NAME=$SCENE_NAME"
-            echo "PUBLICATION_STATUS=$STATUS"
-            echo "CONTENT_JSON_ENC=$CONTENT_JSON_ENC"
-            echo "POSTER_PROMPT_ENC=$POSTER_PROMPT_ENC"
-          } >> "$GITHUB_ENV"
-          echo "scene_id=$SCENE_ID" >> "$GITHUB_OUTPUT"
-          echo "Loaded publication $PUBLICATION_ID with scene $SCENE_ID."
-
-      - name: Generate poster (Imagen)
-        id: generate
-        run: |
-          set -euo pipefail
-          # Rebuild the prompt from the JSON-encoded env value.
-          POSTER_PROMPT=$(printf '%s' "$POSTER_PROMPT_ENC" | jq -r .)
-          printf '%s' "$POSTER_PROMPT" > /tmp/poster_prompt.txt
-          WIDTH="${SIZE_INPUT%%x*}"
-          HEIGHT="${SIZE_INPUT##*x}"
-          echo "Generating poster ${WIDTH}x${HEIGHT} for $PUBLICATION_ID / scene $SCENE_ID ..."
-          python3 scripts/poster/generate_poster.py \
-            --prompt-file /tmp/poster_prompt.txt \
-            --output poster.png \
-            --width "$WIDTH" --height "$HEIGHT" \
-            --model gemini-2.5-flash-image
-          ls -l poster.png
-          file poster.png
-
-      - name: Verify poster + build manifest
-        id: verify
-        run: |
-          set -euo pipefail
-          python3 - <<'PY'
-          import hashlib, json, os
-          from PIL import Image
-          path = "poster.png"
-          with open(path, "rb") as f:
-              data = f.read()
-          sha = hashlib.sha256(data).hexdigest()
-          img = Image.open(path)
-          img.verify()
-          img = Image.open(path)
-          w, h = img.size
-          fmt = img.format
-          # Non-blank check: the image must have more than one distinct colour.
-          colours = img.convert("RGB").resize((32, 32)).getcolors(32 * 32)
-          distinct = len(colours) if colours else 0
-          print(f"format={fmt} size={w}x{h} bytes={len(data)} sha256={sha} distinct_colours_32x32={distinct}")
-          if fmt not in ("PNG", "JPEG"):
-              raise SystemExit(f"unexpected image format: {fmt}")
-          if w < 512 or h < 512:
-              raise SystemExit(f"image too small: {w}x{h}")
-          if distinct < 4:
-              raise SystemExit("image looks blank (too few distinct colours)")
-          manifest = {
-              "publication_id": os.environ["PUBLICATION_ID"],
-              "scene_id": os.environ["SCENE_ID"],
-              "size": os.environ["SIZE_INPUT"],
-              "model": "gemini-2.5-flash-image",
-              "sha256": sha,
-              "bytes": len(data),
-              "width": w,
-              "height": h,
-              "format": fmt,
-              "run_id": os.environ.get("GITHUB_RUN_ID", ""),
+          echo "kolkata_date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Date: $DATE"
+          ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,hadith_source_line" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY")
+          echo "$ROW" | python3 -c "
+          import json, sys
+          rows = json.load(sys.stdin)
+          if not rows:
+              print('NO PUBLISHED PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+          r = rows[0]
+          if r.get('status') != 'published':
+              print('Publication status is', r.get('status'), '— not published. Nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+          if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
+              print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
+              sys.exit(4)
+          print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
+          " || {
+            CODE=$?
+            if [ "$CODE" = "3" ] || [ "$CODE" = "4" ]; then
+              echo "precheck_skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$CODE"
           }
-          with open("poster_manifest.json", "w") as f:
-              json.dump(manifest, f, indent=2)
-          print(json.dumps(manifest, indent=2))
-          PY
-          echo "sha256=$(python3 -c 'import json; print(json.load(open("poster_manifest.json"))["sha256"])')" >> "$GITHUB_OUTPUT"
-          echo "Poster verified."
 
-      - name: Upload to rehearsal bucket + record on publication
-        id: upload
+      - name: Build app (demo routes enabled, rehearsal Supabase)
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          VITE_ENABLE_DEMO_ROUTES: 'true'
+          VITE_SUPABASE_URL: ${{ env.REHEARSAL_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
         run: |
           set -euo pipefail
-          AUTH="${REHEARSAL_DB_URL#*://}"
-          AUTH="${AUTH%%[/?#]*}"
-          USERINFO="${AUTH%@*}"
-          export PGPASSWORD="${USERINFO#*:}"
-          DATE_UTC=$(date -u +%F)
-          RUN_ID="${GITHUB_RUN_ID}"
-          STORAGE_PATH="posters/${DATE_UTC}/${PUBLICATION_ID}-${RUN_ID}.png"
-          echo "Uploading to rehearsal bucket daily-content-posters/$STORAGE_PATH"
-          # Supabase Storage upload via the REST API (service role is not
-          # used here — the anon key cannot upload; use the service-role
-          # key from the REHEARSAL_SERVICE_ROLE_KEY secret if present,
-          # otherwise fall back to the postgres direct-upload helper).
-          # This rehearsal workflow uses the storage REST endpoint with
-          # the service-role key supplied as a repository secret.
-          if [ -z "${REHEARSAL_SERVICE_ROLE_KEY:-}" ]; then
-            echo "REHEARSAL_SERVICE_ROLE_KEY secret is missing. Refusing to upload."
+          npm run build
+          test -f dist/app.html || { echo "dist/app.html missing after build."; exit 1; }
+          echo "Build OK (demo routes enabled for the poster-render route)."
+
+      - name: Render + upload + finalize (per format)
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+          FORMATS: ${{ inputs.formats }}
+        run: |
+          set -euo pipefail
+          # Serve the built app (SPA fallback to app.html).
+          node scripts/daily-content/poster/serve-dist.mjs 4173 > /tmp/serve-dist.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render; then break; fi
+            sleep 1
+          done
+          curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render || { echo "Static server did not come up."; cat /tmp/serve-dist.log; exit 1; }
+          echo "Static server up (pid $SERVER_PID)."
+
+          mkdir -p poster-out
+          FAILED=""
+          for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
+            case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT"; continue ;; esac
+            echo "=== format: $FORMAT ==="
+            PNG="poster-out/poster-$DATE-$FORMAT.png"
+            if ! node scripts/daily-content/poster/render-poster.mjs \
+                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT" \
+                --out "$PNG" > "poster-out/render-$FORMAT.json"; then
+              echo "Render FAILED for $FORMAT:"
+              cat "poster-out/render-$FORMAT.json"
+              FAILED="$FAILED $FORMAT"
+              continue
+            fi
+            cat "poster-out/render-$FORMAT.json"
+            echo "---"
+            if ! node scripts/daily-content/poster/upload-poster.mjs \
+                --file "$PNG" \
+                --object-path "$DATE/$FORMAT.png" \
+                --supabase-url "$REHEARSAL_URL" \
+                --anon-key "$REHEARSAL_ANON_KEY" \
+                --admin-email "$REHEARSAL_ADMIN_EMAIL" \
+                --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
+              echo "Upload FAILED for $FORMAT:"
+              cat "poster-out/upload-$FORMAT.json"
+              FAILED="$FAILED $FORMAT"
+              continue
+            fi
+            cat "poster-out/upload-$FORMAT.json"
+            echo "---"
+          done
+          if [ -n "$FAILED" ]; then
+            echo "FAILED formats:$FAILED — recording poster failure on the publication row and stopping."
+            REASON="render_or_upload_failed:${FAILED# }"
+            RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+              -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
+            echo "$RESP" | head -c 2000
+            echo ""
+            echo "poster_failed=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
-          SUPABASE_URL="https://cazdbxxffvdnsdatjsrx.supabase.co"
-          curl --fail --show-error --silent \
-            -X POST "$SUPABASE_URL/storage/v1/object/daily-content-posters/$STORAGE_PATH" \
-            -H "Authorization: Bearer $REHEARSAL_SERVICE_ROLE_KEY" \
-            -H "apikey: $REHEARSAL_SERVICE_ROLE_KEY" \
-            -H "Content-Type: image/png" \
-            --data-binary @poster.png
-          echo "Upload succeeded."
-          PUBLIC_URL="$SUPABASE_URL/storage/v1/object/public/daily-content-posters/$STORAGE_PATH"
-          SHA256=$(python3 -c 'import json; print(json.load(open("poster_manifest.json"))["sha256"])')
-          # Record on the publication row (rehearsal only).
-          psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
-            "update public.daily_content_publications set poster_asset_id = '$PUBLICATION_ID-$RUN_ID', poster_storage_path = '$STORAGE_PATH', poster_url = '$PUBLIC_URL', poster_urls = jsonb_build_array('$PUBLIC_URL'), poster_checksum = '$SHA256', poster_checksums = jsonb_build_array('$SHA256'), poster_scene_id = '$SCENE_ID', poster_qc_status = 'generated', poster_generated_at = now() where id = '$PUBLICATION_ID';"
-          echo "storage_path=$STORAGE_PATH" >> "$GITHUB_OUTPUT"
-          echo "public_url=$PUBLIC_URL" >> "$GITHUB_OUTPUT"
-          echo "Recorded poster on publication $PUBLICATION_ID."
-        env:
-          REHEARSAL_SERVICE_ROLE_KEY: ${{ secrets.REHEARSAL_SERVICE_ROLE_KEY }}
+          echo "All formats rendered + uploaded."
+          echo "poster_failed=false" >> "$GITHUB_OUTPUT"
 
-      - name: Post-checks
+      - name: Finalize asset via set_poster
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+          FORMATS: ${{ inputs.formats }}
         run: |
           set -euo pipefail
-          AUTH="${REHEARSAL_DB_URL#*://}"
-          AUTH="${AUTH%%[/?#]*}"
-          USERINFO="${AUTH%@*}"
-          export PGPASSWORD="${USERINFO#*:}"
-          ROW=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -F $'\t' -c \
-            "select coalesce(poster_storage_path,''), coalesce(poster_url,''), coalesce(poster_checksum,''), coalesce(poster_qc_status,''), coalesce(poster_scene_id,'') from public.daily_content_publications where id = '$PUBLICATION_ID';")
-          [ -n "$ROW" ] || { echo "Publication row missing after upload."; exit 1; }
-          echo "$ROW" > /tmp/post_row.tsv
-          STORED_PATH=$(cut -f1 /tmp/post_row.tsv)
-          STORED_URL=$(cut -f2 /tmp/post_row.tsv)
-          STORED_SHA=$(cut -f3 /tmp/post_row.tsv)
-          STORED_QC=$(cut -f4 /tmp/post_row.tsv)
-          STORED_SCENE=$(cut -f5 /tmp/post_row.tsv)
-          EXPECTED_SHA=$(python3 -c 'import json; print(json.load(open("poster_manifest.json"))["sha256"])')
-          echo "Stored: path=$STORED_PATH url=$STORED_URL sha=$STORED_SHA qc=$STORED_QC scene=$STORED_SCENE"
-          [ "$STORED_PATH" = "${{ steps.upload.outputs.storage_path }}" ] || { echo "Stored storage path does not match the upload."; exit 1; }
-          [ "$STORED_URL" = "${{ steps.upload.outputs.public_url }}" ] || { echo "Stored public URL does not match the upload."; exit 1; }
-          [ "$STORED_SHA" = "$EXPECTED_SHA" ] || { echo "Stored checksum does not match the generated file."; exit 1; }
-          [ "$STORED_QC" = "generated" ] || { echo "poster_qc_status is not 'generated'."; exit 1; }
-          [ "$STORED_SCENE" = "$SCENE_ID" ] || { echo "poster_scene_id does not match the scene used."; exit 1; }
-          # The public URL must actually serve the file.
-          curl --fail --show-error --silent --head "$STORED_URL" | head -n 5
-          echo "Post-checks passed for $PUBLICATION_ID."
+          python3 - <<'PYEOF'
+          import json, os
+          date = os.environ["DATE"]
+          formats = [f.strip() for f in os.environ["FORMATS"].split(",") if f.strip()]
+          urls, checksums, scene = {}, {}, None
+          for fmt in formats:
+              with open(f"poster-out/render-{fmt}.json") as f:
+                  r = json.load(f)
+              assert r.get("ok"), f"render {fmt} not ok"
+              if scene is None:
+                  scene = r["backgroundId"]
+              elif scene != r["backgroundId"]:
+                  raise SystemExit(f"scene mismatch across formats: {scene} vs {r['backgroundId']}")
+              with open(f"poster-out/upload-{fmt}.json") as f:
+                  u = json.load(f)
+              assert u.get("ok"), f"upload {fmt} not ok"
+              urls[fmt] = u["publicUrl"]
+              checksums[fmt] = u["checksum"]
+          assert "portrait" in urls, "portrait (primary) is required"
+          body = {
+              "action": "set_poster",
+              "kolkata_date": date,
+              "poster_qc_status": "passed",
+              "poster_asset_id": f"poster:{date}",
+              "poster_storage_path": f"daily-content-posters/{date}/portrait.png",
+              "poster_url": urls["portrait"],
+              "poster_urls": urls,
+              "poster_checksum": checksums["portrait"],
+              "poster_checksums": checksums,
+              "poster_scene_id": scene,
+          }
+          with open("poster-out/set-poster-body.json", "w") as f:
+              json.dump(body, f)
+          print("set_poster body prepared; scene:", scene)
+          PYEOF
+          RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d @poster-out/set-poster-body.json)
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "$BODY_OUT" | head -c 2000
+          echo ""
+          [ "$CODE" = "200" ] || { echo "set_poster did not return 200."; exit 1; }
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, d
+          print('set_poster result:', d)
+          "
 
-      - name: Upload poster artifact
+      - name: Verify finalized asset on the publication row
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=kolkata_date,status,poster_asset_id,poster_storage_path,poster_url,poster_urls,poster_checksum,poster_scene_id,poster_qc_status,poster_generated_at" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY" \
+            | python3 -c "
+          import json, sys
+          rows = json.load(sys.stdin)
+          assert rows, 'publication row missing after set_poster'
+          r = rows[0]
+          assert r.get('status') == 'published', r
+          assert r.get('poster_qc_status') == 'passed', r
+          assert r.get('poster_url'), r
+          assert r.get('poster_checksum'), r
+          assert r.get('poster_asset_id') == 'poster:' + '$DATE', r
+          print('FINALIZED ASSET VERIFIED:')
+          print(' asset_id:', r['poster_asset_id'])
+          print(' storage_path:', r['poster_storage_path'])
+          print(' poster_url:', r['poster_url'])
+          print(' checksum:', r['poster_checksum'])
+          print(' scene:', r['poster_scene_id'])
+          print(' qc_status:', r['poster_qc_status'])
+          print(' generated_at:', r['poster_generated_at'])
+          "
+
+      - name: Upload poster PNGs as artifacts
+        if: always() && steps.precheck.outputs.precheck_skip != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: poster-${{ inputs.publication_id }}-${{ github.run_id }}
-          path: |
-            poster.png
-            poster_manifest.json
+          name: poster-${{ steps.precheck.outputs.kolkata_date }}
+          path: poster-out/*.png
           retention-days: 30
-
-      - name: Summary
-        if: always()
-        run: |
-          {
-            echo "## Poster generation (rehearsal only)"
-            echo ""
-            echo "| Field | Value |"
-            echo "| --- | --- |"
-            echo "| Publication ID | \`$PUBLICATION_ID\` |"
-            echo "| Scene ID | \`$SCENE_ID\` |"
-            echo "| Size | \`$SIZE_INPUT\` |"
-            echo "| Storage path | \`${{ steps.upload.outputs.storage_path }}\` |"
-            echo "| Public URL | \`${{ steps.upload.outputs.public_url }}\` |"
-            echo "| SHA-256 | \`$(python3 -c 'import json; print(json.load(open("poster_manifest.json"))["sha256"])' 2>/dev/null || echo '<not generated>')\` |"
-            echo "| Job status | \`${{ job.status }}\` |"
-          } >> "$GITHUB_STEP_SUMMARY"
