@@ -95,7 +95,7 @@ export default function CookieConsentBanner() {
   if (!visible) return null;
 
   return (
-    <div className="fixed bottom-16 left-0 right-0 z-[100] px-3 pb-2 animate-in slide-in-from-bottom-4 duration-500">
+    <div data-cookie-consent-banner className="fixed bottom-16 left-0 right-0 z-[100] px-3 pb-2 animate-in slide-in-from-bottom-4 duration-500">
       <div className="max-w-lg mx-auto bg-card border border-border/80 rounded-2xl shadow-lg p-4 flex flex-col gap-3">
         <p className="text-xs text-muted-foreground leading-relaxed">
           We use cookies and similar technologies for essential functionality, analytics,

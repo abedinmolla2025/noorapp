@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CardPayload } from "@/lib/dailyContent/types";
 import type { OgFormat } from "@/lib/dailyContent/ogQc";
-import { BENGALI_FIRST_LAYOUT, OG_LAYOUT, OG_STAGE_SIZE, type BengaliFirstLayout, type PosterLayout } from "@/lib/dailyContent/ogQc";
+import { OG_LAYOUT, OG_STAGE_SIZE, effectiveBengaliFirstLayout, type BengaliFirstLayout, type PosterLayout } from "@/lib/dailyContent/ogQc";
 import type { Composition } from "@/lib/dailyContent/visuals";
 
 const GOLD = "#e9c15c";
@@ -162,6 +162,15 @@ function AutoFitBengali({
   panel = false,
   accentBar = false,
   align = "center",
+  /**
+   * Coordination signal from the Arabic block (joint fit): when the
+   * Arabic block settles, its box shrinks and this block's container
+   * grows — incrementing this value re-runs the fit from the base size
+   * against the final geometry, so the Bengali lands on the largest
+   * size that fits (instead of the smaller size it settled on while
+   * the Arabic was still tall). 0 on mount (no reset).
+   */
+  resetSignal = 0,
 }: {
   text: string;
   baseSize: number;
@@ -170,6 +179,7 @@ function AutoFitBengali({
   panel?: boolean;
   accentBar?: boolean;
   align?: "center" | "left";
+  resetSignal?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(baseSize);
@@ -213,10 +223,30 @@ function AutoFitBengali({
     };
   }, [baseSize]);
 
+  // Joint fit: when the Arabic block settles (its box shrinks, this
+  // block's container grows), re-run the fit from the base size so the
+  // Bengali lands on the largest size that fits the final geometry.
+  // Skipped on mount (resetSignal 0) and when the size is already at
+  // base (short content fits regardless of the Arabic height).
+  const firstSignal = useRef(true);
+  useEffect(() => {
+    if (firstSignal.current) {
+      firstSignal.current = false;
+      return;
+    }
+    if (resetSignal === 0) return;
+    setSize(baseSize);
+    setDone(false);
+    setOverflow(false);
+    setPass((p) => p + 1);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetSignal]);
+
   return (
     <div
       ref={ref}
       data-autofit
+      data-fit-kind="bengali"
       data-fit-done={done ? "true" : "false"}
       data-fit-overflow={overflow ? "true" : "false"}
       data-fit-size={size}
@@ -257,7 +287,150 @@ function AutoFitBengali({
   );
 }
 
-/** Small source pill (variants B/C): source line + brand, footer position. */
+/**
+ * Arabic citation block with shrink-to-fit (companion to AutoFitBengali).
+ * The Arabic original is second priority (rule 4: smaller, never
+ * distorted, never reworded) — but with a long Arabic text the fixed-size
+ * panel used to eat the height the Bengali hero needs (Bukhari 869: 331
+ * Arabic chars took 5 lines at 20px and the 420-char Bengali then
+ * overflowed at its minimum size in 5 of 6 Rehearsal renders).
+ *
+ * The block is therefore capped: `maxHeight` is a share of the body
+ * height, so the box can never take more than that share. Inside the
+ * capped box the Arabic font steps down 2px at a time until it fits or
+ * reaches `minSize`. If it still overflows at `minSize`,
+ * `data-fit-overflow="true"` is set and the render route must fail the
+ * poster rather than ship a clipped citation. A short Arabic takes only
+ * its natural height (below the cap), so short content renders exactly
+ * as before. `onSettled` fires once per completed fit pass so the
+ * Bengali block (whose container grows as this block shrinks) can
+ * re-fit against the final geometry.
+ */
+function AutoFitArabic({
+  text,
+  baseSize,
+  minSize,
+  lineHeight = 1.9,
+  capShare,
+  panel = false,
+  footnote = false,
+  arabicPadding = "12px 16px",
+  onSettled,
+}: {
+  text: string;
+  baseSize: number;
+  minSize: number;
+  lineHeight?: number;
+  /** Max share of the body height this block may take (0–1). */
+  capShare: number;
+  /** Glass panel (variants A/B). */
+  panel?: boolean;
+  /** Hairline footnote (variant C). */
+  footnote?: boolean;
+  arabicPadding?: string;
+  /** Called once when this block's fit pass completes. */
+  onSettled?: () => void;
+}) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [size, setSize] = useState(baseSize);
+  const [done, setDone] = useState(false);
+  const [overflow, setOverflow] = useState(false);
+  const [pass, setPass] = useState(0);
+  const settledRef = useRef(false);
+
+  useLayoutEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    if (el.scrollHeight > el.clientHeight + 1) {
+      if (size > minSize) {
+        setSize((s) => Math.max(minSize, s - 2));
+      } else {
+        setOverflow(true);
+        setDone(true);
+        if (!settledRef.current) {
+          settledRef.current = true;
+          onSettled?.();
+        }
+      }
+    } else {
+      setDone(true);
+      if (!settledRef.current) {
+        settledRef.current = true;
+        onSettled?.();
+      }
+    }
+  }, [size, text, minSize, pass]);
+
+  // Webfonts can arrive after the first fit and change text metrics:
+  // re-run the fit from the base size once fonts are ready.
+  useEffect(() => {
+    let cancelled = false;
+    const fonts = (document as Document & { fonts?: { ready: Promise<unknown> } }).fonts;
+    if (!fonts) return;
+    fonts.ready.then(() => {
+      if (cancelled) return;
+      settledRef.current = false;
+      setSize(baseSize);
+      setDone(false);
+      setOverflow(false);
+      setPass((p) => p + 1);
+    }).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [baseSize]);
+
+  return (
+    <div
+      ref={ref}
+      data-autofit
+      data-fit-kind="arabic"
+      data-fit-done={done ? "true" : "false"}
+      data-fit-overflow={overflow ? "true" : "false"}
+      data-fit-size={size}
+      style={{
+        flex: "0 0 auto",
+        flexShrink: 0,
+        minHeight: 0,
+        maxHeight: `${Math.round(capShare * 100)}%`,
+        overflow: "hidden",
+        boxSizing: "border-box",
+        ...(panel
+          ? {
+              width: "100%",
+              background: "rgba(6,15,28,0.66)",
+              border: `1px solid ${GOLD_BORDER}`,
+              borderRadius: 18,
+              padding: arabicPadding,
+            }
+          : footnote
+            ? {
+                borderTop: `1px solid ${GOLD_BORDER}`,
+                paddingTop: 10,
+              }
+            : {}),
+      }}
+    >
+      <div
+        dir="rtl"
+        lang="ar"
+        style={{
+          color: "#fff",
+          fontSize: size,
+          lineHeight,
+          fontFamily: '"Noto Naskh Arabic", "Amiri", serif',
+          // Panel (A/B): no explicit alignment — RTL start (= right),
+          // exactly as the fixed-size panel rendered before. Footnote
+          // (C): explicitly right-aligned under the hairline.
+          ...(footnote ? { textAlign: "right" as const } : {}),
+          textShadow: "0 2px 12px rgba(0,0,0,0.6)",
+        }}
+      >
+        {text}
+      </div>
+    </div>
+  );
+}
 function SourcePill({ sourceLine }: { sourceLine: string }) {
   return (
     <div
@@ -306,9 +479,22 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
   const stage = OG_STAGE_SIZE[format];
   const ogLayout = OG_LAYOUT[format];
   const lowerThird = composition === "lower-third" && !ogLayout.horizontal;
-  // Bengali-first variants (a/b/c) use their own size table; legacy keeps
-  // the exact numbers above.
-  const bfLayout = posterLayout !== "legacy" ? BENGALI_FIRST_LAYOUT[posterLayout as BengaliFirstLayout][format] : null;
+  // Joint-fit epoch: incremented each time the Arabic block settles, so
+  // the Bengali block re-fits against the final geometry (its container
+  // grows as the Arabic box shrinks). Legacy renders no autofit blocks,
+  // so this stays 0 there.
+  const [arabicEpoch, setArabicEpoch] = useState(0);
+  // Bengali-first variants (a/b/c) use their own size table, tightened
+  // for long content; legacy keeps the exact numbers above.
+  const bfLayout =
+    posterLayout !== "legacy"
+      ? effectiveBengaliFirstLayout(
+          posterLayout as BengaliFirstLayout,
+          format,
+          card.arabic.length,
+          card.bengali.length,
+        )
+      : null;
   return (
     <div
       style={{
@@ -441,59 +627,24 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
                 panel={posterLayout === "a" || posterLayout === "c"}
                 accentBar={posterLayout === "c"}
                 align={posterLayout === "c" ? "left" : "center"}
+                resetSignal={arabicEpoch}
               />
             )}
-            {/* Arabic second — smaller, verbatim, never reworded (rule 4). */}
-            {posterLayout === "c" ? (
-              <div
-                style={{
-                  borderTop: `1px solid ${GOLD_BORDER}`,
-                  paddingTop: 10,
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  dir="rtl"
-                  lang="ar"
-                  style={{
-                    color: "#fff",
-                    fontSize: bfLayout.arabicSize,
-                    lineHeight: 1.9,
-                    fontFamily: '"Noto Naskh Arabic", "Amiri", serif',
-                    textAlign: "right",
-                    textShadow: "0 2px 12px rgba(0,0,0,0.6)",
-                  }}
-                >
-                  {card.arabic}
-                </div>
-              </div>
-            ) : (
-              <div
-                style={{
-                  width: "100%",
-                  background: "rgba(6,15,28,0.66)",
-                  border: `1px solid ${GOLD_BORDER}`,
-                  borderRadius: 18,
-                  padding: bfLayout.arabicPadding,
-                  boxSizing: "border-box",
-                  flexShrink: 0,
-                }}
-              >
-                <div
-                  dir="rtl"
-                  lang="ar"
-                  style={{
-                    color: "#fff",
-                    fontSize: bfLayout.arabicSize,
-                    lineHeight: 1.9,
-                    fontFamily: '"Noto Naskh Arabic", "Amiri", serif',
-                    textShadow: "0 2px 12px rgba(0,0,0,0.6)",
-                  }}
-                >
-                  {card.arabic}
-                </div>
-              </div>
-            )}
+            {/* Arabic second — smaller, verbatim, never reworded (rule 4).
+                Joint fit: the block is capped (a share of the body
+                height) and auto-fits inside the cap, so a long Arabic
+                can no longer starve the Bengali hero of height. */}
+            <AutoFitArabic
+              text={card.arabic}
+              baseSize={bfLayout.arabicSize}
+              minSize={bfLayout.arabicMinSize}
+              lineHeight={bfLayout.arabicLineHeight}
+              capShare={bfLayout.arabicCapShare}
+              panel={posterLayout !== "c"}
+              footnote={posterLayout === "c"}
+              arabicPadding={bfLayout.arabicPadding}
+              onSettled={() => setArabicEpoch((e) => e + 1)}
+            />
             {/* Source pill — only when the source left the header badge (B/C). */}
             {!bfLayout.sourceInBadge && <SourcePill sourceLine={card.sourceLine} />}
           </div>

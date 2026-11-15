@@ -86,6 +86,7 @@ type PosterStatus = {
   badgeLabel: string | null;
   pronunciationStatus: string | null;
   fitSize: number | null;
+  arabicFitSize: number | null;
   qc: { ok: boolean; errors: string[]; warnings: string[] } | null;
   verbatimOk: boolean | null;
   exportSize: { width: number; height: number };
@@ -142,6 +143,7 @@ export default function PosterRender() {
     badgeLabel: null,
     pronunciationStatus: null,
     fitSize: null,
+    arabicFitSize: null,
     qc: null,
     verbatimOk: null,
     exportSize: ogExportSize(format),
@@ -310,22 +312,32 @@ export default function PosterRender() {
         // (Legacy has no autofit blocks and passes trivially.)
         const fitDeadline = Date.now() + 15000;
         let fitOk = false;
-        let fitOverflow = false;
+        let fitOverflowKind: "bengali" | "arabic" | null = null;
         let fitSize: number | null = null;
+        let arabicFitSize: number | null = null;
+        const overflowKindOf = (nodes: Element[]): "bengali" | "arabic" | null => {
+          const n = nodes.find((el) => el.getAttribute("data-fit-overflow") === "true");
+          if (!n) return null;
+          return n.getAttribute("data-fit-kind") === "arabic" ? "arabic" : "bengali";
+        };
+        const fitSizeOf = (nodes: Element[], kind: string): number | null => {
+          const n = nodes.find((el) => el.getAttribute("data-fit-kind") === kind);
+          return n ? Number(n.getAttribute("data-fit-size") ?? "") || null : null;
+        };
         for (;;) {
           const nodes = Array.from(document.querySelectorAll("[data-autofit]"));
-          fitOverflow = nodes.some((n) => n.getAttribute("data-fit-overflow") === "true");
-          if (fitOverflow) break;
+          fitOverflowKind = overflowKindOf(nodes);
+          if (fitOverflowKind) break;
           const allDone = nodes.length === 0 || nodes.every((n) => n.getAttribute("data-fit-done") === "true");
           if (allDone) {
             await new Promise((resolve) => setTimeout(resolve, 200));
             const still = Array.from(document.querySelectorAll("[data-autofit]"));
-            fitOverflow = still.some((n) => n.getAttribute("data-fit-overflow") === "true");
-            if (fitOverflow) break;
+            fitOverflowKind = overflowKindOf(still);
+            if (fitOverflowKind) break;
             if (still.length === 0 || still.every((n) => n.getAttribute("data-fit-done") === "true")) {
               fitOk = true;
-              const first = still[0];
-              fitSize = first ? Number(first.getAttribute("data-fit-size") ?? "") || null : null;
+              fitSize = fitSizeOf(still, "bengali");
+              arabicFitSize = fitSizeOf(still, "arabic");
               break;
             }
           }
@@ -333,8 +345,15 @@ export default function PosterRender() {
           await new Promise((resolve) => setTimeout(resolve, 150));
         }
         if (cancelled) return;
-        if (fitOverflow) {
-          setStatus((s) => ({ ...s, status: "error", error: "bengali_overflow_at_min: translation does not fit even at minimum font size" }));
+        if (fitOverflowKind) {
+          // Distinguish which text overflowed: the Arabic cap can bind
+          // first (its box is capped so the Bengali gets room); the
+          // error names the block that failed at its minimum size.
+          const msg =
+            fitOverflowKind === "arabic"
+              ? "arabic_overflow_at_min: Arabic does not fit even at minimum font size"
+              : "bengali_overflow_at_min: translation does not fit even at minimum font size";
+          setStatus((s) => ({ ...s, status: "error", error: msg }));
           return;
         }
         if (!fitOk) {
@@ -344,7 +363,7 @@ export default function PosterRender() {
         // One frame for the centered re-render to paint before the shot.
         await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
         if (cancelled) return;
-        setStatus((s) => ({ ...s, status: s.qc && !s.qc.ok ? "error" : "ready", fitSize }));
+        setStatus((s) => ({ ...s, status: s.qc && !s.qc.ok ? "error" : "ready", fitSize, arabicFitSize }));
       } catch (e) {
         if (!cancelled) setStatus((s) => ({ ...s, status: "error", error: e instanceof Error ? e.message : String(e) }));
       }
@@ -363,6 +382,11 @@ export default function PosterRender() {
   const stage = OG_STAGE_SIZE[format];
   return (
     <div style={{ margin: 0, padding: 0, background: "#0b1526", minHeight: "100vh" }}>
+      {/* The cookie-consent banner is a fixed overlay that pops in after
+          load; Playwright's element screenshot captures fixed elements
+          overlapping the stage, so it leaked into poster PNGs. Hide it
+          (and only it) on this render route — it has no role here. */}
+      <style>{`[data-cookie-consent-banner]{display:none!important;}`}</style>
       <div id="poster-status" style={{ display: "none" }}>
         {JSON.stringify(status)}
       </div>

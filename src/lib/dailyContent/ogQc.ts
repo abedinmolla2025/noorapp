@@ -83,28 +83,103 @@ export type BengaliFirstFormatLayout = {
   arabicSize: number; gap: number; bodyPadding: string; arabicPadding: string;
   /** True: source line stays in the header badge (variant A). False: source moves to a footer pill (B/C). */
   sourceInBadge: boolean;
+  /**
+   * Arabic auto-fit floor (px): the Arabic block shrinks toward this size
+   * when the Arabic text is long. Never below this — if the Arabic still
+   * does not fit its capped box at this size, the render fails loudly
+   * rather than shipping a clipped or unreadable citation.
+   */
+  arabicMinSize: number;
+  /**
+   * Arabic height cap as a share of the body height (0–1). The Arabic
+   * block never takes more than this share of the body: its box height is
+   * therefore fixed from first paint, so the Bengali auto-fit measures
+   * against its final geometry and the two fits never chase each other.
+   * A short Arabic takes only its natural height (below the cap).
+   */
+  arabicCapShare: number;
 };
 
 export const BENGALI_FIRST_LAYOUT: Record<BengaliFirstLayout, Record<OgFormat, BengaliFirstFormatLayout>> = {
   a: {
-    portrait: { padding: "26px 28px 26px", titleSize: 30, bengaliSize: 40, bengaliMinSize: 18, arabicSize: 20, gap: 14, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: true },
-    square: { padding: "22px 26px 22px", titleSize: 26, bengaliSize: 34, bengaliMinSize: 16, arabicSize: 18, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: true },
-    wide: { padding: "16px 20px 16px", titleSize: 22, bengaliSize: 26, bengaliMinSize: 13, arabicSize: 15, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: true },
-    story: { padding: "30px 30px 30px", titleSize: 34, bengaliSize: 44, bengaliMinSize: 20, arabicSize: 22, gap: 18, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: true },
+    portrait: { padding: "26px 28px 26px", titleSize: 30, bengaliSize: 40, bengaliMinSize: 18, arabicSize: 20, gap: 14, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: true, arabicMinSize: 13, arabicCapShare: 0.29 },
+    square: { padding: "22px 26px 22px", titleSize: 26, bengaliSize: 34, bengaliMinSize: 16, arabicSize: 18, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: true, arabicMinSize: 12, arabicCapShare: 0.25 },
+    wide: { padding: "16px 20px 16px", titleSize: 22, bengaliSize: 26, bengaliMinSize: 13, arabicSize: 15, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: true, arabicMinSize: 12, arabicCapShare: 0.30 },
+    story: { padding: "30px 30px 30px", titleSize: 34, bengaliSize: 44, bengaliMinSize: 20, arabicSize: 22, gap: 18, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: true, arabicMinSize: 18, arabicCapShare: 0.28 },
   },
   b: {
-    portrait: { padding: "26px 28px 26px", titleSize: 22, bengaliSize: 44, bengaliMinSize: 18, arabicSize: 18, gap: 16, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: false },
-    square: { padding: "22px 26px 22px", titleSize: 20, bengaliSize: 38, bengaliMinSize: 16, arabicSize: 16, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: false },
-    wide: { padding: "16px 20px 16px", titleSize: 18, bengaliSize: 28, bengaliMinSize: 13, arabicSize: 14, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: false },
-    story: { padding: "30px 30px 30px", titleSize: 26, bengaliSize: 48, bengaliMinSize: 20, arabicSize: 20, gap: 20, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: false },
+    portrait: { padding: "26px 28px 26px", titleSize: 22, bengaliSize: 44, bengaliMinSize: 18, arabicSize: 18, gap: 16, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: false, arabicMinSize: 13, arabicCapShare: 0.29 },
+    square: { padding: "22px 26px 22px", titleSize: 20, bengaliSize: 38, bengaliMinSize: 16, arabicSize: 16, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: false, arabicMinSize: 12, arabicCapShare: 0.25 },
+    wide: { padding: "16px 20px 16px", titleSize: 18, bengaliSize: 28, bengaliMinSize: 13, arabicSize: 14, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: false, arabicMinSize: 12, arabicCapShare: 0.30 },
+    story: { padding: "30px 30px 30px", titleSize: 26, bengaliSize: 48, bengaliMinSize: 20, arabicSize: 20, gap: 20, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: false, arabicMinSize: 18, arabicCapShare: 0.28 },
   },
   c: {
-    portrait: { padding: "26px 28px 26px", titleSize: 24, bengaliSize: 38, bengaliMinSize: 18, arabicSize: 18, gap: 14, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: false },
-    square: { padding: "22px 26px 22px", titleSize: 22, bengaliSize: 32, bengaliMinSize: 16, arabicSize: 16, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: false },
-    wide: { padding: "16px 20px 16px", titleSize: 20, bengaliSize: 26, bengaliMinSize: 13, arabicSize: 14, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: false },
-    story: { padding: "30px 30px 30px", titleSize: 28, bengaliSize: 42, bengaliMinSize: 20, arabicSize: 20, gap: 18, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: false },
+    portrait: { padding: "26px 28px 26px", titleSize: 24, bengaliSize: 38, bengaliMinSize: 18, arabicSize: 18, gap: 14, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: false, arabicMinSize: 13, arabicCapShare: 0.28 },
+    square: { padding: "22px 26px 22px", titleSize: 22, bengaliSize: 32, bengaliMinSize: 16, arabicSize: 16, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: false, arabicMinSize: 12, arabicCapShare: 0.25 },
+    wide: { padding: "16px 20px 16px", titleSize: 20, bengaliSize: 26, bengaliMinSize: 13, arabicSize: 14, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: false, arabicMinSize: 12, arabicCapShare: 0.30 },
+    story: { padding: "30px 30px 30px", titleSize: 28, bengaliSize: 42, bengaliMinSize: 20, arabicSize: 20, gap: 18, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: false, arabicMinSize: 18, arabicCapShare: 0.28 },
   },
 } as const;
+
+/**
+ * Long-content thresholds (chars, measured on the stored record): the
+ * real Bukhari 869 content is 420 Bengali / 331 Arabic chars, and the
+ * short fixture is ~35 / ~20. A render past either threshold tightens
+ * the fixed chrome so the two auto-fit blocks keep a readable margin.
+ * The thresholds match the QC "long text" flags in checkOgCardBatch
+ * (Arabic > 260, Bengali > 380).
+ */
+export const LONG_ARABIC_CHARS = 260;
+export const LONG_BENGALI_CHARS = 380;
+
+/** Shrink a "Vpx Hpx Vpx" (or "Vpx Hpx") padding string's vertical values by `by` px (floor 8). */
+function tightenPadding(padding: string, by: number): string {
+  const parts = padding.split(" ").map((p) => parseInt(p, 10));
+  if (parts.some((n) => Number.isNaN(n))) return padding;
+  const tightened = parts.map((n, i) => {
+    // 3-value form: top, horizontal, bottom. 2-value form: vertical, horizontal.
+    const isVertical = parts.length === 3 ? i !== 1 : i === 0;
+    return isVertical ? `${Math.max(8, n - by)}px` : `${n}px`;
+  });
+  return tightened.join(" ");
+}
+
+export type EffectiveBengaliFirstLayout = BengaliFirstFormatLayout & {
+  /** True when either text passed its long-content threshold. */
+  isLongContent: boolean;
+  /** Arabic line height for this content (tighter when the Arabic is long). */
+  arabicLineHeight: number;
+};
+
+/**
+ * Effective sizes for one render: the table values, tightened when the
+ * content is long. The tightening only touches fixed chrome (title,
+ * gaps, padding, Arabic leading) — the Bengali/Arabic font sizes are
+ * left to their auto-fit blocks, which measure the real geometry.
+ * Short content returns the table values unchanged (no regression on
+ * the fixture renders).
+ */
+export function effectiveBengaliFirstLayout(
+  layout: BengaliFirstLayout,
+  format: OgFormat,
+  arabicLen: number,
+  bengaliLen: number,
+): EffectiveBengaliFirstLayout {
+  const base = BENGALI_FIRST_LAYOUT[layout][format];
+  const isLongContent = arabicLen > LONG_ARABIC_CHARS || bengaliLen > LONG_BENGALI_CHARS;
+  if (!isLongContent) {
+    return { ...base, isLongContent: false, arabicLineHeight: 1.9 };
+  }
+  return {
+    ...base,
+    isLongContent: true,
+    titleSize: Math.max(16, base.titleSize - 4),
+    gap: Math.max(8, base.gap - 4),
+    padding: tightenPadding(base.padding, 4),
+    bodyPadding: "0px 0",
+    arabicLineHeight: 1.75,
+  };
+}
 
 /** Parse the `layout` query param: "a" | "b" | "c", anything else → "legacy". */
 export function parsePosterLayout(value: string | null): PosterLayout {

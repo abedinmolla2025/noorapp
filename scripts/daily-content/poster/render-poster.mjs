@@ -94,6 +94,7 @@ try {
     badgeLabel: status.badgeLabel,
     pronunciationStatus: status.pronunciationStatus ?? null,
     fitSize: status.fitSize ?? null,
+    arabicFitSize: status.arabicFitSize ?? null,
     qc: status.qc,
     verbatimOk: status.verbatimOk,
   }));
