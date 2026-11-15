@@ -144,6 +144,11 @@ async function sendPushWithTimeout(sub: unknown, payload: string): Promise<{ sta
     if (timer !== undefined) clearTimeout(timer);
   }
 }
+// CRON_SECRET is read ONCE at module scope (isolate cold start) from the
+// env var DAILY_CONTENT_CRON_SECRET — NOT from a var named CRON_SECRET.
+// After setting or changing that secret in the project, the function MUST
+// be redeployed: a no-change deploy is skipped by the CLI and leaves the
+// old isolate running with the stale value.
 const CRON_SECRET = Deno.env.get("DAILY_CONTENT_CRON_SECRET") ?? "";
 const DEFAULT_ICON = "https://www.noorapp.in/notification-icon.png";
 const DEFAULT_BADGE = "https://www.noorapp.in/badge-icon.png";
