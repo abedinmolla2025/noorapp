@@ -1,19 +1,19 @@
 # Daily Content Poster Generation (rehearsal)
 #
 # Stage 1–3 of the 4-stage Daily Content pipeline, rehearsal only:
-# 1. POSTER GENERATION — render the real OgShareCard component
-# (Dua OG visual identity) headlessly with Playwright/Chromium,
-# from the PUBLISHED publication row (verbatim text, never invented).
-# 2. IMAGE QC — the render page runs checkOgCardBatch + a verbatim
-# character check against the published card; the render script
-# verifies exact export dimensions + non-trivial file size.
-# A QC failure stops the pipeline: no upload, no URL persisted.
-# 3. POSTER ASSET FINALIZATION — upload the PNG(s) to the
-# `daily-content-posters` Storage bucket (deterministic path
-# <kolkata_date>/<format>.png, upsert) and persist the finalized
-# asset (asset ID, storage path, public URL, SHA-256 checksum,
-# QC status) on the publication row via the daily-content
-# `set_poster` action.
+#   1. POSTER GENERATION — render the real OgShareCard component
+#      (Dua OG visual identity) headlessly with Playwright/Chromium,
+#      from the PUBLISHED publication row (verbatim text, never invented).
+#   2. IMAGE QC — the render page runs checkOgCardBatch + a verbatim
+#      character check against the published card; the render script
+#      verifies exact export dimensions + non-trivial file size.
+#      A QC failure stops the pipeline: no upload, no URL persisted.
+#   3. POSTER ASSET FINALIZATION — upload the PNG(s) to the
+#      `daily-content-posters` Storage bucket (deterministic path
+#      <kolkata_date>/<format>.png, upsert) and persist the finalized
+#      asset (asset ID, storage path, public URL, SHA-256 checksum,
+#      QC status) on the publication row via the daily-content
+#      `set_poster` action.
 #
 # Stage 4 (Downstream Distribution — homepage image, push image,
 # WhatsApp/Native Share, Facebook Page) reads the finalized asset.
@@ -35,8 +35,8 @@
 # (text-only). Downstream MUST NOT proceed on a failed poster.
 #
 # Secrets required (repository secrets, created by the owner):
-# REHEARSAL_ANON_KEY, REHEARSAL_ADMIN_EMAIL, REHEARSAL_ADMIN_PASSWORD
-# (Storage upload as admin), REHEARSAL_CRON_SECRET (set_poster call).
+#   REHEARSAL_ANON_KEY, REHEARSAL_ADMIN_EMAIL, REHEARSAL_ADMIN_PASSWORD
+#   (Storage upload as admin), REHEARSAL_CRON_SECRET (set_poster call).
 # Secrets are masked with ::add-mask:: immediately and are NEVER
 # echoed, logged, or written to any file.
 
@@ -129,19 +129,19 @@ jobs:
           ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,hadith_source_line" \
             -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY")
           echo "$ROW" | python3 -c "
-            import json, sys
-            rows = json.load(sys.stdin)
-            if not rows:
+          import json, sys
+          rows = json.load(sys.stdin)
+          if not rows:
               print('NO PUBLISHED PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
               sys.exit(3)
-            r = rows[0]
-            if r.get('status') != 'published':
+          r = rows[0]
+          if r.get('status') != 'published':
               print('Publication status is', r.get('status'), '— not published. Nothing to poster. Exiting cleanly.')
               sys.exit(3)
-            if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
+          if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
               print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
               sys.exit(4)
-            print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
+          print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
           " || {
             CODE=$?
             if [ "$CODE" = "3" ] || [ "$CODE" = "4" ]; then
@@ -188,8 +188,8 @@ jobs:
             echo "=== format: $FORMAT ==="
             PNG="poster-out/poster-$DATE-$FORMAT.png"
             if ! node scripts/daily-content/poster/render-poster.mjs \
-              --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT" \
-              --out "$PNG" > "poster-out/render-$FORMAT.json"; then
+                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT" \
+                --out "$PNG" > "poster-out/render-$FORMAT.json"; then
               echo "Render FAILED for $FORMAT:"
               cat "poster-out/render-$FORMAT.json"
               FAILED="$FAILED $FORMAT"
@@ -198,12 +198,12 @@ jobs:
             cat "poster-out/render-$FORMAT.json"
             echo "---"
             if ! node scripts/daily-content/poster/upload-poster.mjs \
-              --file "$PNG" \
-              --object-path "$DATE/$FORMAT.png" \
-              --supabase-url "$REHEARSAL_URL" \
-              --anon-key "$REHEARSAL_ANON_KEY" \
-              --admin-email "$REHEARSAL_ADMIN_EMAIL" \
-              --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
+                --file "$PNG" \
+                --object-path "$DATE/$FORMAT.png" \
+                --supabase-url "$REHEARSAL_URL" \
+                --anon-key "$REHEARSAL_ANON_KEY" \
+                --admin-email "$REHEARSAL_ADMIN_EMAIL" \
+                --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
               echo "Upload FAILED for $FORMAT:"
               cat "poster-out/upload-$FORMAT.json"
               FAILED="$FAILED $FORMAT"
@@ -235,25 +235,25 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PYEOF'
-            import json, os
-            date = os.environ["DATE"]
-            formats = [f.strip() for f in os.environ["FORMATS"].split(",") if f.strip()]
-            urls, checksums, scene = {}, {}, None
-            for fmt in formats:
+          import json, os
+          date = os.environ["DATE"]
+          formats = [f.strip() for f in os.environ["FORMATS"].split(",") if f.strip()]
+          urls, checksums, scene = {}, {}, None
+          for fmt in formats:
               with open(f"poster-out/render-{fmt}.json") as f:
-                r = json.load(f)
-                assert r.get("ok"), f"render {fmt} not ok"
+                  r = json.load(f)
+              assert r.get("ok"), f"render {fmt} not ok"
               if scene is None:
-                scene = r["backgroundId"]
+                  scene = r["backgroundId"]
               elif scene != r["backgroundId"]:
-                raise SystemExit(f"scene mismatch across formats: {scene} vs {r['backgroundId']}")
-            with open(f"poster-out/upload-{fmt}.json") as f:
-              u = json.load(f)
+                  raise SystemExit(f"scene mismatch across formats: {scene} vs {r['backgroundId']}")
+              with open(f"poster-out/upload-{fmt}.json") as f:
+                  u = json.load(f)
               assert u.get("ok"), f"upload {fmt} not ok"
               urls[fmt] = u["publicUrl"]
               checksums[fmt] = u["checksum"]
-            assert "portrait" in urls, "portrait (primary) is required"
-            body = {
+          assert "portrait" in urls, "portrait (primary) is required"
+          body = {
               "action": "set_poster",
               "kolkata_date": date,
               "poster_qc_status": "passed",
@@ -264,10 +264,10 @@ jobs:
               "poster_checksum": checksums["portrait"],
               "poster_checksums": checksums,
               "poster_scene_id": scene,
-            }
-            with open("poster-out/set-poster-body.json", "w") as f:
+          }
+          with open("poster-out/set-poster-body.json", "w") as f:
               json.dump(body, f)
-            print("set_poster body prepared; scene:", scene)
+          print("set_poster body prepared; scene:", scene)
           PYEOF
           RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
             -H 'Content-Type: application/json' \
@@ -280,10 +280,10 @@ jobs:
           echo ""
           [ "$CODE" = "200" ] || { echo "set_poster did not return 200."; exit 1; }
           echo "$BODY_OUT" | python3 -c "
-            import json, sys
-            d = json.load(sys.stdin)
-            assert d.get('ok') is True, d
-            print('set_poster result:', d)
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, d
+          print('set_poster result:', d)
           "
 
       - name: Verify finalized asset on the publication row
@@ -295,23 +295,23 @@ jobs:
           curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=kolkata_date,status,poster_asset_id,poster_storage_path,poster_url,poster_urls,poster_checksum,poster_scene_id,poster_qc_status,poster_generated_at" \
             -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY" \
             | python3 -c "
-            import json, sys
-            rows = json.load(sys.stdin)
-            assert rows, 'publication row missing after set_poster'
-            r = rows[0]
-            assert r.get('status') == 'published', r
-            assert r.get('poster_qc_status') == 'passed', r
-            assert r.get('poster_url'), r
-            assert r.get('poster_checksum'), r
-            assert r.get('poster_asset_id') == 'poster:' + '$DATE', r
-            print('FINALIZED ASSET VERIFIED:')
-            print(' asset_id:', r['poster_asset_id'])
-            print(' storage_path:', r['poster_storage_path'])
-            print(' poster_url:', r['poster_url'])
-            print(' checksum:', r['poster_checksum'])
-            print(' scene:', r['poster_scene_id'])
-            print(' qc_status:', r['poster_qc_status'])
-            print(' generated_at:', r['poster_generated_at'])
+          import json, sys
+          rows = json.load(sys.stdin)
+          assert rows, 'publication row missing after set_poster'
+          r = rows[0]
+          assert r.get('status') == 'published', r
+          assert r.get('poster_qc_status') == 'passed', r
+          assert r.get('poster_url'), r
+          assert r.get('poster_checksum'), r
+          assert r.get('poster_asset_id') == 'poster:' + '$DATE', r
+          print('FINALIZED ASSET VERIFIED:')
+          print(' asset_id:', r['poster_asset_id'])
+          print(' storage_path:', r['poster_storage_path'])
+          print(' poster_url:', r['poster_url'])
+          print(' checksum:', r['poster_checksum'])
+          print(' scene:', r['poster_scene_id'])
+          print(' qc_status:', r['poster_qc_status'])
+          print(' generated_at:', r['poster_generated_at'])
           "
 
       - name: Upload poster PNGs as artifacts
