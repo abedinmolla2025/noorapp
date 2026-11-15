@@ -38,3 +38,6 @@ verify_jwt = false
 
 [functions.daily-content]
 verify_jwt = false
+
+[functions.recommend-daily-content]
+verify_jwt = true
