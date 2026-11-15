@@ -17,7 +17,7 @@
 #     supabase/config.toml project_id in the checked-out branch.
 #     A wrong ref fails the workflow before any deploy runs.
 #   - Each function directory is checked to exist before its deploy.
-#   - Smoke test now covers ALL 11 functions and expects exactly 401
+#   - Smoke test now covers ALL 12 functions and expects exactly 401
 #     (the old draft tested one function and accepted any non-200,
 #     so a 500/404 would have falsely passed).
 #   - Smoke-test bodies are chosen so the 401 path is deterministic:
@@ -182,7 +182,7 @@ jobs:
           SUPABASE_ACCESS_TOKEN: ${{ secrets.SUPABASE_ACCESS_TOKEN }}
         run: |
           set -euo pipefail
-          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications scheduler-dispatch daily-content; do
+          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications scheduler-dispatch daily-content recommend-daily-content; do
             [ -d "supabase/functions/$fn" ] || { echo "Missing function directory: $fn. Refusing."; exit 1; }
             echo "Deploying $fn ..."
             case "$fn" in
@@ -198,7 +198,7 @@ jobs:
                 ;;
             esac
           done
-          echo "All 11 functions deployed."
+          echo "All 12 functions deployed."
 
       - name: Verify deployed function versions
         env:
@@ -207,10 +207,10 @@ jobs:
           set -euo pipefail
           supabase functions list --project-ref "$EXPECTED_REF" > /tmp/functions-list.txt
           cat /tmp/functions-list.txt
-          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications scheduler-dispatch daily-content; do
+          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications scheduler-dispatch daily-content recommend-daily-content; do
             grep -q "$fn" /tmp/functions-list.txt || { echo "Function not listed after deploy: $fn. Refusing."; exit 1; }
           done
-          echo "All 11 functions present in the deployed list."
+          echo "All 12 functions present in the deployed list."
 
       - name: Smoke check — unauthenticated calls must return exactly 401
         run: |
@@ -238,7 +238,7 @@ jobs:
           # requireAdmin functions: any body 401s before body parsing.
           # Status only here — the deployed mode for these 9 is not
           # asserted (ON recommended; OFF also compatible — WS-B).
-          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications; do
+          for fn in enrich-dua-content fix-dua-content generate-hadith-seo generate-dua-seo generate-quiz-sfx notify-search-engines indexnow-submit test-indexnow send-prayer-notifications recommend-daily-content; do
             check_401 "$fn" '{}' ''
           done
           # scheduler-dispatch: preview mode 401s on missing auth
@@ -255,7 +255,7 @@ jobs:
           # verification is off (the CRON-secret Bearer and the
           # no-Authorization browser preference calls need it off).
           check_401 "daily-content" '{"action":"run","dry_run":true}' '"error":"Unauthorized"'
-          echo "Smoke check passed: all 11 functions return 401 unauthenticated."
+          echo "Smoke check passed: all 12 functions return 401 unauthenticated."
 
       - name: Manual verification checklist (REQUIRED — owner, after this run)
         run: |
