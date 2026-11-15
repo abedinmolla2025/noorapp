@@ -1,3 +1,4 @@
+// Production cutover 2026-11-15: Phase 3 adapter (Gemini/Groq, no Lovable) — redeploy marker.
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import {
   httpErrorResponse,

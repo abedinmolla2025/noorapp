@@ -1,3 +1,4 @@
+// Production cutover 2026-11-15: Phase 3 adapter (Gemini/Groq, no Lovable) — redeploy marker.
 /// <reference lib="deno.ns" />
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";

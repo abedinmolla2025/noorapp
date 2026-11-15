@@ -1,3 +1,4 @@
+// Production cutover 2026-11-15: Phase 3 adapter (Gemini/Groq, no Lovable) — redeploy marker.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
 import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
 import {
