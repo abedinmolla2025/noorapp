@@ -1,4 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
+import { generateToolCall } from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,7 +9,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -39,6 +41,7 @@ const SYSTEM_PROMPT = [
   "- শুধু এক বাক্যে দেবে না; পরিপূর্ণ ব্যাখ্যামূলক অনুবাদ দেবে।",
   "",
   "শুধু tool call এর মাধ্যমে structured output দাও, free text নয়।",
+  BENGALI_EDITORIAL_RULES,
 ].join("\n");
 
 async function generate(args: {
@@ -72,47 +75,26 @@ async function generate(args: {
     required.push("content");
   }
 
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
+  // Phase 3: the Adapter owns the provider call (Gemini free primary,
+  // Groq free secondary), retries, timeouts, and error classification.
+  // The tool schema is still built dynamically per row (only the
+  // incomplete fields are requested; complete fields are never
+  // overwritten) — the schema below is byte-for-byte the old one.
+  const result = await generateToolCall({
+    systemPrompt: SYSTEM_PROMPT,
+    userText,
+    tool: {
+      name: "save_dua_content",
+      description: "Save complete Bengali pronunciation and meaning for a dua.",
+      parameters: {
+        type: "object",
+        properties,
+        required,
+        additionalProperties: false,
+      },
     },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userText },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "save_dua_content",
-            description: "Save complete Bengali pronunciation and meaning for a dua.",
-            parameters: {
-              type: "object",
-              properties,
-              required,
-              additionalProperties: false,
-            },
-          },
-        },
-      ],
-      tool_choice: { type: "function", function: { name: "save_dua_content" } },
-    }),
   });
-
-  if (!resp.ok) {
-    const t = await resp.text();
-    if (resp.status === 429) throw new Error("RATE_LIMIT");
-    if (resp.status === 402) throw new Error("PAYMENT_REQUIRED");
-    throw new Error(`AI ${resp.status}: ${t.slice(0, 200)}`);
-  }
-  const data = await resp.json();
-  const call = data?.choices?.[0]?.message?.tool_calls?.[0];
-  if (!call?.function?.arguments) throw new Error("no tool call returned");
-  const parsed = JSON.parse(call.function.arguments);
+  const parsed = result.args;
   const out: { content_pronunciation?: string; content?: string } = {};
   if (args.needPron && typeof parsed.content_pronunciation === "string") {
     out.content_pronunciation = parsed.content_pronunciation.trim();
@@ -136,6 +118,10 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // P0 remediation: stats and process require an authenticated admin.
+    // The service-role client is only created AFTER this check.
+    await requireAdmin(req);
+
     const body = await req.json().catch(() => ({}));
     const action = body.action || "process";
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
@@ -258,9 +244,6 @@ Deno.serve(async (req) => {
     );
   } catch (e) {
     console.error("fix-dua-content error", e);
-    return new Response(
-      JSON.stringify({ error: e instanceof Error ? e.message : "Unknown error" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
+    return httpErrorResponse(e, corsHeaders);
   }
 });

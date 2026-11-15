@@ -1,4 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import {
+  requireAdmin,
+  httpErrorResponse,
+  HttpError,
+} from "../_shared/require-admin.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +23,11 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // S-2 remediation candidate: admin-only. The only caller is the
+    // admin SEO tab, whose functions.invoke already sends the admin's
+    // session JWT, so gating breaks no authorized caller.
+    await requireAdmin(req);
+
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceRoleKey);
@@ -84,6 +94,7 @@ Deno.serve(async (req) => {
     });
   } catch (err) {
     console.error("Search engine notification error:", err);
+    if (err instanceof HttpError) return httpErrorResponse(err, corsHeaders);
     return json(500, {
       success: false,
       error: err instanceof Error ? err.message : "Unknown error",

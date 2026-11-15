@@ -1,4 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.95.0";
+import { httpErrorResponse, requireAdmin } from "../_shared/require-admin.ts";
+import {
+  generateToolCall,
+  isProviderLevelError,
+} from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,24 +12,27 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY")!;
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-// Enrichment pipeline for Duas — generates when_to_recite_*, virtue text,
+// Enrichment pipeline for Duas — generates when_to_recite_*,
 // hadith_reference (with strict validation against our hadiths table),
 // related_duas (validated against admin_content), and a small FAQ block.
+// Virtue/fadilah claims are NOT generated (removed 2026-11-07, P0 remediation):
+// unsupported religious claims must never enter the review pipeline.
 // Writes to metadata.enrichment_pending; admin must approve before it merges.
 
 const SYSTEM_PROMPT = [
   "You are an Islamic scholar and multilingual content editor for a Dua reference website.",
   "For each Dua you enrich, produce contextual metadata in 4 languages: Bengali (bn), English (en), Hindi (hi), Urdu (ur).",
   "when_to_recite_*: 60-100 words each language — WHEN and WHY a Muslim recites this dua (occasion, situation, timing). Plain, factual, no invented rulings.",
-  "virtue_bn/en/hi/ur: 40-70 words each — the spiritual virtue (fadilah) in general accepted terms. Do NOT quote a specific hadith unless you cite an exact book+number that actually exists.",
+  "Do NOT generate virtue (fadilah), reward (sawab), benefit, or afterlife-outcome claims of any kind. The response must contain no virtue, reward, or benefit wording.",
   "faq: 3 short Q&A pairs (bn language). Each answer 30-60 words. Practical questions a reader would ask.",
   "hadith_reference: OPTIONAL. Only include if you are certain of an EXACT authentic reference from Sahih Bukhari / Sahih Muslim / Jami' at-Tirmidhi / Sunan Abi Dawud / Sunan an-Nasa'i / Sunan Ibn Majah, formatted like 'Sahih Bukhari 6407'. If not certain, return null. NEVER FABRICATE.",
   "quran_reference: OPTIONAL. Only include if you know the exact Surah:Ayah (e.g. '2:286'). If not certain, return null.",
   "related_dua_titles: 3-5 EXACT titles (in Bengali) of thematically related duas — these will be matched against our DB and dropped if not found.",
+  "Write all Bengali output (when_to_recite_bn, faq, related_dua_titles) following these rules:",
+  BENGALI_EDITORIAL_RULES,
   "Return ONLY the tool call.",
 ].join("\n");
 
@@ -32,103 +41,66 @@ type EnrichedPayload = {
   when_to_recite_en: string;
   when_to_recite_hi: string;
   when_to_recite_ur: string;
-  virtue_bn: string;
-  virtue_en: string;
-  virtue_hi: string;
-  virtue_ur: string;
   faq: Array<{ q: string; a: string }>;
   hadith_reference: string | null;
   quran_reference: string | null;
   related_dua_titles: string[];
 };
 
-async function callAi(userText: string, attempt = 0): Promise<EnrichedPayload> {
-  const resp = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${LOVABLE_API_KEY}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: "google/gemini-3-flash-preview",
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userText },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "save_dua_enrichment",
-            description: "Save enriched contextual metadata for a dua.",
-            parameters: {
+async function callAi(userText: string): Promise<EnrichedPayload> {
+  // Phase 3: the Adapter owns the provider call (Gemini free primary,
+  // Groq free secondary), retries, timeouts, and error classification.
+  // The tool schema and the server-side validation below are unchanged.
+  // Virtue/fadilah claims are still never generated (the prompt forbids
+  // them) and never merged into live fields (approve path below).
+  const result = await generateToolCall({
+    systemPrompt: SYSTEM_PROMPT,
+    userText,
+    tool: {
+      name: "save_dua_enrichment",
+      description: "Save enriched contextual metadata for a dua.",
+      parameters: {
+        type: "object",
+        properties: {
+          when_to_recite_bn: { type: "string" },
+          when_to_recite_en: { type: "string" },
+          when_to_recite_hi: { type: "string" },
+          when_to_recite_ur: { type: "string" },
+          faq: {
+            type: "array",
+            minItems: 3,
+            maxItems: 3,
+            items: {
               type: "object",
-              properties: {
-                when_to_recite_bn: { type: "string" },
-                when_to_recite_en: { type: "string" },
-                when_to_recite_hi: { type: "string" },
-                when_to_recite_ur: { type: "string" },
-                virtue_bn: { type: "string" },
-                virtue_en: { type: "string" },
-                virtue_hi: { type: "string" },
-                virtue_ur: { type: "string" },
-                faq: {
-                  type: "array",
-                  minItems: 3,
-                  maxItems: 3,
-                  items: {
-                    type: "object",
-                    properties: { q: { type: "string" }, a: { type: "string" } },
-                    required: ["q", "a"],
-                    additionalProperties: false,
-                  },
-                },
-                hadith_reference: { type: ["string", "null"] },
-                quran_reference: { type: ["string", "null"] },
-                related_dua_titles: {
-                  type: "array",
-                  minItems: 3,
-                  maxItems: 5,
-                  items: { type: "string" },
-                },
-              },
-              required: [
-                "when_to_recite_bn",
-                "when_to_recite_en",
-                "when_to_recite_hi",
-                "when_to_recite_ur",
-                "virtue_bn",
-                "virtue_en",
-                "virtue_hi",
-                "virtue_ur",
-                "faq",
-                "hadith_reference",
-                "quran_reference",
-                "related_dua_titles",
-              ],
+              properties: { q: { type: "string" }, a: { type: "string" } },
+              required: ["q", "a"],
               additionalProperties: false,
             },
           },
+          hadith_reference: { type: ["string", "null"] },
+          quran_reference: { type: ["string", "null"] },
+          related_dua_titles: {
+            type: "array",
+            minItems: 3,
+            maxItems: 5,
+            items: { type: "string" },
+          },
         },
-      ],
-      tool_choice: { type: "function", function: { name: "save_dua_enrichment" } },
-    }),
+        required: [
+          "when_to_recite_bn",
+          "when_to_recite_en",
+          "when_to_recite_hi",
+          "when_to_recite_ur",
+          "faq",
+          "hadith_reference",
+          "quran_reference",
+          "related_dua_titles",
+        ],
+        additionalProperties: false,
+      },
+    },
   });
-
-  if (resp.status === 429 && attempt < 2) {
-    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-    return callAi(userText, attempt + 1);
-  }
-  if (!resp.ok) {
-    const t = await resp.text();
-    if (resp.status === 429) throw new Error("RATE_LIMIT");
-    if (resp.status === 402) throw new Error("CREDITS_EXHAUSTED");
-    throw new Error(`AI_ERROR ${resp.status} ${t.slice(0, 200)}`);
-  }
-  const data = await resp.json();
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!toolCall) throw new Error("NO_TOOL_CALL");
-  return JSON.parse(toolCall.function.arguments) as EnrichedPayload;
+  return result.args as EnrichedPayload;
 }
 
 function validateQuranRef(ref: string | null): string | null {
@@ -164,6 +136,11 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
+    // P0 remediation: every action (stats, list_pending, process, approve, reject)
+    // requires an authenticated admin. The service-role client is only
+    // created AFTER this check.
+    await requireAdmin(req);
+
     const supabase = createClient(SUPABASE_URL, SERVICE_ROLE);
     const body = await req.json();
     const action = body.action as "stats" | "process" | "list_pending" | "approve" | "reject";
@@ -211,30 +188,17 @@ Deno.serve(async (req) => {
       const pending = (row?.metadata as any)?.enrichment_pending;
       if (!pending) throw new Error("no pending enrichment");
 
-      const toArray = (val: any) => {
-        if (!val) return null;
-        if (Array.isArray(val)) return val;
-        if (typeof val !== "string") return [String(val)];
-        // Split by newlines, bullets, or numbers
-        return val
-          .split(/\n+/)
-          .map(s => s.replace(/^[\s•\-\d\.\)\>]+/, "").trim())
-          .filter(s => s.length > 0);
-      };
-
       const merged = { ...(row.metadata as any), enrichment_status: "approved" };
       delete merged.enrichment_pending;
+      // Virtue/fadilah claims are never merged into live fields (P0 remediation):
+      // pending rows written before this fix may still carry virtue_* values;
+      // they are deliberately not copied here, so they can never reach publication.
       const patch: Record<string, unknown> = {
         metadata: merged,
         when_to_recite_bn: pending.when_to_recite_bn,
         when_to_recite_en: pending.when_to_recite_en,
         when_to_recite_hi: pending.when_to_recite_hi,
         when_to_recite_ur: pending.when_to_recite_ur,
-        benefits_bn: toArray(pending.virtue_bn),
-        benefits_en: toArray(pending.virtue_en),
-        benefits_hi: toArray(pending.virtue_hi),
-        benefits_ur: toArray(pending.virtue_ur),
-        virtue: pending.virtue_bn,
         faq: pending.faq,
       };
       if (pending.hadith_reference) patch.hadith_reference = pending.hadith_reference;
@@ -260,7 +224,13 @@ Deno.serve(async (req) => {
       .select("id, title, title_en, category, content_arabic, content, metadata")
       .eq("content_type", "dua")
       .is("when_to_recite_bn", null)
-      .not("metadata", "cs", { enrichment_status: "pending_review" })
+      // NOTE: the value MUST be a JSON string here. postgrest-js's
+      // .not() interpolates the value raw (`not.cs.${value}`) and does
+      // NOT JSON-encode objects — an object becomes "[object Object]"
+      // and Postgres rejects it with "invalid input syntax for type
+      // json" (Phase D run #8). .contains() does JSON.stringify
+      // objects, which is why list_pending's .contains() works.
+      .not("metadata", "cs", JSON.stringify({ enrichment_status: "pending_review" }))
       .limit(batchSize);
     if (rowsErr) throw rowsErr;
 
@@ -295,10 +265,6 @@ Deno.serve(async (req) => {
           when_to_recite_en: raw.when_to_recite_en,
           when_to_recite_hi: raw.when_to_recite_hi,
           when_to_recite_ur: raw.when_to_recite_ur,
-          virtue_bn: raw.virtue_bn,
-          virtue_en: raw.virtue_en,
-          virtue_hi: raw.virtue_hi,
-          virtue_ur: raw.virtue_ur,
           faq: raw.faq,
           hadith_reference: hadithRef,
           quran_reference: quranRef,
@@ -321,7 +287,12 @@ Deno.serve(async (req) => {
       } catch (e: any) {
         failed++;
         errors.push(`${row.id}: ${e?.message ?? e}`);
-        if (String(e?.message).includes("RATE_LIMIT") || String(e?.message).includes("CREDITS_EXHAUSTED")) {
+        // Phase 3: a provider-level failure (rate limit, quota, provider
+        // down, auth, payment) will hit every remaining row the same way,
+        // so stop the batch early. A per-row failure (schema/policy) only
+        // fails that row. This replaces the old RATE_LIMIT /
+        // CREDITS_EXHAUSTED message check.
+        if (isProviderLevelError(e)) {
           break;
         }
       }
@@ -345,9 +316,6 @@ Deno.serve(async (req) => {
     );
   } catch (e: any) {
     console.error("enrich-dua-content error", e);
-    return new Response(JSON.stringify({ error: String(e?.message ?? e) }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+    return httpErrorResponse(e, corsHeaders);
   }
 });

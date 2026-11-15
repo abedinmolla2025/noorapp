@@ -76,8 +76,12 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const VAPID_PUBLIC = Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY")!;
-const VAPID_PRIVATE = Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY")!;
+// NOTE (S-9 lazy-init, Option B — Phase 4 decision 5, applied 2026-11-11):
+// the VAPID keys are deliberately NOT read here. The previous module-scope
+// reads + setVapidDetails call threw at import time when the keys were
+// missing/empty ("No key set vapidDetails.publicKey"), killing the whole
+// function at boot — including dry_run. Keys are read lazily by
+// ensureVapid() on the send path only (see sendPushWithTimeout).
 
 // Push timeout (hardening B): every provider call is bounded at most
 // half the 10-minute retry lease, so a hung provider cannot hold a
@@ -105,7 +109,29 @@ export function pushTimeoutMs(): number {
   if (!Number.isFinite(raw) || raw <= 0) return PUSH_TIMEOUT_MS_DEFAULT;
   return Math.min(Math.floor(raw), PUSH_TIMEOUT_MS_MAX);
 }
+// S-9 lazy VAPID init: initialise web-push credentials only when a send
+// is actually attempted. Fail-closed: a missing/empty key pair throws a
+// clear operational error (env-var names only — never key material),
+// which the per-delivery catch classifies as retryable via the existing
+// no-status-code rule; no token is ever disabled for it and no send is
+// attempted. dry_run never reaches this function, so it works without
+// keys. The flag is per-isolate: a secret rotation takes effect on the
+// next cold start, which is the standard edge-function behaviour.
+let vapidReady = false;
+function ensureVapid(): void {
+  if (vapidReady) return;
+  const pub = (Deno.env.get("WEBPUSH_VAPID_PUBLIC_KEY") ?? "").trim();
+  const priv = (Deno.env.get("WEBPUSH_VAPID_PRIVATE_KEY") ?? "").trim();
+  if (!pub || !priv) {
+    throw new Error(
+      "VAPID keys are not configured (WEBPUSH_VAPID_PUBLIC_KEY / WEBPUSH_VAPID_PRIVATE_KEY missing or empty); push sending is unavailable",
+    );
+  }
+  webpush.setVapidDetails("https://noorapp.in", pub, priv);
+  vapidReady = true;
+}
 async function sendPushWithTimeout(sub: unknown, payload: string): Promise<{ statusCode?: number }> {
+  ensureVapid();
   let timer: ReturnType<typeof setTimeout> | undefined;
   try {
     return await Promise.race([
@@ -118,11 +144,14 @@ async function sendPushWithTimeout(sub: unknown, payload: string): Promise<{ sta
     if (timer !== undefined) clearTimeout(timer);
   }
 }
+// CRON_SECRET is read ONCE at module scope (isolate cold start) from the
+// env var DAILY_CONTENT_CRON_SECRET — NOT from a var named CRON_SECRET.
+// After setting or changing that secret in the project, the function MUST
+// be redeployed: a no-change deploy is skipped by the CLI and leaves the
+// old isolate running with the stale value.
 const CRON_SECRET = Deno.env.get("DAILY_CONTENT_CRON_SECRET") ?? "";
 const DEFAULT_ICON = "https://www.noorapp.in/notification-icon.png";
 const DEFAULT_BADGE = "https://www.noorapp.in/badge-icon.png";
-
-webpush.setVapidDetails("https://noorapp.in", VAPID_PUBLIC, VAPID_PRIVATE);
 
 const hasText = (v: unknown): v is string =>
   typeof v === "string" && v.trim().length > 0;
@@ -507,11 +536,33 @@ async function fetchHadithPool(svc: Svc): Promise<{ rows: HadithRow[]; truncated
 // would still be sent to. Keyset pagination on device_id — the table's
 // text primary key — fetches every opted-out device in bounded 1,000-row
 // pages. The set is snapshotted once per send/tick; an opt-out landing
-// mid-send applies on the next tick (see the in-flight race note in
-// docs/daily-content/PHASE3-OPTOUT-SECURITY.md). The 50-page bound is a
+// mid-send is now caught by the S-6 re-check immediately before each
+// send (isDeviceOptedOut below). The 50-page bound is a
 // runaway guard: unlike the hadith pool, a partial opt-out set is never
 // acceptable (it would send to opted-out devices), so hitting the bound
 // throws and the whole send fails closed instead of sending partially.
+
+// Phase 2 / S-6 (2026-11-10) — opt-out RE-CHECK, immediately before
+// each provider send. The snapshot above closes the race for opt-outs
+// that exist when the send starts; an opt-out landing mid-send used
+// to apply only on the next tick. This single-row read runs AFTER
+// the delivery row is claimed and BEFORE the provider call, in both
+// sendToTokens (first send) and runRetries (retry tick). A device
+// that opted out after the snapshot is skipped and its delivery row
+// is closed terminally (status 'failed', error 'device opted out of
+// daily content') so it is never sent and never re-read. The residual
+// window is the microseconds between this read and the provider call
+// — no database mechanism can close that without provider-side
+// idempotency, and it is documented in PHASE2-SECURITY-COMPLETION-REPORT.md.
+async function isDeviceOptedOut(svc: Svc, deviceId: string): Promise<boolean> {
+  const { data } = await svc
+    .from("daily_content_preferences")
+    .select("device_id")
+    .eq("device_id", deviceId)
+    .eq("daily_enabled", false)
+    .maybeSingle();
+  return data != null;
+}
 const OPT_OUT_PAGE_SIZE = 1000;
 const OPT_OUT_MAX_PAGES = 50; // 50,000 opted-out devices (fleet is 48 tokens)
 
@@ -1008,6 +1059,17 @@ async function sendToTokens(
       ({ data: claimed } = await claimBase().is("next_attempt_at", null).select("id"));
     }
     if (!((claimed as unknown[] | null)?.length)) continue; // lost the race — never send
+    // S-6 re-check: an opt-out that landed after the snapshot (or after
+    // the claim) is respected HERE, before the provider call. Close the
+    // row terminally so it is never sent and never re-read.
+    if (await isDeviceOptedOut(svc, t.device_id)) {
+      skipped++;
+      await svc.from("daily_content_deliveries").update({
+        status: "failed",
+        error: "device opted out of daily content",
+      } as never).eq("publication_id", publicationId).eq("device_id", t.device_id).eq("status", "pending");
+      continue;
+    }
     try {
       const sub = JSON.parse(typeof t.token === "string" ? t.token : JSON.stringify(t.token));
       const res = await sendPushWithTimeout(sub, JSON.stringify(push));
@@ -1089,7 +1151,8 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
   let failed = 0;
   // N-1: the retry path must respect opt-outs exactly like the first
   // send. Preferences are snapshotted once per tick (same as the
-  // first send); an opt-out set mid-tick applies on the next tick.
+  // first send); the S-6 re-check immediately before each provider
+  // call additionally catches an opt-out landing mid-tick.
   const optedOut = await fetchOptedOutDeviceIds(svc);
   for (const row of rows) {
     const { data: pub } = await svc.from("daily_content_publications").select("push, status, kolkata_date").eq("id", row.publication_id).maybeSingle();
@@ -1175,6 +1238,18 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
     const { data: pubFresh } = await svc.from("daily_content_publications").select("status").eq("id", row.publication_id).maybeSingle();
     if (!pubFresh || (pubFresh as { status: string }).status === "failed") {
       await svc.from("daily_content_deliveries").update({ status: "failed", error: "parent publication failed" } as never).eq("id", row.id);
+      continue;
+    }
+    // S-6 re-check (retry path): an opt-out that landed after the
+    // snapshot — including DURING this tick — is respected before the
+    // provider call. Close the row terminally, exactly like the N-1
+    // snapshot path above.
+    if (row.device_id != null && (await isDeviceOptedOut(svc, row.device_id))) {
+      await svc.from("daily_content_deliveries").update({
+        status: "failed",
+        error: "device opted out of daily content",
+      } as never).eq("id", row.id).eq("status", "retryable");
+      failed++;
       continue;
     }
     retried++;

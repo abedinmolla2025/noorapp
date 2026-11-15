@@ -35,8 +35,9 @@ import {
   httpErrorResponse,
   HttpError,
   requireAdmin,
-  requireSecret,
 } from "../_shared/require-admin.ts";
+import { generateToolCall } from "../_shared/ai-adapter.ts";
+import { BENGALI_EDITORIAL_RULES } from "../_shared/bengali-editorial.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -46,8 +47,6 @@ const corsHeaders = {
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-const GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const MODEL = "google/gemini-3-flash-preview";
 
 const MAX_CARDS_DEFAULT = 5;
 const MAX_CARDS_LIMIT = 6;
@@ -85,8 +84,10 @@ const SYSTEM_PROMPT = [
   "Your only job: rank the eligible Quran/Hadith/Dua records you are given, by relevance to today's Islamic context.",
   "Rules:",
   "- Rank ONLY the candidates listed. Never invent a record, a reference, or a title.",
+  "- Copy the ref EXACTLY as listed for each candidate, including the 'content:' or 'hadith:' prefix (for example content:dua-when-it-rains, hadith:bukhari-9-534). NEVER return a bare slug, a book name, a chapter number, or a human-readable reference — only the exact ref string from the list. A ref that does not match the list exactly will be rejected.",
   "- Return references only (kind + ref). NEVER write out Arabic or Bengali religious text.",
-  "- reasonBn: one short Bengali sentence (max 200 characters) saying WHY the record fits today. Plain and factual.",
+  "- reasonBn: one short Bengali sentence (max 200 characters) saying WHY the record fits today. Plain and factual. Write it in natural, fluent Bengali following these rules:",
+  BENGALI_EDITORIAL_RULES,
   "- NEVER claim a virtue (fadilah), a reward (sawab), a guaranteed outcome, an authenticity grade, a prayer count, or a religious ruling.",
   "- NEVER claim which night Laylatul Qadr falls on. The Qadr period is the last ten nights of Ramadan; no single night is fixed.",
   "- NEVER say a hadith is authentic or weak. A collection name (e.g. 'Sahih al-Bukhari') is a book title, not a grade.",
@@ -247,74 +248,43 @@ function reasonViolation(reasonBn: string): string | null {
   return null;
 }
 
-async function callAi(userText: string, attempt = 0): Promise<{ recommendations: AiRecommendation[] }> {
-  const lovableApiKey = requireSecret("LOVABLE_API_KEY");
-  const resp = await fetch(GATEWAY_URL, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${lovableApiKey}`,
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({
-      model: MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "user", content: userText },
-      ],
-      tools: [
-        {
-          type: "function",
-          function: {
-            name: "recommend_daily_content",
-            description: "Rank eligible records by relevance to today's Islamic context.",
-            parameters: {
+async function callAi(userText: string): Promise<{ recommendations: AiRecommendation[] }> {
+  // Phase 3: the Adapter owns the provider call (Gemini free primary,
+  // Groq free secondary), retries, timeouts, and error classification.
+  // The tool schema and the validation below are unchanged: the AI
+  // returns references only, and anything malformed is rejected here
+  // (the server-side validation after the call drops invalid entries).
+  const result = await generateToolCall({
+    systemPrompt: SYSTEM_PROMPT,
+    userText,
+    tool: {
+      name: "recommend_daily_content",
+      description: "Rank eligible records by relevance to today's Islamic context.",
+      parameters: {
+        type: "object",
+        properties: {
+          recommendations: {
+            type: "array",
+            maxItems: MAX_CARDS_LIMIT,
+            items: {
               type: "object",
               properties: {
-                recommendations: {
-                  type: "array",
-                  maxItems: MAX_CARDS_LIMIT,
-                  items: {
-                    type: "object",
-                    properties: {
-                      kind: { type: "string", enum: ["hadith", "content"] },
-                      ref: { type: "string" },
-                      relevance: { type: "number", minimum: 0, maximum: 1 },
-                      reasonBn: { type: "string", maxLength: MAX_REASON_CHARS },
-                    },
-                    required: ["kind", "ref", "relevance", "reasonBn"],
-                    additionalProperties: false,
-                  },
-                },
+                kind: { type: "string", enum: ["hadith", "content"] },
+                ref: { type: "string", description: "The exact ref string from the candidate list, copied verbatim including the 'content:' or 'hadith:' prefix (for example content:dua-when-it-rains, hadith:bukhari-9-534). Never a bare slug, book name, or human-readable reference." },
+                relevance: { type: "number", minimum: 0, maximum: 1 },
+                reasonBn: { type: "string", maxLength: MAX_REASON_CHARS },
               },
-              required: ["recommendations"],
+              required: ["kind", "ref", "relevance", "reasonBn"],
               additionalProperties: false,
             },
           },
         },
-      ],
-      tool_choice: { type: "function", function: { name: "recommend_daily_content" } },
-    }),
+        required: ["recommendations"],
+        additionalProperties: false,
+      },
+    },
   });
-
-  if (resp.status === 429 && attempt < 2) {
-    await new Promise((r) => setTimeout(r, 1500 * (attempt + 1)));
-    return callAi(userText, attempt + 1);
-  }
-  if (!resp.ok) {
-    const t = await resp.text();
-    if (resp.status === 429) throw new Error("RATE_LIMIT");
-    if (resp.status === 402) throw new Error("CREDITS_EXHAUSTED");
-    throw new Error(`AI_ERROR ${resp.status} ${t.slice(0, 200)}`);
-  }
-  const data = await resp.json();
-  const toolCall = data.choices?.[0]?.message?.tool_calls?.[0];
-  if (!toolCall) throw new Error("NO_TOOL_CALL");
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(toolCall.function.arguments);
-  } catch {
-    throw new Error("AI_INVALID_JSON");
-  }
+  const parsed: unknown = result.args;
   if (!parsed || typeof parsed !== "object" || !Array.isArray((parsed as Record<string, unknown>).recommendations)) {
     throw new Error("AI_INVALID_JSON");
   }
@@ -583,6 +553,7 @@ Deno.serve(async (req) => {
       "",
       "[TASK]",
       `Rank the candidates most relevant to today's Islamic context. Return at most ${maxCards} recommendations as the tool call, most relevant first.`,
+      "Return the ref EXACTLY as listed above (including the 'content:' or 'hadith:' prefix). Do not shorten, translate, or reformat it — a ref that does not match the list exactly will be rejected.",
     ].join("\n");
 
     const ai = await callAi(userText);

@@ -1,6 +1,18 @@
 // Vercel Cron heartbeat — calls the scheduler-dispatch Supabase Edge Function
-// every minute with the existing shared CRON_SECRET. The Edge Function selects
-// due schedules, picks content, generates Bengali copy and sends pushes.
+// every minute with the dedicated SCHEDULER_CRON_SECRET. The Edge Function
+// selects due schedules, picks content, generates Bengali copy and sends pushes.
+//
+// PHASE 2 (2026-11-10) — dual-mode gate compatibility (verified, no
+// functional change needed here): this route already forwards the
+// dedicated secret as `Authorization: Bearer <SCHEDULER_CRON_SECRET>`
+// and sends a bulk body ONLY (dispatch_at, never schedule_id), which is
+// exactly what the gated bulk path accepts. It does NOT send a
+// service-role token (the gated bulk path rejects those with 401) and
+// it never sends preview/test bodies. The same secret value must also
+// exist as the Supabase edge secret SCHEDULER_CRON_SECRET and in
+// vault as 'scheduler_cron_secret' (pg_cron path, migration
+// 20261110_001_scheduler_cron_secret.sql). Deploy together with the
+// gated Edge Function (see PHASE2-DEPLOYMENT-DEPENDENCY-MAP.md).
 
 const EDGE_URL =
   "https://llicfiepatzgllmjhzbw.supabase.co/functions/v1/scheduler-dispatch";

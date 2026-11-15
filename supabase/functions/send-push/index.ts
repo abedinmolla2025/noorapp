@@ -5,6 +5,16 @@ import {
   ApplicationServer,
   importVapidKeys,
 } from "jsr:@negrel/webpush@0.5.0";
+import {
+  INTERNAL_CALLER,
+  INTERNAL_HEADER_CALLER,
+  INTERNAL_HEADER_NONCE,
+  INTERNAL_HEADER_SIGNATURE,
+  INTERNAL_HEADER_TIMESTAMP,
+  INTERNAL_TIMESTAMP_WINDOW_MS,
+  decideInternalAuth,
+  decideInternalScope,
+} from "../_shared/internal-auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -184,7 +194,9 @@ async function sendWebPushMessage(opts: {
     deep_link: opts.deepLink,
   });
 
-  console.log("[webpush] Sending to endpoint:", subscription?.endpoint ?? "unknown");
+  // Phase 2 / S-3: never log a full subscription endpoint — host only.
+  const endpointHost = getHostFromUrl(subscription?.endpoint ?? null);
+  console.log("[webpush] Sending to endpoint host:", endpointHost ?? "unknown");
 
   try {
     const res = await subscriber.pushTextMessage(payload, {});
@@ -198,18 +210,18 @@ async function sendWebPushMessage(opts: {
         console.error("[webpush] Push failed", {
           status: response.status,
           statusText: response.statusText,
-          endpoint: subscription?.endpoint,
+          endpoint_host: endpointHost,
           responseBody,
         });
         throw new Error(`webpush_failed_${response.status}: ${responseBody}`);
       }
 
-      console.log("[webpush] Push succeeded", { status: response.status, endpoint: subscription?.endpoint });
+      console.log("[webpush] Push succeeded", { status: response.status, endpoint_host: endpointHost });
       return `webpush_${response.status}`;
     }
 
     // pushTextMessage returned void — treat as success
-    console.log("[webpush] Push succeeded (void return)", { endpoint: subscription?.endpoint });
+    console.log("[webpush] Push succeeded (void return)", { endpoint_host: endpointHost });
     return "webpush_ok";
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err);
@@ -338,6 +350,209 @@ async function sendFcmMessage(opts: {
   return data.name;
 }
 
+// --------------- Internal service-to-service send (Phase 2 / S-3 Option A) ---------------
+//
+// Narrowly scoped: ONE caller (send-prayer-notifications), ONE device
+// (deviceId mandatory — a missing deviceId would broadcast to every
+// enabled web token), draft web notifications <= 60 minutes old only.
+// Auth: HMAC-SHA256 (PRAYER_PUSH_INTERNAL_SECRET) + 300 s window +
+// atomic nonce claim in internal_call_nonces. Delivery dedup: the
+// delivery row is written BEFORE the provider call (status 'failed',
+// error_code 'send_claimed') and updated to 'sent' afterwards; a
+// retry reuses the stale claim row instead of inserting a duplicate,
+// and a 'sent' row is never re-sent. Audit: one line per call with
+// caller / notification id / device id / outcome — never the secret,
+// the signature, or a full endpoint (endpoint_host only).
+// The health bypass above is untouched, and this path never falls
+// through to the user-auth path below.
+
+async function handleInternalSend(
+  body: SendPushRequest & Record<string, unknown>,
+  internalHeaders: Record<string, string | null>,
+): Promise<Response> {
+  const nowMs = Date.now();
+  const notificationId = typeof body.notificationId === "string" ? body.notificationId : "";
+  const deviceId = typeof body.deviceId === "string" ? body.deviceId : "";
+  const nonce = internalHeaders[INTERNAL_HEADER_NONCE] ?? "";
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  const svc = createClient(supabaseUrl, serviceKey);
+
+  // Pre-check for an already-claimed nonce (the atomic insert below is
+  // the real race guard; this read gives the precise replay reason).
+  const claimed = new Set<string>();
+  if (nonce) {
+    const { data: existing } = await svc
+      .from("internal_call_nonces")
+      .select("nonce")
+      .eq("nonce", nonce)
+      .maybeSingle();
+    if (existing) claimed.add(nonce);
+  }
+
+  const secret = (Deno.env.get("PRAYER_PUSH_INTERNAL_SECRET") ?? "").trim();
+  const auth = await decideInternalAuth({
+    headers: internalHeaders,
+    secret,
+    nowMs,
+    claimedNonces: claimed,
+    notificationId,
+    deviceId,
+  });
+  if (!auth.ok) {
+    // Audit: failure class only — never the secret or signature.
+    console.log("[send-push] internal auth rejected", { reason: auth.reason, notificationId });
+    return json(auth.status, { error: auth.error });
+  }
+
+  // Atomic nonce claim: the PK insert is the race guard — a concurrent
+  // replay with the same nonce fails here even if the pre-check raced.
+  const { error: claimErr } = await svc.from("internal_call_nonces").insert({
+    nonce,
+    caller: INTERNAL_CALLER,
+    expires_at: new Date(nowMs + INTERNAL_TIMESTAMP_WINDOW_MS).toISOString(),
+  } as never);
+  if (claimErr) {
+    console.log("[send-push] internal nonce claim failed (replay)", { notificationId });
+    return json(401, { error: "Nonce already used" });
+  }
+
+  if (!notificationId) return json(400, { error: "notificationId is required" });
+
+  const { data: rawNotif } = await svc
+    .from("admin_notifications")
+    .select("id,title,message,image_url,deep_link,target_platform,status,icon_url,badge_url,created_at")
+    .eq("id", notificationId)
+    .maybeSingle();
+  const scope = decideInternalScope({
+    deviceId,
+    notification: rawNotif as { status?: unknown; target_platform?: unknown; created_at?: unknown } | null,
+    nowMs,
+  });
+  if (!scope.ok) {
+    console.log("[send-push] internal scope rejected", { error: scope.error, notificationId, deviceId });
+    return json(scope.status, { error: scope.error });
+  }
+
+  const { data: notifSettings } = await svc
+    .from("app_settings")
+    .select("setting_value")
+    .eq("setting_key", "notifications")
+    .maybeSingle();
+  const defaults = (notifSettings as { setting_value?: Record<string, unknown> } | null)?.setting_value ?? {};
+  const notif = {
+    ...(rawNotif as Record<string, unknown>),
+    body: (rawNotif as { message?: string }).message,
+    icon_url: (rawNotif as { icon_url?: string }).icon_url || (defaults.defaultIconUrl as string | undefined) || null,
+    badge_url: (rawNotif as { badge_url?: string }).badge_url || (defaults.defaultBadgeUrl as string | undefined) || null,
+  } as { id: string; title: string; body: string; image_url: string | null; deep_link: string | null; icon_url: string | null; badge_url: string | null };
+
+  // Targeting is restricted to the ONE given deviceId, platform web.
+  // There is no unfiltered token query on this path — no broadcast.
+  const { data: tokens, error: tokensErr } = await svc
+    .from("device_push_tokens")
+    .select("id,token,platform")
+    .eq("enabled", true)
+    .eq("platform", "web")
+    .eq("device_id", deviceId);
+  if (tokensErr) return json(500, { error: "Failed to fetch tokens" });
+  if (!tokens?.length) {
+    console.log("[send-push] internal send", { notificationId, deviceId, sent: 0, failed: 0, targets: 0 });
+    return json(200, { ok: true, via: "internal", notificationId, totals: { sent: 0, failed: 0, targets: 0 } });
+  }
+
+  let sent = 0;
+  let failed = 0;
+  for (const t of tokens) {
+    const tokenIdStr = String((t as { id: unknown }).id);
+    // Dedup: a 'sent' row for this notification+token is never re-sent.
+    const { data: priorRows } = await svc
+      .from("notification_deliveries")
+      .select("id,status,error_code")
+      .eq("notification_id", notif.id)
+      .eq("token_id", tokenIdStr);
+    const prior = (priorRows as Array<{ id: string; status: string; error_code?: string | null }> | null) ?? [];
+    if (prior.some((r) => r.status === "sent")) continue;
+    // Claim BEFORE the provider call; a stale claim row from a crashed
+    // attempt is reused (updated below) instead of duplicated.
+    let claimId = prior.find((r) => r.status === "failed" && r.error_code === "send_claimed")?.id ?? null;
+    let endpointHost: string | null = null;
+    try {
+      const sub = JSON.parse(String((t as { token: unknown }).token));
+      endpointHost = getHostFromUrl(typeof sub?.endpoint === "string" ? sub.endpoint : null);
+    } catch { /* ignore */ }
+    if (!claimId) {
+      const { data: claimRows } = await svc
+        .from("notification_deliveries")
+        .insert({
+          notification_id: notif.id,
+          token_id: tokenIdStr,
+          platform: "web",
+          status: "failed",
+          error_code: "send_claimed",
+          error_message: null,
+          endpoint_host: endpointHost,
+          browser: guessBrowserFromEndpointHost(endpointHost),
+          stage: "internal_claim",
+        } as never)
+        .select("id");
+      claimId = ((claimRows as Array<{ id: string }> | null)?.[0]?.id) ?? null;
+    }
+
+    try {
+      const providerMessageId = await withRetry(async () => {
+        return await sendWebPushMessage({
+          subscriptionJson: String((t as { token: unknown }).token),
+          title: notif.title,
+          body: notif.body,
+          imageUrl: notif.image_url ?? null,
+          deepLink: notif.deep_link ?? null,
+          iconUrl: notif.icon_url ?? null,
+          badgeUrl: notif.badge_url ?? null,
+        });
+      }, { retries: 2, baseDelayMs: 450 });
+      if (claimId) {
+        await svc.from("notification_deliveries").update({
+          status: "sent",
+          provider_message_id: providerMessageId,
+          error_code: null,
+          error_message: null,
+          stage: "internal_send",
+        } as never).eq("id", claimId);
+      }
+      sent++;
+    } catch (e) {
+      failed++;
+      const msg = e instanceof Error ? e.message : String(e);
+      if (claimId) {
+        await svc.from("notification_deliveries").update({
+          status: "failed",
+          error_code: (() => {
+            const m = msg.toLowerCase();
+            const match = m.match(/(\d{3})/);
+            return match ? `http_${match[1]}` : "send_failed";
+          })(),
+          error_message: msg,
+          stage: "internal_send",
+        } as never).eq("id", claimId);
+      }
+    }
+  }
+
+  const finalStatus = failed > 0 && sent === 0 ? "failed" : "sent";
+  await svc.from("admin_notifications")
+    .update({ status: finalStatus, sent_at: new Date().toISOString() })
+    .eq("id", notif.id);
+
+  console.log("[send-push] internal send", { notificationId, deviceId, sent, failed, targets: tokens.length });
+  return json(200, {
+    ok: true, via: "internal", notificationId,
+    totals: { sent, failed, targets: tokens.length },
+    perPlatform: { web: { sent, failed } },
+  });
+}
+
 // --------------- Main handler ---------------
 
 Deno.serve(async (req) => {
@@ -354,6 +569,19 @@ Deno.serve(async (req) => {
       return json(200, { ok: true });
     }
     if (body === null) return json(400, { error: "Invalid JSON" });
+
+    // Phase 2 / S-3 Option A: any X-Noor-* header routes EXCLUSIVELY to
+    // the internal path — no fall-through to the user-auth path below.
+    // (The health bypass above is checked first and stays untouched.)
+    const internalHeaders: Record<string, string | null> = {
+      [INTERNAL_HEADER_CALLER]: req.headers.get("X-Noor-Internal-Caller"),
+      [INTERNAL_HEADER_TIMESTAMP]: req.headers.get("X-Noor-Timestamp"),
+      [INTERNAL_HEADER_NONCE]: req.headers.get("X-Noor-Nonce"),
+      [INTERNAL_HEADER_SIGNATURE]: req.headers.get("X-Noor-Signature"),
+    };
+    if (Object.values(internalHeaders).some((v) => v !== null && v !== "")) {
+      return await handleInternalSend(body as SendPushRequest & Record<string, unknown>, internalHeaders);
+    }
 
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.startsWith("Bearer ")) return json(401, { error: "Unauthorized" });
