@@ -1,0 +1,132 @@
+# Phase E Recommend Today (manual)
+#
+# Generates a recommendation run for TODAY (Asia/Kolkata date) in the
+# REHEARSAL project (cazdbxxffvdnsdatjsrx) from the GitHub runner,
+# because the owner's phone browser cannot reach supabase.co at all.
+# The run is saved as pending_review — it is NOT approved by this
+# workflow. The owner reviews the content and approves it separately
+# (Phase E Approve Recommendation workflow); only then does the
+# daily-content planner consume it.
+#
+# The planner is date-scoped by design: it consumes only an approved
+# run whose kolkata_date is today. A run for yesterday is correctly
+# ignored. So this workflow always targets today's date, computed at
+# run time. The hijri date is taken from the daily-content planner's
+# own dry-run plan (the single correct source), not computed here.
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_CRON_SECRET     - the CRON secret for the daily-content
+#     dry-run call (same value as DAILY_CONTENT_CRON_SECRET in the
+#     rehearsal project)
+#   REHEARSAL_ANON_KEY        - rehearsal publishable (anon) key
+#   REHEARSAL_ADMIN_EMAIL     - rehearsal-admin@noorapp.test
+#   REHEARSAL_ADMIN_PASSWORD  - the password set for that user
+#
+# The CRON secret and the JWT are masked with ::add-mask:: immediately
+# and are NEVER echoed, logged, or written to any file. They live only
+# in shell variables inside the single recommend step. The recommend
+# response IS logged — it contains no credentials.
+
+name: Phase E Recommend Today (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to generate a pending_review recommendation for today in rehearsal'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  recommend-today:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true; aborting."
+            exit 1
+          fi
+          MISSING=0
+          if [ -z "${{ secrets.REHEARSAL_CRON_SECRET }}" ]; then echo "Missing secret: REHEARSAL_CRON_SECRET"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ANON_KEY }}" ]; then echo "Missing secret: REHEARSAL_ANON_KEY"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_EMAIL }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_EMAIL"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_PASSWORD }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_PASSWORD"; MISSING=1; fi
+          if [ "$MISSING" = "1" ]; then exit 1; fi
+          echo "Inputs validated; secrets present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Recommend for today (rehearsal)
+        env:
+          REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
+        run: |
+          set -u
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          # --- Today's Asia/Kolkata date + hijri date (from the planner's own dry run). ---
+          KOLKATA_DATE=$(TZ=Asia/Kolkata date +%F)
+          echo "Kolkata date: $KOLKATA_DATE"
+          PLAN=$(curl -s --max-time 60 -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d '{"dry_run": true}')
+          HIJRI_YEAR=$(echo "$PLAN" | python3 -c "import json,sys; print(json.load(sys.stdin)['plan']['context']['hijri']['year'])")
+          HIJRI_MONTH=$(echo "$PLAN" | python3 -c "import json,sys; print(json.load(sys.stdin)['plan']['context']['hijri']['month'])")
+          HIJRI_DAY=$(echo "$PLAN" | python3 -c "import json,sys; print(json.load(sys.stdin)['plan']['context']['hijri']['day'])")
+          echo "Hijri date (from planner): $HIJRI_YEAR-$HIJRI_MONTH-$HIJRI_DAY"
+
+          # --- Sign in (get JWT). The JWT is masked at once and never echoed. ---
+          RESP=$(curl -s -X POST "$REHEARSAL_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${{ secrets.REHEARSAL_ADMIN_EMAIL }}\",\"password\":\"${{ secrets.REHEARSAL_ADMIN_PASSWORD }}\"}")
+          JWT=$(echo "$RESP" | jq -r '.access_token // empty')
+          REFRESH=$(echo "$RESP" | jq -r '.refresh_token // empty')
+          if [ -n "$JWT" ]; then echo "::add-mask::$JWT"; fi
+          if [ -n "$REFRESH" ]; then echo "::add-mask::$REFRESH"; fi
+          if [ -z "$JWT" ] || [ "$JWT" = "null" ]; then
+            echo "Sign-in FAILED. Response with tokens removed:"
+            echo "$RESP" | jq 'del(.access_token, .refresh_token)'
+            exit 1
+          fi
+          USER_ID=$(echo "$RESP" | jq -r '.user.id // empty')
+          echo "Signed in. User id: $USER_ID (JWT masked, never shown)."
+          unset RESP REFRESH
+
+          # --- Generate + save the recommendation for today. ---
+          echo ""
+          echo "=== Recommend for today ==="
+          BODY="{\"action\":\"recommend\",\"context\":{\"gregorianKey\":\"$KOLKATA_DATE\",\"hijri\":{\"year\":$HIJRI_YEAR,\"month\":$HIJRI_MONTH,\"day\":$HIJRI_DAY},\"confirmation\":\"calculated\",\"activeEventSlugs\":[],\"ramadanStage\":null},\"kolkataDate\":\"$KOLKATA_DATE\",\"maxCards\":3,\"save\":true}"
+          OUT=$(curl -s -w "\n%{http_code}" -X POST "$REHEARSAL_URL/functions/v1/recommend-daily-content" \
+            -H "Authorization: Bearer $JWT" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+          CODE=$(echo "$OUT" | tail -n 1)
+          RESP_BODY=$(echo "$OUT" | sed '$d')
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$RESP_BODY" | head -c 8000
+          echo ""
+          unset JWT
+          [ "$CODE" = "200" ] || { echo "Recommend FAILED with HTTP $CODE."; exit 1; }
+          echo "$RESP_BODY" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, 'ok is not true: %s' % d
+          item = d.get('item') or d.get('recommendation') or {}
+          rid = item.get('id') or d.get('recommendationId')
+          print('Recommendation id:', rid)
+          print('Kolkata date:', item.get('kolkata_date') or '$KOLKATA_DATE')
+          print('Status:', item.get('status'))
+          recs = item.get('recommendations') or d.get('recommendations') or []
+          print('Cards kept:', len(recs))
+          for r in recs:
+              print(' -', r.get('content_id') or r.get('id'), '|', (r.get('title') or '')[:60])
+          print('RECOMMEND PASS: run saved as pending_review. NOT approved — owner approval is a separate step.')
+          "
