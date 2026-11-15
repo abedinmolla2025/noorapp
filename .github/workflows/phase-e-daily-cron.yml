@@ -1,0 +1,127 @@
+# Phase E Daily Content Cron (rehearsal)
+#
+# Runs the daily-content planner as a REAL daily run against the
+# REHEARSAL project (cazdbxxffvdnsdatjsrx) from the GitHub runner,
+# because the owner's phone browser cannot reach supabase.co at all.
+#
+# Schedule: every day at 00:30 UTC = 06:00 Asia/Kolkata
+# (IST has no DST), the runbook's Step 8 time. This is the rehearsal
+# equivalent of the production cron — it NEVER touches production.
+#
+# The run is gated by the rehearsal daily_content_settings row:
+# while enabled=false (PAUSED) the function returns
+# { ok:false, reason:"paused" } and publishes nothing, sends
+# nothing. Enabling (enabled=true) is a separate owner decision
+# (runbook Step 7) done via owner SQL on the rehearsal project;
+# this workflow never changes the settings row. Once enabled, a
+# scheduled run plans, publishes, and sends pushes in rehearsal
+# only. The retry cron (runbook Step 9) is NOT included here —
+# it is a separate schedule, added only after the daily run is
+# verified.
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_CRON_SECRET - the CRON secret for the daily-content
+#     call (same value as DAILY_CONTENT_CRON_SECRET in the
+#     rehearsal project)
+#
+# The secret is masked with ::add-mask:: immediately and is NEVER
+# echoed, logged, or written to any file. It lives only in a shell
+# variable inside the single run step. The run response IS logged —
+# it contains no credentials.
+
+name: Phase E Daily Content Cron (rehearsal)
+
+on:
+  schedule:
+    # 00:30 UTC = 06:00 Asia/Kolkata, every day.
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the rehearsal daily-content run now'
+        required: true
+        type: boolean
+        default: false
+      dry_run:
+        description: 'Dry run only (plan, write nothing, send nothing) instead of a real run'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  daily-run:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+    steps:
+      - name: Validate inputs and secret
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          if [ -z "${{ secrets.REHEARSAL_CRON_SECRET }}" ]; then
+            echo "REHEARSAL_CRON_SECRET is not set as a repository secret."
+            exit 1
+          fi
+          echo "Inputs validated; secret is present (value never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Daily-content run (rehearsal)
+        env:
+          REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DRY=false
+            echo "Scheduled run (00:30 UTC = 06:00 IST). Real run, not dry-run."
+          elif [ "${{ inputs.dry_run }}" = "true" ]; then
+            DRY=true
+            echo "Manual dry run. Plan only, write nothing, send nothing."
+          else
+            DRY=false
+            echo "Manual real run. Gated by the rehearsal settings row (paused unless enabled=true)."
+          fi
+          if [ "$DRY" = "true" ]; then
+            BODY='{"dry_run": true}'
+          else
+            BODY='{}'
+          fi
+          RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d "$BODY")
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$BODY_OUT" | head -c 8000
+          echo ""
+          if [ "$CODE" = "401" ]; then
+            echo "Unauthorised (401): the CRON_SECRET does not match the rehearsal project's secret."
+            exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          if d.get('reason') == 'paused':
+              print('PAUSED: rehearsal settings enabled=false. Nothing published, nothing sent.')
+              print('To let the daily run publish in rehearsal, the owner enables the rehearsal settings row (runbook Step 7, owner SQL).')
+          elif d.get('dry_run') is True:
+              plan = d.get('plan') or {}
+              print('Plan source:', plan.get('source'))
+              print('Recommendation id:', plan.get('recommendationId'))
+              print('Hadith present:', bool(plan.get('hadith')))
+              print('Cards count:', len(plan.get('cards') or []))
+              print('Context present:', bool(plan.get('context')))
+              print('DRY RUN PASS: plan complete, nothing written, nothing sent.')
+          else:
+              print('Real run result:', json.dumps({k: d.get(k) for k in ('ok','publication_id','status','hadith','cards') if k in d}, ensure_ascii=False)[:2000])
+              print('REAL RUN DONE: check the rehearsal publication row to verify (one row for today, status published).')
+          "
+          echo "Daily-content run complete (rehearsal only). No production touch."
