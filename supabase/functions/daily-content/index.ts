@@ -702,6 +702,183 @@ async function handlePreferenceAction(svc: Svc, body: Record<string, unknown>): 
   return jsonResponse({ ok: true, action, devices: deviceIds.size, daily_enabled: dailyEnabled });
 }
 
+// ---- Poster persistence (Daily Content Master Mission, poster pipeline) ----
+// `set_poster` records a rendered poster on a PUBLISHED publication row —
+// Stage 3 (Poster Asset Finalization) of the 4-stage pipeline:
+//   1. Poster Generation (render) -> 2. Image QC -> 3. Asset Finalization
+//   (this action) -> 4. Downstream Distribution (homepage / push / share /
+//   Facebook — separate work that reads the finalized asset).
+// Called by the poster-generation workflow (GitHub Actions) AFTER the PNG
+// is rendered and QC-checked, using the same CRON-secret gate as the daily
+// path (routed after the gate in the handler). The service-role client
+// performs the write — no caller can write publications directly (RLS:
+// "Service writes publications" only).
+//
+// The finalized asset record persisted here:
+//   poster_asset_id     — stable asset ID `poster:<kolkata_date>`
+//   poster_storage_path — bucket-qualified path
+//                         `daily-content-posters/<date>/portrait.png`
+//   poster_url          — primary poster public URL (portrait 1080x1350)
+//   poster_urls         — format -> public URL map (all rendered formats)
+//   poster_checksum     — SHA-256 hex of the primary (portrait) PNG
+//   poster_checksums    — format -> SHA-256 hex map
+//   poster_scene_id     — background scene id (no-repeat vs yesterday)
+//   poster_qc_status    — 'passed' | 'failed'
+//
+// Safety rules (defense in depth — the workflow also enforces them):
+//  * The row must be status='published'. Posters are never attached to a
+//    planned/failed row.
+//  * A 'passed' poster requires a poster_url under the expected Storage
+//    public prefix for the `daily-content-posters` bucket, with a
+//    deterministic path `<kolkata_date>/<format>.png`, a matching asset ID
+//    and storage path, and a valid SHA-256 checksum. A URL outside that
+//    prefix is refused — the action never persists an arbitrary URL.
+//  * A 'failed' attempt NEVER writes a poster URL (poster_url stays NULL,
+//    or a previously passed poster stays intact). Only the error is recorded.
+//  * Idempotency: once a poster has passed QC (poster_url set +
+//    poster_qc_status='passed'), a later call without force=true is a
+//    no-op returning {ok:true, deduped:true}. A re-render that fails does
+//    not downgrade a passed poster.
+//  * On a pass, the stored `push` jsonb's `image_url` is also set to the
+//    poster URL, so push RETRIES (which re-read the stored push) carry
+//    the image. First-send devices already received the text-only push —
+//    putting the image into the first send requires the split
+//    plan -> poster -> publish flow (future work, see the poster pipeline
+//    report); this action does not re-send anything.
+//  * Nothing here changes status/cards/push (other than push.image_url) /
+//    kolkata_date, and nothing here publishes, sends, or re-sends
+//    anything. The publication stays published (text-only) when the
+//    poster fails.
+const POSTER_FORMATS = ["portrait", "square", "wide", "story"] as const;
+
+function isValidPosterUrl(value: unknown, kolkataDate: string): value is string {
+  if (typeof value !== "string" || value.length === 0 || value.length > 500) return false;
+  const prefix = `${SUPABASE_URL}/storage/v1/object/public/daily-content-posters/`;
+  if (!value.startsWith(prefix)) return false;
+  const rest = value.slice(prefix.length);
+  return POSTER_FORMATS.some((f) => rest === `${kolkataDate}/${f}.png`);
+}
+
+function isValidChecksum(value: unknown): value is string {
+  return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
+}
+
+async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise<Response> {
+  const kolkataDate = body.kolkata_date;
+  const qcStatus = body.poster_qc_status;
+  const force = body.force === true;
+  if (typeof kolkataDate !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(kolkataDate)) {
+    return jsonResponse({ ok: false, error: "kolkata_date must be YYYY-MM-DD" }, 400);
+  }
+  if (qcStatus !== "passed" && qcStatus !== "failed") {
+    return jsonResponse({ ok: false, error: "poster_qc_status must be 'passed' or 'failed'" }, 400);
+  }
+  const posterUrl = body.poster_url;
+  const posterUrls = body.poster_urls;
+  const sceneId = body.poster_scene_id;
+  const posterError = body.poster_error;
+  const assetId = body.poster_asset_id;
+  const storagePath = body.poster_storage_path;
+  const checksum = body.poster_checksum;
+  const checksums = body.poster_checksums;
+  if (qcStatus === "passed") {
+    if (!isValidPosterUrl(posterUrl, kolkataDate)) {
+      return jsonResponse({ ok: false, error: "poster_url must be a daily-content-posters URL for this date and format" }, 400);
+    }
+    if (posterUrls !== undefined) {
+      if (typeof posterUrls !== "object" || posterUrls === null || Array.isArray(posterUrls)) {
+        return jsonResponse({ ok: false, error: "poster_urls must be an object" }, 400);
+      }
+      for (const [format, url] of Object.entries(posterUrls as Record<string, unknown>)) {
+        if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidPosterUrl(url, kolkataDate)) {
+          return jsonResponse({ ok: false, error: `poster_urls[${format}] is not a valid poster URL` }, 400);
+        }
+      }
+    }
+    if (typeof sceneId !== "string" || !/^[a-z0-9-]{1,64}$/.test(sceneId)) {
+      return jsonResponse({ ok: false, error: "poster_scene_id must be a lowercase slug" }, 400);
+    }
+    if (assetId !== `poster:${kolkataDate}`) {
+      return jsonResponse({ ok: false, error: "poster_asset_id must be poster:<kolkata_date>" }, 400);
+    }
+    if (storagePath !== `daily-content-posters/${kolkataDate}/portrait.png`) {
+      return jsonResponse({ ok: false, error: "poster_storage_path must be daily-content-posters/<date>/portrait.png" }, 400);
+    }
+    if (!isValidChecksum(checksum)) {
+      return jsonResponse({ ok: false, error: "poster_checksum must be a SHA-256 hex string" }, 400);
+    }
+    if (checksums !== undefined) {
+      if (typeof checksums !== "object" || checksums === null || Array.isArray(checksums)) {
+        return jsonResponse({ ok: false, error: "poster_checksums must be an object" }, 400);
+      }
+      for (const [format, sum] of Object.entries(checksums as Record<string, unknown>)) {
+        if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidChecksum(sum)) {
+          return jsonResponse({ ok: false, error: `poster_checksums[${format}] must be a SHA-256 hex string` }, 400);
+        }
+      }
+    }
+  } else {
+    if (posterUrl !== undefined || posterUrls !== undefined) {
+      return jsonResponse({ ok: false, error: "a failed attempt must not carry a poster URL" }, 400);
+    }
+    if (typeof posterError !== "string" || posterError.length === 0 || posterError.length > 500) {
+      return jsonResponse({ ok: false, error: "poster_error must be a non-empty string (max 500 chars)" }, 400);
+    }
+  }
+
+  const { data: row, error: readError } = await svc
+    .from("daily_content_publications")
+    .select("id, status, poster_url, poster_qc_status, push")
+    .eq("kolkata_date", kolkataDate)
+    .maybeSingle();
+  if (readError) return jsonResponse({ ok: false, error: "failed to read publication" }, 500);
+  if (!row) return jsonResponse({ ok: false, error: "no publication for date" }, 404);
+  const pub = row as { id: string; status: string; poster_url: string | null; poster_qc_status: string | null; push: Record<string, unknown> | null };
+  if (pub.status !== "published") {
+    return jsonResponse({ ok: false, error: "publication is not published" }, 409);
+  }
+  // Idempotency: a passed poster is never overwritten without force.
+  if (!force && pub.poster_qc_status === "passed" && pub.poster_url) {
+    return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate, poster_qc_status: "passed" });
+  }
+
+  const now = new Date().toISOString();
+  const update = qcStatus === "passed"
+    ? {
+        poster_asset_id: assetId as string,
+        poster_storage_path: storagePath as string,
+        poster_url: posterUrl as string,
+        poster_urls: (posterUrls ?? { portrait: posterUrl }) as never,
+        poster_checksum: checksum as string,
+        poster_checksums: (checksums ?? { portrait: checksum }) as never,
+        poster_scene_id: sceneId as string,
+        poster_qc_status: "passed",
+        poster_error: null,
+        poster_generated_at: now,
+        // Push retries re-read the stored push: give them the image.
+        // (First-send devices already received the text-only push.)
+        push: (pub.push && typeof pub.push === "object"
+          ? { ...pub.push, image_url: posterUrl as string }
+          : pub.push) as never,
+      }
+    : {
+        poster_qc_status: "failed",
+        poster_error: posterError as string,
+        poster_generated_at: now,
+      };
+  const { data: updated, error: updateError } = await svc
+    .from("daily_content_publications")
+    .update(update as never)
+    .eq("id", pub.id)
+    .eq("status", "published")
+    .select("id");
+  if (updateError) return jsonResponse({ ok: false, error: "failed to update publication" }, 500);
+  if (!((updated as unknown[] | null)?.length)) {
+    return jsonResponse({ ok: false, error: "publication update affected 0 rows" }, 409);
+  }
+  return jsonResponse({ ok: true, kolkata_date: kolkataDate, poster_qc_status: qcStatus });
+}
+
 // ---- Phase 9 — approved recommendation runs (daily automation) ----
 // The daily planner consumes APPROVED runs; it never calls the AI and
 // never calls the recommend function (that function is admin-gated —
@@ -1431,6 +1608,12 @@ Deno.serve(async (req: Request) => {
   const auth = req.headers.get("authorization") ?? "";
   if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
     return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
+  }
+  // Poster pipeline: record a rendered + QC-passed poster on a published
+  // publication row. Cron-secret gated (same as the daily path); the
+  // action itself validates the URL, the row state, and idempotency.
+  if (body.action === "set_poster") {
+    return handleSetPoster(svc, body);
   }
   const kolkataDate = kolkataDateString(new Date());
 
