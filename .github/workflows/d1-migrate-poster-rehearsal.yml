@@ -188,7 +188,7 @@ jobs:
           [ "$BUCKET" = "t" ] || { echo "Poster bucket missing or not public."; exit 1; }
           echo "Bucket daily-content-posters present and public."
           POLICIES=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
-            "select count(*) from pg_policies where tablename='objects' and policyname like '%daily poster%';")
+            "select count(*) from pg_policies where tablename='objects' and policyname ilike '%daily poster%';")
           [ "$POLICIES" = "4" ] || { echo "Expected 4 daily-poster storage policies, got $POLICIES."; exit 1; }
           echo "4 daily-poster storage policies present."
           COLS=$(psql --variable ON_ERROR_STOP=1 --no-align --tuples-only -c \
