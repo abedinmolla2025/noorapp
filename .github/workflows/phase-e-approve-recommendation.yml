@@ -1,0 +1,119 @@
+# Phase E Approve Recommendation (manual)
+#
+# Approves ONE pending_review recommendation run in the REHEARSAL
+# project (cazdbxxffvdnsdatjsrx) from the GitHub runner, because the
+# owner's phone browser cannot reach supabase.co at all.
+#
+# The approval DECISION is always the owner's (they review the
+# recommendation's content first); this workflow only executes the
+# approve action they already gave, for the exact run id they named.
+# It changes ONLY that run's status (pending_review -> approved) and
+# records reviewed_by / reviewed_at. It publishes nothing, sends
+# nothing, and enables no cron. The daily-content planner consumes
+# the approved run on the next dry run (source becomes
+# "approved-recommendation").
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_ANON_KEY        - rehearsal publishable (anon) key
+#   REHEARSAL_ADMIN_EMAIL     - rehearsal-admin@noorapp.test
+#   REHEARSAL_ADMIN_PASSWORD  - the password set for that user
+#
+# The JWT obtained at sign-in is masked with ::add-mask:: immediately
+# and is NEVER echoed, logged, or written to any file. It lives only
+# in a shell variable inside the single approve step. The approve
+# response IS logged — it contains no credentials.
+
+name: Phase E Approve Recommendation (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to approve the named recommendation in rehearsal'
+        required: true
+        type: boolean
+        default: false
+      recommendation_id:
+        description: 'Recommendation run id to approve (e.g. e0d4f201-9109-4652-b14a-ee2c9103ca8e)'
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  approve:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true; aborting."
+            exit 1
+          fi
+          if [ -z "${{ inputs.recommendation_id }}" ]; then
+            echo "recommendation_id is required."
+            exit 1
+          fi
+          MISSING=0
+          if [ -z "${{ secrets.REHEARSAL_ANON_KEY }}" ]; then echo "Missing secret: REHEARSAL_ANON_KEY"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_EMAIL }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_EMAIL"; MISSING=1; fi
+          if [ -z "${{ secrets.REHEARSAL_ADMIN_PASSWORD }}" ]; then echo "Missing secret: REHEARSAL_ADMIN_PASSWORD"; MISSING=1; fi
+          if [ "$MISSING" = "1" ]; then exit 1; fi
+          echo "Inputs validated; secrets present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Approve recommendation (rehearsal)
+        run: |
+          set -u
+          # --- Sign in (get JWT). The JWT is masked at once and never echoed. ---
+          RESP=$(curl -s -X POST "$REHEARSAL_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"email\":\"${{ secrets.REHEARSAL_ADMIN_EMAIL }}\",\"password\":\"${{ secrets.REHEARSAL_ADMIN_PASSWORD }}\"}")
+          JWT=$(echo "$RESP" | jq -r '.access_token // empty')
+          REFRESH=$(echo "$RESP" | jq -r '.refresh_token // empty')
+          if [ -n "$JWT" ]; then echo "::add-mask::$JWT"; fi
+          if [ -n "$REFRESH" ]; then echo "::add-mask::$REFRESH"; fi
+          if [ -z "$JWT" ] || [ "$JWT" = "null" ]; then
+            echo "Sign-in FAILED. Response with tokens removed:"
+            echo "$RESP" | jq 'del(.access_token, .refresh_token)'
+            exit 1
+          fi
+          USER_ID=$(echo "$RESP" | jq -r '.user.id // empty')
+          echo "Signed in. User id: $USER_ID (JWT masked, never shown)."
+          unset RESP REFRESH
+
+          # --- Approve the named run. ---
+          echo ""
+          echo "=== Approve recommendation ==="
+          echo "Recommendation id: ${{ inputs.recommendation_id }}"
+          OUT=$(curl -s -w "\n%{http_code}" -X POST "$REHEARSAL_URL/functions/v1/recommend-daily-content" \
+            -H "Authorization: Bearer $JWT" \
+            -H "apikey: ${{ secrets.REHEARSAL_ANON_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"action\":\"approve\",\"id\":\"${{ inputs.recommendation_id }}\"}")
+          CODE=$(echo "$OUT" | tail -n 1)
+          RESP_BODY=$(echo "$OUT" | sed '$d')
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$RESP_BODY" | head -c 8000
+          echo ""
+          unset JWT
+          [ "$CODE" = "200" ] || { echo "Approve FAILED with HTTP $CODE."; exit 1; }
+          echo "$RESP_BODY" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, 'ok is not true: %s' % d
+          item = d.get('item') or {}
+          status = item.get('status')
+          print('Run id:', item.get('id'))
+          print('Kolkata date:', item.get('kolkata_date'))
+          print('Status:', status)
+          print('Reviewed by:', item.get('reviewed_by'))
+          print('Reviewed at:', item.get('reviewed_at'))
+          assert status == 'approved', 'status is not approved: %s' % status
+          print('APPROVE PASS: run is approved. Nothing published, nothing sent, no cron enabled.')
+          "
