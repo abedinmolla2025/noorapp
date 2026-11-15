@@ -132,9 +132,12 @@ jobs:
     runs-on: ubuntu-latest
     if: ${{ inputs.confirm == 'DEPLOY' }}
     steps:
+      # Checkout the branch this run was dispatched from (main for the
+      # production cutover). Do NOT pin a ref here: the old hardcoded
+      # `ref: muse/phase2-security-2026-11-10` made every deploy ship the
+      # stale phase2 (Lovable) code instead of main, and silently skipped
+      # recommend-daily-content (absent from phase2).
       - uses: actions/checkout@v4
-        with:
-          ref: muse/phase2-security-2026-11-10
 
       - name: Install pinned Supabase CLI
         run: |
