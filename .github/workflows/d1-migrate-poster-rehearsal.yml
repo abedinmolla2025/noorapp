@@ -125,6 +125,11 @@ jobs:
             *:* ) DB_PASS="${USERINFO#*:}" ;;
             * ) echo "Missing database password. Refusing."; exit 1 ;;
           esac
+          # URL-decode the password: Supabase percent-encodes special
+          # characters in the connection string (e.g. %40 for @, %23
+          # for #). psql needs the raw password, not the encoded form.
+          # A password without %-sequences is unchanged (no-op).
+          DB_PASS="$(python3 -c 'import urllib.parse,sys; sys.stdout.write(urllib.parse.unquote(sys.argv[1]))' "$DB_PASS")"
           DB_HOST="${HOSTPORT%%:*}"
           DB_PORT="${HOSTPORT#*:}"
           if [ "$DB_PORT" = "$HOSTPORT" ]; then DB_PORT=""; fi
