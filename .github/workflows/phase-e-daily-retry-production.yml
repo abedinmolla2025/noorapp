@@ -1,0 +1,98 @@
+# Phase E Daily Content Retry (production)
+#
+# Retries failed push deliveries for the PRODUCTION project
+# (llicfiepatzgllmjhzbw) from the GitHub runner.
+#
+# Schedule: every 15 minutes. This is the runbook's Step 9
+# retry trigger — it calls the daily-content function with
+# { "retry_only": true }, which re-attempts failed deliveries
+# (bounded: max 4 attempts total — initial + 3 retries — with
+# 5/15/45 min backoff). It never creates a new publication and
+# never plans a new day; it only retries today's failed rows.
+#
+# The run is gated by the production daily_content_settings row:
+# while enabled=false (PAUSED) the function returns
+# { ok:false, reason:"paused" } and retries nothing. Pause stops
+# retry ticks too. This workflow never changes the settings row.
+#
+# This is a SEPARATE schedule from the daily cron (Step 8),
+# which runs once a day at 06:00 IST. It NEVER touches rehearsal.
+#
+# Secrets required (repository secrets, created by the owner):
+#   PROD_CRON_SECRET - the CRON secret for the daily-content
+#     call (same value as DAILY_CONTENT_CRON_SECRET in the
+#     production project; same secret the daily cron uses)
+#
+# The secret is masked with ::add-mask:: immediately and is NEVER
+# echoed, logged, or written to any file. It lives only in a shell
+# variable inside the single run step. The run response IS logged —
+# it contains no credentials.
+
+name: Phase E Daily Content Retry (production)
+
+on:
+  schedule:
+    # Every 15 minutes, all day.
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the production retry tick now'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  retry-tick:
+    runs-on: ubuntu-latest
+    env:
+      PROD_URL: https://llicfiepatzgllmjhzbw.supabase.co
+    steps:
+      - name: Validate inputs and secret
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          if [ -z "${{ secrets.PROD_CRON_SECRET }}" ]; then
+            echo "PROD_CRON_SECRET is not set as a repository secret."
+            exit 1
+          fi
+          echo "Inputs validated; secret is present (value never shown)."
+          echo "Target: production only (llicfiepatzgllmjhzbw)."
+
+      - name: Daily-content retry tick (production)
+        env:
+          PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
+        run: |
+          set -euo pipefail
+          echo "::add-mask::$PROD_CRON_SECRET"
+          echo "Retry tick. Re-attempts failed deliveries only; creates no publication."
+          RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $PROD_CRON_SECRET" \
+            -d '{"retry_only": true}')
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$BODY_OUT" | head -c 8000
+          echo ""
+          if [ "$CODE" = "401" ]; then
+            echo "Unauthorised (401): the CRON_SECRET does not match the production project's secret."
+            exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          if d.get('reason') == 'paused':
+              print('PAUSED: production settings enabled=false. Nothing retried.')
+          else:
+              print('Retry tick result:', json.dumps({k: d.get(k) for k in ('ok','kolkata_date','retry') if k in d}, ensure_ascii=False)[:2000])
+              print('RETRY TICK DONE: failed deliveries were re-attempted where due (bounded by backoff and max attempts).')
+          "
+          echo "Retry tick complete (production only)."
