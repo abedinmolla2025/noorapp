@@ -21,8 +21,9 @@
  * ::add-mask:: in the workflow).
  *
  * The upload is an upsert to a DETERMINISTIC path
- * (`<kolkata_date>/<format>.png`), so re-running replaces the same
- * object — no duplicate assets accumulate. After upload, the script
+ * (`<kolkata_date>/<format>.png`, or `<kolkata_date>/compare/<layout>-<format>.png`
+ * for comparison renders that are never finalized), so re-running replaces
+ * the same object — no duplicate assets accumulate. After upload, the script
  * fetches the public URL and verifies HTTP 200 + a matching
  * content-length before reporting success.
  *
@@ -49,8 +50,8 @@ if (!file || !objectPath || !supabaseUrl || !anonKey || !adminEmail || !adminPas
   console.error("usage: upload-poster.mjs --file <png> --object-path <date/format.png> --supabase-url <url> --anon-key <key> --admin-email <email> --admin-password <password>");
   process.exit(2);
 }
-if (!/^\d{4}-\d{2}-\d{2}\/(portrait|square|wide|story)\.png$/.test(objectPath)) {
-  console.error("object-path must be <YYYY-MM-DD>/<portrait|square|wide|story>.png");
+if (!/^\d{4}-\d{2}-\d{2}\/(compare\/[abc]-(portrait|square|wide|story)\.png|(portrait|square|wide|story)\.png)$/.test(objectPath)) {
+  console.error("object-path must be <YYYY-MM-DD>/<portrait|square|wide|story>.png or <YYYY-MM-DD>/compare/<a|b|c>-<format>.png");
   process.exit(2);
 }
 

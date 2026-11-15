@@ -52,6 +52,66 @@ export const OG_LAYOUT = {
   gap: number; bodyPadding: string; arabicPadding: string; horizontal: boolean;
 }>;
 
+/**
+ * Bengali-first poster layouts (owner brief 2026-11-15: BENGALI TEXT
+ * FIRST — Arabic Text Second). In every variant the Bengali translation
+ * is the largest, primary section and gets most of the poster's space;
+ * the Arabic original is second (smaller, never distorted, never
+ * reworded); source/number/branding stay small but clear. "legacy" is
+ * the original Arabic-first composition; its numbers above must not
+ * change (admin previews render byte-identically). Variants a/b/c differ
+ * in hierarchy and spacing only — all three omit the pronunciation block
+ * entirely (rule 8: pronunciation/QC state lives in QC metadata only,
+ * never on the poster). `bengaliSize` is the starting size; the card
+ * auto-fits down to `bengaliMinSize` (never below) so a long translation
+ * is never cut off (rules 6–7).
+ *
+ *  A — "Bengali Hero": Bengali in a large glass panel on top, Arabic in
+ *      a compact panel below, source stays in the header badge.
+ *  B — "Bengali Full-Bleed": Bengali bare on the scrim (no panel),
+ *      Arabic in a framed citation band at the bottom, source moves to
+ *      a footer pill.
+ *  C — "Bengali Panel + Arabic Footnote": Bengali left-aligned in a
+ *      glass panel with a gold accent bar, Arabic as a compact footnote
+ *      under a hairline, source in a footer pill.
+ */
+export type BengaliFirstLayout = "a" | "b" | "c";
+export type PosterLayout = "legacy" | BengaliFirstLayout;
+
+export type BengaliFirstFormatLayout = {
+  padding: string; titleSize: number; bengaliSize: number; bengaliMinSize: number;
+  arabicSize: number; gap: number; bodyPadding: string; arabicPadding: string;
+  /** True: source line stays in the header badge (variant A). False: source moves to a footer pill (B/C). */
+  sourceInBadge: boolean;
+};
+
+export const BENGALI_FIRST_LAYOUT: Record<BengaliFirstLayout, Record<OgFormat, BengaliFirstFormatLayout>> = {
+  a: {
+    portrait: { padding: "26px 28px 26px", titleSize: 30, bengaliSize: 40, bengaliMinSize: 18, arabicSize: 20, gap: 14, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: true },
+    square: { padding: "22px 26px 22px", titleSize: 26, bengaliSize: 34, bengaliMinSize: 16, arabicSize: 18, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: true },
+    wide: { padding: "16px 20px 16px", titleSize: 22, bengaliSize: 26, bengaliMinSize: 13, arabicSize: 15, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: true },
+    story: { padding: "30px 30px 30px", titleSize: 34, bengaliSize: 44, bengaliMinSize: 20, arabicSize: 22, gap: 18, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: true },
+  },
+  b: {
+    portrait: { padding: "26px 28px 26px", titleSize: 22, bengaliSize: 44, bengaliMinSize: 18, arabicSize: 18, gap: 16, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: false },
+    square: { padding: "22px 26px 22px", titleSize: 20, bengaliSize: 38, bengaliMinSize: 16, arabicSize: 16, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: false },
+    wide: { padding: "16px 20px 16px", titleSize: 18, bengaliSize: 28, bengaliMinSize: 13, arabicSize: 14, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: false },
+    story: { padding: "30px 30px 30px", titleSize: 26, bengaliSize: 48, bengaliMinSize: 20, arabicSize: 20, gap: 20, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: false },
+  },
+  c: {
+    portrait: { padding: "26px 28px 26px", titleSize: 24, bengaliSize: 38, bengaliMinSize: 18, arabicSize: 18, gap: 14, bodyPadding: "8px 0", arabicPadding: "12px 16px", sourceInBadge: false },
+    square: { padding: "22px 26px 22px", titleSize: 22, bengaliSize: 32, bengaliMinSize: 16, arabicSize: 16, gap: 12, bodyPadding: "6px 0", arabicPadding: "10px 14px", sourceInBadge: false },
+    wide: { padding: "16px 20px 16px", titleSize: 20, bengaliSize: 26, bengaliMinSize: 13, arabicSize: 14, gap: 10, bodyPadding: "4px 0", arabicPadding: "8px 12px", sourceInBadge: false },
+    story: { padding: "30px 30px 30px", titleSize: 28, bengaliSize: 42, bengaliMinSize: 20, arabicSize: 20, gap: 18, bodyPadding: "10px 0", arabicPadding: "14px 18px", sourceInBadge: false },
+  },
+} as const;
+
+/** Parse the `layout` query param: "a" | "b" | "c", anything else → "legacy". */
+export function parsePosterLayout(value: string | null): PosterLayout {
+  if (value === "a" || value === "b" || value === "c") return value;
+  return "legacy";
+}
+
 /** Exact export pixels at the component's pixelRatio of 2. */
 export function ogExportSize(format: OgFormat): { width: number; height: number } {
   const s = OG_STAGE_SIZE[format];
@@ -71,14 +131,20 @@ export function checkOgVerbatim(rendered: OgText, source: OgText): OgCheck {
   return { ok: errors.length === 0, errors, warnings: [] };
 }
 
-/** Batch checks: non-empty fields, background uniqueness, long-text flags. */
+/** Batch checks: non-empty fields, background uniqueness, long-text flags.
+ * `opts.pronunciationShown` is false for Bengali-first layouts, where no
+ * pronunciation block is rendered at all (rule 8): the missing/unverified
+ * state is then recorded as a metadata note, never as an on-poster
+ * fallback warning. */
 export function checkOgCardBatch(
   cards: CardPayload[],
   backgroundIds: string[],
   catalogSize: number,
+  opts?: { pronunciationShown?: boolean },
 ): OgCheck {
   const errors: string[] = [];
   const warnings: string[] = [];
+  const pronunciationShown = opts?.pronunciationShown !== false;
   cards.forEach((card, i) => {
     if (!card.title.trim()) errors.push(`card ${i}: empty title`);
     if (!card.arabic.trim()) errors.push(`card ${i}: empty arabic`);
@@ -87,11 +153,15 @@ export function checkOgCardBatch(
     if (card.arabic.length > 260 || card.bengali.length > 380) {
       warnings.push(`card ${i}: long text — verify fit visually (do not truncate)`);
     }
-    if ((card.pronunciation ?? "").length > 380) {
-      warnings.push(`card ${i}: long pronunciation — verify fit visually (do not truncate)`);
-    }
-    if (card.pronunciationStatus === "missing") {
-      warnings.push(`card ${i}: no pronunciation — poster shows the "যাচাই করা হয়নি" fallback`);
+    if (pronunciationShown) {
+      if ((card.pronunciation ?? "").length > 380) {
+        warnings.push(`card ${i}: long pronunciation — verify fit visually (do not truncate)`);
+      }
+      if (card.pronunciationStatus === "missing") {
+        warnings.push(`card ${i}: no pronunciation — poster shows the "যাচাই করা হয়নি" fallback`);
+      }
+    } else if (card.pronunciationStatus !== "verified") {
+      warnings.push(`card ${i}: pronunciation ${card.pronunciationStatus ?? "missing"} — QC metadata only, not shown on poster`);
     }
   });
   const seen = new Set<string>();

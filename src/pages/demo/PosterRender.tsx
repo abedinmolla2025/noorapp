@@ -38,6 +38,9 @@
  *
  * Query params: `date` (YYYY-MM-DD Kolkata, default today),
  * `format` (portrait|square|wide|story, default portrait),
+ * `layout` (legacy|a|b|c, default legacy — a/b/c are the Bengali-first
+ * comparison variants; the pronunciation block is omitted for a/b/c and
+ * its state is recorded in the status JSON / QC metadata only),
  * `fixture` (test-only, see above).
  */
 import { useEffect, useRef, useState } from "react";
@@ -50,7 +53,7 @@ import {
   CARD_BACKGROUNDS,
   type BackgroundScene,
 } from "@/lib/dailyContent/backgrounds";
-import { checkOgCardBatch, checkOgVerbatim, ogExportSize, OG_STAGE_SIZE, type OgFormat } from "@/lib/dailyContent/ogQc";
+import { checkOgCardBatch, checkOgVerbatim, ogExportSize, OG_STAGE_SIZE, parsePosterLayout, type OgFormat, type PosterLayout } from "@/lib/dailyContent/ogQc";
 import { buildHadithCard, hadithCanonicalLink, hadithSourceLine } from "@/lib/dailyContent/cards";
 import { extractHadithMatn, transliterateArabic } from "@/lib/dailyContent/transliteration";
 import type { CardPayload, HadithRecord } from "@/lib/dailyContent/types";
@@ -73,6 +76,7 @@ type PosterStatus = {
   status: "loading" | "ready" | "error";
   kolkataDate: string;
   format: OgFormat;
+  layout: PosterLayout;
   source: "live" | "fixture";
   recordRef: string | null;
   sourceLine: string | null;
@@ -80,6 +84,8 @@ type PosterStatus = {
   backgroundScene: string | null;
   yesterdayScene: string | null;
   badgeLabel: string | null;
+  pronunciationStatus: string | null;
+  fitSize: number | null;
   qc: { ok: boolean; errors: string[]; warnings: string[] } | null;
   verbatimOk: boolean | null;
   exportSize: { width: number; height: number };
@@ -117,6 +123,7 @@ export default function PosterRender() {
   const date = params.get("date") ?? kolkataToday();
   const formatParam = params.get("format") ?? "portrait";
   const format: OgFormat = (FORMATS as string[]).includes(formatParam) ? (formatParam as OgFormat) : "portrait";
+  const layout = parsePosterLayout(params.get("layout"));
   const fixture = params.get("fixture");
 
   const [card, setCard] = useState<CardPayload | null>(null);
@@ -125,6 +132,7 @@ export default function PosterRender() {
     status: "loading",
     kolkataDate: date,
     format,
+    layout,
     source: fixture ? "fixture" : "live",
     recordRef: null,
     sourceLine: null,
@@ -132,6 +140,8 @@ export default function PosterRender() {
     backgroundScene: null,
     yesterdayScene: null,
     badgeLabel: null,
+    pronunciationStatus: null,
+    fitSize: null,
     qc: null,
     verbatimOk: null,
     exportSize: ogExportSize(format),
@@ -236,7 +246,11 @@ export default function PosterRender() {
         if (yesterdayScene && assigned.id === yesterdayScene) {
           assigned = CARD_BACKGROUNDS.find((s) => s.id !== yesterdayScene) ?? assigned;
         }
-        const qc = checkOgCardBatch([payload], [assigned.id], CARD_BACKGROUNDS.length);
+        const qc = checkOgCardBatch([payload], [assigned.id], CARD_BACKGROUNDS.length, {
+          // Bengali-first layouts render no pronunciation block (rule 8):
+          // the pronunciation state is QC metadata only (status JSON).
+          pronunciationShown: layout === "legacy",
+        });
         setCard(payload);
         setBackground(assigned);
         setStatus((s) => ({
@@ -248,6 +262,7 @@ export default function PosterRender() {
           backgroundScene: assigned.scene,
           yesterdayScene,
           badgeLabel: badgeLabelForCard(payload),
+          pronunciationStatus: payload.pronunciationStatus ?? null,
           qc,
           verbatimOk,
           error: qc.ok ? null : `qc_fail:${qc.errors.join("; ")}`,
@@ -261,7 +276,7 @@ export default function PosterRender() {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, format, fixture]);
+  }, [date, format, fixture, layout]);
 
   // Readiness: fonts + all images inside the stage must be loaded.
   useEffect(() => {
@@ -288,7 +303,48 @@ export default function PosterRender() {
           setStatus((s) => ({ ...s, status: "error", error: `image_load_failed:${broken.length}` }));
           return;
         }
-        setStatus((s) => ({ ...s, status: s.qc && !s.qc.ok ? "error" : "ready" }));
+        // Bengali auto-fit gate (rules 6–7): every [data-autofit] block
+        // must report done; a min-size overflow is a hard error — never
+        // render a clipped translation. The fit resets when webfonts
+        // arrive, so "done" must hold across two polls 200ms apart.
+        // (Legacy has no autofit blocks and passes trivially.)
+        const fitDeadline = Date.now() + 15000;
+        let fitOk = false;
+        let fitOverflow = false;
+        let fitSize: number | null = null;
+        for (;;) {
+          const nodes = Array.from(document.querySelectorAll("[data-autofit]"));
+          fitOverflow = nodes.some((n) => n.getAttribute("data-fit-overflow") === "true");
+          if (fitOverflow) break;
+          const allDone = nodes.length === 0 || nodes.every((n) => n.getAttribute("data-fit-done") === "true");
+          if (allDone) {
+            await new Promise((resolve) => setTimeout(resolve, 200));
+            const still = Array.from(document.querySelectorAll("[data-autofit]"));
+            fitOverflow = still.some((n) => n.getAttribute("data-fit-overflow") === "true");
+            if (fitOverflow) break;
+            if (still.length === 0 || still.every((n) => n.getAttribute("data-fit-done") === "true")) {
+              fitOk = true;
+              const first = still[0];
+              fitSize = first ? Number(first.getAttribute("data-fit-size") ?? "") || null : null;
+              break;
+            }
+          }
+          if (Date.now() > fitDeadline || cancelled) break;
+          await new Promise((resolve) => setTimeout(resolve, 150));
+        }
+        if (cancelled) return;
+        if (fitOverflow) {
+          setStatus((s) => ({ ...s, status: "error", error: "bengali_overflow_at_min: translation does not fit even at minimum font size" }));
+          return;
+        }
+        if (!fitOk) {
+          setStatus((s) => ({ ...s, status: "error", error: "autofit_timeout: Bengali fit did not settle" }));
+          return;
+        }
+        // One frame for the centered re-render to paint before the shot.
+        await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
+        if (cancelled) return;
+        setStatus((s) => ({ ...s, status: s.qc && !s.qc.ok ? "error" : "ready", fitSize }));
       } catch (e) {
         if (!cancelled) setStatus((s) => ({ ...s, status: "error", error: e instanceof Error ? e.message : String(e) }));
       }
@@ -312,7 +368,7 @@ export default function PosterRender() {
       </div>
       {card && background && (
         <div id="poster-stage" ref={stageRef} style={{ width: stage.width, height: stage.height }}>
-          <OgShareCard card={card} backgroundUrl={backgroundUrl(background)} badgeLabel={badgeLabelForCard(card)} format={format} />
+          <OgShareCard card={card} backgroundUrl={backgroundUrl(background)} badgeLabel={badgeLabelForCard(card)} format={format} layout={layout} />
         </div>
       )}
       {status.status === "error" && (
