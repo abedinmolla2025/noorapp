@@ -1,0 +1,149 @@
+# Phase E Plan-Only (rehearsal)
+#
+# Calls the rehearsal daily-content function with {"plan_only": true} —
+# step 1 of the Phase 3 split flow (plan -> poster -> publish_planned).
+# Plans the day and inserts the row as `planned`, NEVER sends, NEVER
+# flips to published. The poster workflow then finalizes onto the
+# planned row, and its publish step calls publish_planned.
+#
+# REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx. This
+# workflow NEVER touches production (no production URL, no production
+# secret, no production workflow). It is manual-dispatch only
+# (workflow_dispatch, confirm=true); there is no schedule.
+#
+# Why this file exists: the rehearsal daily cron workflow
+# (phase-e-daily-cron.yml) only posts {} or {"dry_run": true} — it has
+# no plan_only input, and its 06:00 IST schedule runs the DEFAULT path
+# (plan + send + publish, text-only). plan_only must be invoked
+# explicitly, before the day's scheduled run adopts the row.
+#
+# Race note: a `planned` row WITH a stored push is adopted by any later
+# default-path run (ensurePlannedRow returns "ready" with the stored
+# push, and the daily branch sends it). So dispatch plan_only and run
+# the poster workflow promptly; do not leave a planned row waiting
+# across the 06:00 schedule. If plan_only reports deduped, read the
+# row below: a PUBLISHED row means the schedule already published the
+# day (text-only) — the split-flow E2E moves to the next fresh date;
+# no visible row means an earlier plan_only already planned it — the
+# E2E can continue (the poster workflow accepts planned rows).
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_CRON_SECRET - the CRON secret for the rehearsal
+#     daily-content call (same value as DAILY_CONTENT_CRON_SECRET in
+#     the rehearsal project)
+#   REHEARSAL_ANON_KEY - the rehearsal project's anon key (read-only
+#     PostgREST reads of the publication row; RLS shows published
+#     rows only, so a planned row reads back empty — the function
+#     response is the primary evidence, the row read is
+#     corroboration for the published case)
+#
+# The secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file. They live only in shell
+# variables inside the single run step. The run response IS logged —
+# it contains no credentials.
+#
+# Prerequisites:
+#   1. This file enters the repo via the GitHub web upload (browser):
+#      a git push of a workflow file is rejected because the available
+#      token lacks the `workflow` scope. Upload it to
+#      .github/workflows/ on main (exact file upload, never the web
+#      editor paste — paste drifts whitespace).
+#   2. The poster branch (muse/daily-poster-pipeline-2026-11-15) is
+#      deployed to rehearsal (run 43812429214 did this; re-dispatch
+#      the deploy workflow if the branch moves).
+#   3. Rehearsal daily_content_settings: plan_only fails closed while
+#      paused (expected: {ok:false, reason:"paused"}). The owner
+#      enables rehearsal with:
+#        UPDATE daily_content_settings SET enabled = true WHERE id = 1;
+#      on project cazdbxxffvdnsdatjsrx (dashboard noorapp-restore-test
+#      — confirm the project NAME first). Pause it again afterwards.
+
+name: Phase E Plan-Only (rehearsal)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to plan today in rehearsal (planned row only, no send, no publish)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  plan-only:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+      REHEARSAL_ANON_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
+      REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          for s in REHEARSAL_ANON_KEY REHEARSAL_CRON_SECRET; do
+            if [ -z "${!s}" ]; then
+              echo "$s is not set as a repository secret."
+              exit 1
+            fi
+          done
+          echo "::add-mask::$REHEARSAL_ANON_KEY"
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          echo "Inputs validated; secrets are present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Plan-only (rehearsal)
+        run: |
+          set -euo pipefail
+          TODAY=$(TZ=Asia/Kolkata date +%F)
+          echo "Today (Asia/Kolkata): $TODAY"
+          echo "--- publication row(s) for today BEFORE plan_only (anon read; RLS shows published rows only) ---"
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,poster_qc_status,poster_url,published_at" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
+          echo ""
+          echo "--- plan_only ---"
+          RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d '{"plan_only": true}')
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$BODY_OUT" | head -c 8000
+          echo ""
+          if [ "$CODE" = "401" ]; then
+            echo "Unauthorised (401): the CRON_SECRET does not match the rehearsal project's secret."
+            exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
+          echo "--- publication row(s) for today AFTER plan_only (anon read; a planned row is hidden by RLS) ---"
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,poster_qc_status,poster_url,published_at" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
+          echo ""
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          if d.get('reason') == 'paused':
+              print('PAUSED: rehearsal settings enabled=false. Nothing planned, nothing sent.')
+              print('To run the split-flow E2E, the owner enables rehearsal (UPDATE daily_content_settings SET enabled = true WHERE id = 1).')
+          elif d.get('planned') is True:
+              print('PLANNED: a planned row was created for today. Nothing sent, nothing published.')
+              print('Publication id:', d.get('publication_id'))
+              print('Kolkata date:', d.get('kolkata_date'))
+              print('Next: dispatch the poster workflow (planned row, plan mode, formats=portrait,square, layout=c), then its publish step calls publish_planned.')
+          elif d.get('deduped') is True:
+              print('DEDUPED: a row already exists for today. Check the row read above:')
+              print('- a PUBLISHED row means the scheduled daily run already published the day (text-only) — the split-flow E2E moves to the next fresh date.')
+              print('- no visible row means an earlier plan_only already planned it — continue with the poster workflow.')
+          else:
+              print('Unexpected response keys:', sorted(d.keys()))
+              print('Full response:', json.dumps(d, ensure_ascii=False)[:2000])
+          "
+          echo "Plan-only complete (rehearsal only)."
