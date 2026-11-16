@@ -150,7 +150,7 @@ jobs:
         run: |
           set -euo pipefail
           npx playwright install --with-deps chromium
-          
+
       - name: Resolve date and pre-check publication
         id: precheck
         env:
@@ -230,7 +230,7 @@ jobs:
             fi
             exit "$CODE"
           }
-          
+
       - name: Build app (demo routes enabled, rehearsal Supabase)
         if: steps.precheck.outputs.precheck_skip != 'true'
         env:
@@ -271,7 +271,7 @@ jobs:
           done
           curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render || { echo "Static server did not come up."; cat /tmp/serve-dist.log; exit 1; }
           echo "Static server up (pid $SERVER_PID)."
-          
+
           mkdir -p poster-out
           if [ "$PLAN_MODE" = "true" ]; then
             PLAN_PARAM="&plan=1"
@@ -332,7 +332,7 @@ jobs:
           fi
           echo "All formats rendered + uploaded."
           echo "poster_failed=false" >> "$GITHUB_OUTPUT"
-          
+
       - name: Finalize asset via set_poster
         if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
@@ -391,7 +391,7 @@ jobs:
           assert d.get('ok') is True, d
           print('set_poster result:', d)
           "
-          
+
       - name: Publish the planned row (split flow, step 3)
         if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
@@ -437,7 +437,7 @@ jobs:
           done
           echo "publish_planned did not return 200 after 3 attempts."
           exit 1
-          
+
       - name: Verify finalized asset on the publication row
         if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
