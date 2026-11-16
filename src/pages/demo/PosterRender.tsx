@@ -38,9 +38,12 @@
  *
  * Query params: `date` (YYYY-MM-DD Kolkata, default today),
  * `format` (portrait|square|wide|story, default portrait),
- * `layout` (legacy|a|b|c, default legacy — a/b/c are the Bengali-first
- * comparison variants; the pronunciation block is omitted for a/b/c and
- * its state is recorded in the status JSON / QC metadata only),
+ * `layout` (legacy|a|b|c, default c — Layout C, Bengali Panel +
+ * Arabic Footnote, is the standard poster template per the Master
+ * Mission Phase 2 decision 2026-11-16; a/b/c are the Bengali-first
+ * variants and legacy stays available as an explicit override; the
+ * pronunciation block is omitted for a/b/c and its state is recorded
+ * in the status JSON / QC metadata only),
  * `fixture` (test-only, see above).
  */
 import { useEffect, useRef, useState } from "react";

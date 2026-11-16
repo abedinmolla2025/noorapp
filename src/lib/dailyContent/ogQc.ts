@@ -181,10 +181,17 @@ export function effectiveBengaliFirstLayout(
   };
 }
 
-/** Parse the `layout` query param: "a" | "b" | "c", anything else → "legacy". */
+/**
+ * Parse the `layout` query param: "legacy" | "a" | "b" | "c" stay as
+ * given (explicit overrides, including legacy). Anything else —
+ * including a missing param — is the standard template "c"
+ * (Layout C — Bengali Panel + Arabic Footnote, Master Mission
+ * Phase 2 decision 2026-11-16). Legacy is never the default: it
+ * clips long Bengali and shows the forbidden pronunciation fallback.
+ */
 export function parsePosterLayout(value: string | null): PosterLayout {
-  if (value === "a" || value === "b" || value === "c") return value;
-  return "legacy";
+  if (value === "legacy" || value === "a" || value === "b" || value === "c") return value;
+  return "c";
 }
 
 /** Exact export pixels at the component's pixelRatio of 2. */

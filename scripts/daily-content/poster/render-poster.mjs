@@ -85,7 +85,7 @@ try {
     bytes: dims.bytes,
     kolkataDate: status.kolkataDate,
     format: status.format,
-    layout: status.layout ?? "legacy",
+    layout: status.layout ?? "c",
     source: status.source,
     recordRef: status.recordRef,
     sourceLine: status.sourceLine,

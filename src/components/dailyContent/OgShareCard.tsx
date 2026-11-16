@@ -132,11 +132,13 @@ type OgShareCardProps = {
   /**
    * Poster layout. "legacy" is the original Arabic-first composition
    * (Arabic panel first, Bengali below, pronunciation block shown).
-   * "a" | "b" | "c" are the Bengali-first comparison variants (owner
+   * "a" | "b" | "c" are the Bengali-first variants (owner
    * brief 2026-11-15): Bengali is the hero, Arabic is secondary, and
    * NO pronunciation block is rendered at all — pronunciation/QC state
-   * lives in QC metadata only (rule 8). Defaults to "legacy" so the
-   * admin preview and all existing callers render byte-identically.
+   * lives in QC metadata only (rule 8). Defaults to "c" (Layout C —
+   * Bengali Panel + Arabic Footnote, the standard poster template per
+   * the Master Mission Phase 2 decision 2026-11-16); "a", "b" and
+   * "legacy" remain available as explicit overrides.
    */
   layout?: PosterLayout;
 };
@@ -475,7 +477,7 @@ function SourcePill({ sourceLine }: { sourceLine: string }) {
  * content stack is vertically centered, so the frame rebalances itself
  * with no empty space where a banner used to be.
  */
-export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait", composition = "centered", layout: posterLayout = "legacy" }: OgShareCardProps) {
+export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait", composition = "centered", layout: posterLayout = "c" }: OgShareCardProps) {
   const stage = OG_STAGE_SIZE[format];
   const ogLayout = OG_LAYOUT[format];
   const lowerThird = composition === "lower-third" && !ogLayout.horizontal;
