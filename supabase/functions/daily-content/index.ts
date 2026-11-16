@@ -2,10 +2,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.6";
 import webpush from "https://esm.sh/web-push@3.6.7?bundle";
 
 /* ------------------------------------------------------------------
- * daily-content — Daily Islamic Content Automation (NOT YET DEPLOYED).
- * Local implementation only. Deploying this function, running the
- * migration, and registering the 06:00 Asia/Kolkata cron are separately
- * approved launch steps (see docs/daily-content/PRODUCTION-READINESS.md).
+ * daily-content — Daily Islamic Content Automation (DEPLOYED to
+ * production 2026-11-15; rehearsal deploys track branches).
+ * Launch steps (migration, cron registration) are separately approved;
+ * see docs/daily-content/PRODUCTION-READINESS.md.
  *
  * Behaviour:
  *  - One publication per Asia/Kolkata date (UNIQUE kolkata_date).
@@ -32,7 +32,19 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    without a push, or failed row, rewritten to the fresh plan)
  *  - planned --tick, same date--> pending deliveries promoted to
  *    retryable and sent by the tick; the row itself stays planned
- *    (a tick NEVER adopts content, plans, publishes, or creates a row)
+ *    (a plain tick NEVER adopts content, plans, publishes, or creates
+ *    a row — see the heal-tick exception below)
+ *  - (none) --heal tick, same date--> planned --send finishes-->
+ *    published. A tick with { "retry_only": true, "heal": true } runs
+ *    the retry pass first, then runs the daily publication path ONLY
+ *    when today has no row or a failed row; a planned row is left to
+ *    the tick and a published row is left alone. The daily path is
+ *    idempotent, so a race with a concurrent daily run can only
+ *    dedupe or 500 on the H3 flip — never a duplicate publication or
+ *    push. The healed publication is TEXT-ONLY (image_url: null).
+ *  - failed --heal tick, same date--> repaired in place to the fresh
+ *    plan, then planned --send finishes--> published (the daily
+ *    path's own failed-row recovery, reused verbatim).
  *  - planned --tick, past date--> failed ("superseded") + its pending
  *    AND retryable deliveries failed, so no stale notification can
  *    survive supersede. Stale content is NEVER reused as another day's
@@ -72,6 +84,12 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *  - retry_only + dry_run combined is a client error (400) at both
  *    the endpoint and the edge: it performs no planning, publication,
  *    or sending.
+ *  - Self-healing tick (owner-approved 2026-11-16): a retry tick with
+ *    { "retry_only": true, "heal": true } may create today's
+ *    publication when none exists (or repair a failed row), so a
+ *    missed 06:00 run no longer means a lost day. Only the retry
+ *    workflow invokes it; a plain retry_only tick still never plans.
+ *    The healed publication is text-only (image_url: null).
  * ------------------------------------------------------------------ */
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -1412,60 +1430,33 @@ async function runTick(svc: Svc, kolkataDate: string): Promise<{
   return { ...retries, promoted, promotedPublished, superseded };
 }
 
-Deno.serve(async (req: Request) => {
-  if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
-  }
-  const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
-  // Phase 3 — user-facing preference actions (opt_out / opt_in) are routed
-  // BEFORE the CRON-secret gate: a browser cannot present the CRON secret,
-  // and the subscription endpoint in the body is the credential for this
-  // narrow path (see handlePreferenceAction). Phase 7 adds the read-only
-  // "status" action on the same path. Every other action still
-  // requires the CRON secret below. createClient performs no I/O, so
-  // constructing it before the auth check changes nothing.
-  if (body.action === "opt_out" || body.action === "opt_in" || body.action === "status") {
-    return handlePreferenceAction(svc, body);
-  }
-  const auth = req.headers.get("authorization") ?? "";
-  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
-    return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
-  }
-  const kolkataDate = kolkataDateString(new Date());
-
+/**
+ * The daily publication path (plan -> resolve -> send -> flip), shared
+ * by the scheduled/manual daily run and by the self-healing tick.
+ *
+ * Contract (unchanged from the inline daily branch this was extracted
+ * from, 2026-11-16): settings gate fails closed (paused returns
+ * { ok:false, reason:'paused' }); a missing/invalid plan records a
+ * failed row once per date and never blocks a later recovery; a
+ * published row dedupes; a planned row with a push is adopted (same
+ * day, same content); a failed/corrupt row is repaired in place
+ * (conditional on the observed state, H3); the flip to published is
+ * conditional on status='planned' so only the first of two
+ * concurrent runs flips and the second reports a 500 instead of
+ * overwriting counters. Returns { status, body } so both callers
+ * can merge the result into their own response shape.
+ */
+async function publishPlan(
+  svc: Svc,
+  kolkataDate: string,
+  plan: Awaited<ReturnType<typeof planDay>>,
+): Promise<{ status: number; body: Record<string, unknown> }> {
   try {
-    // DECIDED POLICY (launch preparation): retry_only + dry_run is a
-    // client error, never a real retry and never a plan. Rejecting here
-    // — before any planning, publication, or send — guarantees the
-    // combination performs nothing.
-    if (body.retry_only === true && body.dry_run === true) {
-      return jsonResponse({ ok: false, error: "retry_only and dry_run cannot be combined." }, 400);
-    }
-    // DECIDED POLICY (launch preparation): pause stops retry ticks too.
-    // The settings gate applies to the retry branch exactly as it does
-    // to the daily branch, so a paused system sends nothing at all.
-    // Dry-run stays read-only and is unaffected (it returns before any
-    // gate below).
-    if (body.retry_only === true) {
-      const { data: settings } = await svc.from("daily_content_settings").select("enabled").limit(1).maybeSingle();
-      if (!settings || (settings as { enabled: boolean }).enabled !== true) {
-        return jsonResponse({ ok: false, reason: "paused" });
-      }
-      return jsonResponse({ ok: true, ...(await runTick(svc, kolkataDate)) });
-    }
-
-    const plan = await planDay(svc, kolkataDate);
-
-    if (body.dry_run === true) {
-      return jsonResponse({ ok: true, dry_run: true, plan });
-    }
-
     const { data: settings } = await svc.from("daily_content_settings").select("enabled").limit(1).maybeSingle();
     // M1: fail CLOSED. A missing settings row used to fall through and
     // publish; now automation runs only when a row explicitly enables it.
     if (!settings || (settings as { enabled: boolean }).enabled !== true) {
-      return jsonResponse({ ok: false, reason: "paused" });
+      return { status: 200, body: { ok: false, reason: "paused" } };
     }
 
     if (!plan.hadith || !plan.push) {
@@ -1479,7 +1470,7 @@ Deno.serve(async (req: Request) => {
         .eq("kolkata_date", kolkataDate)
         .maybeSingle();
       if (todayRow?.status === "published") {
-        return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+        return { status: 200, body: { ok: true, deduped: true, kolkata_date: kolkataDate } };
       }
       if (!todayRow) {
         await svc.from("daily_content_publications").insert({
@@ -1496,7 +1487,7 @@ Deno.serve(async (req: Request) => {
           recommendation_id: plan.recommendationId,
         } as never);
       }
-      return jsonResponse({ ok: false, reason: plan.hadithEmptyReason });
+      return { status: 200, body: { ok: false, reason: plan.hadithEmptyReason } };
     }
 
     // Valid plan: resolve today's publication row. Repair-in-place is the
@@ -1559,10 +1550,10 @@ Deno.serve(async (req: Request) => {
     if (todayRow) {
       const r = await resolveRow(todayRow as { id: string; status: string; push: unknown });
       if (r.kind === "deduped") {
-        return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+        return { status: 200, body: { ok: true, deduped: true, kolkata_date: kolkataDate } };
       }
       if (r.kind === "conflict") {
-        return jsonResponse({ ok: false, error: "Publication repair conflict." }, 500);
+        return { status: 500, body: { ok: false, error: "Publication repair conflict." } };
       }
       publicationId = r.publicationId;
       pushForSend = r.pushForSend;
@@ -1594,10 +1585,10 @@ Deno.serve(async (req: Request) => {
           .maybeSingle();
         const r = await resolveRow(raced as { id: string; status: string; push: unknown } | null);
         if (r.kind === "deduped") {
-          return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+          return { status: 200, body: { ok: true, deduped: true, kolkata_date: kolkataDate } };
         }
         if (r.kind === "conflict") {
-          return jsonResponse({ ok: false, error: "Publication insert failed." }, 500);
+          return { status: 500, body: { ok: false, error: "Publication insert failed." } };
         }
         publicationId = r.publicationId;
         pushForSend = r.pushForSend;
@@ -1627,7 +1618,7 @@ Deno.serve(async (req: Request) => {
       // daily-path run adopts it; a retry tick recovers its pending and
       // retryable deliveries but never adopts or publishes it. Never
       // mark published here.
-      return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+      return { status: 500, body: { ok: false, error: e instanceof Error ? e.message : String(e) } };
     }
     const { data: flipped } = await svc.from("daily_content_publications").update({
       status: "published",
@@ -1645,7 +1636,98 @@ Deno.serve(async (req: Request) => {
     // run's counters are never overwritten by the second (S-5,
     // 2026-11-08). Without it the last writer's counters win.
     if (!((flipped as unknown[] | null)?.length)) throw new Error("Publication flip affected 0 rows");
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: publicationId, delivery });
+    return { status: 200, body: { ok: true, kolkata_date: kolkataDate, publication_id: publicationId, delivery } };
+  } catch (e) {
+    return { status: 500, body: { ok: false, error: e instanceof Error ? e.message : String(e) } };
+  }
+}
+
+Deno.serve(async (req: Request) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+  const svc = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
+  const body = (await req.json().catch(() => ({}))) as Record<string, unknown>;
+  // Phase 3 — user-facing preference actions (opt_out / opt_in) are routed
+  // BEFORE the CRON-secret gate: a browser cannot present the CRON secret,
+  // and the subscription endpoint in the body is the credential for this
+  // narrow path (see handlePreferenceAction). Phase 7 adds the read-only
+  // "status" action on the same path. Every other action still
+  // requires the CRON secret below. createClient performs no I/O, so
+  // constructing it before the auth check changes nothing.
+  if (body.action === "opt_out" || body.action === "opt_in" || body.action === "status") {
+    return handlePreferenceAction(svc, body);
+  }
+  const auth = req.headers.get("authorization") ?? "";
+  if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
+    return jsonResponse({ ok: false, error: "Unauthorized" }, 401);
+  }
+  const kolkataDate = kolkataDateString(new Date());
+
+  try {
+    // DECIDED POLICY (launch preparation): retry_only + dry_run is a
+    // client error, never a real retry and never a plan. Rejecting here
+    // — before any planning, publication, or send — guarantees the
+    // combination performs nothing.
+    if (body.retry_only === true && body.dry_run === true) {
+      return jsonResponse({ ok: false, error: "retry_only and dry_run cannot be combined." }, 400);
+    }
+    // DECIDED POLICY (launch preparation): pause stops retry ticks too.
+    // The settings gate applies to the retry branch exactly as it does
+    // to the daily branch, so a paused system sends nothing at all.
+    // Dry-run stays read-only and is unaffected (it returns before any
+    // gate below).
+    if (body.retry_only === true) {
+      const { data: settings } = await svc.from("daily_content_settings").select("enabled").limit(1).maybeSingle();
+      if (!settings || (settings as { enabled: boolean }).enabled !== true) {
+        return jsonResponse({ ok: false, reason: "paused" });
+      }
+      const tick = await runTick(svc, kolkataDate);
+      if (body.heal !== true) {
+        return jsonResponse({ ok: true, ...tick });
+      }
+      // Self-healing tick (owner-approved 2026-11-16): the retry pass
+      // above already ran unchanged. If today has no publication row,
+      // or the row is failed, run the daily publication path
+      // (plan -> resolve -> send -> flip) so a missed 06:00 run no
+      // longer means a lost day. A planned row is left to the tick
+      // (its deliveries were just promoted/retried); a published row
+      // is left alone. The daily path is idempotent, so a race with
+      // a concurrent daily run can only dedupe or 500 on the H3
+      // flip — never a duplicate publication or push. The healed
+      // publication is TEXT-ONLY (image_url: null, same as the
+      // current daily run); no poster is ever marked passed here.
+      const { data: todayRow } = await svc.from("daily_content_publications")
+        .select("id, status").eq("kolkata_date", kolkataDate).maybeSingle();
+      const row = todayRow as { id: string; status: string } | null;
+      if (row && row.status !== "failed") {
+        return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false });
+      }
+      const plan = await planDay(svc, kolkataDate);
+      const healed = await publishPlan(svc, kolkataDate, plan);
+      if ((healed.body as { deduped?: boolean }).deduped === true) {
+        // Race: another run published today between the row check
+        // and the daily path. The day IS published; nothing was
+        // duplicated.
+        return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, deduped: true });
+      }
+      if (healed.body.ok !== true) {
+        // No valid plan (failed row recorded once per date) or a
+        // 500 conflict: surface the tick result alongside the
+        // failure so the caller can see the retry work happened.
+        return jsonResponse({ ok: false, tick, healed: false, ...healed.body }, healed.status);
+      }
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: true, heal: healed.body });
+    }
+
+    const plan = await planDay(svc, kolkataDate);
+
+    if (body.dry_run === true) {
+      return jsonResponse({ ok: true, dry_run: true, plan });
+    }
+
+    const published = await publishPlan(svc, kolkataDate, plan);
+    return jsonResponse(published.body, published.status);
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
