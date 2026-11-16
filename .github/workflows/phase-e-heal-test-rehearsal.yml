@@ -1,0 +1,162 @@
+# Phase E Self-Healing Tick Test (rehearsal)
+#
+# Tests the self-healing retry tick against the REHEARSAL project ONLY
+# (cazdbxxffvdnsdatjsrx). Posts {"retry_only": true, "heal": true} to
+# the rehearsal daily-content function and reports what happened.
+#
+# What a heal tick does (function code, branch
+# muse/daily-self-healing-2026-11-16): runs the retry pass unchanged,
+# then — ONLY when today has no publication row or a failed row — runs
+# the daily publication path (plan -> resolve -> send -> flip), so a
+# missed 06:00 run no longer means a lost day. A planned row is left
+# to the tick; a published row is left alone. A plain retry tick
+# (heal=false) still NEVER plans, publishes, or creates a row.
+#
+# REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx. This
+# workflow NEVER touches production (no production URL, no production
+# secret, no production workflow). It is manual-dispatch only
+# (workflow_dispatch, confirm=true); there is no schedule.
+#
+# The tick is idempotent: running it twice is itself a test (the
+# second run must report healed:false, exactly one publication row
+# for today, and no second send). It is safe to re-run.
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_CRON_SECRET - the CRON secret for the rehearsal
+#     daily-content call (same value as DAILY_CONTENT_CRON_SECRET in
+#     the rehearsal project)
+#   REHEARSAL_ANON_KEY - the rehearsal project's anon key (read-only
+#     PostgREST reads of the publication row; RLS shows published
+#     rows only, so a planned/failed row reads back empty — the
+#     function response is the primary evidence, the row read is
+#     corroboration for the published case)
+#
+# The secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file. They live only in shell
+# variables inside the single run step. The run response IS logged —
+# it contains no credentials.
+#
+# NOTE: a heal tick that creates a publication SENDS a real push to
+# the rehearsal project's device tokens (a copy of production's
+# tokens from the Nov 14 restore). Expect a real "আজকের হাদিস" push
+# on the owner's device when a heal creates a publication. That is
+# the test working as designed (the send path is part of the proof).
+#
+# Prerequisites (owner actions, each its own approval):
+#   1. This file enters the repo via the GitHub web upload (browser):
+#      a git push of a workflow file is rejected because the available
+#      token lacks the `workflow` scope. Upload it to
+#      .github/workflows/ on main.
+#   2. The branch muse/daily-self-healing-2026-11-16 is deployed to
+#      rehearsal via supabase-functions-deploy-rehearsal.yml (run
+#      43799986394 did this; re-dispatch if the branch moves).
+#   3. Rehearsal daily_content_settings: the tick fails closed while
+#      paused (expected: {ok:false, reason:"paused"}). For the
+#      heal-create tests the owner enables rehearsal with:
+#        UPDATE daily_content_settings SET enabled = true WHERE id = 1;
+#      on project cazdbxxffvdnsdatjsrx (dashboard noorapp-restore-test
+#      — confirm the project NAME first). Pause it again afterwards.
+
+name: Phase E Self-Healing Tick Test (rehearsal)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the self-healing tick test against REHEARSAL only'
+        required: true
+        type: boolean
+        default: false
+      heal:
+        description: 'Heal mode on (true) or plain retry tick only (false)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  heal-tick-test:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+      REHEARSAL_ANON_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
+      REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          for s in REHEARSAL_ANON_KEY REHEARSAL_CRON_SECRET; do
+            if [ -z "${!s}" ]; then
+              echo "$s is not set as a repository secret."
+              exit 1
+            fi
+          done
+          echo "::add-mask::$REHEARSAL_ANON_KEY"
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          echo "Inputs validated; secrets are present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Self-healing tick (rehearsal)
+        env:
+          HEAL_INPUT: ${{ inputs.heal }}
+        run: |
+          set -euo pipefail
+          TODAY=$(TZ=Asia/Kolkata date +%F)
+          echo "Today (Asia/Kolkata): $TODAY"
+          if [ "$HEAL_INPUT" = "true" ]; then
+            BODY='{"retry_only": true, "heal": true}'
+            echo "Mode: HEAL tick (retry pass, then plan-if-missing)."
+          else
+            BODY='{"retry_only": true}'
+            echo "Mode: PLAIN retry tick (never plans, never publishes)."
+          fi
+          echo "--- publication row(s) for today BEFORE the tick (anon read; RLS shows published rows only) ---"
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,published_at,recipients_total,recipients_sent,recipients_failed" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
+          echo ""
+          echo "--- heal tick ---"
+          RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d "$BODY")
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$BODY_OUT" | head -c 8000
+          echo ""
+          if [ "$CODE" = "401" ]; then
+            echo "Unauthorised (401): the CRON_SECRET does not match the rehearsal project's secret."
+            exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
+          echo "--- publication row(s) for today AFTER the tick ---"
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,published_at,recipients_total,recipients_sent,recipients_failed" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
+          echo ""
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          if d.get('reason') == 'paused':
+              print('PAUSED: rehearsal settings enabled=false. Nothing planned, nothing sent.')
+              print('To run the heal-create tests, the owner enables rehearsal (UPDATE daily_content_settings SET enabled = true WHERE id = 1).')
+          elif d.get('healed') is True:
+              h = d.get('heal') or {}
+              print('HEALED: a publication was created for today.')
+              print('Publication id:', h.get('publication_id'))
+              print('Delivery:', json.dumps(h.get('delivery') or {}, ensure_ascii=False))
+              print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+          elif d.get('healed') is False:
+              print('NOT HEALED: today already has a publication row (planned/published) or the heal failed.')
+              print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+              print('Full response keys:', sorted(d.keys()))
+          else:
+              print('PLAIN RETRY TICK result:', json.dumps({k: d.get(k) for k in ('ok','retried','sent','failed','promoted','promotedPublished','superseded') if k in d}, ensure_ascii=False))
+          "
+          echo "Heal tick test complete (rehearsal only)."
