@@ -703,8 +703,9 @@ async function handlePreferenceAction(svc: Svc, body: Record<string, unknown>): 
 }
 
 // ---- Poster persistence (Daily Content Master Mission, poster pipeline) ----
-// `set_poster` records a rendered poster on a PUBLISHED publication row —
-// Stage 3 (Poster Asset Finalization) of the 4-stage pipeline:
+// `set_poster` records a rendered poster on a PLANNED or PUBLISHED
+// publication row — Stage 3 (Poster Asset Finalization) of the 4-stage
+// pipeline:
 //   1. Poster Generation (render) -> 2. Image QC -> 3. Asset Finalization
 //   (this action) -> 4. Downstream Distribution (homepage / push / share /
 //   Facebook — separate work that reads the finalized asset).
@@ -713,6 +714,10 @@ async function handlePreferenceAction(svc: Svc, body: Record<string, unknown>): 
 // path (routed after the gate in the handler). The service-role client
 // performs the write — no caller can write publications directly (RLS:
 // "Service writes publications" only).
+// In the split flow (Phase 3, Master Mission), the poster is finalized
+// onto the PLANNED row — before any publish — so the first send can
+// carry the image. `publish_planned` is the only step that publishes,
+// and it refuses a row whose poster is not QC-passed.
 //
 // The finalized asset record persisted here:
 //   poster_asset_id     — stable asset ID `poster:<kolkata_date>`
@@ -726,8 +731,10 @@ async function handlePreferenceAction(svc: Svc, body: Record<string, unknown>): 
 //   poster_qc_status    — 'passed' | 'failed'
 //
 // Safety rules (defense in depth — the workflow also enforces them):
-//  * The row must be status='published'. Posters are never attached to a
-//    planned/failed row.
+//  * The row must be status='planned' or 'published'. Posters are never
+//    attached to a failed row. A planned row finalized here stays planned
+//    until `publish_planned` publishes it — finalization alone never
+//    publishes anything.
 //  * A 'passed' poster requires a poster_url under the expected Storage
 //    public prefix for the `daily-content-posters` bucket, with a
 //    deterministic path `<kolkata_date>/<format>.png`, a matching asset ID
@@ -741,14 +748,12 @@ async function handlePreferenceAction(svc: Svc, body: Record<string, unknown>): 
 //    not downgrade a passed poster.
 //  * On a pass, the stored `push` jsonb's `image_url` is also set to the
 //    poster URL, so push RETRIES (which re-read the stored push) carry
-//    the image. First-send devices already received the text-only push —
-//    putting the image into the first send requires the split
-//    plan -> poster -> publish flow (future work, see the poster pipeline
-//    report); this action does not re-send anything.
+//    the image — and so the split flow's `publish_planned` first send
+//    carries it too. This action does not re-send anything.
 //  * Nothing here changes status/cards/push (other than push.image_url) /
 //    kolkata_date, and nothing here publishes, sends, or re-sends
-//    anything. The publication stays published (text-only) when the
-//    poster fails.
+//    anything. A failed poster leaves a planned row planned (never
+//    published) and a published row published (text-only).
 const POSTER_FORMATS = ["portrait", "square", "wide", "story"] as const;
 
 function isValidPosterUrl(value: unknown, kolkataDate: string): value is string {
@@ -834,8 +839,8 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
   if (readError) return jsonResponse({ ok: false, error: "failed to read publication" }, 500);
   if (!row) return jsonResponse({ ok: false, error: "no publication for date" }, 404);
   const pub = row as { id: string; status: string; poster_url: string | null; poster_qc_status: string | null; push: Record<string, unknown> | null };
-  if (pub.status !== "published") {
-    return jsonResponse({ ok: false, error: "publication is not published" }, 409);
+  if (pub.status !== "published" && pub.status !== "planned") {
+    return jsonResponse({ ok: false, error: "publication is neither planned nor published" }, 409);
   }
   // Idempotency: a passed poster is never overwritten without force.
   if (!force && pub.poster_qc_status === "passed" && pub.poster_url) {
@@ -870,7 +875,7 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
     .from("daily_content_publications")
     .update(update as never)
     .eq("id", pub.id)
-    .eq("status", "published")
+    .in("status", ["planned", "published"])
     .select("id");
   if (updateError) return jsonResponse({ ok: false, error: "failed to update publication" }, 500);
   if (!((updated as unknown[] | null)?.length)) {
@@ -1589,6 +1594,252 @@ async function runTick(svc: Svc, kolkataDate: string): Promise<{
   return { ...retries, promoted, promotedPublished, superseded };
 }
 
+// ---- Phase 3 (Master Mission) — split plan -> poster -> publish ----
+// The default daily path (plan -> send -> publish in one call) sends the
+// first push text-only, because `set_poster` could only finalize onto an
+// already-published row (Production Blocker #1). The split flow breaks
+// that call into three explicit steps, each behind the same CRON-secret
+// gate and the same fail-closed settings gate:
+//   1. plan_only        — plan the day, insert the row as `planned`,
+//                          send nothing, publish nothing.
+//   2. poster workflow  — render + QC + `set_poster` onto the planned
+//                          row (now allowed); a QC failure leaves the
+//                          row planned, so downstream has nothing to
+//                          distribute that day.
+//   3. publish_planned  — publish ONLY a planned row whose poster is
+//                          QC-passed, sending the first push with the
+//                          finalized poster as `image_url`.
+// The default daily path ({}) is unchanged: it still plans, sends, and
+// publishes in one call. The split flow is opt-in via the two new modes.
+// A planned row that never publishes is superseded by the next day's
+// tick (existing runTick behaviour) — a poster outage loses that day,
+// and the system recovers the next day automatically.
+
+type PushPayload = NonNullable<Awaited<ReturnType<typeof planDay>>["push"]>;
+
+type PlannedRowResolution =
+  | { kind: "ready"; publicationId: string; pushForSend: PushPayload }
+  | { kind: "deduped" }
+  | { kind: "conflict"; error: string };
+
+/** Record a failed plan once per date (shared by the daily path and
+ *  plan_only). Never lets the failure row reserve the date against a
+ *  later recovery: a row that already occupies today is left untouched
+ *  (published means a concurrent run already finished the day;
+ *  planned/failed means an earlier attempt already recorded its
+ *  outcome). Returns "deduped" when today is already published. */
+async function recordFailedPlan(
+  svc: Svc,
+  kolkataDate: string,
+  plan: Awaited<ReturnType<typeof planDay>>,
+): Promise<"deduped" | "recorded"> {
+  const { data: todayRow } = await svc.from("daily_content_publications")
+    .select("id, status")
+    .eq("kolkata_date", kolkataDate)
+    .maybeSingle();
+  if ((todayRow as { status?: string } | null)?.status === "published") return "deduped";
+  if (!todayRow) {
+    await svc.from("daily_content_publications").insert({
+      kolkata_date: kolkataDate,
+      status: "failed",
+      hadith_ref: null,
+      hadith_source_line: null,
+      cards: plan.cards,
+      push: plan.push,
+      hadith_cycle: plan.hadithCycle,
+      card_cycle: plan.cardCycle,
+      error: plan.hadithEmptyReason,
+      // Phase 9 — provenance of the attempted plan (null when seeded).
+      recommendation_id: plan.recommendationId,
+    } as never);
+  }
+  return "recorded";
+}
+
+/** Resolve today's publication row for a valid plan: adopt an existing
+ *  planned row (resume a crashed run — same day, same content), repair
+ *  a failed/corrupt row in place, or insert a fresh `planned` row.
+ *  Moved verbatim from the daily branch so the daily path and
+ *  plan_only resolve identically. Never sends, never publishes. */
+async function ensurePlannedRow(
+  svc: Svc,
+  kolkataDate: string,
+  plan: Awaited<ReturnType<typeof planDay>>,
+): Promise<PlannedRowResolution> {
+  // Valid plan: resolve today's publication row. Repair-in-place is the
+  // rule for failed and corrupt rows: rewriting the existing row to the
+  // fresh plan can never violate the unique date, unlike fail + insert.
+  // The repair is conditional on the row still holding the observed
+  // state (H3): an unconditional update could clobber a concurrent
+  // run's published row. A zero-row repair means another run won the
+  // race, so we re-read and resolve again instead of sending.
+  const freshPlan = {
+    status: "planned",
+    hadith_ref: `hadith:${plan.hadith!.id}`,
+    hadith_source_line: plan.hadith!.sourceLine,
+    cards: plan.cards,
+    push: plan.push,
+    hadith_cycle: plan.hadithCycle,
+    card_cycle: plan.cardCycle,
+    error: null,
+    published_at: null,
+    // Phase 9 — provenance of the plan (null when seeded). The column
+    // comes from migration 202611070003; the edge must not be deployed
+    // before that migration is applied (see the Phase 9 doc).
+    recommendation_id: plan.recommendationId,
+  };
+  const repairToPlan = async (id: string, mode: "failed" | "corrupt"): Promise<boolean> => {
+    const { data: updated } = mode === "failed"
+      ? await svc.from("daily_content_publications").update(freshPlan as never).eq("id", id).eq("status", "failed").select("id")
+      : await svc.from("daily_content_publications").update(freshPlan as never).eq("id", id).eq("status", "planned").is("push", null).select("id");
+    return ((updated as unknown[] | null)?.length ?? 0) > 0;
+  };
+  const resolveRow = async (row: { id: string; status: string; push: unknown } | null): Promise<PlannedRowResolution> => {
+    if (!row) return { kind: "conflict", error: "Publication repair conflict." };
+    if (row.status === "published") return { kind: "deduped" };
+    if (row.status === "planned" && row.push) {
+      // Resume a crashed run: adopt the stored push (same day, same
+      // content — re-planning could change the day's content mid-flight).
+      return { kind: "ready", publicationId: row.id, pushForSend: row.push as PushPayload };
+    }
+    const repaired = await repairToPlan(row.id, row.status === "failed" ? "failed" : "corrupt");
+    if (repaired) return { kind: "ready", publicationId: row.id, pushForSend: plan.push as PushPayload };
+    const { data: fresh } = await svc.from("daily_content_publications")
+      .select("id, status, push").eq("id", row.id).maybeSingle();
+    const f = fresh as { id: string; status: string; push: unknown } | null;
+    if (f?.status === "published") return { kind: "deduped" };
+    if (f?.status === "planned" && f.push) {
+      return { kind: "ready", publicationId: f.id, pushForSend: f.push as PushPayload };
+    }
+    return { kind: "conflict", error: "Publication repair conflict." };
+  };
+  const { data: todayRow } = await svc.from("daily_content_publications")
+    .select("id, status, push")
+    .eq("kolkata_date", kolkataDate)
+    .maybeSingle();
+  if (todayRow) {
+    return await resolveRow(todayRow as { id: string; status: string; push: unknown });
+  }
+  const { data: pub } = await svc
+    .from("daily_content_publications")
+    .insert({
+      kolkata_date: kolkataDate,
+      status: "planned",
+      hadith_ref: `hadith:${plan.hadith!.id}`,
+      hadith_source_line: plan.hadith!.sourceLine,
+      cards: plan.cards,
+      push: plan.push,
+      hadith_cycle: plan.hadithCycle,
+      card_cycle: plan.cardCycle,
+      // Phase 9 — provenance of the plan (null when seeded).
+      recommendation_id: plan.recommendationId,
+    } as never)
+    .select("id")
+    .single();
+  const publicationId = (pub as { id: string } | null)?.id ?? null;
+  if (publicationId) {
+    return { kind: "ready", publicationId, pushForSend: plan.push as PushPayload };
+  }
+  // Race: another run created today's row first. Resolve it the
+  // same way as above instead of failing the day.
+  const { data: raced } = await svc
+    .from("daily_content_publications")
+    .select("id, status, push")
+    .eq("kolkata_date", kolkataDate)
+    .maybeSingle();
+  const r = await resolveRow(raced as { id: string; status: string; push: unknown } | null);
+  if (r.kind === "conflict") return { kind: "conflict", error: "Publication insert failed." };
+  return r;
+}
+
+/** Send the first push for a planned row and flip it to `published`.
+ *  Moved verbatim from the daily branch (stale-promotion, send, H3
+ *  flip) so the daily path and `publish_planned` send identically.
+ *  Throws on a send abort (row stays `planned`) or on a zero-row flip;
+ *  callers map the throw to a 500. Never marks published on failure. */
+async function sendAndPublish(
+  svc: Svc,
+  publicationId: string,
+  pushForSend: PushPayload,
+): Promise<{ publication_id: string; delivery: Awaited<ReturnType<typeof sendToTokens>> }> {
+  // Stale `pending` delivery rows (inserted but never attempted because
+  // a previous run crashed mid-send) become `retryable` now, so the
+  // retry tick delivers them instead of dropping them silently. The
+  // per-(publication, device) cap still prevents any double-send.
+  // R-5: only due rows are promoted — a row leased by a concurrent
+  // run's in-flight first-send carries a future next_attempt_at
+  // and is skipped until its lease expires. A row with no
+  // next_attempt_at was never leased, so the second update
+  // promotes it (NULL fails the LTE comparison).
+  const staleIso = new Date().toISOString();
+  const staleBase = () => svc.from("daily_content_deliveries").update({
+    status: "retryable",
+    next_attempt_at: staleIso,
+  } as never).eq("publication_id", publicationId).eq("status", "pending");
+  await staleBase().lte("next_attempt_at", staleIso);
+  await staleBase().is("next_attempt_at", null);
+  const delivery = await sendToTokens(svc, publicationId, pushForSend);
+  const { data: flipped } = await svc.from("daily_content_publications").update({
+    status: "published",
+    published_at: new Date().toISOString(),
+    recipients_total: delivery.total,
+    recipients_sent: delivery.sent,
+    recipients_failed: delivery.failed,
+  } as never).eq("id", publicationId).eq("status", "planned").select("id");
+  // H3: a flip that matches zero rows must not be reported as
+  // published. The row stays planned and the next run recovers it.
+  // The status condition is the concurrency guard: two daily runs
+  // that both resolve "ready" can both send (per-device caps prevent
+  // double-sends), but only the first flips the row to published;
+  // the second matches zero rows and throws here, so the first
+  // run's counters are never overwritten by the second (S-5,
+  // 2026-11-08). Without it the last writer's counters win.
+  if (!((flipped as unknown[] | null)?.length)) throw new Error("Publication flip affected 0 rows");
+  return { publication_id: publicationId, delivery };
+}
+
+/** Publish step 3 of the split flow: publish a planned row ONLY when
+ *  its poster is finalized (QC-passed), sending the first push with the
+ *  finalized poster as `image_url`. Refuses anything else — a failed
+ *  or missing poster leaves the row planned, so downstream has nothing
+ *  to distribute that day. An already-published row dedupes. */
+async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> {
+  const { data: row } = await svc.from("daily_content_publications")
+    .select("id, status, push, poster_url, poster_qc_status")
+    .eq("kolkata_date", kolkataDate)
+    .maybeSingle();
+  const pub = row as {
+    id: string;
+    status: string;
+    push: Record<string, unknown> | null;
+    poster_url: string | null;
+    poster_qc_status: string | null;
+  } | null;
+  if (!pub) return jsonResponse({ ok: false, error: "no publication for date" }, 404);
+  if (pub.status === "published") return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+  if (pub.status !== "planned") {
+    return jsonResponse({ ok: false, error: "publication is not planned", reason: "not_planned" }, 409);
+  }
+  // The split-flow gate: a publication is published ONLY with a
+  // QC-passed finalized poster. A failed or missing poster leaves
+  // the row planned — downstream has nothing to distribute.
+  if (pub.poster_qc_status !== "passed" || !pub.poster_url) {
+    return jsonResponse({ ok: false, reason: "poster_not_ready", poster_qc_status: pub.poster_qc_status ?? null }, 409);
+  }
+  const storedPush = pub.push && typeof pub.push === "object" ? (pub.push as Record<string, unknown>) : null;
+  if (!storedPush) return jsonResponse({ ok: false, error: "planned row has no push payload" }, 500);
+  // set_poster already sets push.image_url; re-derive it from the
+  // finalized poster_url so the first send carries the image even if
+  // the stored push predates finalization.
+  const pushForSend = { ...storedPush, image_url: pub.poster_url } as PushPayload;
+  try {
+    const result = await sendAndPublish(svc, pub.id, pushForSend);
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery });
+  } catch (e) {
+    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+  }
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -1625,6 +1876,23 @@ Deno.serve(async (req: Request) => {
     if (body.retry_only === true && body.dry_run === true) {
       return jsonResponse({ ok: false, error: "retry_only and dry_run cannot be combined." }, 400);
     }
+    // Phase 3 (split flow): publish_planned writes (sends + flips), so
+    // it can never combine with dry_run — same policy as retry_only.
+    // plan_only and publish_planned are mutually exclusive, and neither
+    // combines with retry_only (routed below). Rejected before planDay
+    // so a bad combination performs nothing.
+    if (body.publish_planned === true && body.dry_run === true) {
+      return jsonResponse({ ok: false, error: "publish_planned and dry_run cannot be combined." }, 400);
+    }
+    if (body.plan_only === true && body.retry_only === true) {
+      return jsonResponse({ ok: false, error: "plan_only and retry_only cannot be combined." }, 400);
+    }
+    if (body.publish_planned === true && body.retry_only === true) {
+      return jsonResponse({ ok: false, error: "publish_planned and retry_only cannot be combined." }, 400);
+    }
+    if (body.plan_only === true && body.publish_planned === true) {
+      return jsonResponse({ ok: false, error: "plan_only and publish_planned cannot be combined." }, 400);
+    }
     // DECIDED POLICY (launch preparation): pause stops retry ticks too.
     // The settings gate applies to the retry branch exactly as it does
     // to the daily branch, so a paused system sends nothing at all.
@@ -1636,6 +1904,17 @@ Deno.serve(async (req: Request) => {
         return jsonResponse({ ok: false, reason: "paused" });
       }
       return jsonResponse({ ok: true, ...(await runTick(svc, kolkataDate)) });
+    }
+    // Phase 3 (split flow), step 3: publish a planned row whose poster
+    // is finalized. Needs no fresh plan — it publishes what plan_only
+    // planned and the poster workflow finalized. Fail-closed when
+    // paused, exactly like the daily branch.
+    if (body.publish_planned === true) {
+      const { data: settings } = await svc.from("daily_content_settings").select("enabled").limit(1).maybeSingle();
+      if (!settings || (settings as { enabled: boolean }).enabled !== true) {
+        return jsonResponse({ ok: false, reason: "paused" });
+      }
+      return await publishPlanned(svc, kolkataDate);
     }
 
     const plan = await planDay(svc, kolkataDate);
@@ -1652,159 +1931,47 @@ Deno.serve(async (req: Request) => {
     }
 
     if (!plan.hadith || !plan.push) {
-      // No valid plan: record the failure once per date, but never let
-      // the failure row reserve the date against a later recovery. If a
-      // row already occupies today, leave it untouched (published means
-      // a concurrent run already finished the day; planned/failed means
-      // an earlier attempt already recorded its outcome) and just report.
-      const { data: todayRow } = await svc.from("daily_content_publications")
-        .select("id, status")
-        .eq("kolkata_date", kolkataDate)
-        .maybeSingle();
-      if (todayRow?.status === "published") {
+      // No valid plan: record the failure once per date (shared with
+      // plan_only — see recordFailedPlan), but never let the failure
+      // row reserve the date against a later recovery.
+      const recorded = await recordFailedPlan(svc, kolkataDate, plan);
+      if (recorded === "deduped") {
         return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
-      }
-      if (!todayRow) {
-        await svc.from("daily_content_publications").insert({
-          kolkata_date: kolkataDate,
-          status: "failed",
-          hadith_ref: null,
-          hadith_source_line: null,
-          cards: plan.cards,
-          push: plan.push,
-          hadith_cycle: plan.hadithCycle,
-          card_cycle: plan.cardCycle,
-          error: plan.hadithEmptyReason,
-          // Phase 9 — provenance of the attempted plan (null when seeded).
-          recommendation_id: plan.recommendationId,
-        } as never);
       }
       return jsonResponse({ ok: false, reason: plan.hadithEmptyReason });
     }
 
-    // Valid plan: resolve today's publication row. Repair-in-place is the
-    // rule for failed and corrupt rows: rewriting the existing row to the
-    // fresh plan can never violate the unique date, unlike fail + insert.
-    // The repair is conditional on the row still holding the observed
-    // state (H3): an unconditional update could clobber a concurrent
-    // run's published row. A zero-row repair means another run won the
-    // race, so we re-read and resolve again instead of sending.
-    const freshPlan = {
-      status: "planned",
-      hadith_ref: `hadith:${plan.hadith!.id}`,
-      hadith_source_line: plan.hadith!.sourceLine,
-      cards: plan.cards,
-      push: plan.push,
-      hadith_cycle: plan.hadithCycle,
-      card_cycle: plan.cardCycle,
-      error: null,
-      published_at: null,
-      // Phase 9 — provenance of the plan (null when seeded). The column
-      // comes from migration 202611070003; the edge must not be deployed
-      // before that migration is applied (see the Phase 9 doc).
-      recommendation_id: plan.recommendationId,
-    };
-    const repairToPlan = async (id: string, mode: "failed" | "corrupt"): Promise<boolean> => {
-      const { data: updated } = mode === "failed"
-        ? await svc.from("daily_content_publications").update(freshPlan as never).eq("id", id).eq("status", "failed").select("id")
-        : await svc.from("daily_content_publications").update(freshPlan as never).eq("id", id).eq("status", "planned").is("push", null).select("id");
-      return ((updated as unknown[] | null)?.length ?? 0) > 0;
-    };
-    type Resolution =
-      | { kind: "ready"; publicationId: string; pushForSend: typeof plan.push }
-      | { kind: "deduped" }
-      | { kind: "conflict" };
-    const resolveRow = async (row: { id: string; status: string; push: unknown } | null): Promise<Resolution> => {
-      if (!row) return { kind: "conflict" };
-      if (row.status === "published") return { kind: "deduped" };
-      if (row.status === "planned" && row.push) {
-        // Resume a crashed run: adopt the stored push (same day, same
-        // content — re-planning could change the day's content mid-flight).
-        return { kind: "ready", publicationId: row.id, pushForSend: row.push as typeof plan.push };
-      }
-      const repaired = await repairToPlan(row.id, row.status === "failed" ? "failed" : "corrupt");
-      if (repaired) return { kind: "ready", publicationId: row.id, pushForSend: plan.push };
-      const { data: fresh } = await svc.from("daily_content_publications")
-        .select("id, status, push").eq("id", row.id).maybeSingle();
-      const f = fresh as { id: string; status: string; push: unknown } | null;
-      if (f?.status === "published") return { kind: "deduped" };
-      if (f?.status === "planned" && f.push) {
-        return { kind: "ready", publicationId: f.id, pushForSend: f.push as typeof plan.push };
-      }
-      return { kind: "conflict" };
-    };
-    const { data: todayRow } = await svc.from("daily_content_publications")
-      .select("id, status, push")
-      .eq("kolkata_date", kolkataDate)
-      .maybeSingle();
-    let publicationId: string | null = null;
-    let pushForSend = plan.push;
-    if (todayRow) {
-      const r = await resolveRow(todayRow as { id: string; status: string; push: unknown });
+    // Phase 3 (split flow), step 1: plan_only stops here — the row is
+    // planned, the poster workflow finalizes onto it, and
+    // publish_planned finishes the day. Never sends, never flips to
+    // published. Dry-run (above) takes precedence: a dry run returns
+    // the plan and writes nothing.
+    if (body.plan_only === true) {
+      const r = await ensurePlannedRow(svc, kolkataDate, plan);
       if (r.kind === "deduped") {
         return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
       }
       if (r.kind === "conflict") {
-        return jsonResponse({ ok: false, error: "Publication repair conflict." }, 500);
+        return jsonResponse({ ok: false, error: r.error }, 500);
       }
-      publicationId = r.publicationId;
-      pushForSend = r.pushForSend;
-    } else {
-      const { data: pub } = await svc
-        .from("daily_content_publications")
-        .insert({
-          kolkata_date: kolkataDate,
-          status: "planned",
-          hadith_ref: `hadith:${plan.hadith.id}`,
-          hadith_source_line: plan.hadith.sourceLine,
-          cards: plan.cards,
-          push: plan.push,
-          hadith_cycle: plan.hadithCycle,
-          card_cycle: plan.cardCycle,
-          // Phase 9 — provenance of the plan (null when seeded).
-          recommendation_id: plan.recommendationId,
-        } as never)
-        .select("id")
-        .single();
-      publicationId = (pub as { id: string } | null)?.id ?? null;
-      if (!publicationId) {
-        // Race: another run created today's row first. Resolve it the
-        // same way as above instead of failing the day.
-        const { data: raced } = await svc
-          .from("daily_content_publications")
-          .select("id, status, push")
-          .eq("kolkata_date", kolkataDate)
-          .maybeSingle();
-        const r = await resolveRow(raced as { id: string; status: string; push: unknown } | null);
-        if (r.kind === "deduped") {
-          return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
-        }
-        if (r.kind === "conflict") {
-          return jsonResponse({ ok: false, error: "Publication insert failed." }, 500);
-        }
-        publicationId = r.publicationId;
-        pushForSend = r.pushForSend;
-      }
+      return jsonResponse({ ok: true, planned: true, kolkata_date: kolkataDate, publication_id: r.publicationId });
     }
-    // Stale `pending` delivery rows (inserted but never attempted because
-    // a previous run crashed mid-send) become `retryable` now, so the
-    // retry tick delivers them instead of dropping them silently. The
-    // per-(publication, device) cap still prevents any double-send.
-    // R-5: only due rows are promoted — a row leased by a concurrent
-    // run's in-flight first-send carries a future next_attempt_at
-    // and is skipped until its lease expires. A row with no
-    // next_attempt_at was never leased, so the second update
-    // promotes it (NULL fails the LTE comparison).
-    const staleIso = new Date().toISOString();
-    const staleBase = () => svc.from("daily_content_deliveries").update({
-      status: "retryable",
-      next_attempt_at: staleIso,
-    } as never).eq("publication_id", publicationId).eq("status", "pending");
-    await staleBase().lte("next_attempt_at", staleIso);
-    await staleBase().is("next_attempt_at", null);
-    let delivery;
+
+    // Valid plan: resolve today's publication row (shared helper —
+    // plan_only uses the same resolution, then stops before sending).
+    const r = await ensurePlannedRow(svc, kolkataDate, plan);
+    if (r.kind === "deduped") {
+      return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
+    }
+    if (r.kind === "conflict") {
+      return jsonResponse({ ok: false, error: r.error }, 500);
+    }
+    const publicationId = r.publicationId;
+    const pushForSend = r.pushForSend;
+    // Send + flip (shared helper — publish_planned sends identically).
+    let result;
     try {
-      delivery = await sendToTokens(svc, publicationId, pushForSend);
+      result = await sendAndPublish(svc, publicationId, pushForSend);
     } catch (e) {
       // Send aborted mid-flight: the row stays `planned`. Only a later
       // daily-path run adopts it; a retry tick recovers its pending and
@@ -1812,23 +1979,7 @@ Deno.serve(async (req: Request) => {
       // mark published here.
       return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
     }
-    const { data: flipped } = await svc.from("daily_content_publications").update({
-      status: "published",
-      published_at: new Date().toISOString(),
-      recipients_total: delivery.total,
-      recipients_sent: delivery.sent,
-      recipients_failed: delivery.failed,
-    } as never).eq("id", publicationId).eq("status", "planned").select("id");
-    // H3: a flip that matches zero rows must not be reported as
-    // published. The row stays planned and the next run recovers it.
-    // The status condition is the concurrency guard: two daily runs
-    // that both resolve "ready" can both send (per-device caps prevent
-    // double-sends), but only the first flips the row to published;
-    // the second matches zero rows and throws here, so the first
-    // run's counters are never overwritten by the second (S-5,
-    // 2026-11-08). Without it the last writer's counters win.
-    if (!((flipped as unknown[] | null)?.length)) throw new Error("Publication flip affected 0 rows");
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: publicationId, delivery });
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery });
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }

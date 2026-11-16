@@ -2253,4 +2253,292 @@ await t("edge Phase 9: with no approved run the plan stays seeded and carries th
   assert.equal(res.json.plan.context.hijriKey, libCtx.hijriKey);
 });
 
+// ---- Phase 3 (Master Mission) — split plan -> poster -> publish ----
+// The default daily path ({}) still plans, sends, and publishes in one
+// call (covered by the H2 tests above). These cases cover the two new
+// explicit modes and the set_poster change (planned rows accepted).
+const posterUrlFor = (date) => `http://stub/storage/v1/object/public/daily-content-posters/${date}/portrait.png`;
+const posterBody = (over = {}) => ({
+  action: "set_poster",
+  kolkata_date: TODAY,
+  poster_qc_status: "passed",
+  poster_url: posterUrlFor(TODAY),
+  poster_asset_id: `poster:${TODAY}`,
+  poster_storage_path: `daily-content-posters/${TODAY}/portrait.png`,
+  poster_checksum: "a".repeat(64),
+  poster_scene_id: "courtyard-prayer",
+  ...over,
+});
+const plannedPush = () => ({
+  title: "T",
+  body: "B",
+  deep_link: "/hadith",
+  icon: "https://www.noorapp.in/notification-icon.png",
+  badge: "https://www.noorapp.in/badge-icon.png",
+  image_url: null,
+});
+const plannedRow = (over = {}) => ({
+  id: "pub-plan",
+  kolkata_date: TODAY,
+  status: "planned",
+  hadith_ref: "hadith:seed-h1",
+  hadith_source_line: "Sahih al-Bukhari, Hadith 1",
+  cards: [],
+  push: plannedPush(),
+  poster_qc_status: null,
+  poster_url: null,
+  ...over,
+});
+
+await t("edge Phase 3: plan_only plans without sending or publishing", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ plan_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
+  assert.equal(res.json.kolkata_date, TODAY);
+  assert.equal(typeof res.json.publication_id, "string");
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  const pub = svc.tables.daily_content_publications[0];
+  assert.equal(pub.id, res.json.publication_id);
+  assert.equal(pub.status, "planned");
+  assert.equal(pub.push.image_url, null);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+});
+
+await t("edge Phase 3: plan_only fails closed when paused", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: false }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ plan_only: true });
+  assert.equal(res.json.ok, false);
+  assert.equal(res.json.reason, "paused");
+  assert.equal(svc.tables.daily_content_publications.length, 0);
+  assert.equal(calls.length, 0);
+});
+
+await t("edge Phase 3: plan_only twice adopts the same planned row, no duplicate", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const first = await callEdge({ plan_only: true });
+  const second = await callEdge({ plan_only: true });
+  assert.equal(first.json.planned, true);
+  assert.equal(second.json.planned, true);
+  assert.equal(second.json.publication_id, first.json.publication_id);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+});
+
+await t("edge Phase 3: plan_only on a published day dedupes", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+    publications: [{ id: "pub-done", kolkata_date: TODAY, status: "published", push: plannedPush() }],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ plan_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.deduped, true);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  assert.equal(calls.length, 0);
+});
+
+await t("edge Phase 3: set_poster finalizes onto a planned row", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge(posterBody());
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.poster_qc_status, "passed");
+  const pub = svc.tables.daily_content_publications[0];
+  assert.equal(pub.status, "planned");
+  assert.equal(pub.poster_url, posterUrlFor(TODAY));
+  assert.equal(pub.poster_asset_id, `poster:${TODAY}`);
+  assert.equal(pub.poster_qc_status, "passed");
+  assert.equal(pub.poster_scene_id, "courtyard-prayer");
+  assert.equal(pub.push.image_url, posterUrlFor(TODAY));
+});
+
+await t("edge Phase 3: set_poster refuses a failed row", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow({ status: "failed", error: "no plan" })],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge(posterBody());
+  assert.equal(res.status, 409);
+  assert.equal(res.json.ok, false);
+  const pub = svc.tables.daily_content_publications[0];
+  assert.equal(pub.poster_url, null);
+  assert.equal(pub.poster_qc_status, null);
+});
+
+await t("edge Phase 3: publish_planned refuses a planned row with no passed poster", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.status, 409);
+  assert.equal(res.json.ok, false);
+  assert.equal(res.json.reason, "poster_not_ready");
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+});
+
+await t("edge Phase 3: publish_planned refuses a failed poster", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow({ poster_qc_status: "failed", poster_error: "render failed" })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.status, 409);
+  assert.equal(res.json.reason, "poster_not_ready");
+  assert.equal(res.json.poster_qc_status, "failed");
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(calls.length, 0);
+});
+
+await t("edge Phase 3: full split flow — plan_only, set_poster, publish_planned sends with the image", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const planned = await callEdge({ plan_only: true });
+  assert.equal(planned.json.planned, true);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.json.ok, true);
+  assert.equal(pub.json.publication_id, planned.json.publication_id);
+  assert.equal(pub.json.delivery.total, 2);
+  assert.equal(pub.json.delivery.sent, 2);
+  const row = svc.tables.daily_content_publications[0];
+  assert.equal(row.status, "published");
+  assert.equal(row.recipients_total, 2);
+  assert.equal(row.recipients_sent, 2);
+  assert.equal(row.poster_qc_status, "passed");
+  assert.equal(calls.length, 2);
+  assert.equal(JSON.parse(calls[0].payload).image_url, posterUrlFor(TODAY));
+  assert.equal(JSON.parse(calls[1].payload).image_url, posterUrlFor(TODAY));
+  assert.equal(svc.tables.daily_content_deliveries.filter((d) => d.status === "sent").length, 2);
+  // A second publish_planned dedupes — no double-publish, no extra send.
+  const again = await callEdge({ publish_planned: true });
+  assert.equal(again.json.ok, true);
+  assert.equal(again.json.deduped, true);
+  assert.equal(calls.length, 2);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+});
+
+await t("edge Phase 3: publish_planned fails closed when paused", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: false }],
+    publications: [plannedRow({
+      poster_qc_status: "passed",
+      poster_url: posterUrlFor(TODAY),
+      push: { ...plannedPush(), image_url: posterUrlFor(TODAY) },
+    })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.json.ok, false);
+  assert.equal(res.json.reason, "paused");
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(calls.length, 0);
+});
+
+await t("edge Phase 3: publish_planned on an already-published row dedupes", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow({
+      status: "published",
+      poster_qc_status: "passed",
+      poster_url: posterUrlFor(TODAY),
+    })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.deduped, true);
+  assert.equal(calls.length, 0);
+});
+
+await t("edge Phase 3: split-flow mode combinations are rejected and perform nothing", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const r1 = await callEdge({ plan_only: true, retry_only: true });
+  assert.equal(r1.status, 400);
+  const r2 = await callEdge({ publish_planned: true, dry_run: true });
+  assert.equal(r2.status, 400);
+  const r3 = await callEdge({ plan_only: true, publish_planned: true });
+  assert.equal(r3.status, 400);
+  const r4 = await callEdge({ publish_planned: true, retry_only: true });
+  assert.equal(r4.status, 400);
+  assert.equal(svc.tables.daily_content_publications.length, 0);
+  assert.equal(calls.length, 0);
+});
+
+await t("edge Phase 3: plan_only with dry_run returns the plan and writes nothing", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({ plan_only: true, dry_run: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.dry_run, true);
+  assert.equal(typeof res.json.plan, "object");
+  assert.equal(svc.tables.daily_content_publications.length, 0);
+  assert.equal(calls.length, 0);
+});
+
 console.log(`edge tests: ${n} passed`);
