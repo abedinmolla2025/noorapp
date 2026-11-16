@@ -534,7 +534,13 @@ t("containerState: valid publication builds the published record", () => {
     source: "Sahih al-Bukhari, Hadith 42",
     chapter: "Chapter 3",
     canonicalLink: "/hadith/sahih-bukhari/bangla",
+    posterUrl: null,
   });
+});
+t("containerState: poster_url flows through to the published record (Phase 3)", () => {
+  const url = "https://cazdbxxffvdnsdatjsrx.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-15/portrait.png";
+  const rec = cstate.resolvePublishedRecord(pubRow({ poster_url: url }), hRow());
+  assert.equal(rec.posterUrl, url);
 });
 t("containerState: non-bukhari book keeps its key and falls back to /hadith", () => {
   const rec = cstate.resolvePublishedRecord(pubRow(), hRow({ book_key: "muslim" }));

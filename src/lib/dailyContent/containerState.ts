@@ -37,6 +37,9 @@ export interface PublishedHadithRecord {
   source: string;
   chapter: string;
   canonicalLink: string;
+  /** Phase 3 — the finalized poster URL for today's publication
+   *  (null when no poster is finalized yet; the card stays text-only). */
+  posterUrl?: string | null;
 }
 
 export type RotationReason = "no-publication" | "invalid-content" | "fetch-error";
@@ -56,6 +59,7 @@ export type DailyHadithViewState =
 
 export interface PublicationRow {
   hadith_ref?: string | null;
+  poster_url?: string | null;
 }
 
 /** Minimal shape of a recommendation run row for the contextual resolver. */
@@ -95,6 +99,7 @@ export function resolvePublishedRecord(
     source: `${book}, Hadith ${row.hadith_number}`,
     chapter: `Chapter ${row.chapter_id}`,
     canonicalLink: row.book_key === "bukhari" ? "/hadith/sahih-bukhari/bangla" : "/hadith",
+    posterUrl: pub.poster_url ?? null,
   };
 }
 

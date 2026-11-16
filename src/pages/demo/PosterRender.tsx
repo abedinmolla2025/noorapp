@@ -14,6 +14,15 @@
  *     verbatim fields are checked character-for-character against the
  *     stored card (`checkOgVerbatim`). A mismatch aborts the render:
  *     the poster must never disagree with the published text.
+ *  1b. Plan (`?plan=1`, split flow, Phase 3): the PLANNED row's cards
+ *     from `/poster-plan.json` — written by the poster workflow from an
+ *     admin-JWT read of the planned row. Anon RLS ("Public can read
+ *     published rows") cannot see a planned row, and the admin policy
+ *     ("Admins read publications") already covers the workflow's read,
+ *     so no RLS or migration change is needed. The JSON is served only
+ *     from the ephemeral workflow runner (never deployed) and holds only
+ *     the day's public hadith content — no secrets. The same verbatim
+ *     gate applies: the rebuilt card must equal the stored card.
  *  2. Fixture (`?fixture=intentions`, test-only): the app's own rotation
  *     entry from `src/components/DailyHadith.tsx` (Sahih Bukhari,
  *     intentions hadith — verbatim, no number, because that entry
@@ -44,6 +53,8 @@
  * variants and legacy stays available as an explicit override; the
  * pronunciation block is omitted for a/b/c and its state is recorded
  * in the status JSON / QC metadata only),
+ * `plan=1` (split flow: render from the PLANNED row's `/poster-plan.json`
+ * instead of the published row — see data source 1b above),
  * `fixture` (test-only, see above).
  */
 import { useEffect, useRef, useState } from "react";
@@ -129,6 +140,7 @@ export default function PosterRender() {
   const format: OgFormat = (FORMATS as string[]).includes(formatParam) ? (formatParam as OgFormat) : "portrait";
   const layout = parsePosterLayout(params.get("layout"));
   const fixture = params.get("fixture");
+  const planMode = params.get("plan") === "1";
 
   const [card, setCard] = useState<CardPayload | null>(null);
   const [background, setBackground] = useState<BackgroundScene | null>(null);
@@ -168,20 +180,46 @@ export default function PosterRender() {
         } else if (fixture) {
           throw new Error(`unknown_fixture:${fixture}`);
         } else {
-          // Live: published publication row for the date (anon-readable).
-          const { data: pub, error: pubError } = await supabasePublic
-            .from("daily_content_publications" as never)
-            .select("id, kolkata_date, hadith_ref, hadith_source_line, cards")
-            .eq("kolkata_date", date)
-            .eq("status", "published")
-            .maybeSingle();
-          if (pubError) throw new Error(`publication_read:${pubError.message}`);
-          if (!pub) throw new Error(`no_published_publication:${date}`);
-          const row = pub as unknown as {
+          // Live: the publication row for the date.
+          //  - Default: the PUBLISHED row (anon-readable).
+          //  - `?plan=1`: the PLANNED row's cards from `/poster-plan.json`
+          //    (written by the poster workflow from an admin-JWT read —
+          //    anon cannot see a planned row; see the header comment).
+          //  Either way the cards below go through the same verbatim
+          //  gate: the rebuilt card must equal the stored card.
+          let row: {
             hadith_ref?: string | null;
             hadith_source_line?: string | null;
             cards?: unknown;
           };
+          if (planMode) {
+            const planRes = await fetch("/poster-plan.json");
+            if (!planRes.ok) throw new Error(`plan_json_missing:${date}`);
+            const planJson = (await planRes.json()) as {
+              kolkata_date?: string;
+              hadith_ref?: string | null;
+              hadith_source_line?: string | null;
+              cards?: unknown;
+            };
+            if (planJson.kolkata_date && planJson.kolkata_date !== date) {
+              throw new Error(`plan_json_date_mismatch:${planJson.kolkata_date}`);
+            }
+            row = planJson;
+          } else {
+            const { data: pub, error: pubError } = await supabasePublic
+              .from("daily_content_publications" as never)
+              .select("id, kolkata_date, hadith_ref, hadith_source_line, cards")
+              .eq("kolkata_date", date)
+              .eq("status", "published")
+              .maybeSingle();
+            if (pubError) throw new Error(`publication_read:${pubError.message}`);
+            if (!pub) throw new Error(`no_published_publication:${date}`);
+            row = pub as unknown as {
+              hadith_ref?: string | null;
+              hadith_source_line?: string | null;
+              cards?: unknown;
+            };
+          }
           const cards = Array.isArray(row.cards) ? (row.cards as Record<string, unknown>[]) : [];
           const stored = cards.find((c) => c.kind === "hadith") as
             | { recordRef?: string; title?: string; arabic?: string; bengali?: string; sourceLine?: string }

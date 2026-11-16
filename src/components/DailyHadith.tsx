@@ -133,6 +133,9 @@ export interface PublishedDailyHadith {
   source: string;
   chapter: string;
   canonicalLink: string;
+  /** Phase 3 — the finalized poster URL for today's publication
+   *  (null when no poster is finalized yet; the card stays text-only). */
+  posterUrl?: string | null;
 }
 
 const languages: { key: Language; label: string }[] = [
@@ -318,6 +321,23 @@ const DailyHadith = ({ published, status, rotationReason, contextLabel }: DailyH
           <p className="text-sm text-amber-300/80 mb-5 md:mb-6">
             {contextLabel}
           </p>
+        )}
+
+        {/* Phase 3 — finalized poster (published state only): the same
+            asset the poster pipeline finalized for today. Shown above
+            the text card; the text card below stays for readability.
+            Contextual/rotation states have no publication row, so they
+            never show a poster. When no poster is finalized yet, the
+            card stays text-only. */}
+        {isPublished && published?.posterUrl && (
+          <div className="mb-5 md:mb-6 overflow-hidden rounded-xl md:rounded-2xl border border-white/10">
+            <img
+              src={published.posterUrl}
+              alt={`আজকের হাদিস পোস্টার — ${shownSource}`}
+              className="w-full h-auto block"
+              loading="lazy"
+            />
+          </div>
         )}
 
         {/* Hadith Text Card */}

@@ -116,7 +116,7 @@ export function DailyHadithContainer() {
           // `as any` pattern the codebase uses for device_push_tokens).
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           .from("daily_content_publications" as any)
-          .select("hadith_ref, hadith_source_line")
+          .select("hadith_ref, hadith_source_line, poster_url")
           .eq("kolkata_date", today)
           .eq("status", "published")
           .maybeSingle();
@@ -149,7 +149,7 @@ export function DailyHadithContainer() {
           return;
         }
         const record = resolvePublishedRecord(
-          pub as { hadith_ref?: string | null },
+          pub as { hadith_ref?: string | null; poster_url?: string | null },
           h as {
             arabic?: string;
             bengali?: string | null;
