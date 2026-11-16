@@ -33,8 +33,9 @@
 # Bengali-first variants side by side WITHOUT touching the publication
 # row — the pre-check's idempotent skip is bypassed, PNGs upload to
 # `<kolkata_date>/compare/<layout>-<format>.png`, and the set_poster
-# finalization + verification steps are skipped. Nothing is finalized
-# until the owner chooses a layout.
+# finalization + verification steps are skipped. Standard template is
+# layout "c" (Bengali Panel + Arabic Footnote, Master Mission Phase 2
+# decision 2026-11-16); compare mode stays available for A/B checks.
 #
 # Failure: any render/upload/QC failure records `poster_qc_status=
 # 'failed'` + a short reason on the publication row (never a poster
@@ -68,10 +69,10 @@ on:
         type: string
         default: 'portrait,square'
       layout:
-        description: 'Poster layout: legacy (Arabic-first) or a/b/c (Bengali-first comparison variants)'
+        description: 'Poster layout: c (standard — Bengali Panel + Arabic Footnote), a/b (Bengali-first overrides), legacy (Arabic-first, explicit only)'
         required: false
         type: choice
-        default: 'legacy'
+        default: 'c'
         options: [legacy, a, b, c]
       compare:
         description: 'Comparison mode: render to <date>/compare/<layout>-<format>.png and skip set_poster finalization (never touches the publication row)'
