@@ -767,6 +767,71 @@ t("non-admin cannot approve -> 403", async () => {
   eq(r.status, 403, "status");
 });
 
+// 36-40: Phase 6 — decided-runs history + regenerate-per-run.
+t("list_decided returns approved + rejected runs, newest first, pending excluded", async () => {
+  const decided = (id, status, created_at) => ({
+    id, kolkata_date: "2026-11-07", hijri_key: "1448-05-26", context: {},
+    recommendations: [], dropped: [], status, created_by: "admin-uuid",
+    created_at, reviewed_by: "admin-uuid", reviewed_at: created_at, review_note: null,
+  });
+  setup({
+    tables: {
+      ...defaultTables(),
+      daily_content_recommendations: [
+        decided("rec-old", "approved", "2026-11-07T01:00:00Z"),
+        decided("rec-new", "rejected", "2026-11-07T03:00:00Z"),
+        decided("rec-pending", "pending_review", "2026-11-07T04:00:00Z"),
+      ],
+    },
+  });
+  const r = await callEdge({ action: "list_decided" });
+  eq(r.status, 200, "status");
+  eq(r.body.items.length, 2, "decided items only");
+  eq(r.body.items[0].id, "rec-new", "newest first");
+  eq(r.body.items[0].status, "rejected", "newest status");
+  eq(r.body.items[1].id, "rec-old", "oldest second");
+});
+
+t("regenerate on a fresh date saves a new pending_review run (regenerated:true)", async () => {
+  setup();
+  const r = await callEdge({ ...recommendBody(), action: "regenerate" });
+  eq(r.status, 200, "status");
+  eq(r.body.ok, true, "ok");
+  eq(r.body.regenerated, true, "regenerated flag");
+  eq(r.body.persisted, true, "regenerate always saves");
+  if (!r.body.recommendationId) throw new Error("recommendationId missing");
+  const rows = globalThis.__FAKE_TABLES__.daily_content_recommendations;
+  eq(rows.length, 1, "one run saved");
+  eq(rows[0].status, "pending_review", "status");
+  eq(rows[0].kolkata_date, "2026-11-07", "kolkata_date");
+});
+
+t("regenerate on a published date -> 409, no AI call, no new run", async () => {
+  setup({
+    tables: {
+      ...defaultTables(),
+      daily_content_publications: [{ id: "pub-1", kolkata_date: "2026-11-07", status: "published" }],
+    },
+  });
+  const r = await callEdge({ ...recommendBody(), action: "regenerate" });
+  eq(r.status, 409, "status");
+  eq(globalThis.__GATEWAY__.calls, 0, "AI never called for a published date");
+  eq(globalThis.__FAKE_TABLES__.daily_content_recommendations.length, 0, "no run saved");
+});
+
+t("regenerate is admin-gated (non-admin -> 403)", async () => {
+  setup();
+  const r = await callEdge({ ...recommendBody(), action: "regenerate" }, USER_JWT);
+  eq(r.status, 403, "status");
+  eq(globalThis.__GATEWAY__.calls, 0, "AI never called");
+});
+
+t("unknown action still 400 (dispatch unchanged)", async () => {
+  setup();
+  const r = await callEdge({ action: "bogus" });
+  eq(r.status, 400, "status");
+});
+
 await chain;
 console.log(`\nrecommend-daily-content tests: ${passed} passed, ${failed} failed`);
 if (failed > 0) {

@@ -43,15 +43,23 @@ function formatKolkata(iso: string): string {
  * production publication runs in the `daily-content` edge function, and the
  * browser never calls it with a secret (the status check sends no
  * Authorization header, so the function answers 401 before any logic).
- * Facebook (Phase 4): the card below is READ-ONLY. It shows the Page
- * connection, the auto-publish / approval switches (disabled by design
- * until owner approval — same two-layer pattern as the live Enable
- * toggle), and the `daily_content_facebook_posts` log. This page never
- * posts to Facebook and never approves a post; posting runs only through
- * the daily-content edge function (CRON-secret gated, Mode B approval
- * required by default). Until the Facebook migration is applied the log
- * query fails honestly with "table not available" instead of inventing
- * rows.
+ * Facebook (Phase 4): the card below shows the Page connection, the
+ * auto-publish / approval switches, and the `daily_content_facebook_posts`
+ * log. Phase 6 wires those switches to real settings writes through the
+ * admin-JWT-gated `update_settings` edge action (audit-logged
+ * server-side); they stay disabled until the Facebook migration adds
+ * the columns. This page never posts to Facebook and never approves a
+ * post; posting runs only through the daily-content edge function
+ * (CRON-secret gated, Mode B approval required by default). Until the
+ * Facebook migration is applied the log query fails honestly with
+ * "table not available" instead of inventing rows.
+ * Mode A/B + per-channel switches (Phase 6): the Publishing mode card
+ * shows the current mode (Mode A automatic vs Mode B admin approval)
+ * and the website/push channel switches, all written through the same
+ * `update_settings` action. The master `enabled` toggle is NOT wired
+ * here — it stays owner-SQL only. The decided-runs card lists
+ * approved/rejected recommendation runs (list_decided) and offers a
+ * Regenerate button for today (a published day cannot be regenerated).
  */
 
 // Deployed edge function (mission state: ACTIVE, verify_jwt=false).
@@ -60,6 +68,12 @@ const EDGE_URL = "https://llicfiepatzgllmjhzbw.supabase.co/functions/v1/daily-co
 interface LiveSettings {
   enabled: boolean;
   updated_at: string;
+  // Mode A/B + per-channel switches (Phase 6) — present only after
+  // the Mode A/B migration. Absent columns mean legacy behaviour
+  // (Mode B, website + push on).
+  approval_required?: boolean;
+  website_auto_publish?: boolean;
+  push_enabled?: boolean;
   // Facebook (Phase 4) — present only after the Facebook migration.
   facebook_auto_publish_enabled?: boolean;
   facebook_approval_required?: boolean;
@@ -68,6 +82,17 @@ interface LiveSettings {
   facebook_page_name?: string | null;
   facebook_token_health?: string | null;
   facebook_token_checked_at?: string | null;
+}
+
+interface DecidedRun {
+  id: string;
+  kolkata_date: string;
+  status: string;
+  created_by: string | null;
+  created_at: string;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  review_note: string | null;
 }
 
 interface LivePublication {
@@ -135,6 +160,10 @@ export default function AdminDailyContent() {
   const [liveFacebook, setLiveFacebook] = useState<LiveFacebookPost[] | null>(null);
   const [liveFacebookError, setLiveFacebookError] = useState<string | null>(null);
   const [liveFacebookMessage, setLiveFacebookMessage] = useState<string | null>(null);
+  const [decidedRuns, setDecidedRuns] = useState<DecidedRun[] | null>(null);
+  const [decidedError, setDecidedError] = useState<string | null>(null);
+  const [decidedLoading, setDecidedLoading] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
   const [liveToggling, setLiveToggling] = useState(false);
   const [edgeStatus, setEdgeStatus] = useState<string | null>(null);
   const [edgeChecking, setEdgeChecking] = useState(false);
@@ -240,9 +269,32 @@ export default function AdminDailyContent() {
     }
   }, []);
 
+  // Phase 6 — decided-runs history (approved + rejected, newest
+  // first). Declared before the admin-session effect below because
+  // that effect calls it (a later declaration would be a TDZ error).
+  const loadDecided = useCallback(async () => {
+    setDecidedLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("recommend-daily-content", {
+        body: { action: "list_decided" },
+      });
+      if (error) throw error;
+      setDecidedRuns(((data as { items?: DecidedRun[] }).items ?? []) as DecidedRun[]);
+      setDecidedError(null);
+    } catch (e) {
+      setDecidedRuns(null);
+      setDecidedError(e instanceof Error ? e.message : "Decided runs could not be loaded.");
+    } finally {
+      setDecidedLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
-    if (!adminLoading && isAdmin) void loadLive();
-  }, [adminLoading, isAdmin, loadLive]);
+    if (!adminLoading && isAdmin) {
+      void loadLive();
+      void loadDecided();
+    }
+  }, [adminLoading, isAdmin, loadLive, loadDecided]);
 
   const toggleLive = useCallback(
     async (checked: boolean) => {
@@ -278,16 +330,65 @@ export default function AdminDailyContent() {
     [loadLive],
   );
 
-  const toggleFacebook = useCallback((_key: string, _checked: boolean) => {
-    // Phase 4: Facebook controls are disabled by design until owner
-    // approval (G1–G3 + the auto-publish activation gate). Same
-    // two-layer pattern as toggleLive: the switches render the live
-    // values, and any attempt to change them is refused here.
-    // Unlike the local-preview Switch, these controls never write
-    // browser localStorage — Facebook state lives only in the
-    // database, changed only by the owner-approved path.
-    setLiveFacebookMessage("Facebook automation is disabled — awaiting owner approval. No change was made.");
-  }, []);
+  const updateSetting = useCallback(
+    async (key: string, checked: boolean) => {
+      // Phase 6: real settings writes through the admin-JWT-gated
+      // `update_settings` edge action (audit-logged server-side).
+      // The master `enabled` toggle is NOT offered here — it stays
+      // owner-SQL only (the edge action refuses it with 403). Unlike
+      // the local-preview Switch, these controls never write browser
+      // localStorage — the setting lives only in the database.
+      // Switching Mode B -> Mode A (approval_required off) needs an
+      // explicit confirm: recommendations will then be consumed
+      // WITHOUT admin approval (all mandatory validations + Image QC
+      // stay on, and the switch can be reversed at any time).
+      const label =
+        key === "approval_required"
+          ? "Admin approval required (Mode B)"
+          : key === "website_auto_publish"
+            ? "Website auto-publish"
+            : key === "push_enabled"
+              ? "Push enabled"
+              : key === "facebook_auto_publish_enabled"
+                ? "Facebook auto-publish"
+                : key === "facebook_approval_required"
+                  ? "Facebook admin approval required (Mode B)"
+                  : key === "facebook_posting_enabled"
+                    ? "Facebook posting enabled"
+                    : key;
+      if (key === "approval_required" && !checked) {
+        if (
+          !window.confirm(
+            "Switch to Mode A (automatic)? AI recommendations will be consumed WITHOUT admin approval. All mandatory validations and Image QC stay on. You can switch back to Mode B at any time.",
+          )
+        ) {
+          return;
+        }
+      } else if (
+        !window.confirm(
+          `Change "${label}" to ${checked ? "on" : "off"}? This updates the live settings row and is audit-logged.`,
+        )
+      ) {
+        return;
+      }
+      setLiveToggling(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("daily-content", {
+          body: { action: "update_settings", settings: { [key]: checked } },
+        });
+        if (error) throw error;
+        const d = data as { ok?: boolean; error?: string; detail?: string } | null;
+        if (!d?.ok) throw new Error(d?.error ? `${d.error}${d.detail ? ` — ${d.detail}` : ""}` : "Settings update failed.");
+        setLiveFacebookMessage(`Updated ${label}.`);
+        await loadLive();
+      } catch (e) {
+        setLiveFacebookMessage(e instanceof Error ? e.message : "Settings update failed.");
+      } finally {
+        setLiveToggling(false);
+      }
+    },
+    [loadLive],
+  );
 
   const checkEdge = useCallback(async () => {
     setEdgeChecking(true);
@@ -316,6 +417,35 @@ export default function AdminDailyContent() {
 
   const today = useMemo(() => kolkataDateString(new Date()), []);
   const nextRun = useMemo(() => nextDailyRunAt(new Date()), []);
+
+  // Phase 6 — regenerate-per-run for today. Creates a fresh
+  // pending_review run; it never changes today's planned or published
+  // row, and a published day cannot be regenerated (the edge action
+  // refuses it with 409).
+  const regenerateToday = useCallback(async () => {
+    if (
+      !window.confirm(
+        "Generate a fresh recommendation for today? The new run will be pending review; it does not change today's planned or published row. A published day cannot be regenerated.",
+      )
+    ) {
+      return;
+    }
+    setRegenerating(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("recommend-daily-content", {
+        body: { action: "regenerate", kolkataDate: today },
+      });
+      if (error) throw error;
+      const d = data as { ok?: boolean; error?: string } | null;
+      if (!d?.ok) throw new Error(d?.error ?? "Regenerate failed.");
+      setDecidedError(null);
+      await loadDecided();
+    } catch (e) {
+      setDecidedError(e instanceof Error ? e.message : "Regenerate failed.");
+    } finally {
+      setRegenerating(false);
+    }
+  }, [today, loadDecided]);
 
   const preview = useCallback(() => {
     const r = planDay({
@@ -362,6 +492,21 @@ export default function AdminDailyContent() {
   const latestPublished = livePublications.find((p) => p.status === "published");
   const latestPush = latestPublished?.push ?? null;
   const pubDateById = new Map(livePublications.map((p) => [p.id, p.kolkata_date]));
+  // Phase 6: the Mode A/B + Facebook columns exist only after their
+  // migrations (select "*" returns whatever is present). Absent
+  // columns mean legacy behaviour — the switches stay disabled until
+  // the migration is applied instead of erroring on every click.
+  const modeColumnsPresent =
+    liveSettings !== null &&
+    ("approval_required" in liveSettings ||
+      "website_auto_publish" in liveSettings ||
+      "push_enabled" in liveSettings);
+  const facebookColumnsPresent =
+    liveSettings !== null &&
+    ("facebook_auto_publish_enabled" in liveSettings ||
+      "facebook_posting_enabled" in liveSettings ||
+      "facebook_page_id" in liveSettings);
+  const isModeA = liveSettings?.approval_required === false;
 
   return (
     <div className="space-y-6 p-4 md:p-6">
@@ -439,6 +584,77 @@ export default function AdminDailyContent() {
             <p className="text-xs text-muted-foreground">
               Edge function: {EDGE_URL} (deployed; this page never calls it with a secret and
               never triggers a dry run).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && liveSettings && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Publishing mode (Mode A/B)</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm">
+              <span className="font-semibold">Current mode: </span>
+              <Badge variant={isModeA ? "default" : "secondary"}>
+                {isModeA ? "Mode A — automatic" : "Mode B — admin approval"}
+              </Badge>{" "}
+              {isModeA
+                ? "AI recommendations are consumed without admin approval. All mandatory validations and Image QC stay on."
+                : "Recommendations wait for admin approval before the planner consumes them."}
+            </p>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={liveSettings.approval_required ?? true}
+                  onCheckedChange={(v) => void updateSetting("approval_required", v)}
+                  disabled={liveToggling || !modeColumnsPresent}
+                />
+                <span className="text-sm">
+                  Admin approval required — Mode B{" "}
+                  {liveSettings.approval_required === false ? "(off — Mode A)" : "(on)"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={liveSettings.website_auto_publish ?? true}
+                  onCheckedChange={(v) => void updateSetting("website_auto_publish", v)}
+                  disabled={liveToggling || !modeColumnsPresent}
+                />
+                <span className="text-sm">
+                  Website auto-publish{" "}
+                  {liveSettings.website_auto_publish === false ? "(paused)" : "(on)"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={liveSettings.push_enabled ?? true}
+                  onCheckedChange={(v) => void updateSetting("push_enabled", v)}
+                  disabled={liveToggling || !modeColumnsPresent}
+                />
+                <span className="text-sm">
+                  Push enabled{" "}
+                  {liveSettings.push_enabled === false
+                    ? "(paused — the website still publishes, no push is sent)"
+                    : "(on)"}
+                </span>
+              </div>
+            </div>
+            {liveFacebookMessage && (
+              <p className="text-sm text-destructive">{liveFacebookMessage}</p>
+            )}
+            {!modeColumnsPresent && (
+              <p className="text-sm text-muted-foreground">
+                Mode A/B columns not present — the Mode A/B migration has not been applied yet.
+                Switches are disabled until then.
+              </p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Every change is audit-logged. The master Enabled toggle stays owner-SQL only — it
+              is not on this card. A paused channel never blocks the others: pausing push does
+              not pause the website, and a Facebook failure never rolls back a website
+              publication.
             </p>
           </CardContent>
         </Card>
@@ -560,7 +776,8 @@ export default function AdminDailyContent() {
               <div className="flex items-center gap-3">
                 <Switch
                   checked={liveSettings?.facebook_auto_publish_enabled ?? false}
-                  onCheckedChange={(v) => toggleFacebook("facebook_auto_publish_enabled", v)}
+                  onCheckedChange={(v) => void updateSetting("facebook_auto_publish_enabled", v)}
+                  disabled={liveToggling || !facebookColumnsPresent}
                 />
                 <span className="text-sm">
                   Auto-publish to Facebook {liveSettings?.facebook_auto_publish_enabled ? "(on)" : "(off)"}
@@ -569,7 +786,8 @@ export default function AdminDailyContent() {
               <div className="flex items-center gap-3">
                 <Switch
                   checked={liveSettings?.facebook_approval_required ?? true}
-                  onCheckedChange={(v) => toggleFacebook("facebook_approval_required", v)}
+                  onCheckedChange={(v) => void updateSetting("facebook_approval_required", v)}
+                  disabled={liveToggling || !facebookColumnsPresent}
                 />
                 <span className="text-sm">
                   Admin approval required — Mode B{" "}
@@ -579,7 +797,8 @@ export default function AdminDailyContent() {
               <div className="flex items-center gap-3">
                 <Switch
                   checked={liveSettings?.facebook_posting_enabled ?? true}
-                  onCheckedChange={(v) => toggleFacebook("facebook_posting_enabled", v)}
+                  onCheckedChange={(v) => void updateSetting("facebook_posting_enabled", v)}
+                  disabled={liveToggling || !facebookColumnsPresent}
                 />
                 <span className="text-sm">
                   Facebook posting enabled{" "}
@@ -590,10 +809,10 @@ export default function AdminDailyContent() {
                 <p className="text-sm text-destructive">{liveFacebookMessage}</p>
               )}
               <p className="text-xs text-muted-foreground">
-                Disabled by design until owner approval. Publishing format: portrait (Layout C).
-                Caption is Bengali-first with the source line and the website link. The 2026
-                organic link-post restriction is UNVERIFIED — daily link posts are not finalized
-                until tested on the real Page.
+                Switches are disabled until the Facebook migration adds the columns. Changes are
+                audit-logged. Publishing format: portrait (Layout C). Caption is Bengali-first
+                with the source line and the website link. The 2026 organic link-post restriction
+                is UNVERIFIED — daily link posts are not finalized until tested on the real Page.
               </p>
             </div>
             <div>
@@ -634,6 +853,49 @@ export default function AdminDailyContent() {
               This page never posts to Facebook and never approves a post. Posting runs only
               through the daily-content edge function (CRON-secret gated, Mode B approval
               required by default).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Decided recommendation runs</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => void loadDecided()} disabled={decidedLoading}>
+                Reload decided runs
+              </Button>
+              <Button variant="outline" onClick={() => void regenerateToday()} disabled={regenerating}>
+                Regenerate today&apos;s recommendation
+              </Button>
+            </div>
+            {decidedError && <p className="text-sm text-destructive">{decidedError}</p>}
+            {decidedRuns === null ? (
+              <p className="text-sm text-muted-foreground">Decided runs could not be loaded.</p>
+            ) : decidedRuns.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No decided runs yet.</p>
+            ) : (
+              <ul className="space-y-2 text-sm">
+                {decidedRuns.map((r) => (
+                  <li key={r.id} className="flex flex-wrap gap-2 items-center">
+                    <span>{r.kolkata_date}</span>
+                    <Badge variant={r.status === "approved" ? "default" : "destructive"}>
+                      {r.status}
+                    </Badge>
+                    <span>reviewed {r.reviewed_at ? formatKolkata(r.reviewed_at) : "—"}</span>
+                    {r.review_note && (
+                      <span className="text-muted-foreground">{r.review_note}</span>
+                    )}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Regenerate creates a fresh pending-review run for today; it does not change
+              today&apos;s planned or published row. A published day cannot be regenerated.
             </p>
           </CardContent>
         </Card>

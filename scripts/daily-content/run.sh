@@ -38,6 +38,10 @@ echo "== edge-function regression tests (real edge code, stubbed deps) =="
 node scripts/daily-content/edge-tests.mjs
 echo "== facebook page publication tests (real edge code, mocked Graph API) =="
 node supabase/functions/daily-content/facebook.test.mjs
+echo "== split-flow self-healing tests (real edge code, stubbed deps) =="
+node supabase/functions/daily-content/heal-splitflow.test.mjs
+echo "== Mode A/B + per-channel switches tests (real edge code, mocked Graph API) =="
+node supabase/functions/daily-content/mode-ab.test.mjs
 echo "== ai recommendation tests (real recommend function, stubbed deps) =="
 node supabase/functions/_shared/ai-recommend.test.mjs
 echo "== dry-run (plan only) =="

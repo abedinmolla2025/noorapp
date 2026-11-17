@@ -132,6 +132,48 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    link-post restriction is UNVERIFIED (single source): no
  *    daily-link design is finalized before a real-Page test; do NOT
  *    pay for Meta One (INR 0). The migration is a SKETCH ONLY.
+ *  - Mode A/B + per-channel switches (Phase 6, owner-authorized
+ *    2026-11-16; architecture update 2026-11-15): the planner
+ *    consumes recommendation runs by MODE, read from
+ *    daily_content_settings with fail-closed defaults (missing or
+ *    invalid settings -> Mode B, nothing auto-publishes, nothing is
+ *    silently enabled). Mode B (approval_required !== false, the
+ *    DEFAULT) consumes only status='approved' runs, as before. Mode A
+ *    (approval_required === false) may ALSO consume the newest
+ *    'pending_review' run — but ONLY when it passes the server-side
+ *    Mode A gate (validateModeARun): every recommendation ref
+ *    well-formed and resolving in the LIVE eligible pool, at most one
+ *    hadith, no malformed refs; a rejected run is never consumed in
+ *    either mode. A failed gate falls back to the seeded selection
+ *    (the run is ignored wholesale, never partially consumed). The
+ *    8 mandatory validations are enforced where each lives: source /
+ *    Arabic / Bengali integrity + fabricated-claim detection by
+ *    construction (the planner publishes pool text + refs only — no
+ *    AI-written text ever reaches a publication); content-visual
+ *    consistency + Bengali readability + finalized-asset integrity
+ *    by the poster QC gate at publish_planned; duplicate prevention
+ *    by the cycle checks + kolkata_date UNIQUE. Mode A end-to-end
+ *    automatic publication is therefore realized ONLY through the
+ *    split flow (plan_only -> poster -> publish_planned); the default
+ *    daily branch (single-call text-only send) is UNCHANGED in this
+ *    phase — it is a cutover dependency (Phase 3 §6). Per-channel
+ *    switches: website_auto_publish === false refuses publish_planned
+ *    (409 website_paused, row stays planned); push_enabled === false
+ *    flips the row WITHOUT sending (delivery zeroed, push_paused
+ *    reported — no push catch-up is queued for that day);
+ *    facebook_posting_enabled === false pauses the Facebook channel;
+ *    facebook_auto_publish_enabled === true lets the heal tick trigger
+ *    the existing facebook_publish action after a website publish
+ *    (Mode B queues with zero Graph calls; Mode A posts). A paused
+ *    channel NEVER blocks the others. Settings are changed ONLY
+ *    through the admin-JWT-gated update_settings action (never the
+ *    master `enabled` toggle — that stays owner-SQL only); every
+ *    change is audit-logged (guarded: only a real admin profile UUID
+ *    is written). The Mode A/B + per-channel columns are a migration
+ *    SKETCH ONLY (phase6-working/) — DO NOT APPLY without owner
+ *    approval; until applied, the code reads the columns as absent
+ *    and the legacy behaviour holds (Mode B, website + push on,
+ *    Facebook auto-publish off).
  * ------------------------------------------------------------------ */
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -998,7 +1040,81 @@ interface ApprovedRunRow {
   created_at: string;
 }
 
-/** The newest approved run for the date, or null. */
+// ============================================================================
+// Phase 6 — Mode A/B + per-channel switches.
+//
+// The four architecture settings (approval_required,
+// website_auto_publish, facebook_auto_publish, daily_content_enabled)
+// live on daily_content_settings; daily_content_enabled IS the
+// existing `enabled` column (the master switch, owner-SQL only —
+// never written by the update_settings action). The Mode A/B and
+// per-channel columns are a migration SKETCH ONLY until the owner
+// approves + applies them; until then the row has no such columns
+// and readModeSettings returns the legacy defaults below.
+//
+// Fail-closed defaults (a missing/invalid column must NEVER silently
+// enable publication):
+//   approval_required            true  (Mode B) unless explicitly false
+//   website_auto_publish         true  unless explicitly false (legacy:
+//                                  publish_planned published regardless)
+//   push_enabled                 true  unless explicitly false (legacy:
+//                                  the daily path always sent)
+//   facebook_auto_publish_enabled false unless explicitly true (Phase 4)
+//   facebook_approval_required   true  unless explicitly false (Phase 4)
+//   facebook_posting_enabled     true  unless explicitly false (Phase 4)
+// A missing settings row means paused (enabled === false).
+// ============================================================================
+export type ModeSettings = {
+  enabled: boolean;
+  approvalRequired: boolean;
+  websiteAutoPublish: boolean;
+  pushEnabled: boolean;
+  facebookAutoPublishEnabled: boolean;
+  facebookApprovalRequired: boolean;
+  facebookPostingEnabled: boolean;
+};
+
+/** Pure mapping from a settings row (select "*") to ModeSettings.
+ *  Exported for the edge tests. A null row means paused. */
+export function modeSettingsFromRow(row: Record<string, unknown> | null): ModeSettings {
+  if (!row) {
+    return {
+      enabled: false,
+      approvalRequired: true,
+      websiteAutoPublish: true,
+      pushEnabled: true,
+      facebookAutoPublishEnabled: false,
+      facebookApprovalRequired: true,
+      facebookPostingEnabled: true,
+    };
+  }
+  return {
+    enabled: row.enabled === true,
+    approvalRequired: row.approval_required !== false,
+    websiteAutoPublish: row.website_auto_publish !== false,
+    pushEnabled: row.push_enabled !== false,
+    facebookAutoPublishEnabled: row.facebook_auto_publish_enabled === true,
+    facebookApprovalRequired: row.facebook_approval_required !== false,
+    facebookPostingEnabled: row.facebook_posting_enabled !== false,
+  };
+}
+
+/** Read the mode settings (select "*" — the Mode A/B columns exist
+ *  only after the migration; a wildcard returns whatever is present).
+ *  Returns both the mapped settings and the raw row: the raw row is
+ *  how callers tell "Facebook columns absent" (migration unapplied)
+ *  from "Facebook configured but auto-publish off". */
+export async function readModeSettings(svc: Svc): Promise<{
+  settings: ModeSettings;
+  row: Record<string, unknown> | null;
+}> {
+  const { data, error } = await svc.from("daily_content_settings").select("*").limit(1).maybeSingle();
+  if (error || !data) return { settings: modeSettingsFromRow(null), row: null };
+  const row = data as Record<string, unknown>;
+  return { settings: modeSettingsFromRow(row), row };
+}
+
+/** The newest recommendation run for the date, or null. */
 async function fetchApprovedRun(svc: Svc, kolkataDate: string): Promise<ApprovedRunRow | null> {
   const { data } = await svc
     .from("daily_content_recommendations")
@@ -1009,6 +1125,69 @@ async function fetchApprovedRun(svc: Svc, kolkataDate: string): Promise<Approved
     .limit(1)
     .maybeSingle();
   return (data ?? null) as ApprovedRunRow | null;
+}
+
+/** The newest run for the date under the current mode, or null.
+ *  Mode B: approved runs only (unchanged behaviour). Mode A: the
+ *  newest run with status 'approved' OR 'pending_review' — a rejected
+ *  run is NEVER consumed in either mode. The caller gates a
+ *  pending_review run through validateModeARun before trusting it. */
+async function fetchLatestRunForMode(
+  svc: Svc,
+  kolkataDate: string,
+  approvalRequired: boolean,
+): Promise<ApprovedRunRow | null> {
+  if (approvalRequired) return fetchApprovedRun(svc, kolkataDate);
+  const { data } = await svc
+    .from("daily_content_recommendations")
+    .select("id, kolkata_date, hijri_key, context, recommendations, dropped, status, created_by, created_at")
+    .eq("kolkata_date", kolkataDate)
+    .in("status", ["approved", "pending_review"])
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  return (data ?? null) as ApprovedRunRow | null;
+}
+
+/** The server-side Mode A gate for an UNAPPROVED run. An approved run
+ *  was human-reviewed and is not gated here (its slots are still
+ *  re-validated one by one by the planner, as before). A pending_review
+ *  run is consumed in Mode A ONLY when every recommendation is
+ *  well-formed AND resolves in the LIVE eligible pool: a malformed
+ *  ref, a ref outside the pool (fabricated or stale), or more than
+ *  one hadith fails the whole run — it is ignored wholesale and the
+ *  planner falls back to the seeded selection, never partially
+ *  consuming an untrusted run. Exported for the edge tests. */
+export function validateModeARun(
+  run: ApprovedRunRow | null,
+  eligibleHadithRefs: Set<string>,
+  eligibleContentRefs: Set<string>,
+): { ok: boolean; reason?: string } {
+  if (!run) return { ok: false, reason: "no run" };
+  if (run.status !== "approved" && run.status !== "pending_review") {
+    return { ok: false, reason: `run status ${run.status} is never consumed` };
+  }
+  if (!Array.isArray(run.recommendations) || run.recommendations.length === 0) {
+    return { ok: false, reason: "run has no recommendations" };
+  }
+  let hadithCount = 0;
+  for (const rec of run.recommendations) {
+    if (!rec || typeof rec !== "object") return { ok: false, reason: "malformed recommendation" };
+    const kind = (rec as { kind?: unknown }).kind;
+    const ref = (rec as { ref?: unknown }).ref;
+    if (kind !== "hadith" && kind !== "content") return { ok: false, reason: "malformed recommendation kind" };
+    if (typeof ref !== "string" || !ref) return { ok: false, reason: "malformed recommendation ref" };
+    if (kind === "hadith") {
+      if (!ref.startsWith("hadith:")) return { ok: false, reason: `hadith ref ${ref} is malformed` };
+      if (!eligibleHadithRefs.has(ref)) return { ok: false, reason: `hadith ref ${ref} is not in the eligible pool` };
+      hadithCount++;
+      if (hadithCount > 1) return { ok: false, reason: "more than one hadith in the run" };
+    } else {
+      if (!ref.startsWith("content:")) return { ok: false, reason: `content ref ${ref} is malformed` };
+      if (!eligibleContentRefs.has(ref)) return { ok: false, reason: `content ref ${ref} is not in the eligible pool` };
+    }
+  }
+  return { ok: true };
 }
 
 /** The hadith ref the run recommends (first well-formed "hadith:<id>"), or null. */
@@ -1083,6 +1262,10 @@ async function planDay(svc: Svc, kolkataDate: string) {
         hadithPoolTruncated: true,
         approvedRun: false,
         approvedHadithSkipped: null,
+        mode: "B",
+        modeAConsumed: false,
+        modeAGate: null,
+        runStatus: null,
       },
     };
   }
@@ -1119,10 +1302,33 @@ async function planDay(svc: Svc, kolkataDate: string) {
       .flatMap((r) => (r.cards ?? []).map((c) => c.recordRef)),
   );
 
-  // Phase 9 — the newest approved recommendation run for today, if one
+  // Phase 9 — the newest recommendation run for today, if one
   // exists. It is advisory: each slot is re-validated below, and a short
   // or stale run falls back to the seeded selection slot by slot.
-  const approved = await fetchApprovedRun(svc, kolkataDate);
+  // Phase 6 (Mode A/B): which runs may be consumed is decided by the
+  // mode settings. Mode B (the default) takes approved runs only. Mode
+  // A also takes the newest pending_review run — but ONLY when it
+  // passes validateModeARun (every ref well-formed and in the live
+  // eligible pool). A failed gate ignores the run wholesale (the
+  // seeded selection fills every slot); a rejected run is never
+  // consumed in either mode.
+  const { settings: modeSettings } = await readModeSettings(svc);
+  const modeA = !modeSettings.approvalRequired;
+  let approved = await fetchLatestRunForMode(svc, kolkataDate, modeSettings.approvalRequired);
+  let modeAGate: { ok: boolean; reason?: string } | null = null;
+  let modeAConsumed = false;
+  if (approved && approved.status === "pending_review") {
+    modeAGate = validateModeARun(
+      approved,
+      new Set(eligibleH.map((h) => `hadith:${h.id}`)),
+      new Set(eligibleD.map((d) => `content:${d.slug}`)),
+    );
+    if (modeAGate.ok) {
+      modeAConsumed = true;
+    } else {
+      approved = null;
+    }
+  }
 
   // Hadith: the approved run's hadith first — but only when it is in the
   // live eligible pool AND not already used in the current cycle. An
@@ -1236,6 +1442,12 @@ async function planDay(svc: Svc, kolkataDate: string) {
       hadithPoolTruncated: false,
       approvedRun: approved !== null,
       approvedHadithSkipped,
+      // Phase 6 — which mode consumed the run (A = an unapproved run
+      // passed the server-side gate; B = approved-only, the default).
+      mode: modeA ? "A" : "B",
+      modeAConsumed,
+      modeAGate,
+      runStatus: approved?.status ?? null,
     },
   };
 }
@@ -1894,6 +2106,57 @@ async function sendAndPublish(
   return { publication_id: publicationId, delivery };
 }
 
+/** Phase 6 — the heal tick's Facebook disposition after a website
+ *  publication. This is the auto-publish trigger for the Facebook
+ *  channel: it delegates to the EXISTING facebook_publish action
+ *  logic (handleFacebookPublish, Phase 4 section below — a hoisted
+ *  function declaration, so the call below resolves) — same gates,
+ *  same log row, same Mode B queue. It does not re-implement
+ *  publishing.
+ *
+ *  Dispositions (no Graph call is made except in the auto-publish
+ *  case):
+ *   - "paused"          settings disabled, or facebook_posting_enabled
+ *                       === false.
+ *   - "not_implemented" the Facebook columns are absent from the
+ *                       settings row — the Facebook migration is
+ *                       unapplied, so the channel does not exist yet.
+ *   - "manual"          auto-publish is off: Facebook is a manual
+ *                       action; the heal tick never posts.
+ *   - "queued"          auto-publish on + Mode B: the log row is
+ *                       staged and waiting for facebook_approve
+ *                       (zero Graph calls).
+ *   - "published"       auto-publish on and the post is live (or an
+ *                       earlier tick already posted it).
+ *   - "failed"          auto-publish on and the attempt failed
+ *                       (terminal or retryable — see the log row).
+ *   - "not_configured"  auto-publish on but no Page token secret.
+ *   - "skipped"         the log row is paused/skipped.
+ *  Never throws and never touches the publication row: a Facebook
+ *  failure can never roll back a website publication. */
+async function facebookDispositionAfterPublish(svc: Svc, kolkataDate: string): Promise<string> {
+  try {
+    const { settings: mode, row } = await readModeSettings(svc);
+    if (!mode.enabled) return "paused";
+    const fbConfigured = row !== null &&
+      ("facebook_auto_publish_enabled" in row || "facebook_posting_enabled" in row || "facebook_page_id" in row);
+    if (!fbConfigured) return "not_implemented";
+    if (mode.facebookPostingEnabled === false) return "paused";
+    if (mode.facebookAutoPublishEnabled !== true) return "manual";
+    const res = await handleFacebookPublish({ action: "facebook_publish", kolkata_date: kolkataDate }, svc);
+    const j = (await res.json().catch(() => ({}))) as Record<string, unknown>;
+    if (j.queued === true) return "queued";
+    if (j.ok === true && (typeof j.post_id === "string" || j.deduped === true)) return "published";
+    if (j.ok === true && j.skipped === true) return "skipped";
+    if (typeof j.error === "string" && j.error === "facebook_log_unavailable") return "not_implemented";
+    if (typeof j.error === "string" && j.error === "FACEBOOK_PAGE_ACCESS_TOKEN is not configured") return "not_configured";
+    if (j.ok === false) return "failed";
+    return "unknown";
+  } catch {
+    return "failed";
+  }
+}
+
 /** Split-flow self-healing tick (Phase 3 — supersedes the text-only
  *  heal of the self-healing branch, which published via publishPlan()
  *  with image_url null).
@@ -1934,10 +2197,10 @@ async function healSplitFlow(
   kolkataDate: string,
   tick: Awaited<ReturnType<typeof runTick>>,
 ): Promise<Response> {
-  const channels = (website: string, push: unknown) => ({
+  const channels = (website: string, push: unknown, facebook = "not_implemented") => ({
     website,
     push: push ?? null,
-    facebook: "not_implemented",
+    facebook,
   });
   const alertFor = (level: "warn" | "critical", reason: string, publicationId: string | null) => ({
     level,
@@ -1959,7 +2222,11 @@ async function healSplitFlow(
   } | null;
 
   if (pub?.status === "published") {
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, channels: channels("published", null) });
+    // Phase 6: the website is already published — the heal tick is
+    // still the Facebook auto-publish trigger for this row (Mode B
+    // queues, Mode A posts; auto-publish off means "manual").
+    const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, channels: channels("published", null, fb) });
   }
 
   if (pub?.status === "planned" && pub.push) {
@@ -1975,12 +2242,14 @@ async function healSplitFlow(
       const published = await publishPlanned(svc, kolkataDate);
       const pj = (await published.json().catch(() => ({}))) as Record<string, unknown>;
       if (pj.ok === true && pj.deduped !== true) {
+        const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
         return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: true, hold: null, publication_id: pj.publication_id,
-          channels: channels("published", pj.delivery ?? null) });
+          channels: channels("published", pj.delivery ?? null, fb) });
       }
       if (pj.deduped === true) {
+        const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
         return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
-          channels: channels("published", null) });
+          channels: channels("published", null, fb) });
       }
       return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "publish_failed", publication_id: pub.id,
         channels: channels("planned", null),
@@ -2052,6 +2321,27 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
   }
   const storedPush = pub.push && typeof pub.push === "object" ? (pub.push as Record<string, unknown>) : null;
   if (!storedPush) return jsonResponse({ ok: false, error: "planned row has no push payload" }, 500);
+  // Phase 6 — per-channel switches. website_auto_publish === false
+  // refuses the website publication (the row stays planned); a
+  // paused website channel never publishes. push_enabled === false
+  // publishes the website WITHOUT sending: the row flips with zeroed
+  // delivery counters and no delivery rows are created, so no push is
+  // queued for later — the push channel's pause is honored, not
+  // deferred. (Push catch-up after unpausing is not implemented;
+  // see the Phase 6 report.) Missing columns mean legacy behaviour
+  // (website + push on).
+  const { settings: modeSettings } = await readModeSettings(svc);
+  if (modeSettings.websiteAutoPublish === false) {
+    return jsonResponse({ ok: false, error: "website_paused", reason: "website_auto_publish is false" }, 409);
+  }
+  if (modeSettings.pushEnabled === false) {
+    try {
+      const result = await publishWithoutPush(svc, pub.id);
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery });
+    } catch (e) {
+      return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
+    }
+  }
   // set_poster already sets push.image_url; re-derive it from the
   // finalized poster_url so the first send carries the image even if
   // the stored push predates finalization.
@@ -2062,6 +2352,150 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
+}
+
+/** Publish a planned row WITHOUT sending any push (Phase 6: the push
+ *  channel is paused). The flip is the same conditional guard
+ *  sendAndPublish uses — it matches zero rows when another worker
+ *  already flipped the row, and that is a failure, never a success.
+ *  No delivery rows are created: a push-paused day gets no push, and
+ *  unpausing later does not retro-send it. */
+async function publishWithoutPush(
+  svc: Svc,
+  publicationId: string,
+): Promise<{ publication_id: string; delivery: { total: number; sent: number; failed: number; disabled: number; skipped: number; push_paused: boolean } }> {
+  const { data: flipped } = await svc.from("daily_content_publications").update({
+    status: "published",
+    published_at: new Date().toISOString(),
+    recipients_total: 0,
+    recipients_sent: 0,
+    recipients_failed: 0,
+  } as never).eq("id", publicationId).eq("status", "planned").select("id");
+  if (!((flipped as unknown[] | null)?.length)) throw new Error("Publication flip affected 0 rows");
+  return { publication_id: publicationId, delivery: { total: 0, sent: 0, failed: 0, disabled: 0, skipped: 0, push_paused: true } };
+}
+
+// ============================================================================
+// Phase 6 — admin settings writes (Mode A/B + per-channel switches).
+//
+// The daily-content function is dual-auth: automation calls carry the
+// CRON secret, admin settings writes carry the admin's own Supabase
+// JWT. verifyAdmin below implements the SAME trust model as
+// _shared/require-admin.ts (anon-client getClaims + is_admin RPC,
+// 401/403 fail-closed) locally instead of importing that module: the
+// Node test harness stages this file by rewriting only the two esm.sh
+// imports, and a relative ../_shared import would break staging.
+// The logic is intentionally identical; if require-admin.ts changes
+// its trust model, this verifier must change with it.
+//
+// ALLOWLIST (booleans only): approval_required, website_auto_publish,
+// facebook_auto_publish_enabled, facebook_approval_required,
+// facebook_posting_enabled, push_enabled. The master `enabled`
+// toggle is NOT on the list — it stays owner-SQL only (403). Every
+// accepted change writes one admin_audit_log row, guarded exactly
+// like Phase 4's facebook_approve: only when the actor is a real
+// admin profile UUID (UUID-shaped AND present in profiles), so a
+// display name or a made-up id is never written as actor_id.
+// ============================================================================
+const UPDATE_SETTINGS_ALLOWLIST = [
+  "approval_required",
+  "website_auto_publish",
+  "facebook_auto_publish_enabled",
+  "facebook_approval_required",
+  "facebook_posting_enabled",
+  "push_enabled",
+] as const;
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+async function verifyAdmin(
+  req: Request,
+): Promise<{ ok: true; userId: string } | { ok: false; status: number; error: string }> {
+  const header = req.headers.get("authorization") ?? req.headers.get("Authorization") ?? null;
+  if (!header || !header.startsWith("Bearer ") || header.length <= "Bearer ".length) {
+    return { ok: false, status: 401, error: "Missing or malformed Authorization header" };
+  }
+  const url = Deno.env.get("SUPABASE_URL");
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
+  if (!url || !anonKey) {
+    return { ok: false, status: 500, error: "Server auth configuration missing" };
+  }
+  const jwt = header.slice("Bearer ".length);
+  const authed = createClient(url, anonKey, {
+    global: { headers: { Authorization: header } },
+  });
+  const { data: claimsData, error: claimsErr } = await authed.auth.getClaims(jwt);
+  if (claimsErr || typeof (claimsData as { claims?: { sub?: unknown } } | null)?.claims?.sub !== "string" ||
+    !(claimsData as { claims: { sub: string } }).claims.sub) {
+    return { ok: false, status: 401, error: "Invalid or expired token" };
+  }
+  const userId = (claimsData as { claims: { sub: string } }).claims.sub;
+  const { data: isAdmin, error: isAdminErr } = await authed.rpc("is_admin", { _user_id: userId });
+  if (isAdminErr || isAdmin !== true) {
+    return { ok: false, status: 403, error: "Admin access required" };
+  }
+  return { ok: true, userId };
+}
+
+async function handleUpdateSettings(req: Request, svc: Svc, body: Record<string, unknown>): Promise<Response> {
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return jsonResponse({ ok: false, error: auth.error }, auth.status);
+  const adminId = auth.userId;
+  const patch = body.settings;
+  if (!patch || typeof patch !== "object" || Array.isArray(patch)) {
+    return jsonResponse({ ok: false, error: "settings must be an object" }, 400);
+  }
+  const entries = Object.entries(patch as Record<string, unknown>);
+  if (entries.length === 0) return jsonResponse({ ok: false, error: "no settings provided" }, 400);
+  if ("enabled" in (patch as Record<string, unknown>)) {
+    return jsonResponse({ ok: false, error: "enabled is owner-SQL only and cannot be changed here" }, 403);
+  }
+  for (const [k, v] of entries) {
+    if (!(UPDATE_SETTINGS_ALLOWLIST as readonly string[]).includes(k)) {
+      return jsonResponse({ ok: false, error: `unknown setting: ${k}` }, 400);
+    }
+    if (typeof v !== "boolean") {
+      return jsonResponse({ ok: false, error: `setting ${k} must be a boolean` }, 400);
+    }
+  }
+  const prev = await svc.from("daily_content_settings").select("*").limit(1).maybeSingle();
+  const prevRow = (prev.data ?? null) as Record<string, unknown> | null;
+  if (!prevRow) return jsonResponse({ ok: false, error: "settings row not found" }, 500);
+  const updated = await svc.from("daily_content_settings")
+    .update(patch as never).eq("id", 1).select("id");
+  if ((updated as { error?: { message?: string; code?: string } | null }).error) {
+    const err = (updated as { error: { message?: string; code?: string } }).error;
+    const msg = typeof err.message === "string" ? err.message : "";
+    // A missing column (the Mode A/B migration is not applied) fails
+    // here — fail closed and say so instead of a bare 500.
+    if (err.code === "PGRST204" || /column .* does not exist/i.test(msg) || /Could not find the .* column/i.test(msg)) {
+      return jsonResponse({ ok: false, error: "settings_columns_missing", detail: "apply the Mode A/B migration first" }, 500);
+    }
+    return jsonResponse({ ok: false, error: "settings update failed", detail: msg }, 500);
+  }
+  // Audit-logged, guarded: only a real admin profile UUID is written
+  // as actor_id (Phase 4 pattern). The change itself is recorded in
+  // the response either way, so the decision is never lost when the
+  // audit insert is skipped.
+  let auditNote = "skipped_no_admin_uuid";
+  if (UUID_RE.test(adminId)) {
+    const profile = await svc.from("profiles").select("id").eq("id", adminId).limit(1).maybeSingle();
+    if (!profile.error && profile.data) {
+      const changed: Record<string, { from: unknown; to: unknown }> = {};
+      for (const [k, v] of entries) changed[k] = { from: prevRow[k] ?? null, to: v };
+      const audit = await svc.from("admin_audit_log").insert({
+        action: "daily_content_settings_update",
+        actor_id: adminId,
+        resource_type: "daily_content_settings",
+        resource_id: "1",
+        metadata: { changed },
+      });
+      auditNote = (audit as { error?: { message?: string } | null }).error
+        ? `audit_insert_failed: ${(audit as { error: { message: string } }).error.message}`
+        : "written";
+    }
+  }
+  return jsonResponse({ ok: true, updated: patch, admin_audit_log: auditNote });
 }
 
 // ============================================================================
@@ -2811,6 +3245,17 @@ Deno.serve(async (req: Request) => {
   // constructing it before the auth check changes nothing.
   if (body.action === "opt_out" || body.action === "opt_in" || body.action === "status") {
     return handlePreferenceAction(svc, body);
+  }
+  // Phase 6 — admin settings writes (Mode A/B + per-channel
+  // switches). Routed BEFORE the CRON-secret gate like the preference
+  // actions: the admin panel calls this with the admin's own Supabase
+  // JWT (supabase.functions.invoke sends it), never with the CRON
+  // secret. verifyAdmin validates the JWT itself (anon-client
+  // getClaims + is_admin RPC — the same trust model as
+  // _shared/require-admin.ts); a CRON Bearer here is NOT an admin
+  // credential and is rejected with 401.
+  if (body.action === "update_settings") {
+    return await handleUpdateSettings(req, svc, body);
   }
   const auth = req.headers.get("authorization") ?? "";
   if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {
