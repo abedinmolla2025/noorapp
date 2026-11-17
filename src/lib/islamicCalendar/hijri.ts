@@ -164,6 +164,14 @@ export function isValidHijriDate(h: HijriDate): boolean {
   return h.day >= 1 && h.day <= hijriMonthLength(h.year, h.month);
 }
 
+/** Gregorian weekday (0 = Sunday … 6 = Saturday) for a calendar date.
+ *  Built from local-midnight parts, the same construction gregorianToHijri
+ *  uses: the weekday of a calendar date does not depend on the runtime's
+ *  timezone, because the date parts are the date itself. */
+export function gregorianWeekday(g: GregorianDate): number {
+  return new Date(g.year, g.month - 1, g.day).getDay();
+}
+
 /** Shift a Hijri date by n days (negative allowed); handles month/year rollover. */
 export function addHijriDays(h: HijriDate, n: number): HijriDate {
   if (!isValidHijriDate(h)) {

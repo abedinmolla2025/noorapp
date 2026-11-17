@@ -23,7 +23,11 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { kolkataDateString } from "@/lib/dailyContent/selection";
-import { getIslamicContextForKey } from "@/lib/islamicCalendar";
+import {
+  fetchConfirmedCorrections,
+  getIslamicContextForKey,
+  type CalendarCorrection,
+} from "@/lib/islamicCalendar";
 import {
   buildRecommendRequest,
   type RecommendationRun,
@@ -41,7 +45,17 @@ async function invokeRecommend(body: Record<string, unknown>) {
 export default function RecommendationReview() {
   const { toast } = useToast();
   const today = useMemo(() => kolkataDateString(new Date()), []);
-  const request = useMemo(() => buildRecommendRequest(today, getIslamicContextForKey(today)), [today]);
+  // Confirmed calendar corrections (Jumu'ah phase): the context — and
+  // therefore the chapter prefilter — must reflect a locally confirmed
+  // Hijri date, not just the calculated one. The request is built from
+  // the corrected context; Generate stays disabled until the read
+  // resolves, so an admin can never generate from a stale context.
+  const [corrections, setCorrections] = useState<CalendarCorrection[]>([]);
+  const [correctionsLoaded, setCorrectionsLoaded] = useState(false);
+  const request = useMemo(
+    () => buildRecommendRequest(today, getIslamicContextForKey(today, corrections)),
+    [today, corrections],
+  );
   const [runs, setRuns] = useState<RecommendationRun[]>([]);
   const [loading, setLoading] = useState(false);
   const [generating, setGenerating] = useState(false);
@@ -67,6 +81,26 @@ export default function RecommendationReview() {
   useEffect(() => {
     loadPending();
   }, [loadPending]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetchConfirmedCorrections(supabase)
+      .then((rows) => {
+        if (cancelled) return;
+        setCorrections(rows);
+        setCorrectionsLoaded(true);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        // A failed corrections read degrades to calculated dates — the
+        // same as having no corrections (the planner does the same
+        // server-side). It must not block generating a recommendation.
+        setCorrectionsLoaded(true);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const loadRecordText = useCallback(async (ref: string) => {
     if (recordTexts[ref]) return;
@@ -167,7 +201,7 @@ export default function RecommendationReview() {
         </p>
 
         <div className="flex flex-wrap gap-2">
-          <Button onClick={generate} disabled={generating}>
+          <Button onClick={generate} disabled={generating || !correctionsLoaded}>
             {generating ? "তৈরি হচ্ছে…" : "আজকের পরামর্শ তৈরি করুন"}
           </Button>
           <Button variant="outline" onClick={loadPending} disabled={loading}>

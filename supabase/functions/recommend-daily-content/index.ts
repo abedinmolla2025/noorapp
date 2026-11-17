@@ -58,8 +58,9 @@ const HISTORY_DAYS = 30;
 const HISTORY_LIMIT = 500;
 const MAX_REASON_CHARS = 200;
 
-// The 16 event slugs from the Phase 4 catalog (src/lib/islamicCalendar/events.ts).
-// Keep in sync with the catalog — the function validates caller context here.
+// The event slugs from the Phase 4 catalog (src/lib/islamicCalendar/events.ts)
+// plus the weekly Jumu'ah occasion (WEEKLY_EVENTS). Keep in sync with the
+// catalog — the function validates caller context here.
 const EVENT_SLUGS = new Set([
   "islamic-new-year",
   "ashura",
@@ -77,6 +78,7 @@ const EVENT_SLUGS = new Set([
   "hajj",
   "dhul-hijjah-month",
   "rabi-ul-awwal-month",
+  "jumuah",
 ]);
 
 const SYSTEM_PROMPT = [

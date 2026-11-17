@@ -4,7 +4,7 @@
 // Conventions match tests.mjs: sequential `t` chain, plain assertions.
 
 import { CHAPTER_EVENT_MAP, EVENTS_WITHOUT_CHAPTERS, chaptersForEvents, eventsForChapter } from "./.out/chapterEvents.js";
-import { ISLAMIC_EVENTS } from "./.out-cal/events.js";
+import { ISLAMIC_EVENTS, WEEKLY_EVENTS } from "./.out-cal/events.js";
 
 let passed = 0;
 let failed = 0;
@@ -32,10 +32,13 @@ function ok(cond, label) {
   if (!cond) throw new Error(label);
 }
 
-const catalogSlugs = new Set(ISLAMIC_EVENTS.map((e) => e.slug));
+const catalogSlugs = new Set([
+  ...ISLAMIC_EVENTS.map((e) => e.slug),
+  ...WEEKLY_EVENTS.map((e) => e.slug),
+]);
 
-t("9 mapped chapters, ids unique, all 1-97", () => {
-  eq(CHAPTER_EVENT_MAP.length, 9, "map size");
+t("10 mapped chapters, ids unique, all 1-97", () => {
+  eq(CHAPTER_EVENT_MAP.length, 10, "map size");
   const ids = CHAPTER_EVENT_MAP.map((m) => m.chapterId);
   eq(new Set(ids).size, ids.length, "unique ids");
   for (const id of ids) ok(Number.isInteger(id) && id >= 1 && id <= 97, `chapter ${id} in 1-97`);
@@ -49,6 +52,7 @@ t("every mapped event slug exists in the Phase 4 catalog", () => {
 
 t("pinned titles (canonical English, reconstruction CSV)", () => {
   const byId = new Map(CHAPTER_EVENT_MAP.map((m) => [m.chapterId, m.chapterTitleEn]));
+  eq(byId.get(11), "Friday Prayer", "11 title");
   eq(byId.get(13), "The Two Festivals (Eids)", "13 title");
   eq(byId.get(25), "Hajj (Pilgrimage)", "25 title");
   eq(byId.get(27), "Pilgrims Prevented from Completing the Pilgrimage", "27 title");
@@ -62,6 +66,7 @@ t("pinned titles (canonical English, reconstruction CSV)", () => {
 
 t("pinned mappings", () => {
   const byId = new Map(CHAPTER_EVENT_MAP.map((m) => [m.chapterId, [...m.events].sort()]));
+  eq(byId.get(11), ["jumuah"], "11 events");
   eq(byId.get(13), ["eid-adha", "eid-fitr"], "13 events");
   eq(byId.get(25), ["arafah", "dhul-hijjah-month", "eid-adha", "first-ten-dhul-hijjah", "hajj"], "25 events");
   eq(byId.get(30), ["ashura", "last-ten-nights", "ramadan-month", "ramadan-start"], "30 events");
@@ -81,25 +86,27 @@ t("chaptersForEvents: union, deduped, sorted", () => {
   eq(chaptersForEvents(["ramadan-month", "last-ten-nights"]), [30, 31, 32, 33], "ramadan + last-ten");
   eq(chaptersForEvents(["ashura"]), [30], "ashura");
   eq(chaptersForEvents(["hajj"]), [25, 27, 28], "hajj");
+  eq(chaptersForEvents(["jumuah"]), [11], "jumuah -> Friday Prayer (book 11)");
   eq(chaptersForEvents([]), [], "empty");
   eq(chaptersForEvents(["miraj"]), [], "unmapped event");
 });
 
 t("eventsForChapter: mapped vs unmapped", () => {
+  eq(eventsForChapter(11), ["jumuah"], "11");
   eq(eventsForChapter(30).sort(), ["ashura", "last-ten-nights", "ramadan-month", "ramadan-start"], "30");
   eq(eventsForChapter(1), [], "1 unmapped");
   eq(eventsForChapter(60), [], "60 unmapped (Prophets is not Mawlid-specific)");
   eq(eventsForChapter(99), [], "99 out of range");
 });
 
-t("catalog coverage: every event is mapped or explicitly unmapped (16 total)", () => {
+t("catalog coverage: every event is mapped or explicitly unmapped (16 Hijri + 1 weekly)", () => {
   const mapped = new Set(CHAPTER_EVENT_MAP.flatMap((m) => m.events));
   const unmapped = new Set(EVENTS_WITHOUT_CHAPTERS);
   eq(EVENTS_WITHOUT_CHAPTERS.length, 5, "unmapped count");
   eq([...EVENTS_WITHOUT_CHAPTERS].sort(), ["islamic-new-year", "mawlid", "miraj", "rabi-ul-awwal-month", "shabe-barat"], "unmapped list");
   for (const slug of mapped) ok(!unmapped.has(slug), `${slug} is both mapped and unmapped`);
-  eq(mapped.size + unmapped.size, 16, "mapped + unmapped = 16 catalog events");
-  eq(new Set([...mapped, ...unmapped]).size, 16, "no overlap, full coverage");
+  eq(mapped.size + unmapped.size, 17, "mapped + unmapped = 17 catalog events (16 Hijri + jumuah)");
+  eq(new Set([...mapped, ...unmapped]).size, 17, "no overlap, full coverage");
   for (const slug of catalogSlugs) {
     ok(mapped.has(slug) || unmapped.has(slug), `${slug} is neither mapped nor listed unmapped`);
   }

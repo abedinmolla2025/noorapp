@@ -114,6 +114,18 @@ const INPUTS = {
     english: "Narrated Talha: I asked `Abdullah bin Abi `Aufa, \"Did the Prophet (ﷺ) make a will (to appoint his successor or bequeath wealth)?\" He replied, \"No.\" I said, \"How is it prescribed then for the people to make wills, and they are ordered to do so while the Prophet (ﷺ) did not make any will?\" He said, \"He made a will wherein he recommended Allah's Book",
     sourceLine: "Sahih al-Bukhari, Hadith 5022",
   }),
+  // Jumu'ah phase — Bukhari 876, first hadith of book 11 "Friday Prayer",
+  // verbatim from bundled sahih_bukhari_en.json (Bengali is DB-only, so
+  // bengali is "" here, as in the canonical engine test §15). The English
+  // names Friday twice; the chapter prior (11) is a salah hint.
+  h876: H({
+    ref: "hadith:bukhari-11-876", bookKey: "bukhari", chapterId: 11,
+    chapterTitleEn: "Friday Prayer",
+    bengali: "",
+    arabic: "حَدَّثَنَا أَبُو الْيَمَانِ، قَالَ أَخْبَرَنَا شُعَيْبٌ، قَالَ حَدَّثَنَا أَبُو الزِّنَادِ، أَنَّ عَبْدَ الرَّحْمَنِ بْنَ هُرْمُزَ الأَعْرَجَ، مَوْلَى رَبِيعَةَ بْنِ الْحَارِثِ حَدَّثَهُ أَنَّهُ، سَمِعَ أَبَا هُرَيْرَةَ ـ رضى الله عنه ـ أَنَّهُ سَمِعَ رَسُولَ اللَّهِ صلى الله عليه وسلم يَقُولُ ‏ \"‏ نَحْنُ الآخِرُونَ السَّابِقُونَ يَوْمَ الْقِيَامَةِ، بَيْدَ أَنَّهُمْ أُوتُوا الْكِتَابَ مِنْ قَبْلِنَا، ثُمَّ هَذَا يَوْمُهُمُ الَّذِي فُرِضَ عَلَيْهِمْ فَاخْتَلَفُوا فِيهِ، فَهَدَانَا اللَّهُ، فَالنَّاسُ لَنَا فِيهِ تَبَعٌ، الْيَهُودُ غَدًا وَالنَّصَارَى بَعْدَ غَدٍ \"‏‏.‏",
+    english: "Narrated Abu Huraira:I heard Allah's Messenger (ﷺ) saying, \"We (Muslims) are the last (to come) but (will be) the foremost on the Day of Resurrection though the former nations were given the Holy Scriptures before us. And this was their day (Friday) the celebration of which was made compulsory for them but they differed about it. So Allah gave us the guidance for it (Friday) and all the other people are behind us in this respect: the Jews' (holy day is) tomorrow (i.e. Saturday) and the Christians' (is) the day after tomorrow (i.e. Sunday)",
+    sourceLine: "Sahih al-Bukhari, Hadith 876",
+  }),
 };
 
 const cardFor = (input) => ({
@@ -185,9 +197,10 @@ const EXPECTED = [
   ["modesty (no scene yet)", "modesty", null, null, undefined],
   ["bukhari-10-869 (live)", "salah", "mosque-courtyard", "courtyard-prayer", undefined],
   ["bukhari-66-5022 (E2E)", "quran", "quran-rehal", "library", undefined],
+  ["bukhari-11-876 (Jumu'ah)", "salah", "mosque-courtyard", "courtyard-prayer", undefined],
 ];
 for (const [name, topic, concept, scene, override] of EXPECTED) {
-  const key = { intentions: "intentions", knowledge: "knowledge", "speech (no scene yet)": "speech", "quran-5027": "quran5027", "character + kindness override": "character", "safety + protection override": "safety", "modesty (no scene yet)": "modesty", "bukhari-10-869 (live)": "h869", "bukhari-66-5022 (E2E)": "h5022" }[name];
+  const key = { intentions: "intentions", knowledge: "knowledge", "speech (no scene yet)": "speech", "quran-5027": "quran5027", "character + kindness override": "character", "safety + protection override": "safety", "modesty (no scene yet)": "modesty", "bukhari-10-869 (live)": "h869", "bukhari-66-5022 (E2E)": "h5022", "bukhari-11-876 (Jumu'ah)": "h876" }[name];
   t(`select ${name}: topic=${topic} concept=${concept} scene=${scene}`, () => {
     const { sel, qc, score } = selectAndQc(INPUTS[key], NO_HISTORY, override);
     assert.equal(sel.selection.topicId, topic, `topic mismatch: ${sel.selection.topicId}`);

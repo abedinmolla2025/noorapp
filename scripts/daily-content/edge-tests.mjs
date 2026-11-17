@@ -86,6 +86,7 @@ globalThis.Deno = {
     get: (k) => edgeEnvOverrides[k] ??
       ({
         SUPABASE_URL: "http://stub",
+        SUPABASE_ANON_KEY: "anon-key",
         SUPABASE_SERVICE_ROLE_KEY: "key",
         WEBPUSH_VAPID_PUBLIC_KEY: "pub",
         WEBPUSH_VAPID_PRIVATE_KEY: "priv",
@@ -116,7 +117,18 @@ function makeSvc(seed = {}) {
     hadiths: seed.hadiths ?? [],
     admin_content: seed.duas ?? [],
     daily_content_recommendations: seed.recommendations ?? [],
+    // Jumu'ah phase — the corrections table the planner now reads, plus
+    // the audit + profiles tables the admin action's guarded audit insert
+    // touches (audit only when the actor is a real admin profile UUID).
+    islamic_calendar_corrections: seed.corrections ?? [],
+    admin_audit_log: seed.audit ?? [],
+    profiles: seed.profiles ?? [],
   };
+  // Jumu'ah phase — fake admin identity for the admin-JWT-gated
+  // `calendar_correction` action: verifyAdmin calls auth.getClaims
+  // (sub) + rpc("is_admin"). Default is an admin; tests override via
+  // seed.auth = { sub, isAdmin }.
+  const authCfg = seed.auth ?? { sub: "admin-uuid", isAdmin: true };
   let seq = 1000;
   const flags = {
     hideTodayRowOnce: false,
@@ -129,6 +141,11 @@ function makeSvc(seed = {}) {
     zeroRowSentUpdateAt: null,
     zeroRowFlip: false,
     zeroRowClaimUpdates: null,
+    // Jumu'ah phase — fault injection for the corrections read: when
+    // set, every read of islamic_calendar_corrections throws the
+    // relation-does-not-exist error a missing table produces in
+    // production, so the fail-open path is exercised.
+    throwOnCorrectionsRead: false,
   };
   const matches = (rows, filters) => rows.filter((r) => filters.every((f) => f(r)));
 
@@ -192,6 +209,10 @@ function makeSvc(seed = {}) {
       return this;
     }
     rows() {
+      // Jumu'ah phase fault injection (see flags.throwOnCorrectionsRead).
+      if (flags.throwOnCorrectionsRead && this.table === "islamic_calendar_corrections") {
+        throw new Error('relation "islamic_calendar_corrections" does not exist');
+      }
       let rs = matches(tables[this.table], this.filters);
       if (
         flags.hideTodayRowOnce &&
@@ -347,6 +368,18 @@ function makeSvc(seed = {}) {
     tables,
     flags,
     from: (table) => new Q(table),
+    // Jumu'ah phase — the admin verifier's surface (auth.getClaims +
+    // rpc("is_admin")); the rest of the fake never calls these.
+    auth: {
+      getClaims: async (jwt) => {
+        if (!jwt || jwt === "garbage-jwt") return { data: null, error: new Error("invalid token") };
+        return { data: { claims: { sub: authCfg.sub } }, error: null };
+      },
+    },
+    rpc: async (fn) => {
+      if (fn === "is_admin") return { data: authCfg.isAdmin, error: null };
+      return { data: null, error: new Error(`unknown rpc ${fn}`) };
+    },
   };
 }
 
@@ -2826,6 +2859,217 @@ await t("edge Phase 8: a published row stays published when a later push retry f
   const del = svc.tables.daily_content_deliveries[0];
   assert.equal(del.status, "retryable");
   assert.equal(del.attempts, 2);
+});
+
+// ---- Jumu'ah phase: weekly Friday occasion + calendar corrections ----
+
+await t("edge Jumu'ah: edge context == lib context on 2026-11-20 (Fri), 2026-11-18 (Wed), 2026-11-27 (Fri)", async () => {
+  // The Phase 9 sweep above covers 3 Fridays; these pin the two dates
+  // the mission cares about: 2026-11-20 is the first Friday after this
+  // phase lands, 2026-11-18 is the Wednesday rehearsal run (no Jumu'ah).
+  for (const d of ["2026-11-20", "2026-11-18", "2026-11-27"]) {
+    const libCtx = cal.getIslamicContextForKey(d);
+    const edgeCtx = edgeMod.islamicContextForKolkataDate(d);
+    assert.deepEqual(edgeCtx.hijri, libCtx.hijri, `hijri ${d}`);
+    assert.equal(edgeCtx.hijriKey, libCtx.hijriKey, `hijriKey ${d}`);
+    assert.deepEqual(edgeCtx.activeEventSlugs, libCtx.activeEvents.map((e) => e.event.slug), `events ${d}`);
+    assert.equal(edgeCtx.ramadanStage, libCtx.ramadanStage, `ramadanStage ${d}`);
+  }
+  assert.ok(edgeMod.islamicContextForKolkataDate("2026-11-20").activeEventSlugs.includes("jumuah"));
+  assert.ok(!edgeMod.islamicContextForKolkataDate("2026-11-18").activeEventSlugs.includes("jumuah"));
+});
+
+await t("edge Jumu'ah: a confirmed correction shifts the edge context and is recorded", async () => {
+  // The edge function takes corrections in the camelCase shape
+  // fetchCorrectionsForMonth maps DB rows into (not the snake_case row).
+  const corr = {
+    id: "c1", hijriYear: 1447, hijriMonth: 9, dayOffset: -1,
+    reasonBn: "পশ্চিমবঙ্গে চাঁদ একদিন পরে দেখা গেছে", source: "Hilal Committee, West Bengal",
+    status: "confirmed", createdBy: "admin-1", createdAt: "2026-02-18T10:00:00.000Z",
+  };
+  const edgeCtx = edgeMod.islamicContextForKolkataDate("2026-02-19", [corr]);
+  const libCtx = cal.getIslamicContextForKey("2026-02-19", [corr]);
+  assert.equal(edgeCtx.hijriKey, "1447-09-01");
+  assert.equal(edgeCtx.hijriKey, libCtx.hijriKey);
+  assert.equal(edgeCtx.confirmation, "confirmed");
+  assert.equal(edgeCtx.appliedCorrections.length, 1);
+  assert.equal(edgeCtx.appliedCorrections[0].id, "c1");
+  // No correction -> the edge context matches the lib on every field
+  // the planner consumes (byte-identical planning input).
+  const plain = edgeMod.islamicContextForKolkataDate("2026-02-19");
+  const plainLib = cal.getIslamicContextForKey("2026-02-19");
+  assert.deepEqual(plain.hijri, plainLib.hijri);
+  assert.equal(plain.hijriKey, plainLib.hijriKey);
+  assert.equal(plain.confirmation, plainLib.confirmation);
+  assert.deepEqual(plain.activeEventSlugs, plainLib.activeEvents.map((e) => e.event.slug));
+  assert.deepEqual(plain.appliedCorrections, []);
+  assert.deepEqual(plain.pendingCorrections, []);
+});
+
+await t("edge Jumu'ah: dry-run plan carries a correction in context + diagnostics", async () => {
+  const todayCtx = cal.getIslamicContextForKey(TODAY);
+  const corrLib = {
+    id: "c-today", hijriYear: todayCtx.hijri.year, hijriMonth: todayCtx.hijri.month, dayOffset: -1,
+    reasonBn: "পশ্চিমবঙ্গে চাঁদ একদিন পরে দেখা গেছে", source: "Hilal Committee, West Bengal",
+    status: "confirmed", createdBy: "admin-1", createdAt: "2026-11-17T00:00:00.000Z",
+  };
+  const corrRow = {
+    id: "c-today", hijri_year: corrLib.hijriYear, hijri_month: corrLib.hijriMonth, day_offset: -1,
+    reason_bn: corrLib.reasonBn, source: corrLib.source,
+    status: "confirmed", created_by: "admin-1", created_at: "2026-11-17T00:00:00.000Z",
+  };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    corrections: [corrRow],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.status, 200);
+  const expected = cal.getIslamicContextForKey(TODAY, [corrLib]);
+  assert.equal(res.json.plan.context.hijriKey, expected.hijriKey);
+  assert.equal(res.json.plan.context.confirmation, "confirmed");
+  assert.equal(res.json.plan.diagnostics.correctionsApplied, 1);
+  assert.equal(res.json.plan.diagnostics.correctionsReadError, false);
+  assert.equal(res.json.plan.context.appliedCorrections[0].id, "c-today");
+  assert.equal(svc.tables.daily_content_publications.length, 0, "dry-run writes nothing");
+});
+
+await t("edge Jumu'ah: dry-run without a correction is identical to the lib (no jumuah on a non-Friday)", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.status, 200);
+  const libCtx = cal.getIslamicContextForKey(TODAY);
+  assert.equal(res.json.plan.context.hijriKey, libCtx.hijriKey);
+  assert.equal(res.json.plan.context.confirmation, "calculated");
+  assert.deepEqual(res.json.plan.context.activeEventSlugs, libCtx.activeEvents.map((e) => e.event.slug));
+  assert.ok(!res.json.plan.context.activeEventSlugs.includes("jumuah"), "today is not a Friday");
+  assert.equal(res.json.plan.diagnostics.correctionsApplied, 0);
+  assert.equal(res.json.plan.diagnostics.correctionsReadError, false);
+});
+
+await t("edge Jumu'ah: a failed corrections read degrades to calculated, never blocks the day", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+  });
+  svc.flags.throwOnCorrectionsRead = true;
+  stubs.holder.svc = svc;
+  const res = await callEdge({ dry_run: true });
+  assert.equal(res.status, 200);
+  const libCtx = cal.getIslamicContextForKey(TODAY);
+  assert.equal(res.json.plan.context.hijriKey, libCtx.hijriKey);
+  assert.equal(res.json.plan.context.confirmation, "calculated");
+  assert.equal(res.json.plan.diagnostics.correctionsApplied, 0);
+  assert.equal(res.json.plan.diagnostics.correctionsReadError, true);
+});
+
+const CORRECTION_BODY = (over = {}) => ({
+  hijriYear: 1447, hijriMonth: 9, dayOffset: -1,
+  reasonBn: "পশ্চিমবঙ্গে চাঁদ একদিন পরে দেখা গেছে", source: "Hilal Committee, West Bengal",
+  status: "confirmed",
+  ...over,
+});
+
+await t("edge calendar_correction: no auth -> 401, non-admin -> 403", async () => {
+  const svc = makeSvc({ settings: [{ enabled: true }] });
+  stubs.holder.svc = svc;
+  const noAuth = await callEdgeNoAuth({ action: "calendar_correction", correction: CORRECTION_BODY() });
+  assert.equal(noAuth.status, 401);
+  const nonAdmin = makeSvc({ settings: [{ enabled: true }], auth: { sub: "user-1", isAdmin: false } });
+  stubs.holder.svc = nonAdmin;
+  const forbidden = await callEdge({ action: "calendar_correction", correction: CORRECTION_BODY() });
+  assert.equal(forbidden.status, 403);
+  assert.equal(svc.tables.islamic_calendar_corrections.length, 0);
+  assert.equal(nonAdmin.tables.islamic_calendar_corrections.length, 0);
+});
+
+await t("edge calendar_correction: invalid correction -> 400, nothing written", async () => {
+  const svc = makeSvc({ settings: [{ enabled: true }] });
+  stubs.holder.svc = svc;
+  for (const bad of [
+    CORRECTION_BODY({ hijriMonth: 13 }),
+    CORRECTION_BODY({ dayOffset: 2 }),
+    CORRECTION_BODY({ hijriYear: 1399 }),
+    CORRECTION_BODY({ reasonBn: "  " }),
+    CORRECTION_BODY({ source: "" }),
+    CORRECTION_BODY({ status: "maybe" }),
+    { hijriYear: 1447 },
+  ]) {
+    const res = await callEdge({ action: "calendar_correction", correction: bad });
+    assert.equal(res.status, 400, `expected 400 for ${JSON.stringify(bad)}`);
+    assert.ok(Array.isArray(res.json.detail) && res.json.detail.length > 0, "detail lists the errors");
+  }
+  assert.equal(svc.tables.islamic_calendar_corrections.length, 0);
+});
+
+await t("edge calendar_correction: admin creates a row (audit skipped for non-UUID actor)", async () => {
+  const svc = makeSvc({ settings: [{ enabled: true }] });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ action: "calendar_correction", correction: CORRECTION_BODY() });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.superseded, false);
+  assert.equal(res.json.admin_audit_log, "skipped_no_admin_uuid");
+  assert.equal(svc.tables.islamic_calendar_corrections.length, 1);
+  const row = svc.tables.islamic_calendar_corrections[0];
+  assert.equal(row.hijri_year, 1447);
+  assert.equal(row.hijri_month, 9);
+  assert.equal(row.day_offset, -1);
+  assert.equal(row.status, "confirmed");
+  assert.equal(row.reason_bn, "পশ্চিমবঙ্গে চাঁদ একদিন পরে দেখা গেছে");
+});
+
+await t("edge calendar_correction: second save for the same month supersedes, audit keeps the old values", async () => {
+  const ADMIN_UUID = "11111111-2222-3333-4444-555555555555";
+  const prev = {
+    id: "c-old", hijri_year: 1447, hijri_month: 9, day_offset: 1,
+    reason_bn: "আগের রিপোর্ট", source: "Old source",
+    status: "proposed", created_by: "admin-1", created_at: "2026-02-17T10:00:00.000Z",
+  };
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    corrections: [prev],
+    profiles: [{ id: ADMIN_UUID }],
+    auth: { sub: ADMIN_UUID, isAdmin: true },
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge({ action: "calendar_correction", correction: CORRECTION_BODY() });
+  assert.equal(res.status, 200);
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.superseded, true);
+  assert.equal(res.json.admin_audit_log, "written");
+  // Still exactly one row for the month (UNIQUE), now with the new values.
+  assert.equal(svc.tables.islamic_calendar_corrections.length, 1);
+  const row = svc.tables.islamic_calendar_corrections[0];
+  assert.equal(row.id, "c-old");
+  assert.equal(row.day_offset, -1);
+  assert.equal(row.status, "confirmed");
+  // The superseded values survive only in the audit log.
+  assert.equal(svc.tables.admin_audit_log.length, 1);
+  const audit = svc.tables.admin_audit_log[0];
+  assert.equal(audit.action, "islamic_calendar_correction");
+  assert.equal(audit.actor_id, ADMIN_UUID);
+  assert.equal(audit.metadata.changed.from.day_offset, 1);
+  assert.equal(audit.metadata.changed.from.status, "proposed");
+  assert.equal(audit.metadata.changed.to.day_offset, -1);
+});
+
+await t("edge calendar_correction: missing table -> 500 corrections_table_missing", async () => {
+  const svc = makeSvc({ settings: [{ enabled: true }] });
+  svc.flags.throwOnCorrectionsRead = true;
+  stubs.holder.svc = svc;
+  const res = await callEdge({ action: "calendar_correction", correction: CORRECTION_BODY() });
+  assert.equal(res.status, 500);
+  assert.equal(res.json.error, "corrections_table_missing");
+  assert.equal(svc.tables.islamic_calendar_corrections.length, 0);
 });
 
 console.log(`edge tests: ${n} passed`);

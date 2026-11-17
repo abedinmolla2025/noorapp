@@ -82,10 +82,16 @@ export type Topic = {
 export const TOPICS: Topic[] = [
   {
     id: "salah", labelBn: "সালাত ও ইবাদত", labelEn: "Prayer & worship",
-    keywordsBn: ["নামাজ", "সালাত", "মসজিদ", "জামাত", "আজান", "ফজর", "ইবাদত", "সিজদা", "রুকু", "তাহাজ্জুদ"],
-    keywordsAr: ["صلاة", "مسجد", "أذان", "فجر", "سجود", "ركوع", "تهجد"],
-    keywordsEn: ["prayer", "mosque", "adhan", "fajr", "prostrat", "worship"],
-    chapterHints: [10, 31, 33],
+    keywordsBn: ["নামাজ", "সালাত", "মসজিদ", "জামাত", "আজান", "ফজর", "ইবাদত", "সিজদা", "রুকু", "তাহাজ্জুদ", "জুম্মা", "জুমা"],
+    keywordsAr: ["صلاة", "مسجد", "أذان", "فجر", "سجود", "ركوع", "تهجد", "جمعة"],
+    keywordsEn: ["prayer", "mosque", "adhan", "fajr", "prostrat", "worship", "friday", "jumu"],
+    // Friday keywords (2026-11-17, Jumu'ah): a Friday hadith is prayer
+    // content — "জুমার নামাজ" already matched on "নামাজ", but a text
+    // that says only "জুম্মার দিন" did not. "جمعة" is 4 letters (the
+    // Phase 2 fix removed bare 2-letter Arabic words); "jumu" matches
+    // jumu'ah / jumuah. Chapter 11 is the canonical "Friday Prayer"
+    // book (forensic reconstruction, 97/97).
+    chapterHints: [10, 11, 31, 33],
   },
   {
     id: "quran", labelBn: "কুরআন", labelEn: "Quran",

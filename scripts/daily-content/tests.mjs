@@ -699,8 +699,10 @@ t("recommendations: last-ten night builds a Qadr-window request", () => {
 t("recommendations: Eid al-Fitr builds a festivals-chapter request", () => {
   const req = reqFor("2026-03-20");
   assert.deepEqual(req.context.hijri, { year: 1447, month: 10, day: 1 });
-  assert.deepEqual(req.context.activeEventSlugs, ["eid-fitr"]);
-  assert.deepEqual(req.chapterIds, [13]);
+  // 2026-03-20 is a Friday: Jumu'ah joins Eid al-Fitr, and book 11
+  // (Friday Prayer) joins the chapter prefilter.
+  assert.deepEqual(req.context.activeEventSlugs, ["eid-fitr", "jumuah"]);
+  assert.deepEqual(req.chapterIds, [11, 13]);
 });
 t("recommendations: Eid al-Adha builds a Hajj-chapter request", () => {
   const req = reqFor("2026-05-27");

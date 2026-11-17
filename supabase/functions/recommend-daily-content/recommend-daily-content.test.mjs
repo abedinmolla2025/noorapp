@@ -546,6 +546,18 @@ t("bad context (month 13, unknown slug) -> 400, gateway not called", async () =>
   eq(globalThis.__GATEWAY__.calls, 0, "gateway calls");
 });
 
+// Jumu'ah phase — the weekly Friday occasion is a known slug: a Friday
+// context carrying it must pass validation (the gateway is called),
+// while a still-unknown slug is still rejected.
+t("jumuah slug accepted in context (Friday 2026-11-20) -> gateway called", async () => {
+  setup();
+  const body = recommendBody();
+  body.context.activeEventSlugs = ["jumuah"];
+  const r = await callEdge(body);
+  eq(r.status, 200, "jumuah status");
+  eq(globalThis.__GATEWAY__.calls, 1, "gateway calls");
+});
+
 // 20: unknown action
 t("unknown action -> 400", async () => {
   setup();

@@ -19,8 +19,11 @@ echo "== compile dailyContent lib =="
 # the dailyContent outputs into .out/dailyContent/..., breaking test imports.
 ./node_modules/.bin/tsc src/lib/islamicCalendar/hijri.ts src/lib/islamicCalendar/events.ts \
   src/lib/islamicCalendar/corrections.ts src/lib/islamicCalendar/context.ts \
-  src/lib/islamicCalendar/index.ts \
-  --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out-cal
+  src/lib/islamicCalendar/correctionsApi.ts src/lib/islamicCalendar/index.ts \
+  --module esnext --moduleResolution bundler --target es2020 --skipLibCheck --outDir scripts/daily-content/.out-cal
+# NOTE: --moduleResolution bundler is needed ONLY because correctionsApi.ts
+# imports the SupabaseClient TYPE from @supabase/supabase-js (type-only,
+# erased at emit). The emitted JS is identical to the esnext compile.
 # Separate invocation: mixing api/ into the lib compile would move the
 # lib outputs into .out/src/... (common rootDir), breaking test imports.
 ./node_modules/.bin/tsc api/daily-content-run.ts \

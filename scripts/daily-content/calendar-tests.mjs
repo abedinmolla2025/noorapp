@@ -13,6 +13,7 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 const hijri = await import(path.join(dir, ".out-cal/hijri.js"));
 const events = await import(path.join(dir, ".out-cal/events.js"));
 const corr = await import(path.join(dir, ".out-cal/corrections.js"));
+const corrApi = await import(path.join(dir, ".out-cal/correctionsApi.js"));
 const ctx = await import(path.join(dir, ".out-cal/context.js"));
 
 let n = 0;
@@ -185,6 +186,61 @@ t("context 2025-07-06 (Muharram 10): Ashura", () => {
   assert.ok(ctx.activeEventSlugs(c).includes("ashura"));
 });
 
+// --- context: Jumu'ah (weekly Friday occasion) ---
+t("gregorianWeekday: 2026-11-20 is Friday (5), 2026-11-18 is Wednesday (3)", () => {
+  assert.equal(hijri.gregorianWeekday(G(2026, 11, 20)), 5);
+  assert.equal(hijri.gregorianWeekday(G(2026, 11, 18)), 3);
+  assert.equal(hijri.gregorianWeekday(G(2026, 11, 27)), 5);
+});
+t("context 2026-11-20 (Friday): jumuah active, day is not ordinary", () => {
+  const c = ctx.getIslamicContext(G(2026, 11, 20));
+  assert.ok(ctx.activeEventSlugs(c).includes("jumuah"));
+  assert.equal(c.isOrdinaryDay, false);
+  const j = c.activeEvents.find((a) => a.event.slug === "jumuah");
+  assert.ok(j, "jumuah must be an active event");
+  assert.equal(j.windowLength, 1);
+  assert.equal(j.dayInWindow, 1);
+  assert.deepEqual(j.windowStart, c.hijri);
+  assert.deepEqual(j.windowEnd, c.hijri);
+});
+t("context 2026-11-18 (Wednesday): no jumuah; 2026-11-27 (Friday): jumuah", () => {
+  assert.ok(!ctx.activeEventSlugs(ctx.getIslamicContext(G(2026, 11, 18))).includes("jumuah"));
+  assert.ok(ctx.activeEventSlugs(ctx.getIslamicContext(G(2026, 11, 27))).includes("jumuah"));
+});
+t("context 2026-02-20 (Friday, Ramadan 3): jumuah alongside ramadan-month, appended last", () => {
+  const c = ctx.getIslamicContext(G(2026, 2, 20));
+  assert.equal(c.hijriKey, "1447-09-03");
+  const slugs = ctx.activeEventSlugs(c);
+  assert.ok(slugs.includes("jumuah"));
+  assert.ok(slugs.includes("ramadan-month"));
+  assert.equal(slugs[slugs.length - 1], "jumuah"); // weekly appended after Hijri windows
+});
+t("upcoming: jumuah never appears (weekly recurrence is not a Hijri window)", () => {
+  const c = ctx.getIslamicContext(G(2026, 11, 19)); // Thursday
+  assert.ok(!c.upcomingEvents.some((u) => u.event.slug === "jumuah"));
+});
+t("weekly catalog: exactly one entry, Friday, with the Jumu'ah note", () => {
+  assert.equal(events.WEEKLY_EVENTS.length, 1);
+  const j = events.WEEKLY_EVENTS[0];
+  assert.equal(j.slug, "jumuah");
+  assert.equal(j.weekday, 5);
+  assert.equal(j.nameBn, "জুম্মা");
+  assert.match(j.descriptionBn, /শুক্রবার/);
+});
+t("page events: still 16 dated rows — the weekly occasion has no date to render", () => {
+  const rows = events.getCalendarPageEvents();
+  assert.equal(rows.length, 16);
+  assert.ok(!rows.some((r) => r.slug === "jumuah"));
+});
+t("no corrections: context is identical to the pinned vectors (calculated, none applied)", () => {
+  const c = ctx.getIslamicContext(G(2026, 2, 18), []);
+  assert.equal(c.hijriKey, "1447-09-01");
+  assert.equal(c.confirmation, "calculated");
+  assert.deepEqual(c.appliedCorrections, []);
+  assert.deepEqual(c.pendingCorrections, []);
+  assert.deepEqual(c.hijriCalculated, c.hijri);
+});
+
 // --- context: upcoming events ---
 t("upcoming: 2026-02-10 lists Ramadan start in 8 days (2026-02-18)", () => {
   const c = ctx.getIslamicContext(G(2026, 2, 10));
@@ -265,6 +321,25 @@ t("validateCorrection: valid passes, bad month/offset/source fail", () => {
   assert.ok(corr.validateCorrection({ ...RAMADAN_MINUS_1, dayOffset: 2 }).length > 0);
   assert.ok(corr.validateCorrection({ ...RAMADAN_MINUS_1, source: "  " }).length > 0);
   assert.ok(corr.validateCorrection({ ...RAMADAN_MINUS_1, status: "maybe" }).length > 0);
+});
+t("mapCorrectionRow: valid DB row maps to the lib shape", () => {
+  const c = corrApi.mapCorrectionRow({
+    id: "c9", hijri_year: 1447, hijri_month: 9, day_offset: -1,
+    reason_bn: "পশ্চিমবঙ্গে চাঁদ একদিন পরে দেখা গেছে", source: "Hilal Committee",
+    status: "confirmed", created_by: "admin-1", created_at: "2026-02-18T10:00:00.000Z",
+  });
+  assert.ok(c);
+  assert.equal(c.hijriYear, 1447);
+  assert.equal(c.hijriMonth, 9);
+  assert.equal(c.dayOffset, -1);
+  assert.equal(c.status, "confirmed");
+  assert.equal(c.createdBy, "admin-1");
+});
+t("mapCorrectionRow: invalid row (bad month) maps to null, never applied", () => {
+  assert.equal(corrApi.mapCorrectionRow({
+    id: "c10", hijri_year: 1447, hijri_month: 13, day_offset: -1,
+    reason_bn: "x", source: "y", status: "confirmed", created_by: null, created_at: "2026-02-18T10:00:00.000Z",
+  }), null);
 });
 
 // --- catalog invariants ---

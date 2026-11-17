@@ -427,13 +427,17 @@ const BOOK_NAMES: Record<string, string> = {
 // src/lib (same constraint as the recommend function, D-18/D-21). This
 // section is a minimal, self-contained port of the deterministic core the
 // daily plan needs: the tabular Hijri conversion, the 16-event catalog
-// (slugs + windows only), and the context assembly. It carries NO
-// corrections (an approved run's stored context already reflects any
-// correction applied at generation time) and NO AI. Every date it produces
-// is labelled confirmation: "calculated" — never presented as locally
-// confirmed. Equivalence with the lib is pinned by edge tests (the
-// dry-run's plan.context vs the lib's getIslamicContextForKey over a date
-// list); if the port and the lib ever disagree, the test fails.
+// (slugs + windows only), the weekly Jumu'ah occasion, and the context
+// assembly. Corrections ARE carried here (Jumu'ah phase, 2026-11-17):
+// planDay reads confirmed rows from islamic_calendar_corrections for the
+// calculated Hijri month and applies the lib's rule (latest confirmed
+// wins, proposed recorded but never applied) via edgeApplyCorrections.
+// A failed corrections read degrades to calculated with a diagnostics
+// flag — it never blocks the day. Every date it produces is labelled
+// confirmation: "calculated" unless a confirmed correction applied it.
+// Equivalence with the lib is pinned by edge tests (the dry-run's
+// plan.context vs the lib's getIslamicContextForKey over a date list);
+// if the port and the lib ever disagree, the test fails.
 
 // Tabular Hijri conversion (Kuwaiti / Islamic-civil algorithm), ported
 // VERBATIM from src/lib/islamicCalendar/hijri.ts — same arithmetic, but
@@ -478,6 +482,146 @@ function edgeHijriMonthLength(year: number, month: number): number {
   return month % 2 === 1 ? 30 : 29;
 }
 
+// JDN round-trip (ported VERBATIM from src/lib/islamicCalendar/hijri.ts:
+// hijriToJdn + jdnToGregorian), so a Hijri date can be shifted by days.
+function edgeHijriToJdn(h: { year: number; month: number; day: number }): number {
+  return (
+    h.day +
+    Math.ceil(29.5 * (h.month - 1)) +
+    (h.year - 1) * 354 +
+    Math.floor((3 + 11 * h.year) / 30) +
+    1948440 -
+    1
+  );
+}
+
+function edgeJdnToGregorian(jdn: number): { year: number; month: number; day: number } {
+  const a = jdn + 32044;
+  const b = Math.floor((4 * a + 3) / 146097);
+  const c = a - Math.floor((146097 * b) / 4);
+  const d = Math.floor((4 * c + 3) / 1461);
+  const e = c - Math.floor((1461 * d) / 4);
+  const m = Math.floor((5 * e + 2) / 153);
+  const day = e - Math.floor((153 * m + 2) / 5) + 1;
+  const month = m + 3 - 12 * Math.floor(m / 10);
+  const year = 100 * b + d - 4800 + Math.floor(m / 10);
+  return { year, month, day };
+}
+
+function edgeJdnToHijri(jdn: number): { year: number; month: number; day: number } {
+  const g = edgeJdnToGregorian(jdn);
+  return edgeGregorianToHijri(g.year, g.month, g.day);
+}
+
+/** Shift a Hijri date by n days (negative allowed); handles month/year rollover. */
+function edgeAddHijriDays(h: { year: number; month: number; day: number }, n: number): { year: number; month: number; day: number } {
+  return edgeJdnToHijri(edgeHijriToJdn(h) + n);
+}
+
+// ---- Calendar corrections (ported from src/lib/islamicCalendar/corrections.ts) ----
+// A correction row (islamic_calendar_corrections) says: for Hijri month M
+// of year Y, the calculated month started `dayOffset` days off from the
+// locally sighted moon. dayOffset = -1 means the month started ONE DAY
+// LATER than calculated; +1 means ONE DAY EARLIER. Only "confirmed"
+// rows shift the date; "proposed" rows are recorded but never applied.
+// Latest confirmed wins (by createdAt, then id); the table enforces
+// UNIQUE(hijri_year, hijri_month), so in practice there is at most one
+// row per month. AI NEVER creates or confirms a correction.
+interface EdgeCalendarCorrection {
+  id: string;
+  hijriYear: number;
+  hijriMonth: number;
+  /** -1 = month started a day later than calculated; +1 = a day earlier. */
+  dayOffset: -1 | 0 | 1;
+  reasonBn: string;
+  source: string;
+  status: "confirmed" | "proposed";
+  createdAt: string;
+}
+
+function edgeValidateCorrection(c: Partial<EdgeCalendarCorrection>): string[] {
+  const errors: string[] = [];
+  if (typeof c.hijriYear !== "number" || !Number.isInteger(c.hijriYear) || c.hijriYear < 1400 || c.hijriYear > 1500) {
+    errors.push("hijriYear must be an integer between 1400 and 1500");
+  }
+  if (typeof c.hijriMonth !== "number" || !Number.isInteger(c.hijriMonth) || c.hijriMonth < 1 || c.hijriMonth > 12) {
+    errors.push("hijriMonth must be an integer between 1 and 12");
+  }
+  if (c.dayOffset !== -1 && c.dayOffset !== 0 && c.dayOffset !== 1) {
+    errors.push("dayOffset must be -1, 0, or 1");
+  }
+  if (typeof c.source !== "string" || c.source.trim() === "") {
+    errors.push("source is required");
+  }
+  if (typeof c.reasonBn !== "string" || c.reasonBn.trim() === "") {
+    errors.push("reasonBn is required");
+  }
+  if (c.status !== "confirmed" && c.status !== "proposed") {
+    errors.push('status must be "confirmed" or "proposed"');
+  }
+  return errors;
+}
+
+function edgeApplyCorrections(
+  hijri: { year: number; month: number; day: number },
+  corrections: readonly EdgeCalendarCorrection[],
+): {
+  date: { year: number; month: number; day: number };
+  applied: EdgeCalendarCorrection[];
+  pending: EdgeCalendarCorrection[];
+  confirmation: "calculated" | "confirmed";
+} {
+  const forMonth = corrections.filter(
+    (c) => c.hijriYear === hijri.year && c.hijriMonth === hijri.month,
+  );
+  const byRecency = (a: EdgeCalendarCorrection, b: EdgeCalendarCorrection): number => {
+    if (a.createdAt !== b.createdAt) return a.createdAt < b.createdAt ? -1 : 1;
+    if (a.id !== b.id) return a.id < b.id ? -1 : 1;
+    return 0;
+  };
+  const pending = forMonth.filter((c) => c.status === "proposed").sort(byRecency);
+  const confirmed = forMonth.filter((c) => c.status === "confirmed").sort(byRecency);
+  if (confirmed.length === 0) {
+    return { date: hijri, applied: [], pending, confirmation: "calculated" };
+  }
+  const latest = confirmed[confirmed.length - 1];
+  const date = latest.dayOffset === 0 ? hijri : edgeAddHijriDays(hijri, latest.dayOffset);
+  return { date, applied: [latest], pending, confirmation: "confirmed" };
+}
+
+/** Read the corrections rows for one calculated Hijri month. A failed
+ *  read (e.g. the table predates the environment) degrades to an empty
+ *  set with readError=true — the planner falls back to calculated dates
+ *  and records the flag in diagnostics, never blocking the day. */
+async function fetchCorrectionsForMonth(
+  svc: Svc,
+  hijriYear: number,
+  hijriMonth: number,
+): Promise<{ rows: EdgeCalendarCorrection[]; readError: boolean }> {
+  try {
+    const { data, error } = await svc
+      .from("islamic_calendar_corrections")
+      .select("id,hijri_year,hijri_month,day_offset,reason_bn,source,status,created_at")
+      .eq("hijri_year", hijriYear)
+      .eq("hijri_month", hijriMonth)
+      .order("created_at", { ascending: true });
+    if (error) return { rows: [], readError: true };
+    const rows = ((data ?? []) as Array<Record<string, unknown>>).map((r) => ({
+      id: String(r.id ?? ""),
+      hijriYear: Number(r.hijri_year),
+      hijriMonth: Number(r.hijri_month),
+      dayOffset: Number(r.day_offset) as -1 | 0 | 1,
+      reasonBn: String(r.reason_bn ?? ""),
+      source: String(r.source ?? ""),
+      status: String(r.status) as "confirmed" | "proposed",
+      createdAt: String(r.created_at ?? ""),
+    }));
+    return { rows, readError: false };
+  } catch {
+    return { rows: [], readError: true };
+  }
+}
+
 // Event windows (slug, Hijri month, inclusive day range) — the same 16
 // entries, in the same order, as src/lib/islamicCalendar/events.ts. Only
 // the fields the plan needs are carried here; names and descriptions stay
@@ -501,15 +645,33 @@ const EDGE_ISLAMIC_EVENTS: ReadonlyArray<{ slug: string; hijriMonth: number; hij
   { slug: "rabi-ul-awwal-month", hijriMonth: 3, hijriDayStart: 1, hijriDayEnd: 30 },
 ];
 
-/** The day's Islamic context for a Kolkata date: Hijri date, active event
- *  slugs (catalog order, window end clamped to the real month length),
- *  and the Ramadan stage (date range only — no virtue claims attached).
- *  Mirrors the lib's getIslamicContext (without corrections). */
-export function islamicContextForKolkataDate(kolkataDate: string): {
+// Weekly (Gregorian-weekday) occasions — the same entries as
+// src/lib/islamicCalendar/events.ts WEEKLY_EVENTS (slugs + weekday only;
+// names and descriptions stay in the lib). Jumu'ah recurs every Friday;
+// it is not a Hijri-date window and carries no confirmation concept.
+const EDGE_WEEKLY_EVENTS: ReadonlyArray<{ slug: string; weekday: number }> = [
+  { slug: "jumuah", weekday: 5 },
+];
+
+/** The day's Islamic context for a Kolkata date: Hijri date (calculated,
+ *  then shifted by confirmed corrections), active event slugs (catalog
+ *  order, window end clamped to the real month length), and the Ramadan
+ *  stage (date range only — no virtue claims attached). Mirrors the lib's
+ *  getIslamicContext, including the weekly Jumu'ah check and the
+ *  corrections rule. */
+export function islamicContextForKolkataDate(
+  kolkataDate: string,
+  corrections: readonly EdgeCalendarCorrection[] = [],
+): {
   gregorianKey: string;
   hijriKey: string;
+  /** The tabular (calculated) Hijri date, before corrections. */
+  hijriCalculated: { year: number; month: number; day: number };
+  /** The date after confirmed corrections — the date to display. */
   hijri: { year: number; month: number; day: number };
-  confirmation: "calculated";
+  confirmation: "calculated" | "confirmed";
+  appliedCorrections: EdgeCalendarCorrection[];
+  pendingCorrections: EdgeCalendarCorrection[];
   activeEventSlugs: string[];
   ramadanStage: "first-ten" | "middle-ten" | "last-ten" | null;
 } {
@@ -517,7 +679,9 @@ export function islamicContextForKolkataDate(kolkataDate: string): {
   const gy = m ? Number(m[1]) : 1970;
   const gm = m ? Number(m[2]) : 1;
   const gd = m ? Number(m[3]) : 1;
-  const hijri = edgeGregorianToHijri(gy, gm, gd);
+  const hijriCalculated = edgeGregorianToHijri(gy, gm, gd);
+  const applied = edgeApplyCorrections(hijriCalculated, corrections);
+  const hijri = applied.date;
   const monthLen = edgeHijriMonthLength(hijri.year, hijri.month);
   const activeEventSlugs = EDGE_ISLAMIC_EVENTS.filter(
     (e) =>
@@ -525,6 +689,14 @@ export function islamicContextForKolkataDate(kolkataDate: string): {
       hijri.day >= e.hijriDayStart &&
       hijri.day <= Math.min(e.hijriDayEnd, monthLen),
   ).map((e) => e.slug);
+  // Weekly occasions: Gregorian-weekday based, appended after the Hijri
+  // windows in catalog order (the lib does the same — the equivalence
+  // test pins the order). new Date(gy, gm-1, gd) is local-midnight
+  // parts, so getDay() is that calendar date's weekday in any timezone.
+  const weekday = new Date(gy, gm - 1, gd).getDay();
+  for (const w of EDGE_WEEKLY_EVENTS) {
+    if (w.weekday === weekday) activeEventSlugs.push(w.slug);
+  }
   const ramadanStage =
     hijri.month === 9
       ? hijri.day <= 10
@@ -536,8 +708,11 @@ export function islamicContextForKolkataDate(kolkataDate: string): {
   return {
     gregorianKey: kolkataDate,
     hijriKey: `${hijri.year}-${String(hijri.month).padStart(2, "0")}-${String(hijri.day).padStart(2, "0")}`,
+    hijriCalculated,
     hijri,
-    confirmation: "calculated",
+    confirmation: applied.confirmation,
+    appliedCorrections: applied.applied,
+    pendingCorrections: applied.pending,
     activeEventSlugs,
     ramadanStage,
   };
@@ -1332,9 +1507,16 @@ function approvedContentCards(
 }
 
 async function planDay(svc: Svc, kolkataDate: string) {
-  // The day's Islamic context (pure, no I/O) — recorded on every plan
-  // return, including the fail-closed truncated path below.
-  const context = islamicContextForKolkataDate(kolkataDate);
+  // The day's Islamic context — recorded on every plan return,
+  // including the fail-closed truncated path below. Corrections are
+  // read for the CALCULATED Hijri month (a correction is keyed by the
+  // month it corrects); a failed read degrades to calculated dates with
+  // a diagnostics flag, never blocking the day. The context itself
+  // carries the applied/pending corrections (the transparent record).
+  const calculatedContext = islamicContextForKolkataDate(kolkataDate);
+  const { rows: correctionRows, readError: correctionsReadError } =
+    await fetchCorrectionsForMonth(svc, calculatedContext.hijri.year, calculatedContext.hijri.month);
+  const context = islamicContextForKolkataDate(kolkataDate, correctionRows);
   const hadithPool = await fetchHadithPool(svc);
   const hadithRows = hadithPool.rows;
   const eligibleH = (hadithRows as HadithRow[]).filter(eligibleHadith);
@@ -1370,6 +1552,8 @@ async function planDay(svc: Svc, kolkataDate: string) {
         modeAConsumed: false,
         modeAGate: null,
         runStatus: null,
+        correctionsApplied: context.appliedCorrections.length,
+        correctionsReadError,
       },
     };
   }
@@ -1552,6 +1736,8 @@ async function planDay(svc: Svc, kolkataDate: string) {
       modeAConsumed,
       modeAGate,
       runStatus: approved?.status ?? null,
+      correctionsApplied: context.appliedCorrections.length,
+      correctionsReadError,
     },
   };
 }
@@ -2667,6 +2853,115 @@ async function handleUpdateSettings(req: Request, svc: Svc, body: Record<string,
 }
 
 // ============================================================================
+// Jumu'ah phase — admin calendar corrections (moon-sighting adjustments).
+//
+// The admin panel records a correction for one Hijri month through the
+// `calendar_correction` action (admin-JWT-gated, routed BEFORE the
+// CRON-secret gate like update_settings; verifyAdmin implements the SAME
+// trust model as _shared/require-admin.ts).
+//
+// The table enforces UNIQUE(hijri_year, hijri_month), so a second row
+// for the same month cannot exist — a wrong correction is SUPERSEDED by
+// updating the existing row (the migration's "superseded by a newer row"
+// cannot work as written under the UNIQUE constraint). The superseded
+// values are preserved in the admin_audit_log metadata (changed.from),
+// so the history is not lost. Rows are never deleted here.
+// ============================================================================
+async function handleCalendarCorrection(req: Request, svc: Svc, body: Record<string, unknown>): Promise<Response> {
+  const auth = await verifyAdmin(req);
+  if (!auth.ok) return jsonResponse({ ok: false, error: auth.error }, auth.status);
+  const adminId = auth.userId;
+  const c = body.correction;
+  if (!c || typeof c !== "object" || Array.isArray(c)) {
+    return jsonResponse({ ok: false, error: "correction must be an object" }, 400);
+  }
+  const fields = c as Record<string, unknown>;
+  const candidate: Partial<EdgeCalendarCorrection> = {
+    id: "",
+    hijriYear: fields.hijriYear as number,
+    hijriMonth: fields.hijriMonth as number,
+    dayOffset: fields.dayOffset as -1 | 0 | 1,
+    reasonBn: fields.reasonBn as string,
+    source: fields.source as string,
+    status: fields.status as "confirmed" | "proposed",
+    createdAt: "",
+  };
+  const errors = edgeValidateCorrection(candidate);
+  if (errors.length > 0) {
+    return jsonResponse({ ok: false, error: "invalid correction", detail: errors }, 400);
+  }
+  const row = {
+    hijri_year: candidate.hijriYear,
+    hijri_month: candidate.hijriMonth,
+    day_offset: candidate.dayOffset,
+    reason_bn: (candidate.reasonBn as string).trim(),
+    source: (candidate.source as string).trim(),
+    status: candidate.status,
+  };
+  try {
+    const prev = await svc.from("islamic_calendar_corrections")
+      .select("id,hijri_year,hijri_month,day_offset,reason_bn,source,status,created_at")
+      .eq("hijri_year", row.hijri_year)
+      .eq("hijri_month", row.hijri_month)
+      .maybeSingle();
+    if (prev.error) throw prev.error;
+    // Snapshot the previous row NOW: the update below may mutate the
+    // returned object in place (the test fake does), and the audit log
+    // must preserve the superseded values, not the new ones.
+    const prevRow = (prev.data ?? null) as Record<string, unknown> | null;
+    const prevSnapshot = prevRow ? { ...prevRow } : null;
+    let saved: Record<string, unknown> | null = null;
+    if (prevRow) {
+      // Supersede: update the one row for this month (UNIQUE blocks a
+      // second row). created_at is bumped so "latest wins" stays true.
+      const updated = await svc.from("islamic_calendar_corrections")
+        .update({ ...row, created_at: new Date().toISOString() } as never)
+        .eq("id", prevRow.id as string)
+        .select("id,hijri_year,hijri_month,day_offset,reason_bn,source,status,created_at");
+      if (updated.error) throw updated.error;
+      saved = ((updated.data ?? []) as Array<Record<string, unknown>>)[0] ?? null;
+    } else {
+      const inserted = await svc.from("islamic_calendar_corrections")
+        .insert({ ...row, created_by: adminId })
+        .select("id,hijri_year,hijri_month,day_offset,reason_bn,source,status,created_at");
+      if (inserted.error) throw inserted.error;
+      saved = (inserted.data ?? null) as Record<string, unknown> | null;
+    }
+    if (!saved) return jsonResponse({ ok: false, error: "correction write returned no row" }, 500);
+    // Audit-logged, guarded exactly like update_settings /
+    // facebook_approve: only a real admin profile UUID is written as
+    // actor_id, and the superseded values are preserved in metadata.
+    let auditNote = "skipped_no_admin_uuid";
+    if (UUID_RE.test(adminId)) {
+      const profile = await svc.from("profiles").select("id").eq("id", adminId).limit(1).maybeSingle();
+      if (!profile.error && profile.data) {
+        const audit = await svc.from("admin_audit_log").insert({
+          action: "islamic_calendar_correction",
+          actor_id: adminId,
+          resource_type: "islamic_calendar_corrections",
+          resource_id: String(saved.id),
+          metadata: { changed: { from: prevSnapshot, to: saved } },
+        });
+        auditNote = (audit as { error?: { message?: string } | null }).error
+          ? `audit_insert_failed: ${(audit as { error: { message: string } }).error.message}`
+          : "written";
+      }
+    }
+    return jsonResponse({ ok: true, correction: saved, superseded: prevRow !== null, admin_audit_log: auditNote });
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    if (/column .* does not exist/i.test(msg) || /Could not find the .* column/i.test(msg) ||
+      /relation .* does not exist/i.test(msg) || /table .* does not exist/i.test(msg)) {
+      return jsonResponse({ ok: false, error: "corrections_table_missing", detail: "the islamic_calendar_corrections table is not present in this environment" }, 500);
+    }
+    if (/unique/i.test(msg) || /duplicate key/i.test(msg)) {
+      return jsonResponse({ ok: false, error: "correction_conflict", detail: msg }, 409);
+    }
+    return jsonResponse({ ok: false, error: "correction write failed", detail: msg }, 500);
+  }
+}
+
+// ============================================================================
 // Phase 4 — Facebook Page publication (rehearsal-only, M1–M14;
 // owner-authorized 2026-11-16; design authority:
 // NOORAPP-FACEBOOK-AUTOMATION-AUDIT-2026-11-16.md).
@@ -3424,6 +3719,12 @@ Deno.serve(async (req: Request) => {
   // credential and is rejected with 401.
   if (body.action === "update_settings") {
     return await handleUpdateSettings(req, svc, body);
+  }
+  // Jumu'ah phase — admin calendar corrections. Routed BEFORE the
+  // CRON-secret gate like update_settings: the admin panel calls this
+  // with the admin's own Supabase JWT, never with the CRON secret.
+  if (body.action === "calendar_correction") {
+    return await handleCalendarCorrection(req, svc, body);
   }
   const auth = req.headers.get("authorization") ?? "";
   if (!CRON_SECRET || auth !== `Bearer ${CRON_SECRET}`) {

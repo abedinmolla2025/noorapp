@@ -31,7 +31,7 @@
  * - Local hadiths fail the real Bengali check; that is reported, not hidden.
  */
 
-import { getIslamicContextForKey, ISLAMIC_EVENTS } from "@/lib/islamicCalendar";
+import { getIslamicContextForKey, ISLAMIC_EVENTS, WEEKLY_EVENTS } from "@/lib/islamicCalendar";
 import {
   buildRecommendRequest,
   type RecommendationItem,
@@ -124,7 +124,11 @@ export const DEMO_SCENARIOS: DemoScenario[] = [
 ];
 
 export function eventNameBn(slug: string): string {
-  return ISLAMIC_EVENTS.find((e) => e.slug === slug)?.nameBn ?? slug;
+  return (
+    ISLAMIC_EVENTS.find((e) => e.slug === slug)?.nameBn ??
+    WEEKLY_EVENTS.find((e) => e.slug === slug)?.nameBn ??
+    slug
+  );
 }
 
 export function chapterTitleEn(chapterId: number): string {

@@ -2,6 +2,16 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import DailyHadith from "@/components/DailyHadith";
 import { ExportableOgShareCard } from "@/components/dailyContent/ExportableOgShareCard";
@@ -15,6 +25,13 @@ import { kolkataDateString, nextDailyRunAt } from "@/lib/dailyContent/selection"
 import { planDay, type PlanResult } from "@/lib/dailyContent/plan";
 import { applyRetry, isFailedJob } from "@/lib/dailyContent/delivery";
 import { buildMonitoringSnapshot } from "@/lib/dailyContent/monitoring";
+import {
+  HIJRI_MONTHS_BN,
+  correctionAuditLine,
+  fetchAllCorrections,
+  getIslamicContextForKey,
+  type CalendarCorrection,
+} from "@/lib/islamicCalendar";
 import type {
   ContentRecord,
   DeliveryAttempt,
@@ -61,6 +78,12 @@ function formatKolkata(iso: string): string {
  * here — it stays owner-SQL only. The decided-runs card lists
  * approved/rejected recommendation runs (list_decided) and offers a
  * Regenerate button for today (a published day cannot be regenerated).
+ * Islamic calendar corrections (Jumu'ah phase): the corrections card
+ * lists `islamic_calendar_corrections` rows (admin RLS read) and saves
+ * one correction per Hijri month through the admin-JWT-gated
+ * `calendar_correction` edge action (validated + audit-logged
+ * server-side). Only a confirmed row shifts the planned Hijri date;
+ * a proposed row is recorded but never applied.
  */
 
 // Deployed edge function (mission state: ACTIVE, verify_jwt=false).
@@ -177,6 +200,24 @@ export default function AdminDailyContent() {
   const [liveToggling, setLiveToggling] = useState(false);
   const [edgeStatus, setEdgeStatus] = useState<string | null>(null);
   const [edgeChecking, setEdgeChecking] = useState(false);
+  // Jumu'ah phase — Islamic calendar corrections (moon-sighting
+  // adjustments). The list is read directly (admin RLS); writes go
+  // through the admin-JWT-gated `calendar_correction` edge action.
+  const [corrections, setCorrections] = useState<CalendarCorrection[] | null>(null);
+  const [correctionsError, setCorrectionsError] = useState<string | null>(null);
+  const [correctionsLoading, setCorrectionsLoading] = useState(false);
+  const [correctionSubmitting, setCorrectionSubmitting] = useState(false);
+  const [correctionMessage, setCorrectionMessage] = useState<string | null>(null);
+  const [corrYear, setCorrYear] = useState(() =>
+    String(getIslamicContextForKey(kolkataDateString(new Date())).hijri.year),
+  );
+  const [corrMonth, setCorrMonth] = useState(() =>
+    String(getIslamicContextForKey(kolkataDateString(new Date())).hijri.month),
+  );
+  const [corrOffset, setCorrOffset] = useState("-1");
+  const [corrReason, setCorrReason] = useState("");
+  const [corrSource, setCorrSource] = useState("");
+  const [corrStatus, setCorrStatus] = useState("proposed");
 
   useEffect(() => {
     setEnabled(dailyContentStore.getSettings().enabled);
@@ -318,12 +359,91 @@ export default function AdminDailyContent() {
     }
   }, []);
 
+  // Jumu'ah phase — calendar corrections list (admin RLS read).
+  // Declared before the admin-session effect below because that effect
+  // calls it (a later declaration would be a TDZ error).
+  const loadCorrections = useCallback(async () => {
+    setCorrectionsLoading(true);
+    try {
+      const rows = await fetchAllCorrections(supabase);
+      setCorrections(rows);
+      setCorrectionsError(null);
+    } catch (e) {
+      setCorrections(null);
+      setCorrectionsError(
+        e instanceof Error ? e.message : "Corrections could not be loaded.",
+      );
+    } finally {
+      setCorrectionsLoading(false);
+    }
+  }, []);
+
+  // Jumu'ah phase — save (or supersede) one correction for a Hijri
+  // month. Validation + audit logging happen server-side in the
+  // `calendar_correction` edge action; this handler only confirms the
+  // intent and surfaces the result. A confirmed row shifts the planned
+  // Hijri date for that month; a proposed row is recorded but never
+  // applied. The edge action refuses invalid rows with 400 and a
+  // missing table with 500 (corrections_table_missing).
+  const submitCorrection = useCallback(async () => {
+    const correction = {
+      hijriYear: Number(corrYear),
+      hijriMonth: Number(corrMonth),
+      dayOffset: Number(corrOffset),
+      reasonBn: corrReason.trim(),
+      source: corrSource.trim(),
+      status: corrStatus,
+    };
+    if (
+      !window.confirm(
+        `Save this calendar correction? Hijri ${correction.hijriYear}-${String(correction.hijriMonth).padStart(2, "0")} will shift by ${correction.dayOffset > 0 ? "+" : ""}${correction.dayOffset} day(s) for planning${
+          correction.status === "confirmed"
+            ? "."
+            : " — proposed rows are recorded but never applied."
+        } The change is audit-logged.`,
+      )
+    ) {
+      return;
+    }
+    setCorrectionSubmitting(true);
+    setCorrectionMessage(null);
+    try {
+      const { data, error } = await supabase.functions.invoke("daily-content", {
+        body: { action: "calendar_correction", correction },
+      });
+      if (error) throw error;
+      const d = data as {
+        ok?: boolean;
+        error?: string;
+        detail?: string | string[];
+        superseded?: boolean;
+        admin_audit_log?: string;
+      } | null;
+      if (!d?.ok) {
+        throw new Error(
+          d?.error
+            ? `${d.error}${d.detail ? ` — ${Array.isArray(d.detail) ? d.detail.join("; ") : d.detail}` : ""}`
+            : "Correction save failed.",
+        );
+      }
+      setCorrectionMessage(
+        `Saved${d.superseded ? " (superseded the previous row for this month)" : ""}. Audit: ${d.admin_audit_log ?? "—"}.`,
+      );
+      await loadCorrections();
+    } catch (e) {
+      setCorrectionMessage(e instanceof Error ? e.message : "Correction save failed.");
+    } finally {
+      setCorrectionSubmitting(false);
+    }
+  }, [corrYear, corrMonth, corrOffset, corrReason, corrSource, corrStatus, loadCorrections]);
+
   useEffect(() => {
     if (!adminLoading && isAdmin) {
       void loadLive();
       void loadDecided();
+      void loadCorrections();
     }
-  }, [adminLoading, isAdmin, loadLive, loadDecided]);
+  }, [adminLoading, isAdmin, loadLive, loadDecided, loadCorrections]);
 
   const toggleLive = useCallback(
     async (checked: boolean) => {
@@ -740,6 +860,135 @@ export default function AdminDailyContent() {
               Read-only: this card never publishes, sends, or retries. A missed schedule is
               noticed here and in the heal-tick response; there is no email/webhook alert
               channel yet — that needs an owner decision (see the Phase 10 report).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Islamic calendar corrections</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              A correction records a local moon-sighting adjustment for one Hijri month.
+              Only a <strong>confirmed</strong> row shifts the planned Hijri date; a
+              proposed row is recorded but never applied. One row per month — saving
+              again for the same month supersedes the previous row (the old values
+              stay in the audit log). Rows are never deleted.
+            </p>
+            {correctionsLoading ? (
+              <p className="text-sm text-muted-foreground">Loading corrections…</p>
+            ) : correctionsError ? (
+              <p className="text-sm text-destructive">
+                {correctionsError} (The corrections table may not exist yet — the
+                migration has not been applied in this environment.)
+              </p>
+            ) : corrections && corrections.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No corrections recorded yet.</p>
+            ) : (
+              <ul className="space-y-1 text-sm">
+                {corrections?.map((c) => (
+                  <li key={c.id} className="flex flex-wrap gap-2 items-center">
+                    <Badge variant={c.status === "confirmed" ? "default" : "secondary"}>
+                      {c.status}
+                    </Badge>
+                    <span>{correctionAuditLine(c)}</span>
+                    <span className="text-muted-foreground">
+                      · {c.reasonBn} ({c.source})
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <Label htmlFor="corr-year">Hijri year (1400–1500)</Label>
+                <Input
+                  id="corr-year"
+                  inputMode="numeric"
+                  value={corrYear}
+                  onChange={(e) => setCorrYear(e.target.value)}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="corr-month">Hijri month</Label>
+                <Select value={corrMonth} onValueChange={setCorrMonth}>
+                  <SelectTrigger id="corr-month">
+                    <SelectValue placeholder="Month" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {HIJRI_MONTHS_BN.map((m, i) => (
+                      <SelectItem key={m} value={String(i + 1)}>
+                        {i + 1} — {m}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="corr-offset">Day offset</Label>
+                <Select value={corrOffset} onValueChange={setCorrOffset}>
+                  <SelectTrigger id="corr-offset">
+                    <SelectValue placeholder="Offset" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="-1">−1 — month started a day later</SelectItem>
+                    <SelectItem value="0">0 — no shift</SelectItem>
+                    <SelectItem value="+1">+1 — month started a day earlier</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1">
+                <Label htmlFor="corr-status">Status</Label>
+                <Select value={corrStatus} onValueChange={setCorrStatus}>
+                  <SelectTrigger id="corr-status">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="proposed">proposed (recorded, not applied)</SelectItem>
+                    <SelectItem value="confirmed">confirmed (shifts the date)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1 col-span-2">
+                <Label htmlFor="corr-reason">Reason (Bengali)</Label>
+                <Textarea
+                  id="corr-reason"
+                  value={corrReason}
+                  onChange={(e) => setCorrReason(e.target.value)}
+                  placeholder="যেমন: পশ্চিমবঙ্গে চাঁদ দেখা গেছে"
+                />
+              </div>
+              <div className="space-y-1 col-span-2">
+                <Label htmlFor="corr-source">Source</Label>
+                <Input
+                  id="corr-source"
+                  value={corrSource}
+                  onChange={(e) => setCorrSource(e.target.value)}
+                  placeholder="যেমন: Hilal Committee, West Bengal"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={() => void submitCorrection()} disabled={correctionSubmitting}>
+                Save correction
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => void loadCorrections()}
+                disabled={correctionsLoading}
+              >
+                Reload
+              </Button>
+            </div>
+            {correctionMessage && (
+              <p className="text-sm text-muted-foreground">{correctionMessage}</p>
+            )}
+            <p className="text-xs text-muted-foreground">
+              Every save is audit-logged. AI never creates or confirms a correction —
+              corrections come only from an administrator&apos;s sighting report.
             </p>
           </CardContent>
         </Card>

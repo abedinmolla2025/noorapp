@@ -44,6 +44,13 @@ export type ChapterEventMapping = {
 
 export const CHAPTER_EVENT_MAP: readonly ChapterEventMapping[] = [
   {
+    chapterId: 11,
+    chapterTitleEn: "Friday Prayer",
+    events: ["jumuah"],
+    evidence:
+      "Title names the Friday (Jumu'ah) prayer — canonical title per the forensic reconstruction (sunnah.com + The House of Islam, 97/97, 2026-09-28); corroborated by 60 'Friday/Jumu' mentions in book_11, the most of any book (next: book_15 with 24).",
+  },
+  {
     chapterId: 13,
     chapterTitleEn: "The Two Festivals (Eids)",
     events: ["eid-fitr", "eid-adha"],

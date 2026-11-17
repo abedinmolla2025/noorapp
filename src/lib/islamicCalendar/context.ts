@@ -27,6 +27,7 @@ import {
   gregorianDateKey,
   gregorianDaysBetween,
   gregorianToHijri,
+  gregorianWeekday,
   hijriDateKey,
   hijriMonthLength,
   hijriToGregorian,
@@ -34,15 +35,17 @@ import {
   type GregorianDate,
   type HijriDate,
 } from "./hijri.js";
-import { ISLAMIC_EVENTS, type ConfirmationStatus, type IslamicEventDef } from "./events.js";
+import { ISLAMIC_EVENTS, WEEKLY_EVENTS, type ConfirmationStatus, type IslamicEventDef, type WeeklyEventDef } from "./events.js";
 import { applyCorrections, type CalendarCorrection } from "./corrections.js";
 
 export type RamadanStage = "first-ten" | "middle-ten" | "last-ten";
 
 export interface ActiveEvent {
-  event: IslamicEventDef;
+  /** A Hijri-window event, or a weekly (weekday) event such as Jumu'ah. */
+  event: IslamicEventDef | WeeklyEventDef;
   /** Hijri year the window falls in for this date. */
   windowYear: number;
+  /** For a weekly event the window is the single day itself. */
   windowStart: HijriDate;
   windowEnd: HijriDate;
   /** 1-based day position inside the window. */
@@ -130,7 +133,29 @@ export function getIslamicContext(
     });
   }
 
+  // Weekly occasions: Gregorian-weekday based, not Hijri-date based.
+  // Jumu'ah recurs every Friday regardless of the Hijri date, so it is
+  // checked after the Hijri windows and appended in catalog order (the
+  // edge port does the same — the equivalence test pins the order).
+  // The window for a weekly event is the single day itself.
+  const weekday = gregorianWeekday(gregorian);
+  for (const weekly of WEEKLY_EVENTS) {
+    if (weekly.weekday !== weekday) continue;
+    activeEvents.push({
+      event: weekly,
+      windowYear: hijri.year,
+      windowStart: hijri,
+      windowEnd: hijri,
+      dayInWindow: 1,
+      windowLength: 1,
+    });
+  }
+
   // Upcoming: for each event, the next window start on/after today.
+  // Weekly occasions are deliberately excluded: they are not Hijri
+  // windows, and a weekly recurrence would dominate a list whose
+  // purpose is "which dated occasion is coming next" (the next Friday
+  // is always at most 6 days away and needs no reminder).
   const upcoming: UpcomingEvent[] = [];
   for (const event of ISLAMIC_EVENTS) {
     for (const yearOffset of [0, 1]) {
