@@ -14,6 +14,7 @@ import { dailyContentStore } from "@/lib/dailyContent/store";
 import { kolkataDateString, nextDailyRunAt } from "@/lib/dailyContent/selection";
 import { planDay, type PlanResult } from "@/lib/dailyContent/plan";
 import { applyRetry, isFailedJob } from "@/lib/dailyContent/delivery";
+import { buildMonitoringSnapshot } from "@/lib/dailyContent/monitoring";
 import type {
   ContentRecord,
   DeliveryAttempt,
@@ -109,6 +110,12 @@ interface LivePublication {
   error: string | null;
   created_at: string;
   published_at: string | null;
+  // Phase 10: poster columns exist only after migration 202611150001.
+  // loadLive tries them first and falls back without them, so these are
+  // optional here and normalized to null in the monitoring snapshot.
+  poster_qc_status?: string | null;
+  poster_error?: string | null;
+  poster_url?: string | null;
 }
 
 interface LiveDelivery {
@@ -157,6 +164,9 @@ export default function AdminDailyContent() {
   const [liveSettings, setLiveSettings] = useState<LiveSettings | null>(null);
   const [livePublications, setLivePublications] = useState<LivePublication[]>([]);
   const [liveDeliveries, setLiveDeliveries] = useState<LiveDelivery[]>([]);
+  // Phase 10: true when the poster columns (migration 202611150001)
+  // were readable; false when loadLive fell back to the base columns.
+  const [posterColumnsAvailable, setPosterColumnsAvailable] = useState(false);
   const [liveFacebook, setLiveFacebook] = useState<LiveFacebookPost[] | null>(null);
   const [liveFacebookError, setLiveFacebookError] = useState<string | null>(null);
   const [liveFacebookMessage, setLiveFacebookMessage] = useState<string | null>(null);
@@ -221,13 +231,32 @@ export default function AdminDailyContent() {
         .eq("id", 1)
         .maybeSingle();
       if (sErr) throw sErr;
-      const { data: p, error: pErr } = await supabase
+      // Phase 10 — poster columns (migration 202611150001) exist in
+      // rehearsal but not yet in production. Try them first; on error
+      // fall back to the base columns instead of failing the whole
+      // live load. The monitoring card reports the gap honestly.
+      const PUB_BASE_COLS =
+        "id, kolkata_date, status, hadith_ref, hadith_source_line, cards, push, recipients_total, recipients_sent, recipients_failed, error, created_at, published_at";
+      const first = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("daily_content_publications" as any)
-        .select("id, kolkata_date, status, hadith_ref, hadith_source_line, cards, push, recipients_total, recipients_sent, recipients_failed, error, created_at, published_at")
+        .select(`${PUB_BASE_COLS}, poster_qc_status, poster_error, poster_url`)
         .order("kolkata_date", { ascending: false })
         .limit(30);
-      if (pErr) throw pErr;
+      let p = first.data;
+      let posterAvailable = !first.error;
+      if (first.error) {
+        const fallback = await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .from("daily_content_publications" as any)
+          .select(PUB_BASE_COLS)
+          .order("kolkata_date", { ascending: false })
+          .limit(30);
+        if (fallback.error) throw fallback.error;
+        p = fallback.data;
+        posterAvailable = false;
+      }
+      setPosterColumnsAvailable(posterAvailable);
       const { data: d, error: dErr } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("daily_content_deliveries" as any)
@@ -489,6 +518,19 @@ export default function AdminDailyContent() {
 
   const plan = result?.plan ?? null;
   const todayLive = livePublications.find((p) => p.kolkata_date === today);
+  // Phase 10 — monitoring snapshot, assembled from the rows already
+  // loaded above (no extra queries). Recomputed when the live rows
+  // change; the schedule is assessed against the load time.
+  const monitoring = useMemo(() => {
+    if (!liveAvailable) return null;
+    const pubs = livePublications.map((p) => ({
+      ...p,
+      poster_qc_status: p.poster_qc_status ?? null,
+      poster_error: p.poster_error ?? null,
+      poster_url: p.poster_url ?? null,
+    }));
+    return buildMonitoringSnapshot(pubs, liveDeliveries, new Date());
+  }, [liveAvailable, livePublications, liveDeliveries]);
   const latestPublished = livePublications.find((p) => p.status === "published");
   const latestPush = latestPublished?.push ?? null;
   const pubDateById = new Map(livePublications.map((p) => [p.id, p.kolkata_date]));
@@ -584,6 +626,120 @@ export default function AdminDailyContent() {
             <p className="text-xs text-muted-foreground">
               Edge function: {EDGE_URL} (deployed; this page never calls it with a secret and
               never triggers a dry run).
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && liveSettings && monitoring && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Monitoring — today&apos;s status</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm">
+              <span className="font-semibold">Schedule: </span>
+              <Badge
+                variant={monitoring.schedule.status === "missed" ? "destructive" : "default"}
+              >
+                {monitoring.schedule.status.toUpperCase()}
+              </Badge>{" "}
+              {monitoring.schedule.status === "ok" && monitoring.schedule.window === "open"
+                ? "Window open — due 06:00 IST, grace until 06:30 IST."
+                : monitoring.schedule.status === "ok"
+                  ? "Published on time (by 06:30 IST)."
+                  : monitoring.schedule.status === "late"
+                    ? "Published late (after 06:30 IST)."
+                    : "No publication by 06:30 IST — the day was missed; the heal tick is the recovery."}
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold">Today&apos;s publication: </span>
+              {monitoring.publication ? (
+                <>
+                  <Badge
+                    variant={
+                      monitoring.publication.status === "failed"
+                        ? "destructive"
+                        : monitoring.publication.status === "published"
+                          ? "default"
+                          : "secondary"
+                    }
+                  >
+                    {monitoring.publication.status}
+                  </Badge>{" "}
+                  {monitoring.publication.hadith_ref ?? "no hadith"}{" "}
+                  {posterColumnsAvailable ? (
+                    <>
+                      · poster{" "}
+                      <Badge variant={monitoring.publication.poster_qc_status === "passed" ? "default" : "secondary"}>
+                        {monitoring.publication.poster_qc_status ?? "pending"}
+                      </Badge>{" "}
+                      {monitoring.publication.poster_url && (
+                        <a
+                          className="underline"
+                          href={monitoring.publication.poster_url}
+                          target="_blank"
+                          rel="noreferrer"
+                        >
+                          view poster
+                        </a>
+                      )}
+                    </>
+                  ) : (
+                    "· poster status unavailable (poster migration not applied yet)"
+                  )}
+                  {monitoring.publication.error && (
+                    <span className="text-destructive"> · {monitoring.publication.error}</span>
+                  )}
+                </>
+              ) : (
+                "no publication row for today yet."
+              )}
+            </p>
+            <p className="text-sm">
+              <span className="font-semibold">Push: </span>
+              {monitoring.push.total} total · {monitoring.push.sent} sent ·{" "}
+              {monitoring.push.failed} failed · {monitoring.push.retryable} retryable ·{" "}
+              {monitoring.push.attempts_remaining} attempts remaining.
+            </p>
+            <div className="text-sm">
+              <span className="font-semibold">Alerts: </span>
+              {monitoring.alerts.length === 0 ? (
+                "No active alerts."
+              ) : (
+                <ul className="mt-1 space-y-1">
+                  {monitoring.alerts.map((a) => (
+                    <li key={`${a.kolkata_date}|${a.reason}`}>
+                      <Badge variant={a.level === "critical" ? "destructive" : "secondary"}>
+                        {a.level}
+                      </Badge>{" "}
+                      {a.kolkata_date} — {a.reason}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            {monitoring.recent_failures.length > 0 && (
+              <div className="text-sm">
+                <span className="font-semibold">Recent failures: </span>
+                <ul className="mt-1 space-y-1">
+                  {monitoring.recent_failures.map((f) => (
+                    <li key={`${f.kolkata_date}|${f.reason}`}>
+                      {f.kolkata_date} — {f.status} — {f.reason}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+            <p className="text-sm text-muted-foreground">
+              Last recorded activity:{" "}
+              {monitoring.last_activity ? formatKolkata(monitoring.last_activity) : "—"}.
+              (Newest recorded timestamp, not a tick heartbeat — no heartbeat is stored yet.)
+            </p>
+            <p className="text-xs text-muted-foreground">
+              Read-only: this card never publishes, sends, or retries. A missed schedule is
+              noticed here and in the heal-tick response; there is no email/webhook alert
+              channel yet — that needs an owner decision (see the Phase 10 report).
             </p>
           </CardContent>
         </Card>

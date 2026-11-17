@@ -269,6 +269,110 @@ function kolkataDateString(at: Date): string {
   return `${get("year")}-${get("month")}-${get("day")}`;
 }
 
+// ---- Phase 10 (autonomous monitoring) — schedule health + retry
+// observability. `assessSchedule` + the two constants are a VERBATIM
+// PORT of src/lib/dailyContent/monitoring.ts (the canonical source;
+// Deno edge functions cannot import from src/lib, so the port is copied
+// by hand — if the logic changes in either place, update both).
+// The daily cron is due 06:00 Asia/Kolkata with a 30-minute grace
+// period (the runbook rule): a day is "ok" when published at or before
+// 06:30 IST or while the window is still open, "late" when published
+// after 06:30 IST (2026-11-16: fired 6h39m late, published 12:39 IST),
+// "missed" when there is no published row after the grace period
+// (2026-11-17: the schedule missed entirely). IST is UTC+5:30 with no
+// DST, so 06:00 IST is always 00:30 UTC and 06:30 IST is always 01:00
+// UTC — the comparison is done on instants, never on wall-clock fields.
+// This phase only OBSERVES: it never changes what gets published.
+const SCHEDULED_HOUR_IST = 6;
+const SCHEDULE_GRACE_MINUTES = 30;
+type ScheduleAssessment = {
+  status: "ok" | "late" | "missed";
+  kolkata_date: string;
+  checked_at: string;
+  expected_at: string;
+  grace_until: string;
+  published_at: string | null;
+  publication_status: string | null;
+  window: "open" | "closed";
+};
+function assessSchedule(
+  now: Date,
+  kolkataDate: string,
+  publication: { status: string; published_at: string | null } | null,
+): ScheduleAssessment {
+  const [y, m, d] = kolkataDate.split("-").map((p) => Number(p));
+  const expectedMs = Date.UTC(y, m - 1, d, 0, 30); // 06:00 IST
+  const graceMs = Date.UTC(y, m - 1, d, 1, 0); // 06:30 IST
+  const base = {
+    kolkata_date: kolkataDate,
+    checked_at: now.toISOString(),
+    expected_at: new Date(expectedMs).toISOString(),
+    grace_until: new Date(graceMs).toISOString(),
+    published_at: publication?.published_at ?? null,
+    publication_status: publication?.status ?? null,
+  };
+  if (publication?.status === "published") {
+    if (!publication.published_at) return { ...base, status: "ok", window: "closed" };
+    return new Date(publication.published_at).getTime() > graceMs
+      ? { ...base, status: "late", window: "closed" }
+      : { ...base, status: "ok", window: "closed" };
+  }
+  return now.getTime() < graceMs
+    ? { ...base, status: "ok", window: "open" }
+    : { ...base, status: "missed", window: "closed" };
+}
+type DailyAlert = {
+  level: "warn" | "critical";
+  reason: string;
+  kolkata_date: string;
+  publication_id: string | null;
+  first_seen: string;
+};
+function dedupeAlerts(alerts: readonly DailyAlert[]): DailyAlert[] {
+  const seen = new Set<string>();
+  const out: DailyAlert[] = [];
+  for (const a of alerts) {
+    const key = `${a.kolkata_date}|${a.reason}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(a);
+  }
+  return out;
+}
+/** Retry observability for a tick response: how many of today's
+ *  deliveries are still retryable and how many attempts they have
+ *  left. Read-only — it never promotes, sends, or changes a row. */
+async function monitoringMeta(
+  svc: Svc,
+  kolkataDate: string,
+  now: Date,
+  preFetchedPub: { id: string; status: string; published_at: string | null } | null = null,
+): Promise<{ schedule: ScheduleAssessment; retry: { retryable: number; attempts_remaining: number; publication_id: string | null } }> {
+  const pub = preFetchedPub ?? (await (async () => {
+    const { data: row } = await svc.from("daily_content_publications")
+      .select("id, status, published_at")
+      .eq("kolkata_date", kolkataDate)
+      .maybeSingle();
+    return row as { id: string; status: string; published_at: string | null } | null;
+  })());
+  const schedule = assessSchedule(now, kolkataDate, pub);
+  let retryable = 0;
+  let attemptsRemaining = 0;
+  if (pub) {
+    const { data: rows } = await svc.from("daily_content_deliveries")
+      .select("id, attempts, max_attempts")
+      .eq("publication_id", pub.id)
+      .eq("status", "retryable");
+    for (const r of (rows ?? []) as Array<{ attempts: number; max_attempts: number | null }>) {
+      const max = r.max_attempts ?? 4;
+      if (r.attempts >= max) continue;
+      retryable += 1;
+      attemptsRemaining += max - r.attempts;
+    }
+  }
+  return { schedule, retry: { retryable, attempts_remaining: attemptsRemaining, publication_id: pub?.id ?? null } };
+}
+
 function hashString(input: string): number {
   let h = 0x811c9dc5;
   for (let i = 0; i < input.length; i++) {
@@ -2207,9 +2311,10 @@ async function healSplitFlow(
     reason,
     kolkata_date: kolkataDate,
     publication_id: publicationId,
+    first_seen: new Date().toISOString(),
   });
   const { data: row } = await svc.from("daily_content_publications")
-    .select("id, status, poster_qc_status, poster_error, poster_url, push")
+    .select("id, status, poster_qc_status, poster_error, poster_url, push, published_at")
     .eq("kolkata_date", kolkataDate)
     .maybeSingle();
   const pub = row as {
@@ -2219,19 +2324,41 @@ async function healSplitFlow(
     poster_error: string | null;
     poster_url: string | null;
     push: Record<string, unknown> | null;
+    published_at: string | null;
   } | null;
+  // Phase 10 — monitoring meta, computed BEFORE any healing action:
+  // the schedule reflects the day as the tick found it (a missed day
+  // that gets healed still reports schedule:"missed"), and the retry
+  // summary reflects the deliveries as the tick found them.
+  const metaNow = new Date();
+  const meta = await monitoringMeta(svc, kolkataDate, metaNow, pub);
+  const respond = (body: Record<string, unknown>, status = 200) => {
+    const alerts: DailyAlert[] = [];
+    const single = body.alert as DailyAlert | undefined;
+    if (single) alerts.push(single);
+    if (meta.schedule.status === "missed") {
+      alerts.push({
+        level: "critical",
+        reason: "schedule_missed: no publication by 06:30 IST",
+        kolkata_date: kolkataDate,
+        publication_id: pub?.id ?? null,
+        first_seen: metaNow.toISOString(),
+      });
+    }
+    return jsonResponse({ ...body, schedule: meta.schedule, retry: meta.retry, alerts: dedupeAlerts(alerts) }, status);
+  };
 
   if (pub?.status === "published") {
     // Phase 6: the website is already published — the heal tick is
     // still the Facebook auto-publish trigger for this row (Mode B
     // queues, Mode A posts; auto-publish off means "manual").
     const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, channels: channels("published", null, fb) });
+    return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, channels: channels("published", null, fb) });
   }
 
   if (pub?.status === "planned" && pub.push) {
     if (isQuarantined(pub.poster_error)) {
-      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "quarantined", publication_id: pub.id,
+      return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "quarantined", publication_id: pub.id,
         channels: channels("quarantined", null),
         alert: alertFor("critical", "quarantined: poster failed twice; needs owner/admin review", pub.id) });
     }
@@ -2243,24 +2370,24 @@ async function healSplitFlow(
       const pj = (await published.json().catch(() => ({}))) as Record<string, unknown>;
       if (pj.ok === true && pj.deduped !== true) {
         const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
-        return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: true, hold: null, publication_id: pj.publication_id,
+        return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: true, hold: null, publication_id: pj.publication_id,
           channels: channels("published", pj.delivery ?? null, fb) });
       }
       if (pj.deduped === true) {
         const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
-        return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+        return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
           channels: channels("published", null, fb) });
       }
-      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "publish_failed", publication_id: pub.id,
+      return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "publish_failed", publication_id: pub.id,
         channels: channels("planned", null),
         alert: alertFor("warn", `publish_planned failed: ${typeof pj.error === "string" ? pj.error : "unknown"}`, pub.id) });
     }
     if (pub.poster_qc_status === "failed") {
-      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_failed", publication_id: pub.id,
+      return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_failed", publication_id: pub.id,
         channels: channels("held", null),
         alert: alertFor("warn", "poster failed; poster workflow retry needed", pub.id) });
     }
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_pending", publication_id: pub.id,
+    return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_pending", publication_id: pub.id,
       channels: channels("planned", null) });
   }
 
@@ -2272,22 +2399,22 @@ async function healSplitFlow(
   if (!plan.hadith || !plan.push) {
     const recorded = await recordFailedPlan(svc, kolkataDate, plan);
     if (recorded === "deduped") {
-      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+      return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
         channels: channels("published", null) });
     }
-    return jsonResponse({ ok: false, kolkata_date: kolkataDate, tick, healed: false, hold: "no_valid_plan", reason: plan.hadithEmptyReason,
+    return respond({ ok: false, kolkata_date: kolkataDate, tick, healed: false, hold: "no_valid_plan", reason: plan.hadithEmptyReason,
       channels: channels("failed", null),
       alert: alertFor("critical", `no valid plan: ${plan.hadithEmptyReason ?? "unknown"}`, pub?.id ?? null) });
   }
   const r = await ensurePlannedRow(svc, kolkataDate, plan);
   if (r.kind === "deduped") {
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+    return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
       channels: channels("published", null) });
   }
   if (r.kind === "conflict") {
-    return jsonResponse({ ok: false, error: r.error }, 500);
+    return respond({ ok: false, error: r.error }, 500);
   }
-  return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: "planned", hold: null, publication_id: r.publicationId,
+  return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: "planned", hold: null, publication_id: r.publicationId,
     channels: channels("planned", null) });
 }
 
@@ -3331,8 +3458,10 @@ Deno.serve(async (req: Request) => {
       const tick = await runTick(svc, kolkataDate);
       if (body.heal !== true) {
         // Plain tick: unchanged — never plans, publishes, or creates
-        // a row. The tick object is the whole response.
-        return jsonResponse({ ok: true, ...tick });
+        // a row. The tick object is the whole response, plus the
+        // Phase 10 monitoring meta (schedule + retry observability).
+        const meta = await monitoringMeta(svc, kolkataDate, new Date());
+        return jsonResponse({ ok: true, ...tick, ...meta });
       }
       // Split-flow heal (Phase 3): run the retry pass, then heal ONLY
       // through the split flow — never a text-only send.

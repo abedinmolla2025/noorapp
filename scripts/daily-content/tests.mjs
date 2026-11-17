@@ -20,6 +20,7 @@ const cstate = await import(path.join(dir, ".out/containerState.js"));
 const recs = await import(path.join(dir, ".out/recommendations.js"));
 const recPlan = await import(path.join(dir, ".out/recommendationPlan.js"));
 const share = await import(path.join(dir, ".out/dailyShare.js"));
+const mon = await import(path.join(dir, ".out/monitoring.js"));
 const cal = await import(path.join(dir, ".out-cal/context.js"));
 const reqFor = (d) => recs.buildRecommendRequest(d, cal.getIslamicContextForKey(d));
 
@@ -1038,6 +1039,172 @@ t("dailyShare: copyText returns true on success, false when denied or unavailabl
     false,
   );
   assert.equal(await share.copyText("https://www.noorapp.in/", null), false);
+});
+
+// --- monitoring (Phase 10): schedule assessment, alert derivation, snapshot ---
+const monPub = (over = {}) => ({
+  id: "pub-1",
+  kolkata_date: "2026-11-17",
+  status: "published",
+  poster_qc_status: "passed",
+  poster_error: null,
+  poster_url: "https://example.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+  hadith_ref: "hadith:h1",
+  recipients_total: 9,
+  recipients_sent: 9,
+  recipients_failed: 0,
+  error: null,
+  created_at: "2026-11-17T00:35:00.000Z",
+  published_at: "2026-11-17T00:35:00.000Z",
+  ...over,
+});
+const monDel = (over = {}) => ({
+  publication_id: "pub-1",
+  status: "sent",
+  attempts: 1,
+  max_attempts: 4,
+  created_at: "2026-11-17T00:35:00.000Z",
+  error: null,
+  ...over,
+});
+
+t("monitoring: published on time (06:05 IST) -> ok", () => {
+  const s = mon.assessSchedule(new Date("2026-11-17T10:00:00+05:30"), "2026-11-17", monPub());
+  assert.equal(s.status, "ok");
+  assert.equal(s.window, "closed");
+  assert.equal(s.expected_at, "2026-11-17T00:30:00.000Z");
+  assert.equal(s.grace_until, "2026-11-17T01:00:00.000Z");
+});
+t("monitoring: published late (12:39 IST, the 2026-11-16 shape) -> late", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-16T13:00:00+05:30"),
+    "2026-11-16",
+    monPub({ kolkata_date: "2026-11-16", published_at: "2026-11-16T07:09:00.000Z" }),
+  );
+  assert.equal(s.status, "late");
+});
+t("monitoring: no row after grace (10:00 IST, the 2026-11-17 shape) -> missed", () => {
+  const s = mon.assessSchedule(new Date("2026-11-17T10:00:00+05:30"), "2026-11-17", null);
+  assert.equal(s.status, "missed");
+  assert.equal(s.window, "closed");
+});
+t("monitoring: planned row after grace -> missed", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T10:00:00+05:30"),
+    "2026-11-17",
+    monPub({ status: "planned", published_at: null }),
+  );
+  assert.equal(s.status, "missed");
+  assert.equal(s.publication_status, "planned");
+});
+t("monitoring: failed row after grace -> missed", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T10:00:00+05:30"),
+    "2026-11-17",
+    monPub({ status: "failed", published_at: null, error: "no valid plan" }),
+  );
+  assert.equal(s.status, "missed");
+});
+t("monitoring: no row before grace (05:30 IST) -> ok, window open", () => {
+  const s = mon.assessSchedule(new Date("2026-11-17T05:30:00+05:30"), "2026-11-17", null);
+  assert.equal(s.status, "ok");
+  assert.equal(s.window, "open");
+});
+t("monitoring: grace boundary — 06:29 IST ok, 06:30 IST missed", () => {
+  assert.equal(mon.assessSchedule(new Date("2026-11-17T06:29:00+05:30"), "2026-11-17", null).status, "ok");
+  assert.equal(mon.assessSchedule(new Date("2026-11-17T06:30:00+05:30"), "2026-11-17", null).status, "missed");
+});
+t("monitoring: timezone — 01:00 UTC is 06:30 IST (missed), 00:35 UTC is 06:05 IST (ok)", () => {
+  assert.equal(mon.assessSchedule(new Date("2026-11-17T01:00:00.000Z"), "2026-11-17", null).status, "missed");
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T01:00:00.000Z"),
+    "2026-11-17",
+    monPub({ published_at: "2026-11-17T00:35:00.000Z" }),
+  );
+  assert.equal(s.status, "ok");
+});
+t("monitoring: published row with no published_at -> ok (never late on missing data)", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T10:00:00+05:30"),
+    "2026-11-17",
+    monPub({ published_at: null }),
+  );
+  assert.equal(s.status, "ok");
+});
+t("monitoring: deriveAlerts — failed row critical, quarantined critical, poster failed warn", () => {
+  const alerts = mon.deriveAlerts(
+    [
+      monPub({ id: "p-fail", kolkata_date: "2026-11-16", status: "failed", error: "no valid plan" }),
+      monPub({ id: "p-q", kolkata_date: "2026-11-17", status: "planned", poster_qc_status: "failed", poster_error: "quarantined:bengali_overflow_at_min" }),
+      monPub({ id: "p-pf", kolkata_date: "2026-11-15", status: "planned", poster_qc_status: "failed", poster_error: "bengali_overflow_at_min" }),
+    ],
+    [],
+  );
+  assert.equal(alerts.length, 3);
+  assert.equal(alerts.find((a) => a.publication_id === "p-fail").level, "critical");
+  assert.equal(alerts.find((a) => a.publication_id === "p-q").level, "critical");
+  assert.equal(alerts.find((a) => a.publication_id === "p-q").reason, "quarantined:bengali_overflow_at_min");
+  assert.equal(alerts.find((a) => a.publication_id === "p-pf").level, "warn");
+});
+t("monitoring: deriveAlerts — failed deliveries aggregate per (publication, error)", () => {
+  const alerts = mon.deriveAlerts(
+    [monPub()],
+    [
+      monDel({ status: "failed", error: "gone" }),
+      monDel({ status: "failed", error: "gone" }),
+      monDel({ status: "failed", error: "timeout" }),
+      monDel({ status: "retryable", error: "gone" }),
+    ],
+  );
+  assert.equal(alerts.length, 2);
+  assert.equal(alerts.find((a) => a.reason.includes("gone")).reason, "push delivery failed for 2 devices: gone");
+  assert.ok(alerts.find((a) => a.reason.includes("timeout")));
+});
+t("monitoring: dedupeAlerts — same day+reason twice -> one alert", () => {
+  const a = { level: "warn", reason: "poster failed; poster workflow retry needed", kolkata_date: "2026-11-17", publication_id: "p1", first_seen: "2026-11-17T01:00:00.000Z" };
+  const out = mon.dedupeAlerts([a, { ...a }, { ...a, reason: "other" }]);
+  assert.equal(out.length, 2);
+});
+t("monitoring: snapshot — published today, push counts + retryable + last activity", () => {
+  const snap = mon.buildMonitoringSnapshot(
+    [monPub()],
+    [
+      monDel({ status: "retryable", attempts: 1, max_attempts: 4, created_at: "2026-11-17T00:40:00.000Z" }),
+      monDel({ status: "retryable", attempts: 3, max_attempts: 4, created_at: "2026-11-17T00:40:00.000Z" }),
+      monDel({ status: "failed", attempts: 4, max_attempts: 4, error: "gone" }),
+    ],
+    new Date("2026-11-17T10:00:00+05:30"),
+  );
+  assert.equal(snap.kolkata_date, "2026-11-17");
+  assert.equal(snap.schedule.status, "ok");
+  assert.equal(snap.publication.status, "published");
+  assert.equal(snap.publication.poster_qc_status, "passed");
+  assert.equal(snap.push.total, 9);
+  assert.equal(snap.push.sent, 9);
+  assert.equal(snap.push.retryable, 2);
+  assert.equal(snap.push.attempts_remaining, 4);
+  assert.equal(snap.alerts.length, 1);
+  assert.equal(snap.last_activity, "2026-11-17T00:40:00.000Z");
+});
+t("monitoring: snapshot — no row after grace -> missed, no publication, empty push", () => {
+  const snap = mon.buildMonitoringSnapshot([], [], new Date("2026-11-17T10:00:00+05:30"));
+  assert.equal(snap.schedule.status, "missed");
+  assert.equal(snap.publication, null);
+  assert.equal(snap.push.total, 0);
+  assert.equal(snap.alerts.length, 0);
+  assert.equal(snap.last_activity, null);
+});
+t("monitoring: snapshot — quarantined today -> missed schedule + critical alert + recent failure", () => {
+  const snap = mon.buildMonitoringSnapshot(
+    [monPub({ status: "planned", poster_qc_status: "failed", poster_error: "quarantined:bengali_overflow_at_min", published_at: null })],
+    [],
+    new Date("2026-11-17T10:00:00+05:30"),
+  );
+  assert.equal(snap.schedule.status, "missed");
+  assert.equal(snap.alerts.length, 1);
+  assert.equal(snap.alerts[0].level, "critical");
+  assert.equal(snap.recent_failures.length, 1);
+  assert.equal(snap.recent_failures[0].reason, "quarantined:bengali_overflow_at_min");
 });
 
 await Promise.all(pending);

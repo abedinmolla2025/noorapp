@@ -12,7 +12,7 @@ echo "== compile dailyContent lib =="
   src/lib/dailyContent/chapterEvents.ts src/lib/dailyContent/recommendations.ts \
   src/lib/dailyContent/recommendationPlan.ts src/lib/dailyContent/semantic.ts \
   src/lib/dailyContent/visualConceptEngine.ts src/lib/dailyContent/visualSelection.ts \
-  src/lib/dailyContent/dailyShare.ts \
+  src/lib/dailyContent/dailyShare.ts src/lib/dailyContent/monitoring.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 # Separate invocation for the Islamic Calendar lib: its own outDir (.out-cal).
 # Mixing it into the lib compile would change the common rootDir and move
@@ -45,6 +45,8 @@ echo "== split-flow self-healing tests (real edge code, stubbed deps) =="
 node supabase/functions/daily-content/heal-splitflow.test.mjs
 echo "== Mode A/B + per-channel switches tests (real edge code, mocked Graph API) =="
 node supabase/functions/daily-content/mode-ab.test.mjs
+echo "== monitoring + schedule-miss tests (real edge code, stubbed deps) =="
+node supabase/functions/daily-content/monitoring.test.mjs
 echo "== ai recommendation tests (real recommend function, stubbed deps) =="
 node supabase/functions/_shared/ai-recommend.test.mjs
 echo "== dry-run (plan only) =="
