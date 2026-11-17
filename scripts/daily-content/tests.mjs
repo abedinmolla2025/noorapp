@@ -447,6 +447,35 @@ t("ogQc: export sizes are exactly 1080x1350 and 1080x1080", () => {
   assert.deepEqual(ogQc.ogExportSize("square"), { width: 1080, height: 1080 });
   assert.deepEqual(ogQc.OG_STAGE_SIZE.portrait, { width: 540, height: 675 });
 });
+t("ogQc: square long content gets extra tightening, Bengali floor stays 16", () => {
+  const sq = ogQc.effectiveBengaliFirstLayout("c", "square", 306, 538);
+  assert.equal(sq.isLongContent, true);
+  assert.equal(sq.bengaliMinSize, 16);
+  assert.equal(sq.padding, "12px 26px 12px");
+  assert.equal(sq.titleSize, 16);
+  assert.equal(sq.gap, 6);
+  assert.equal(sq.arabicCapShare, 0.23);
+  assert.equal(sq.bengaliLineHeight, 1.6);
+  assert.equal(sq.panelPaddingV, 12);
+  assert.equal(sq.sourcePillPaddingV, 4);
+  assert.equal(sq.arabicMinSize, 12);
+});
+t("ogQc: square short content is byte-identical to the table (no regression)", () => {
+  const sq = ogQc.effectiveBengaliFirstLayout("c", "square", 20, 35);
+  assert.equal(sq.isLongContent, false);
+  assert.deepEqual(
+    { padding: sq.padding, titleSize: sq.titleSize, gap: sq.gap, arabicCapShare: sq.arabicCapShare, bengaliLineHeight: sq.bengaliLineHeight, panelPaddingV: sq.panelPaddingV, sourcePillPaddingV: sq.sourcePillPaddingV },
+    { padding: "22px 26px 22px", titleSize: 22, gap: 12, arabicCapShare: 0.25, bengaliLineHeight: 1.65, panelPaddingV: 16, sourcePillPaddingV: 6 },
+  );
+});
+t("ogQc: portrait long content is untouched by the square fix", () => {
+  const po = ogQc.effectiveBengaliFirstLayout("c", "portrait", 306, 538);
+  assert.equal(po.isLongContent, true);
+  assert.deepEqual(
+    { padding: po.padding, titleSize: po.titleSize, gap: po.gap, arabicCapShare: po.arabicCapShare, bengaliLineHeight: po.bengaliLineHeight, panelPaddingV: po.panelPaddingV, sourcePillPaddingV: po.sourcePillPaddingV },
+    { padding: "22px 28px 22px", titleSize: 20, gap: 10, arabicCapShare: 0.28, bengaliLineHeight: 1.65, panelPaddingV: 16, sourcePillPaddingV: 6 },
+  );
+});
 
 // ---- Phase 3: preference client (pure, stubbed transport) ----
 t("preferences: opt_out posts the endpoint with action opt_out and returns the server state", async () => {

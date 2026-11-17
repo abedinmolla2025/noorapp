@@ -149,6 +149,12 @@ export type EffectiveBengaliFirstLayout = BengaliFirstFormatLayout & {
   isLongContent: boolean;
   /** Arabic line height for this content (tighter when the Arabic is long). */
   arabicLineHeight: number;
+  /** Bengali line height (1.65 normally; 1.6 for square long content — see below). */
+  bengaliLineHeight: number;
+  /** Vertical padding (px) inside the Bengali hero panel (16 normally). */
+  panelPaddingV: number;
+  /** Vertical padding (px) inside the source pill (6 normally). */
+  sourcePillPaddingV: number;
 };
 
 /**
@@ -158,6 +164,21 @@ export type EffectiveBengaliFirstLayout = BengaliFirstFormatLayout & {
  * left to their auto-fit blocks, which measure the real geometry.
  * Short content returns the table values unchanged (no regression on
  * the fixture renders).
+ *
+ * Square long content gets EXTRA tightening (square-fix, 2026-11-17):
+ * the 2026-11-17 E2E proved square Layout C cannot fit a long Bengali
+ * (Bukhari 66-5022, 538 chars) at the 16 px minimum — the real Google
+ * webfont needs 9 lines where the local fallback needs 8.5, and the
+ * square body (460 px) leaves the Bengali panel ~20 px short. The
+ * extras below free ~40 px for the Bengali panel (measured geometry,
+ * 5022 square: panel 267 px -> ~292 px, content ~224 px -> ~266 px),
+ * so the same text fits at 16 px with a full line of headroom instead
+ * of sitting exactly at the floor. The Arabic cap moves 0.25 -> 0.23:
+ * at the 12 px minimum a 5-line Arabic is 105 px and the new cap is
+ * ~108 px, so the min-size threshold is UNCHANGED (a 6-line Arabic
+ * fails today and still fails — no new Arabic failure class). Bengali
+ * min size stays 16 px (readability floor, not lowered); only chrome
+ * and line height move. Portrait/wide/story are untouched.
  */
 export function effectiveBengaliFirstLayout(
   layout: BengaliFirstLayout,
@@ -168,9 +189,9 @@ export function effectiveBengaliFirstLayout(
   const base = BENGALI_FIRST_LAYOUT[layout][format];
   const isLongContent = arabicLen > LONG_ARABIC_CHARS || bengaliLen > LONG_BENGALI_CHARS;
   if (!isLongContent) {
-    return { ...base, isLongContent: false, arabicLineHeight: 1.9 };
+    return { ...base, isLongContent: false, arabicLineHeight: 1.9, bengaliLineHeight: 1.65, panelPaddingV: 16, sourcePillPaddingV: 6 };
   }
-  return {
+  const tightened: EffectiveBengaliFirstLayout = {
     ...base,
     isLongContent: true,
     titleSize: Math.max(16, base.titleSize - 4),
@@ -178,7 +199,27 @@ export function effectiveBengaliFirstLayout(
     padding: tightenPadding(base.padding, 4),
     bodyPadding: "0px 0",
     arabicLineHeight: 1.75,
+    bengaliLineHeight: 1.65,
+    panelPaddingV: 16,
+    sourcePillPaddingV: 6,
   };
+  if (format === "square") {
+    // Square long content: the short body is the binding constraint.
+    // Tighten the chrome further (outer padding 22 -> 12 top/bottom,
+    // title 18 -> 16, gaps 8 -> 6, panel padding 16 -> 12, pill
+    // padding 6 -> 4) and cap the Arabic footnote at 23% of the body
+    // (it settles at 14 px instead of 16 px for 5022 — still a
+    // readable footnote, Arabic stays second priority per the
+    // Bengali-first rules). Bengali line height 1.65 -> 1.6.
+    tightened.titleSize = Math.max(16, base.titleSize - 6);
+    tightened.gap = Math.max(6, base.gap - 6);
+    tightened.padding = tightenPadding(base.padding, 10);
+    tightened.arabicCapShare = 0.23;
+    tightened.bengaliLineHeight = 1.6;
+    tightened.panelPaddingV = 12;
+    tightened.sourcePillPaddingV = 4;
+  }
+  return tightened;
 }
 
 /**

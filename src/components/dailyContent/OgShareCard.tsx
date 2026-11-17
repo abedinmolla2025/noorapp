@@ -173,6 +173,12 @@ function AutoFitBengali({
    * the Arabic was still tall). 0 on mount (no reset).
    */
   resetSignal = 0,
+  /**
+   * Vertical padding (px) inside the glass panel (16 normally; 12 for
+   * square long content — square-fix 2026-11-17, frees room for the
+   * Bengali hero without touching the text).
+   */
+  panelPaddingV = 16,
 }: {
   text: string;
   baseSize: number;
@@ -182,6 +188,7 @@ function AutoFitBengali({
   accentBar?: boolean;
   align?: "center" | "left";
   resetSignal?: number;
+  panelPaddingV?: number;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(baseSize);
@@ -265,7 +272,7 @@ function AutoFitBengali({
               background: "rgba(6,15,28,0.55)",
               border: `1px solid ${GOLD_BORDER}`,
               borderRadius: 18,
-              padding: "16px 20px",
+              padding: `${panelPaddingV}px 20px`,
               boxSizing: "border-box",
               ...(accentBar ? { borderLeft: `4px solid ${GOLD}` } : {}),
             }
@@ -433,7 +440,7 @@ function AutoFitArabic({
     </div>
   );
 }
-function SourcePill({ sourceLine }: { sourceLine: string }) {
+function SourcePill({ sourceLine, paddingV = 6 }: { sourceLine: string; paddingV?: number }) {
   return (
     <div
       style={{
@@ -453,7 +460,7 @@ function SourcePill({ sourceLine }: { sourceLine: string }) {
           background: "rgba(6,17,32,0.88)",
           border: `1px solid ${GOLD_BORDER}`,
           borderRadius: 12,
-          padding: "6px 12px",
+          padding: `${paddingV}px 12px`,
           fontFamily: BENGALI_FONT,
         }}
       >
@@ -626,10 +633,12 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
                 text={card.bengali}
                 baseSize={bfLayout.bengaliSize}
                 minSize={bfLayout.bengaliMinSize}
+                lineHeight={bfLayout.bengaliLineHeight}
                 panel={posterLayout === "a" || posterLayout === "c"}
                 accentBar={posterLayout === "c"}
                 align={posterLayout === "c" ? "left" : "center"}
                 resetSignal={arabicEpoch}
+                panelPaddingV={bfLayout.panelPaddingV}
               />
             )}
             {/* Arabic second — smaller, verbatim, never reworded (rule 4).
@@ -648,7 +657,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
               onSettled={() => setArabicEpoch((e) => e + 1)}
             />
             {/* Source pill — only when the source left the header badge (B/C). */}
-            {!bfLayout.sourceInBadge && <SourcePill sourceLine={card.sourceLine} />}
+            {!bfLayout.sourceInBadge && <SourcePill sourceLine={card.sourceLine} paddingV={bfLayout.sourcePillPaddingV} />}
           </div>
         ) : ogLayout.horizontal ? (
           <div
