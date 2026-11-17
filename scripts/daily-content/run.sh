@@ -47,8 +47,14 @@ echo "== Mode A/B + per-channel switches tests (real edge code, mocked Graph API
 node supabase/functions/daily-content/mode-ab.test.mjs
 echo "== monitoring + schedule-miss tests (real edge code, stubbed deps) =="
 node supabase/functions/daily-content/monitoring.test.mjs
+echo "== ai-adapter tests (real _shared adapter, stubbed fetch) =="
+node supabase/functions/_shared/ai-adapter.test.mjs
+echo "== bengali editorial quality tests =="
+node supabase/functions/_shared/bengali-quality.test.mjs
 echo "== ai recommendation tests (real recommend function, stubbed deps) =="
 node supabase/functions/_shared/ai-recommend.test.mjs
+echo "== recommend function tests (real recommend function, stubbed deps) =="
+node supabase/functions/recommend-daily-content/recommend-daily-content.test.mjs
 echo "== dry-run (plan only) =="
 node scripts/daily-content/dry-run.mjs
 rm -rf scripts/daily-content/.out scripts/daily-content/.out-cal
