@@ -29,14 +29,18 @@
  *     carries none). Used for LOCAL render testing without live
  *     Supabase credentials. Never used by the workflow.
  *
- * Scene selection reuses `assignBackgrounds()` from the same lib the
- * admin preview uses (subject match, deterministic, no repeat inside
- * the batch). Yesterday's scene is read from yesterday's publication
- * row (`poster_scene_id`) when the column exists; if the subject
- * match equals yesterday's scene, the next unused scene is used.
- * The `poster_scene_id` select is tolerant: before the poster
- * migration lands, the column does not exist and the check is skipped
- * (reported in the status JSON as `yesterdayScene: "unknown"`).
+ * Scene selection uses the Visual Concept Engine (`visualSelection.ts`,
+ * Phase 2): the hadith is classified (topic/lesson/emotion) and the
+ * engine picks a content-matched concept -> scene, filtered by the
+ * 14-day scene / 7-day concept history rebuilt from published rows
+ * (`poster_scene_id` + stored cards — no new columns). Content-Visual
+ * Match QC is mandatory (engine match + semantic score >= 85 +
+ * similarity windows + Islamic visual safety); any failure HOLDS the
+ * render — there is no fallback scene. Yesterday's scene comes from
+ * the same history read. The `poster_scene_id` select is tolerant:
+ * before the poster migration lands, the column does not exist and the
+ * check is skipped (reported in the status JSON as `yesterdayScene:
+ * "unknown"`).
  *
  * Readiness signal (for the screenshot script):
  *  - `document.documentElement.dataset.posterStatus` = "ready" | "error:<code>"
@@ -61,12 +65,19 @@ import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { OgShareCard } from "@/components/dailyContent/OgShareCard";
 import {
-  assignBackgrounds,
   backgroundUrl,
   badgeLabelForCard,
   CARD_BACKGROUNDS,
   type BackgroundScene,
 } from "@/lib/dailyContent/backgrounds";
+import {
+  buildHistoryEntries,
+  checkVisualQC,
+  selectPosterVisual,
+  visualStatusJson,
+  type VisualHistoryRow,
+  type VisualStatusJson,
+} from "@/lib/dailyContent/visualSelection";
 import { checkOgCardBatch, checkOgVerbatim, ogExportSize, OG_STAGE_SIZE, parsePosterLayout, type OgFormat, type PosterLayout } from "@/lib/dailyContent/ogQc";
 import { buildHadithCard, hadithCanonicalLink, hadithSourceLine } from "@/lib/dailyContent/cards";
 import { extractHadithMatn, transliterateArabic } from "@/lib/dailyContent/transliteration";
@@ -97,6 +108,8 @@ type PosterStatus = {
   backgroundId: string | null;
   backgroundScene: string | null;
   yesterdayScene: string | null;
+  /** Visual Intelligence selection (Phase 2) — null until the QC passes. */
+  visual: VisualStatusJson | null;
   badgeLabel: string | null;
   pronunciationStatus: string | null;
   fitSize: number | null;
@@ -155,6 +168,7 @@ export default function PosterRender() {
     backgroundId: null,
     backgroundScene: null,
     yesterdayScene: null,
+    visual: null,
     badgeLabel: null,
     pronunciationStatus: null,
     fitSize: null,
@@ -172,6 +186,7 @@ export default function PosterRender() {
     (async () => {
       try {
         let payload: CardPayload;
+        let record: HadithRecord | null = null;
         let verbatimOk: boolean | null = null;
         let yesterdayScene: string | null = null;
 
@@ -235,11 +250,12 @@ export default function PosterRender() {
             .maybeSingle();
           if (hadithError) throw new Error(`hadith_read:${hadithError.message}`);
           if (!h) throw new Error(`hadith_not_found:${hadithId}`);
-          const record = h as unknown as HadithRecord;
+          const rec = h as unknown as HadithRecord;
+          record = rec;
           payload = buildHadithCard({
-            record,
-            sourceLine: hadithSourceLine(record),
-            canonicalLink: hadithCanonicalLink(record),
+            record: rec,
+            sourceLine: hadithSourceLine(rec),
+            canonicalLink: hadithCanonicalLink(rec),
           });
           // Verbatim gate: the rebuilt card must equal the published card
           // character-for-character, or the poster must not render.
@@ -265,30 +281,82 @@ export default function PosterRender() {
           // as verified). Only the four published text fields gate.
           verbatimOk = check.errors.filter((e) => !e.startsWith("pronunciation")).length === 0;
           if (!verbatimOk) throw new Error(`verbatim_mismatch:${check.errors.join("; ")}`);
-
-          // Yesterday's scene (tolerant: the column does not exist
-          // before the poster migration lands).
-          try {
-            const { data: prev } = await supabasePublic
-              .from("daily_content_publications" as never)
-              .select("poster_scene_id")
-              .eq("kolkata_date", addDays(date, -1))
-              .eq("status", "published")
-              .maybeSingle();
-            const prevRow = prev as unknown as { poster_scene_id?: string | null } | null;
-            yesterdayScene = prevRow?.poster_scene_id ?? null;
-          } catch {
-            yesterdayScene = null;
-          }
         }
 
         if (cancelled) return;
-        // Scene: subject match via the shared lib; if it equals
-        // yesterday's scene, fall back to the next unused scene.
-        let assigned = assignBackgrounds([payload])[0].background;
-        if (yesterdayScene && assigned.id === yesterdayScene) {
-          assigned = CARD_BACKGROUNDS.find((s) => s.id !== yesterdayScene) ?? assigned;
+        // Visual Intelligence (Phase 2): classify the hadith, pick a
+        // content-matched concept -> scene with the history windows,
+        // then run the mandatory Content-Visual Match QC. Any failure
+        // HOLDS the render — there is no fallback scene (the old
+        // subject-keyword match + yesterday-fallback is replaced).
+        // History is rebuilt from published rows (existing columns
+        // only). A history-read failure is a warning, not a hold: the
+        // read just succeeded for the card itself, and the window is a
+        // repetition rule, not a religious-safety rule — the match,
+        // semantic, safety and fit gates below are all computed locally
+        // and still hold. The missing history is visible in the status.
+        let history: ReturnType<typeof buildHistoryEntries> = [];
+        let historyWarning: string | null = null;
+        if (!fixture) {
+          try {
+            const { data: prevRows, error: prevError } = await supabasePublic
+              .from("daily_content_publications" as never)
+              .select("kolkata_date, hadith_ref, cards, poster_scene_id")
+              .eq("status", "published")
+              .order("kolkata_date", { ascending: false })
+              .limit(30);
+            if (prevError) throw new Error(prevError.message);
+            const rows = (prevRows ?? []) as unknown as VisualHistoryRow[];
+            // Batch-fetch the history rows' hadith records so the topic /
+            // concept rebuild classifies with chapter + English, like the
+            // live path (card-only classification can differ — see
+            // buildHistoryEntries). Failure here is non-fatal: the rebuild
+            // falls back to card-only and the 14-day scene window (which
+            // reads the DB scene id directly) stays exact.
+            let records: Map<string, { chapter_id: number | null; english: string | null }> | undefined;
+            try {
+              const ids = [...new Set(rows.map((r) => (r.hadith_ref ?? "").replace(/^hadith:/, "")).filter(Boolean))];
+              if (ids.length > 0) {
+                const { data: hs, error: hError } = await supabasePublic
+                  .from("hadiths")
+                  .select("id, chapter_id, english")
+                  .in("id", ids);
+                if (hError) throw new Error(hError.message);
+                records = new Map(
+                  ((hs ?? []) as unknown as { id: string; chapter_id: number | null; english: string | null }[]).map(
+                    (h) => [h.id, { chapter_id: h.chapter_id ?? null, english: h.english ?? null }],
+                  ),
+                );
+              }
+            } catch (e) {
+              historyWarning = `visual_history_records_unavailable:${e instanceof Error ? e.message : String(e)}`;
+            }
+            history = buildHistoryEntries(rows, date, records);
+          } catch (e) {
+            history = [];
+            historyWarning = `visual_history_unavailable:${e instanceof Error ? e.message : String(e)}`;
+          }
+          const yesterday = history.find((h) => h.date === addDays(date, -1));
+          yesterdayScene = yesterday?.sceneId ?? null;
         }
+        const visual = selectPosterVisual(payload, record, history, date);
+        if (visual.hold || !visual.scene || !visual.selection.chosen) {
+          throw new Error(`visual_hold:${visual.hold?.reason ?? "unknown"}: ${visual.hold?.detail ?? ""}`);
+        }
+        const visualQc = checkVisualQC({
+          card: payload,
+          topicId: visual.selection.topicId,
+          concept: visual.selection.chosen,
+          scene: visual.scene,
+          history,
+          today: date,
+        });
+        if (!visualQc.ok) {
+          throw new Error(`visual_qc_fail:${visualQc.failures.join("; ")}`);
+        }
+        if (historyWarning) visualQc.warnings.push(historyWarning);
+        const assigned = visual.scene;
+        const visualJson = visualStatusJson(visual.selection, assigned, visualQc);
         const qc = checkOgCardBatch([payload], [assigned.id], CARD_BACKGROUNDS.length, {
           // Bengali-first layouts render no pronunciation block (rule 8):
           // the pronunciation state is QC metadata only (status JSON).
@@ -304,6 +372,7 @@ export default function PosterRender() {
           backgroundId: assigned.id,
           backgroundScene: assigned.scene,
           yesterdayScene,
+          visual: visualJson,
           badgeLabel: badgeLabelForCard(payload),
           pronunciationStatus: payload.pronunciationStatus ?? null,
           qc,

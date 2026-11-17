@@ -15,7 +15,9 @@
  *    (`document.documentElement.dataset.posterStatus === "ready"`).
  *    Any "error:*" status fails the run with the page's error message.
  *  - Reads the `#poster-status` JSON (date, format, recordRef,
- *    sourceLine, backgroundId, badgeLabel, qc, verbatimOk, exportSize).
+ *    sourceLine, backgroundId, badgeLabel, qc, verbatimOk, exportSize,
+ *    plus `visual` — the Phase 2 Visual Intelligence selection:
+ *    topic/concept/scene, semantic score, match/safety flags).
  *  - Screenshots the `#poster-stage` element at deviceScaleFactor 2.
  *  - Verifies the PNG's IHDR dimensions equal the expected export size
  *    (ogExportSize) and that the file is non-trivially large.
@@ -58,8 +60,14 @@ try {
   const page = await browser.newPage({ deviceScaleFactor: 2, viewport: { width: 1280, height: 900 } });
   await page.goto(url, { waitUntil: "domcontentloaded", timeout: timeoutMs });
   // Wait for the page's own readiness signal (fonts + images loaded).
+  // NOTE: waitForFunction's signature is (fn, arg, options) — the
+  // timeout MUST be the 3rd argument. Passing it 2nd silently treats
+  // it as the function's arg and the wait falls back to Playwright's
+  // 30 s default, which the font/image/autofit deadlines can exceed
+  // when webfonts are unreachable (fixed 2026-11-17, Phase 2).
   await page.waitForFunction(
     () => ["ready", "error"].includes(document.documentElement.dataset.posterStatus || ""),
+    undefined,
     { timeout: timeoutMs },
   );
   const statusJson = await page.locator("#poster-status").innerText();
@@ -91,6 +99,7 @@ try {
     sourceLine: status.sourceLine,
     backgroundId: status.backgroundId,
     backgroundScene: status.backgroundScene,
+    visual: status.visual ?? null,
     badgeLabel: status.badgeLabel,
     pronunciationStatus: status.pronunciationStatus ?? null,
     fitSize: status.fitSize ?? null,

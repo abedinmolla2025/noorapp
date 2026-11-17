@@ -10,7 +10,8 @@ echo "== compile dailyContent lib =="
   src/lib/dailyContent/backgrounds.ts src/lib/dailyContent/ogQc.ts \
   src/lib/dailyContent/preferences.ts src/lib/dailyContent/containerState.ts \
   src/lib/dailyContent/chapterEvents.ts src/lib/dailyContent/recommendations.ts \
-  src/lib/dailyContent/recommendationPlan.ts \
+  src/lib/dailyContent/recommendationPlan.ts src/lib/dailyContent/semantic.ts \
+  src/lib/dailyContent/visualConceptEngine.ts src/lib/dailyContent/visualSelection.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 # Separate invocation for the Islamic Calendar lib: its own outDir (.out-cal).
 # Mixing it into the lib compile would change the common rootDir and move
@@ -27,6 +28,8 @@ echo "== build fixture (real bundled duas) =="
 node scripts/daily-content/build-fixture.mjs
 echo "== unit tests =="
 node scripts/daily-content/tests.mjs
+echo "== visual intelligence integration tests =="
+node scripts/daily-content/visual-integration-tests.mjs
 echo "== islamic calendar tests =="
 node scripts/daily-content/calendar-tests.mjs
 echo "== chapter -> event mapping tests =="
