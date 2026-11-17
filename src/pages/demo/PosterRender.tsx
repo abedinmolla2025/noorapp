@@ -78,7 +78,7 @@ import {
   type VisualHistoryRow,
   type VisualStatusJson,
 } from "@/lib/dailyContent/visualSelection";
-import { checkOgCardBatch, checkOgVerbatim, ogExportSize, OG_STAGE_SIZE, parsePosterLayout, type OgFormat, type PosterLayout } from "@/lib/dailyContent/ogQc";
+import { checkOgCardBatch, checkOgVerbatim, effectiveBengaliFirstLayout, ogExportSize, OG_STAGE_SIZE, parsePosterLayout, type OgFitRecord, type OgFormat, type PosterLayout } from "@/lib/dailyContent/ogQc";
 import { buildHadithCard, hadithCanonicalLink, hadithSourceLine } from "@/lib/dailyContent/cards";
 import { extractHadithMatn, transliterateArabic } from "@/lib/dailyContent/transliteration";
 import type { CardPayload, HadithRecord } from "@/lib/dailyContent/types";
@@ -114,6 +114,14 @@ type PosterStatus = {
   pronunciationStatus: string | null;
   fitSize: number | null;
   arabicFitSize: number | null;
+  /**
+   * Measured fit record (Phase 2): fitted sizes, line counts (Range
+   * rects) and spare px for both auto-fit blocks, so a render can be
+   * judged from data in the render JSON — not eyeballs alone. Null
+   * until the fit settles. The workflow's render-poster.mjs passes it
+   * through into its result JSON.
+   */
+  fit: OgFitRecord | null;
   qc: { ok: boolean; errors: string[]; warnings: string[] } | null;
   verbatimOk: boolean | null;
   exportSize: { width: number; height: number };
@@ -173,6 +181,7 @@ export default function PosterRender() {
     pronunciationStatus: null,
     fitSize: null,
     arabicFitSize: null,
+    fit: null,
     qc: null,
     verbatimOk: null,
     exportSize: ogExportSize(format),
@@ -425,6 +434,7 @@ export default function PosterRender() {
         let fitOverflowKind: "bengali" | "arabic" | null = null;
         let fitSize: number | null = null;
         let arabicFitSize: number | null = null;
+        let fitRecord: OgFitRecord | null = null;
         const overflowKindOf = (nodes: Element[]): "bengali" | "arabic" | null => {
           const n = nodes.find((el) => el.getAttribute("data-fit-overflow") === "true");
           if (!n) return null;
@@ -433,6 +443,74 @@ export default function PosterRender() {
         const fitSizeOf = (nodes: Element[], kind: string): number | null => {
           const n = nodes.find((el) => el.getAttribute("data-fit-kind") === kind);
           return n ? Number(n.getAttribute("data-fit-size") ?? "") || null : null;
+        };
+        // Measured fit record for the render JSON: line counts via
+        // Range rects (distinct line tops), spare px per auto-fit box,
+        // line heights from computed style. Measured at the same moment
+        // the fit settles, before the screenshot.
+        const measureFit = (nodes: Element[]): OgFitRecord | null => {
+          const bn = nodes.find((el) => el.getAttribute("data-fit-kind") === "bengali") as HTMLElement | undefined;
+          const ar = nodes.find((el) => el.getAttribute("data-fit-kind") === "arabic") as HTMLElement | undefined;
+          if (!bn || !ar) return null;
+          const linesOf = (el: HTMLElement): number => {
+            const textEl = el.querySelector("div");
+            if (!textEl) return 0;
+            // Count lines from the TEXT NODE only: the gold quote
+            // spans (size+4) sit on the first/last lines with taller
+            // rects, and counting their rects invents phantom lines
+            // (intentions measured 4 lines instead of 2).
+            const textNode = [...textEl.childNodes].find((n) => n.nodeType === 3);
+            if (!textNode) return 0;
+            const range = document.createRange();
+            range.selectNodeContents(textNode);
+            const rects = [...range.getClientRects()];
+            const tops: number[] = [];
+            for (const r of rects) {
+              if (!tops.some((t) => Math.abs(t - r.top) < 2)) tops.push(r.top);
+            }
+            return tops.length;
+          };
+          const lhOf = (el: HTMLElement): number => {
+            const textEl = el.querySelector("div");
+            return textEl ? parseFloat(getComputedStyle(textEl).lineHeight) || 0 : 0;
+          };
+          const bnSize = Number(bn.getAttribute("data-fit-size") ?? "") || 0;
+          const arSize = Number(ar.getAttribute("data-fit-size") ?? "") || 0;
+          // Floors come from the same effective-layout table the card
+          // rendered with — never hardcoded here, so the record and the
+          // render can never disagree about what the floor was.
+          const eff = layout === "legacy" ? null : effectiveBengaliFirstLayout(layout, format, card?.arabic.length ?? 0, card?.bengali.length ?? 0);
+          // Spare px is the TRUE headroom: box height minus text height
+          // minus vertical padding. (NOT clientHeight - scrollHeight:
+          // for a fitting flex panel Chrome reports scrollHeight ==
+          // clientHeight, so that difference reads 0 for ANY fitting
+          // content — the Phase 1 audit's "0 px spare" was this quirk,
+          // and the real fragility signal was settling AT the floor.
+          // The headroom formula below is negative exactly when the
+          // text overflows, so it stays a valid overflow signal too.)
+          const spareOf = (el: HTMLElement): number => {
+            const textEl = el.querySelector("div");
+            const cs = getComputedStyle(el);
+            const padV = parseFloat(cs.paddingTop) + parseFloat(cs.paddingBottom);
+            const textH = textEl ? textEl.getBoundingClientRect().height : 0;
+            return Math.round((el.clientHeight - textH - padV) * 10) / 10;
+          };
+          return {
+            format,
+            isLongContent: (card?.arabic.length ?? 0) > 260 || (card?.bengali.length ?? 0) > 380,
+            bengaliSize: bnSize,
+            bengaliMinSize: eff?.bengaliMinSize ?? 0,
+            arabicSize: arSize,
+            arabicMinSize: eff?.arabicMinSize ?? 0,
+            bengaliLines: linesOf(bn),
+            arabicLines: linesOf(ar),
+            bengaliSparePx: spareOf(bn),
+            arabicSparePx: spareOf(ar),
+            bengaliOverflow: bn.getAttribute("data-fit-overflow") === "true",
+            arabicOverflow: ar.getAttribute("data-fit-overflow") === "true",
+            bengaliLineHeight: lhOf(bn),
+            arabicLineHeight: lhOf(ar),
+          };
         };
         for (;;) {
           const nodes = Array.from(document.querySelectorAll("[data-autofit]"));
@@ -448,6 +526,7 @@ export default function PosterRender() {
               fitOk = true;
               fitSize = fitSizeOf(still, "bengali");
               arabicFitSize = fitSizeOf(still, "arabic");
+              fitRecord = measureFit(still);
               break;
             }
           }
@@ -473,7 +552,7 @@ export default function PosterRender() {
         // One frame for the centered re-render to paint before the shot.
         await new Promise((resolve) => requestAnimationFrame(() => resolve(null)));
         if (cancelled) return;
-        setStatus((s) => ({ ...s, status: s.qc && !s.qc.ok ? "error" : "ready", fitSize, arabicFitSize }));
+        setStatus((s) => ({ ...s, status: s.qc && !s.qc.ok ? "error" : "ready", fitSize, arabicFitSize, fit: fitRecord }));
       } catch (e) {
         if (!cancelled) setStatus((s) => ({ ...s, status: "error", error: e instanceof Error ? e.message : String(e) }));
       }

@@ -173,9 +173,9 @@ t("all 15 catalog scenes pass Islamic visual safety", () => {
     assert.equal(r.safe, true, `scene ${s.id} unsafe: ${r.reasons.join("; ")}`);
   }
 });
-t("exactly 3 catalog scenes lack the 'darker areas' text-safe marker (warning, not a hold)", () => {
+t("all 15 catalog scenes carry the 'darker areas' text-safe marker (Phase 2: the 3 missing prompts now carry it)", () => {
   const lacking = bg.CARD_BACKGROUNDS.filter((s) => !vs.hasTextSafeArea(s)).map((s) => s.id).sort();
-  assert.deepEqual(lacking, ["forgiveness-leaf", "guidance-path", "intention-sunrise"]);
+  assert.deepEqual(lacking, []);
 });
 t("safety rejects a prompt without a 'no text' marker", () => {
   const bad = { ...bg.CARD_BACKGROUNDS[0], prompt: "A landscape with a sign that says hello, no people." };

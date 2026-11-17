@@ -17,7 +17,9 @@
  *  - Reads the `#poster-status` JSON (date, format, recordRef,
  *    sourceLine, backgroundId, badgeLabel, qc, verbatimOk, exportSize,
  *    plus `visual` — the Phase 2 Visual Intelligence selection:
- *    topic/concept/scene, semantic score, match/safety flags).
+ *    topic/concept/scene, semantic score, match/safety flags — and
+ *    `fit`, the measured fit record: fitted sizes, line counts and
+ *    spare px for both auto-fit blocks).
  *  - Screenshots the `#poster-stage` element at deviceScaleFactor 2.
  *  - Verifies the PNG's IHDR dimensions equal the expected export size
  *    (ogExportSize) and that the file is non-trivially large.
@@ -123,6 +125,7 @@ async function renderOnce() {
       pronunciationStatus: status.pronunciationStatus ?? null,
       fitSize: status.fitSize ?? null,
       arabicFitSize: status.arabicFitSize ?? null,
+      fit: status.fit ?? null,
       qc: status.qc,
       verbatimOk: status.verbatimOk,
     };

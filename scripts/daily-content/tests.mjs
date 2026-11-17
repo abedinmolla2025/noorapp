@@ -457,11 +457,18 @@ t("ogQc: square long content gets extra tightening, Bengali floor stays 16", () 
   assert.equal(sq.padding, "12px 26px 12px");
   assert.equal(sq.titleSize, 16);
   assert.equal(sq.gap, 6);
-  assert.equal(sq.arabicCapShare, 0.23);
-  assert.equal(sq.bengaliLineHeight, 1.6);
+  // Phase 2 (2026-11-17): the Arabic cap is RESTORED to the table value
+  // 0.25 — the 0.23 cap + the raised 14px Arabic floor cannot both hold
+  // (a 4-line minimum-size Arabic needs ~120px; 0.25 of the taller body
+  // is ~121px). Headroom now comes from the compact header + omitted
+  // divider + 1.55 Bengali leading, never from the Arabic.
+  assert.equal(sq.arabicCapShare, 0.25);
+  assert.equal(sq.bengaliLineHeight, 1.55);
   assert.equal(sq.panelPaddingV, 12);
   assert.equal(sq.sourcePillPaddingV, 4);
-  assert.equal(sq.arabicMinSize, 12);
+  assert.equal(sq.arabicMinSize, 14);
+  assert.equal(sq.headerCompact, true);
+  assert.equal(sq.hideDivider, true);
 });
 t("ogQc: square short content is byte-identical to the table (no regression)", () => {
   const sq = ogQc.effectiveBengaliFirstLayout("c", "square", 20, 35);
@@ -471,13 +478,72 @@ t("ogQc: square short content is byte-identical to the table (no regression)", (
     { padding: "22px 26px 22px", titleSize: 22, gap: 12, arabicCapShare: 0.25, bengaliLineHeight: 1.65, panelPaddingV: 16, sourcePillPaddingV: 6 },
   );
 });
-t("ogQc: portrait long content is untouched by the square fix", () => {
+t("ogQc: portrait long content pays for the Arabic strip from chrome (header + leading), keeps its divider", () => {
   const po = ogQc.effectiveBengaliFirstLayout("c", "portrait", 306, 538);
   assert.equal(po.isLongContent, true);
+  // Phase 2: long portrait compacts the header and uses 1.6 Bengali
+  // leading to pay for the Arabic glass strip (~15px) — the divider
+  // stays, and every other number is the pre-existing long tightening.
+  assert.equal(po.headerCompact, true);
+  assert.equal(po.hideDivider, false);
+  assert.equal(po.arabicMinSize, 14);
   assert.deepEqual(
     { padding: po.padding, titleSize: po.titleSize, gap: po.gap, arabicCapShare: po.arabicCapShare, bengaliLineHeight: po.bengaliLineHeight, panelPaddingV: po.panelPaddingV, sourcePillPaddingV: po.sourcePillPaddingV },
-    { padding: "22px 28px 22px", titleSize: 20, gap: 10, arabicCapShare: 0.28, bengaliLineHeight: 1.65, panelPaddingV: 16, sourcePillPaddingV: 6 },
+    { padding: "22px 28px 22px", titleSize: 20, gap: 10, arabicCapShare: 0.28, bengaliLineHeight: 1.6, panelPaddingV: 16, sourcePillPaddingV: 6 },
   );
+});
+t("ogQc: layout C arabic floor is 14px in both formats, never below", () => {
+  assert.equal(ogQc.BENGALI_FIRST_LAYOUT.c.portrait.arabicMinSize, 14);
+  assert.equal(ogQc.BENGALI_FIRST_LAYOUT.c.square.arabicMinSize, 14);
+  assert.equal(ogQc.ARABIC_MIN_SIZE_LAYOUT_C, 14);
+  assert.equal(ogQc.effectiveBengaliFirstLayout("c", "square", 20, 35).arabicMinSize, 14);
+  assert.equal(ogQc.effectiveBengaliFirstLayout("c", "portrait", 20, 35).arabicMinSize, 14);
+});
+t("ogQc: short-content rule shrinks the panel only when both texts are short", () => {
+  assert.equal(ogQc.isShortPosterContent(35, 20), true); // intentions fixture
+  assert.equal(ogQc.isShortPosterContent(120, 120), true); // boundary
+  assert.equal(ogQc.isShortPosterContent(121, 20), false);
+  assert.equal(ogQc.isShortPosterContent(35, 121), false);
+  assert.equal(ogQc.isShortPosterContent(424, 331), false); // 869 medium
+  assert.equal(ogQc.isShortPosterContent(538, 306), false); // 5022 long
+});
+t("ogQc: fit record passes with headroom, warns at the floor, fails on overflow or below-floor size", () => {
+  const base = { format: "square", isLongContent: true, bengaliSize: 20, bengaliMinSize: 16, arabicSize: 16, arabicMinSize: 14, bengaliLines: 8, arabicLines: 3, bengaliSparePx: 30, arabicSparePx: 5, bengaliOverflow: false, arabicOverflow: false, bengaliLineHeight: 24.8, arabicLineHeight: 28 };
+  const ok = ogQc.checkOgFitRecord(base);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.warnings.length, 0);
+  const atFloor = ogQc.checkOgFitRecord({ ...base, bengaliSize: 16, bengaliSparePx: 30 });
+  assert.equal(atFloor.ok, true);
+  assert.equal(atFloor.warnings.some((w) => w.includes("at the floor")), true);
+  const thin = ogQc.checkOgFitRecord({ ...base, bengaliSparePx: 5 });
+  assert.equal(thin.ok, true);
+  assert.equal(thin.warnings.some((w) => w.includes("under one real-font line")), true);
+  const over = ogQc.checkOgFitRecord({ ...base, bengaliOverflow: true, bengaliSparePx: -2 });
+  assert.equal(over.ok, false);
+  assert.equal(over.errors.some((e) => e.startsWith("bengali_overflow_at_min")), true);
+  const below = ogQc.checkOgFitRecord({ ...base, arabicSize: 13 });
+  assert.equal(below.ok, false);
+  assert.equal(below.errors.some((e) => e.includes("below the 14px floor")), true);
+  const neg = ogQc.checkOgFitRecord({ ...base, arabicSparePx: -2 });
+  assert.equal(neg.ok, false);
+  // Sub-pixel rounding (-0.4px) passes: same +1px tolerance as the render gate.
+  assert.equal(ogQc.checkOgFitRecord({ ...base, arabicSparePx: -0.4 }).ok, true);
+});
+t("ogQc: readability guarantees pass for layout C and catch a lowered floor", () => {
+  const sqLong = ogQc.effectiveBengaliFirstLayout("c", "square", 306, 538);
+  const g = ogQc.checkOgReadabilityGuarantees("c", sqLong);
+  assert.equal(g.ok, true);
+  // Known hierarchy inversion (title 16 == floor 16) is a warning, not a pass/fail.
+  assert.equal(g.warnings.some((w) => w.includes("hierarchy inversion")), true);
+  const poLong = ogQc.effectiveBengaliFirstLayout("c", "portrait", 306, 538);
+  assert.equal(ogQc.checkOgReadabilityGuarantees("c", poLong).ok, true);
+  const lowered = ogQc.checkOgReadabilityGuarantees("c", { ...sqLong, bengaliMinSize: 14 });
+  assert.equal(lowered.ok, false);
+  assert.equal(lowered.errors.some((e) => e.includes("16px hard floor")), true);
+  const squeezed = ogQc.checkOgReadabilityGuarantees("c", { ...sqLong, bengaliLineHeight: 1.4 });
+  assert.equal(squeezed.ok, false);
+  const starved = ogQc.checkOgReadabilityGuarantees("c", { ...sqLong, arabicCapShare: 0.15 });
+  assert.equal(starved.ok, false);
 });
 
 // ---- Phase 3: preference client (pure, stubbed transport) ----

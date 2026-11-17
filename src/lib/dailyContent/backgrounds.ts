@@ -37,7 +37,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Winding path through misty green hills at dawn, distant mosque silhouette",
     subjects: ["guidance", "হেদায়াত", "path", "straight path", "hidayah", "সরল পথ"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a narrow luminous footpath winding through soft green rolling hills at dawn, gentle mist, warm golden sunlight breaking on the horizon, a small distant mosque silhouette with a single minaret far on the horizon, peaceful and serene atmosphere, soft cinematic light, rich detail. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a narrow luminous footpath winding through soft green rolling hills at dawn, gentle mist, warm golden sunlight breaking on the horizon, a small distant mosque silhouette with a single minaret far on the horizon, peaceful and serene atmosphere, soft cinematic light, rich detail, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
   },
   {
     id: "parents-hands",
@@ -77,7 +77,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Golden sunrise over layered mountains and a valley river",
     subjects: ["intention", "niyyah", "নিয়ত", "new day", "morning", "beginning", "actions"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a golden sunrise breaking over gentle layered mountains, soft rays of light through thin clouds, calm warm sky in gold and soft amber, a tranquil valley below in soft shadow, serene and hopeful atmosphere, soft cinematic light. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a golden sunrise breaking over gentle layered mountains, soft rays of light through thin clouds, calm warm sky in gold and soft amber, a tranquil valley below in soft shadow, serene and hopeful atmosphere, soft cinematic light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
   },
   {
     id: "forgiveness-leaf",
@@ -85,7 +85,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Rain-washed green leaf with droplets in golden light",
     subjects: ["forgiveness", "mercy", "repentance", "ক্ষমা", "istighfar", "rain", "purity", "pardon"],
     prompt:
-      "Photorealistic premium macro photograph, tall vertical portrait orientation: a fresh green leaf covered in clear rain droplets, soft golden sunlight glowing through the droplets, dreamy green bokeh background, pure and refreshing atmosphere, crisp detail, soft cinematic light. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium macro photograph, tall vertical portrait orientation: a fresh green leaf covered in clear rain droplets, soft golden sunlight glowing through the droplets, dreamy green bokeh background, pure and refreshing atmosphere, crisp detail, soft cinematic light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
   },
   {
     id: "morning-window",

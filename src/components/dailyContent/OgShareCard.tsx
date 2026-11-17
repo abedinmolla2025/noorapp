@@ -1,7 +1,7 @@
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import type { CardPayload } from "@/lib/dailyContent/types";
 import type { OgFormat } from "@/lib/dailyContent/ogQc";
-import { OG_LAYOUT, OG_STAGE_SIZE, effectiveBengaliFirstLayout, type BengaliFirstLayout, type PosterLayout } from "@/lib/dailyContent/ogQc";
+import { OG_LAYOUT, OG_STAGE_SIZE, effectiveBengaliFirstLayout, isShortPosterContent, type BengaliFirstLayout, type PosterLayout } from "@/lib/dailyContent/ogQc";
 import type { Composition } from "@/lib/dailyContent/visuals";
 
 const GOLD = "#e9c15c";
@@ -179,6 +179,15 @@ function AutoFitBengali({
    * Bengali hero without touching the text).
    */
   panelPaddingV = 16,
+  /**
+   * Short content only (see isShortPosterContent): let the panel shrink
+   * to its content instead of stretching (flex:1) across the whole
+   * body, so a 2-line translation no longer sits in a mostly empty
+   * frame. Only safe for short text — the stretching panel + auto-fit
+   * measurement is what detects overflow, and short text cannot
+   * overflow the body at base size (see isShortPosterContent).
+   */
+  shrinkToContent = false,
 }: {
   text: string;
   baseSize: number;
@@ -189,6 +198,7 @@ function AutoFitBengali({
   align?: "center" | "left";
   resetSignal?: number;
   panelPaddingV?: number;
+  shrinkToContent?: boolean;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(baseSize);
@@ -260,7 +270,10 @@ function AutoFitBengali({
       data-fit-overflow={overflow ? "true" : "false"}
       data-fit-size={size}
       style={{
-        flex: 1,
+        // Short content: size to the text (see shrinkToContent). Long
+        // content keeps flex:1 — the stretching panel is what lets the
+        // auto-fit measurement see a real overflow.
+        flex: shrinkToContent ? "0 0 auto" : 1,
         minHeight: 0,
         overflow: "hidden",
         display: "flex",
@@ -286,6 +299,15 @@ function AutoFitBengali({
           lineHeight,
           fontFamily: BENGALI_FONT,
           textShadow: "0 2px 12px rgba(0,0,0,0.65)",
+          // NOTE (Phase 2): `text-wrap: balance` was tried here to fix
+          // the orphaned publisher-note word and REVERTED the same day:
+          // Chromium's balancer spends an extra line to even the breaks
+          // (5022 portrait overflowed at the 18 px floor; intentions
+          // went from 2 to 4 measured lines). Line count is the scarce
+          // resource on long posters, so normal wrapping stays. The
+          // dangling final word is therefore a known typographic
+          // compromise of the source text + measure, not a defect this
+          // phase can fix without changing the text (forbidden).
         }}
       >
         <span style={{ color: GOLD, fontSize: size + 4, fontWeight: 700 }}>“</span>
@@ -414,8 +436,19 @@ function AutoFitArabic({
             }
           : footnote
             ? {
-                borderTop: `1px solid ${GOLD_BORDER}`,
-                paddingTop: 10,
+                // Footnote quiet zone (Phase 2, 2026-11-17): the Arabic
+                // used to sit bare on the photograph — 869 square at
+                // 14 px over lamp reflections, readable only via shadow
+                // + scrim. The footnote now carries its own glass strip
+                // (same dark glass as the Bengali panel, hairline gold
+                // border) so no bright photo detail can sit directly
+                // behind the citation. The strip adds ~10 px of height
+                // vs the old hairline-only footnote; the Arabic cap was
+                // restored to 0.25 to hold it (see ogQc.ts).
+                background: "rgba(6,15,28,0.60)",
+                border: `1px solid ${GOLD_BORDER}`,
+                borderRadius: 12,
+                padding: arabicPadding,
               }
             : {}),
       }}
@@ -524,7 +557,10 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
       {/* Dark scrim: keeps gold/white text readable on any photograph.
           Lower-third directions get a heavier bottom scrim, since the text
           sits low over the photograph. Variant B renders the Bengali hero
-          bare on the scrim (no panel), so its middle scrim is heavier. */}
+          bare on the scrim (no panel), so its middle scrim is heavier.
+          Layout C's bottom stop is 0.78 (Phase 2, was 0.74): the Arabic
+          footnote zone is the bottom ~15% of the frame, and the extra
+          weight backs up the footnote's own glass strip. */}
       <div
         style={{
           position: "absolute",
@@ -534,7 +570,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
               ? "linear-gradient(180deg, rgba(4,10,20,0.66) 0%, rgba(4,10,20,0.48) 38%, rgba(4,10,20,0.50) 62%, rgba(4,10,20,0.78) 100%)"
               : lowerThird
                 ? "linear-gradient(180deg, rgba(4,10,20,0.45) 0%, rgba(4,10,20,0.22) 30%, rgba(4,10,20,0.42) 55%, rgba(4,10,20,0.82) 100%)"
-                : "linear-gradient(180deg, rgba(4,10,20,0.62) 0%, rgba(4,10,20,0.28) 38%, rgba(4,10,20,0.30) 62%, rgba(4,10,20,0.74) 100%)",
+                : "linear-gradient(180deg, rgba(4,10,20,0.62) 0%, rgba(4,10,20,0.28) 38%, rgba(4,10,20,0.30) 62%, rgba(4,10,20,0.78) 100%)",
         }}
       />
       <div
@@ -547,15 +583,19 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
           boxSizing: "border-box",
         }}
       >
-        {/* Header: brand left, reference badge right. */}
+        {/* Header: brand left, reference badge right. Long content
+            uses the compact header (bfLayout.headerCompact): logo
+            40 -> 32 px and tighter badge padding, freeing ~8 px of body
+            height for the Bengali panel (Phase 2 headroom — chrome, not
+            Arabic, pays for it). */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 9 }}>
-            <img src={LOGO} alt="NoorApp" style={{ width: 40, height: 40, borderRadius: 12 }} />
+            <img src={LOGO} alt="NoorApp" style={{ width: bfLayout?.headerCompact ? 32 : 40, height: bfLayout?.headerCompact ? 32 : 40, borderRadius: 12 }} />
             <div>
-              <div style={{ color: "#fff", fontWeight: 800, fontSize: 15, letterSpacing: 0.5, lineHeight: 1.2 }}>
+              <div style={{ color: "#fff", fontWeight: 800, fontSize: bfLayout?.headerCompact ? 13 : 15, letterSpacing: 0.5, lineHeight: 1.2 }}>
                 NOOR APP
               </div>
-              <div style={{ color: "#e8e8e8", fontSize: 11, lineHeight: 1.4 }}>
+              <div style={{ color: "#e8e8e8", fontSize: bfLayout?.headerCompact ? 10 : 11, lineHeight: 1.4 }}>
                 <span style={{ color: GOLD }}>—</span> noorapp.in <span style={{ color: GOLD }}>—</span>
               </div>
             </div>
@@ -568,13 +608,13 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
               background: "rgba(6,17,32,0.88)",
               border: `1px solid ${GOLD_BORDER}`,
               borderRadius: 14,
-              padding: "8px 12px",
+              padding: bfLayout?.headerCompact ? "6px 10px" : "8px 12px",
               flexShrink: 0,
             }}
           >
-            <BookIcon size={26} />
+            <BookIcon size={bfLayout?.headerCompact ? 22 : 26} />
             <div>
-              <div style={{ color: GOLD, fontWeight: 800, fontSize: 11, letterSpacing: 0.8, lineHeight: 1.3 }}>
+              <div style={{ color: GOLD, fontWeight: 800, fontSize: bfLayout?.headerCompact ? 10 : 11, letterSpacing: 0.8, lineHeight: 1.3 }}>
                 {badgeLabel}
               </div>
               {/* Variants B/C move the source line to a footer pill; A and
@@ -626,7 +666,11 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
             >
               {card.title}
             </div>
-            <Divider width={posterLayout === "b" ? "60%" : "78%"} />
+            {/* Divider omitted for square long content
+                (bfLayout.hideDivider, Phase 2 headroom): the divider is
+                chrome, and its height + one gap (~15 px) go to the
+                Bengali panel instead. */}
+            {!bfLayout.hideDivider && <Divider width={posterLayout === "b" ? "60%" : "78%"} />}
             {/* Bengali hero — auto-fit, never truncated (rules 6–7). */}
             {card.bengali.trim() !== "" && (
               <AutoFitBengali
@@ -639,6 +683,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
                 align={posterLayout === "c" ? "left" : "center"}
                 resetSignal={arabicEpoch}
                 panelPaddingV={bfLayout.panelPaddingV}
+                shrinkToContent={isShortPosterContent(card.bengali.length, card.arabic.length)}
               />
             )}
             {/* Arabic second — smaller, verbatim, never reworded (rule 4).
