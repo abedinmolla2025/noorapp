@@ -12,6 +12,7 @@ echo "== compile dailyContent lib =="
   src/lib/dailyContent/chapterEvents.ts src/lib/dailyContent/recommendations.ts \
   src/lib/dailyContent/recommendationPlan.ts src/lib/dailyContent/semantic.ts \
   src/lib/dailyContent/visualConceptEngine.ts src/lib/dailyContent/visualSelection.ts \
+  src/lib/dailyContent/dailyShare.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 # Separate invocation for the Islamic Calendar lib: its own outDir (.out-cal).
 # Mixing it into the lib compile would change the common rootDir and move
@@ -36,6 +37,8 @@ echo "== chapter -> event mapping tests =="
 node scripts/daily-content/chapter-events-tests.mjs
 echo "== edge-function regression tests (real edge code, stubbed deps) =="
 node scripts/daily-content/edge-tests.mjs
+echo "== service-worker push tests (real public/sw.js, stubbed self) =="
+node scripts/daily-content/sw-tests.mjs
 echo "== facebook page publication tests (real edge code, mocked Graph API) =="
 node supabase/functions/daily-content/facebook.test.mjs
 echo "== split-flow self-healing tests (real edge code, stubbed deps) =="

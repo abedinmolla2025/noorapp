@@ -2541,4 +2541,72 @@ await t("edge Phase 3: plan_only with dry_run returns the plan and writes nothin
   assert.equal(calls.length, 0);
 });
 
+await t("edge Phase 8: publish_planned with all push sends failing still publishes the website (push failure never blocks publication)", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  stubs.holder.svc = svc;
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  // Every provider call fails: the website still publishes (rule 4 —
+  // a push failure must never roll back or block the publication),
+  // with failed delivery rows left retryable for the retry tick.
+  const calls = setWebpush(throwWith(new Error("provider down")));
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.json.ok, true);
+  assert.equal(pub.json.delivery.total, 2);
+  assert.equal(pub.json.delivery.sent, 0);
+  assert.equal(pub.json.delivery.failed, 2);
+  const row = svc.tables.daily_content_publications[0];
+  assert.equal(row.status, "published");
+  assert.equal(row.recipients_total, 2);
+  assert.equal(row.recipients_sent, 0);
+  assert.equal(row.recipients_failed, 2);
+  assert.equal(calls.length, 2);
+  assert.equal(JSON.parse(calls[0].payload).image_url, posterUrlFor(TODAY));
+  assert.equal(JSON.parse(calls[1].payload).image_url, posterUrlFor(TODAY));
+  const deliveries = svc.tables.daily_content_deliveries;
+  assert.equal(deliveries.length, 2);
+  assert.equal(deliveries.filter((d) => d.status === "retryable").length, 2);
+  assert.equal(deliveries.filter((d) => d.attempts === 1).length, 2);
+});
+
+await t("edge Phase 8: a published row stays published when a later push retry fails", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    publications: [
+      {
+        id: "pub-done",
+        kolkata_date: TODAY,
+        status: "published",
+        push: { ...plannedPush(), image_url: posterUrlFor(TODAY) },
+      },
+    ],
+    deliveries: [
+      {
+        id: "del-r",
+        publication_id: "pub-done",
+        token_id: "t1",
+        device_id: "d1",
+        status: "retryable",
+        attempts: 1,
+        next_attempt_at: "2000-01-01T00:00:00.000Z",
+      },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(throwWith(new Error("provider down")));
+  const tick = await callEdge({ retry_only: true });
+  assert.equal(tick.json.ok, true);
+  // The retry failed, but the website publication is untouched.
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
+  assert.equal(calls.length, 1);
+  const del = svc.tables.daily_content_deliveries[0];
+  assert.equal(del.status, "retryable");
+  assert.equal(del.attempts, 2);
+});
+
 console.log(`edge tests: ${n} passed`);

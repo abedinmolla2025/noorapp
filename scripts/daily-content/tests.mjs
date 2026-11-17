@@ -19,6 +19,7 @@ const prefs = await import(path.join(dir, ".out/preferences.js"));
 const cstate = await import(path.join(dir, ".out/containerState.js"));
 const recs = await import(path.join(dir, ".out/recommendations.js"));
 const recPlan = await import(path.join(dir, ".out/recommendationPlan.js"));
+const share = await import(path.join(dir, ".out/dailyShare.js"));
 const cal = await import(path.join(dir, ".out-cal/context.js"));
 const reqFor = (d) => recs.buildRecommendRequest(d, cal.getIslamicContextForKey(d));
 
@@ -760,6 +761,283 @@ t("recommendationPlan: more than 5 content recommendations are capped at 5", () 
   assert.equal(plan.contentRefs.length, 5);
   assert.equal(plan.contentRefs[4], "content:dua-e");
   assert.equal(plan.contentRefs.includes("content:dua-f"), false);
+});
+
+// ---- Phase 8: daily share (pure, injected navigator/fetch) ----
+const SHARE_POSTER_URL =
+  "https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png";
+const shareRec = (over = {}) => ({
+  bengali: "BENGALI-TEST",
+  source: "Sahih al-Bukhari, Hadith 1",
+  canonicalLink: "/hadith/sahih-bukhari/bangla",
+  posterUrl: SHARE_POSTER_URL,
+  kolkataDate: "2026-11-17",
+  ...over,
+});
+const imageFetch = async () => ({
+  ok: true,
+  status: 200,
+  headers: { get: (n) => (n === "content-type" ? "image/png" : null) },
+  // 2,400 bytes: larger than the 1x1 probe file (68 bytes) so a
+  // size-gated canShare can accept the probe and reject the real file.
+  blob: async () => new Blob(["PNG-POSTER-".repeat(200)], { type: "image/png" }),
+});
+const httpFailFetch = async () => ({
+  ok: false,
+  status: 404,
+  headers: { get: () => null },
+  blob: async () => new Blob([]),
+});
+const textFetch = async () => ({
+  ok: true,
+  status: 200,
+  headers: { get: (n) => (n === "content-type" ? "text/html" : null) },
+  blob: async () => new Blob(["<html>"], { type: "text/html" }),
+});
+const throwingFetch = async () => {
+  throw new Error("network down");
+};
+
+t("dailyShare: caption is Bengali-first with source, homepage link, brand suffix", () => {
+  const caption = share.dailyShareCaption(shareRec());
+  assert.ok(caption.startsWith("🤲 আজকের হাদিস\nBENGALI-TEST"));
+  assert.ok(caption.includes("📖 Sahih al-Bukhari, Hadith 1"));
+  assert.ok(caption.includes("🔗 https://www.noorapp.in/"));
+  assert.ok(caption.endsWith("— NoorApp"));
+  assert.equal(caption.includes("BENGALI-TEST"), true);
+});
+
+t("dailyShare: caption throws on missing Bengali or missing source", () => {
+  assert.throws(() => share.dailyShareCaption(shareRec({ bengali: "  " })), /Bengali text/);
+  assert.throws(() => share.dailyShareCaption(shareRec({ source: "" })), /source line/);
+});
+
+t("dailyShare: share URL is the homepage (where the daily card lives)", () => {
+  assert.equal(share.dailyShareUrl(), "https://www.noorapp.in/");
+});
+
+t("dailyShare: WhatsApp URL is a wa.me text link carrying the caption", () => {
+  const caption = share.dailyShareCaption(shareRec());
+  const url = share.dailyWhatsappShareUrl(caption);
+  assert.ok(url.startsWith("https://wa.me/?text="));
+  assert.equal(decodeURIComponent(url.slice("https://wa.me/?text=".length)), caption);
+});
+
+t("dailyShare: Facebook URL is sharer.php with the homepage URL + quote", () => {
+  const caption = share.dailyShareCaption(shareRec());
+  const url = share.dailyFacebookShareUrl(share.dailyShareUrl(), caption);
+  assert.ok(url.startsWith("https://www.facebook.com/sharer/sharer.php?"));
+  const params = new URL(url).searchParams;
+  assert.equal(params.get("u"), "https://www.noorapp.in/");
+  assert.equal(params.get("quote"), caption);
+});
+
+t("dailyShare: finalized-poster URL validation accepts only the poster bucket PNG", () => {
+  assert.equal(share.isFinalizedPosterUrl(SHARE_POSTER_URL), true);
+  assert.equal(
+    share.isFinalizedPosterUrl(SHARE_POSTER_URL.replace("/portrait.png", "/square.png")),
+    true,
+  );
+  // Rehearsal project host is equally valid (same code, both environments).
+  assert.equal(
+    share.isFinalizedPosterUrl(
+      "https://cazdbxxffvdnsdatjsrx.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+    ),
+    true,
+  );
+  assert.equal(share.isFinalizedPosterUrl("http://example.com/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png"), false);
+  assert.equal(share.isFinalizedPosterUrl("https://example.com/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png"), false);
+  assert.equal(share.isFinalizedPosterUrl("https://www.noorapp.in/og-image.png"), false);
+  assert.equal(share.isFinalizedPosterUrl("https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.jpg"), false);
+  assert.equal(share.isFinalizedPosterUrl(null), false);
+  assert.equal(share.isFinalizedPosterUrl(42), false);
+});
+
+t("dailyShare: poster format from URL + dated download filename", () => {
+  assert.equal(share.posterFormatFromUrl(SHARE_POSTER_URL), "portrait");
+  assert.equal(share.posterFormatFromUrl(SHARE_POSTER_URL.replace("portrait", "square")), "square");
+  assert.equal(share.dailyPosterFileName("2026-11-17", SHARE_POSTER_URL), "noorapp-hadith-2026-11-17-portrait.png");
+  assert.throws(() => share.dailyPosterFileName("17-11-2026", SHARE_POSTER_URL), /YYYY-MM-DD/);
+});
+
+t("dailyShare: fetchPosterFile returns a PNG File; HTTP / non-image / network throw typed errors", async () => {
+  const file = await share.fetchPosterFile(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", imageFetch);
+  assert.equal(file.name, "noorapp-hadith-2026-11-17-portrait.png");
+  assert.equal(file.type, "image/png");
+  await assert.rejects(
+    share.fetchPosterFile(SHARE_POSTER_URL, "x.png", httpFailFetch),
+    (e) => e.reason === "http",
+  );
+  await assert.rejects(
+    share.fetchPosterFile(SHARE_POSTER_URL, "x.png", textFetch),
+    (e) => e.reason === "not-image",
+  );
+  await assert.rejects(
+    share.fetchPosterFile(SHARE_POSTER_URL, "x.png", throwingFetch),
+    (e) => e.reason === "network",
+  );
+});
+
+t("dailyShare: native-share support probe — none / text / image", () => {
+  assert.equal(share.getNativeShareSupport(null), "none");
+  assert.equal(share.getNativeShareSupport({}), "none");
+  assert.equal(share.getNativeShareSupport({ share: async () => {} }), "text");
+  assert.equal(
+    share.getNativeShareSupport({ share: async () => {}, canShare: () => true }),
+    "image",
+  );
+  assert.equal(
+    share.getNativeShareSupport({
+      share: async () => {},
+      canShare: (d) => !d.files,
+    }),
+    "text",
+  );
+  assert.equal(
+    share.getNativeShareSupport({
+      share: async () => {},
+      canShare: () => {
+        throw new Error("unsupported shape");
+      },
+    }),
+    "text",
+  );
+});
+
+t("dailyShare: native file share sends the poster file + caption", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(shareRec(), { nav, fetchImpl: imageFetch });
+  assert.equal(res.method, "native-file");
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].files.length, 1);
+  assert.equal(shared[0].files[0].name, "noorapp-hadith-2026-11-17-portrait.png");
+  assert.equal(shared[0].files[0].type, "image/png");
+  assert.ok(shared[0].text.includes("BENGALI-TEST"));
+});
+
+t("dailyShare: fetch failure degrades to a text share, never a silent failure", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(shareRec(), { nav, fetchImpl: throwingFetch });
+  assert.equal(res.method, "native-text");
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].files, undefined);
+  assert.ok(shared[0].text.includes("BENGALI-TEST"));
+});
+
+t("dailyShare: text-only support shares text; no API reports unsupported; cancel is not an error", async () => {
+  const shared = [];
+  const textNav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: (d) => !d.files,
+  };
+  const textRes = await share.shareDailyPoster(shareRec(), { nav: textNav, fetchImpl: imageFetch });
+  assert.equal(textRes.method, "native-text");
+  assert.equal(shared.length, 1);
+
+  const noneRes = await share.shareDailyPoster(shareRec(), { nav: {}, fetchImpl: imageFetch });
+  assert.equal(noneRes.method, "unsupported");
+  assert.equal(shared.length, 1);
+
+  const abortError = new Error("user cancelled");
+  abortError.name = "AbortError";
+  const cancelNav = {
+    share: async () => {
+      throw abortError;
+    },
+    canShare: () => true,
+  };
+  const cancelRes = await share.shareDailyPoster(shareRec(), { nav: cancelNav, fetchImpl: imageFetch });
+  assert.equal(cancelRes.method, "cancelled");
+
+  const failNav = {
+    share: async () => {
+      throw new Error("share sheet failed");
+    },
+    canShare: () => true,
+  };
+  const failRes = await share.shareDailyPoster(shareRec(), { nav: failNav, fetchImpl: imageFetch });
+  assert.equal(failRes.method, "failed");
+  assert.equal(failRes.detail, "share sheet failed");
+});
+
+t("dailyShare: canShare rejecting the exact file falls back to text share", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    // Tiny probe passes (68 bytes), the real 2.4 KB file does not.
+    canShare: (d) => !(d.files && d.files[0].size > 1000),
+  };
+  const res = await share.shareDailyPoster(shareRec(), { nav, fetchImpl: imageFetch });
+  assert.equal(res.method, "native-text");
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].files, undefined);
+});
+
+t("dailyShare: no finalized poster → file share refuses instead of sharing an arbitrary URL", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(shareRec({ posterUrl: "https://example.com/other.png" }), {
+    nav,
+    fetchImpl: imageFetch,
+  });
+  assert.equal(res.method, "failed");
+  assert.equal(shared.length, 0);
+});
+
+t("dailyShare: download serves the file; fetch failure opens the poster URL instead", async () => {
+  const clicked = [];
+  const revoked = [];
+  const res = await share.downloadPoster(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", {
+    fetchImpl: imageFetch,
+    createObjectUrl: () => "blob:poster",
+    revokeObjectUrl: (u) => revoked.push(u),
+    clickAnchor: (href, name) => clicked.push({ href, name }),
+  });
+  assert.equal(res.method, "downloaded");
+  assert.deepEqual(clicked, [{ href: "blob:poster", name: "noorapp-hadith-2026-11-17-portrait.png" }]);
+  assert.deepEqual(revoked, ["blob:poster"]);
+
+  const opened = [];
+  const res2 = await share.downloadPoster(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", {
+    fetchImpl: throwingFetch,
+    openWindow: (u) => opened.push(u),
+  });
+  assert.equal(res2.method, "opened");
+  assert.deepEqual(opened, [SHARE_POSTER_URL]);
+});
+
+t("dailyShare: copyText returns true on success, false when denied or unavailable", async () => {
+  assert.equal(await share.copyText("https://www.noorapp.in/", { writeText: async () => {} }), true);
+  assert.equal(
+    await share.copyText("https://www.noorapp.in/", {
+      writeText: async () => {
+        throw new Error("denied");
+      },
+    }),
+    false,
+  );
+  assert.equal(await share.copyText("https://www.noorapp.in/", null), false);
 });
 
 await Promise.all(pending);

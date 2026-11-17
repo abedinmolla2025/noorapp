@@ -342,6 +342,52 @@ const getDuaOgImage = (dua) => {
   return `${SITE_ORIGIN}/og-dua.png`;
 };
 
+// Phase 8: a daily poster URL is only usable as og:image when it is the
+// finalized Storage asset for this project (daily-content-posters
+// bucket, PNG). Anything else falls back to the static default — a stray
+// or attacker-controlled URL must never become the site's og:image.
+const isDailyPosterOgUrl = (url) => {
+  try {
+    const parsed = new URL(url);
+    const supabaseHost = new URL(SUPABASE_URL).host;
+    return (
+      parsed.protocol === "https:" &&
+      parsed.host === supabaseHost &&
+      parsed.pathname.includes("/storage/v1/object/public/daily-content-posters/") &&
+      parsed.pathname.endsWith(".png")
+    );
+  } catch {
+    return false;
+  }
+};
+
+// Phase 8: today's finalized daily poster for the homepage og:image, so
+// WhatsApp/Facebook link previews of the shared homepage URL show the
+// poster itself. Any failure (no client, no publication, no poster,
+// bad URL) returns null and the caller falls back to the static
+// default — never break the homepage prerender for this.
+const getDailyPosterOgImage = async () => {
+  try {
+    if (!supabase) return null;
+    const kolkataToday = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Asia/Kolkata",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(new Date());
+    const { data } = await supabase
+      .from("daily_content_publications")
+      .select("poster_url")
+      .eq("kolkata_date", kolkataToday)
+      .eq("status", "published")
+      .maybeSingle();
+    const posterUrl = data?.poster_url;
+    return typeof posterUrl === "string" && isDailyPosterOgUrl(posterUrl) ? posterUrl : null;
+  } catch {
+    return null;
+  }
+};
+
 const loadBundledStories = () => {
   const candidates = [
     path.join(process.cwd(), "dist", "stories.json"),
@@ -1244,6 +1290,12 @@ export default async function handler(req, res) {
     if (routePath === "/") {
       title = "Noor Islamic App — Quran, Hadith, Dua & Prayer Times";
       description = "Use Noor, a free Islamic app for Quran reading, Hadith, daily Duas, prayer times and learning tools. Explore the web app or install it on supported devices.";
+      // Phase 8: today's finalized daily poster is the homepage og:image,
+      // so WhatsApp/Facebook previews of the shared homepage show the
+      // poster. getDailyPosterOgImage never throws; a null result keeps
+      // the static default below.
+      const dailyPoster = await getDailyPosterOgImage();
+      if (dailyPoster) req.dailyPosterOgImage = dailyPoster;
       bodyContent = `
         <div class="min-h-screen bg-background pb-24 text-foreground">
           <header class="bg-gradient-to-br from-emerald-700 to-teal-800 px-5 py-12 text-white">
@@ -2954,7 +3006,7 @@ export default async function handler(req, res) {
       title,
       description,
       canonical: canonicalUrl,
-      ogImage: req.storyOgImage || TOOL_OG_IMAGES[routePath] || `${SITE_ORIGIN}/og-image.png`,
+      ogImage: req.dailyPosterOgImage || req.storyOgImage || TOOL_OG_IMAGES[routePath] || `${SITE_ORIGIN}/og-image.png`,
       body: bodyContent,
       extraStructuredData,
       robots: robotsDirective,
