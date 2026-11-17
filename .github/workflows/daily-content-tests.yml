@@ -1,0 +1,67 @@
+# Daily Content tests — CI enforcement for the poster pipeline.
+#
+# PREPARED FILE ONLY — not yet uploaded to GitHub. Workflow files reach
+# GitHub only via browser exact file upload (the gh token has NO `workflow`
+# scope; never push this file via git). Upload target:
+#   .github/workflows/daily-content-tests.yml
+# on branch muse/daily-poster-pipeline-2026-11-15 (and main, on merge).
+#
+# What it runs (exactly the commands verified locally — see
+# NOORAPP-CI-ENFORCEMENT.md): the full local verification script
+# (compile -> fixture -> all suites -> dry-run), then a repo-wide
+# typecheck and the production build. Every step fails the run on a
+# non-zero exit; there is NO continue-on-error on any test step.
+#
+# Offline-safe: the suites use stubbed/fake dependencies only — no
+# network, no production writes, no sends, no secrets. The only network
+# use is `npm ci` (registry) at install time.
+#
+# Node 24 is pinned deliberately: the edge-function suites import .ts
+# directly (Node type-stripping) and are verified locally against
+# Node v24.22.1. The older workflows use Node 22; do not "harmonise"
+# this to 22 without re-running the full suite on 22 first.
+#
+# Playwright smoke renders are NOT run here (they need a Chromium
+# install and a built preview server); they stay a local/manual step.
+# `tsc --noEmit` is repo-wide and currently passes with zero errors.
+
+name: Daily Content tests
+
+on:
+  push:
+    branches:
+      - muse/daily-poster-pipeline-2026-11-15
+      - main
+  pull_request:
+    branches:
+      - muse/daily-poster-pipeline-2026-11-15
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  daily-content-tests:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node 24
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Daily Content verification (all suites + dry-run)
+        run: npm run daily-content:verify
+
+      - name: Typecheck (repo-wide)
+        run: ./node_modules/.bin/tsc --noEmit
+
+      - name: Production build
+        run: npm run build
