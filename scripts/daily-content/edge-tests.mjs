@@ -483,6 +483,73 @@ const throwWith = (err) => () => {
   throw err;
 };
 
+// ---- Option A conversion (overnight mission 2026-11-17): the bare daily
+// call ({}) now plans only and never sends, so tests that used to drive
+// a full send through callEdge({}) drive the split flow instead:
+// plan_only -> set_poster -> publish_planned. publishViaSplitFlow
+// returns the publish_planned response (the step that sends);
+// planAndFinalize runs the first two steps for tests that need to
+// control the publish step themselves (crash injection, concurrency).
+// (Moved up from the Phase 3 section: the split-flow helpers above
+// need it, and the H2 tests run before that section is evaluated.)
+const posterUrlFor = (date) => `http://stub/storage/v1/object/public/daily-content-posters/${date}/portrait.png`;
+const posterBody = (over = {}) => ({
+  action: "set_poster",
+  kolkata_date: TODAY,
+  poster_qc_status: "passed",
+  poster_url: posterUrlFor(TODAY),
+  poster_asset_id: `poster:${TODAY}`,
+  poster_storage_path: `daily-content-posters/${TODAY}/portrait.png`,
+  poster_checksum: "a".repeat(64),
+  // The fixture hadith is chapter 1 with synthetic text: the engine
+  // classifies it "intentions" via the chapter prior, so the fixture
+  // scene is the intentions concept's scene (the gate's V5 enforces
+  // the topic<->scene match at publish time).
+  poster_scene_id: "intention-sunrise",
+  ...over,
+});
+async function planAndFinalize() {
+  const planned = await callEdge({ plan_only: true });
+  assert.equal(planned.json.ok, true, "plan_only must succeed in the split-flow helper");
+  assert.equal(planned.json.planned, true);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true, "set_poster must succeed in the split-flow helper");
+  return planned;
+}
+async function publishViaSplitFlow() {
+  await planAndFinalize();
+  return callEdge({ publish_planned: true });
+}
+
+// (Moved up from the Phase 3 section with posterBody: the H2 tests
+// above need plannedRow() before that section is evaluated.)
+const plannedPush = () => ({
+  title: "T",
+  body: "B",
+  deep_link: "/hadith",
+  icon: "https://www.noorapp.in/notification-icon.png",
+  badge: "https://www.noorapp.in/badge-icon.png",
+  image_url: null,
+});
+const plannedRow = (over = {}) => ({
+  id: "pub-plan",
+  kolkata_date: TODAY,
+  status: "planned",
+  hadith_ref: "hadith:h1",
+  hadith_source_line: "Sahih al-Bukhari, Hadith 1",
+  // The gate (V1/V2/V3) verifies the stored cards against the live
+  // rows at publish time, so the fixture row carries a complete,
+  // verbatim hadith card for the seeded live hadith h1.
+  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  push: plannedPush(),
+  hadith_cycle: 1,
+  card_cycle: 1,
+  error: null,
+  poster_qc_status: null,
+  poster_url: null,
+  ...over,
+});
+
 // ---- H2: fresh run publishes only after the send finishes ----
 await t("edge H2: fresh run ends published with delivery counts", async () => {
   const svc = makeSvc({
@@ -493,7 +560,7 @@ await t("edge H2: fresh run ends published with delivery counts", async () => {
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow();
   assert.equal(res.json.ok, true);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   const pub = svc.tables.daily_content_publications[0];
@@ -515,7 +582,7 @@ await t("edge opt-out: daily_enabled=false device is skipped, no row, no send", 
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow();
   assert.equal(res.json.ok, true);
   const pub = svc.tables.daily_content_publications[0];
   assert.equal(pub.status, "published");
@@ -559,7 +626,10 @@ await t("edge N-1: retry skips opted-out device and closes its row, no send", as
 });
 
 // ---- R-5: retry tick landing mid-send must not double-send ----
-await t("edge R-5: retry tick during daily send sends nothing extra", async () => {
+// Option A conversion: the send now happens in publish_planned (the
+// bare call plans only), so the gated in-flight send is the publish
+// step, after plan_only + set_poster.
+await t("edge R-5: retry tick during publish send sends nothing extra", async () => {
   const svc = makeSvc({
     settings: [{ enabled: true }],
     hadiths: [hadithRow()],
@@ -567,8 +637,9 @@ await t("edge R-5: retry tick during daily send sends nothing extra", async () =
     tokens: [token("t1", "d1")],
   });
   stubs.holder.svc = svc;
-  // Gate the first provider call open: the daily run blocks inside its
-  // send while the tick runs, proving the tick cannot re-send the
+  await planAndFinalize();
+  // Gate the first provider call open: the publish run blocks inside
+  // its send while the tick runs, proving the tick cannot re-send the
   // leased row. Without the claim, the tick would promote + send it.
   let releaseGate;
   let markStarted;
@@ -590,10 +661,10 @@ await t("edge R-5: retry tick during daily send sends nothing extra", async () =
       authorization: "Bearer test-secret",
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({}),
+    body: JSON.stringify({ publish_planned: true }),
   });
   const dailyPromise = capturedHandler(dailyReq);
-  await started; // daily is inside its provider call, row claimed
+  await started; // publish is inside its provider call, row claimed
   const tick = await callEdge({ retry_only: true });
   assert.equal(tick.json.ok, true);
   assert.equal(tick.json.promoted, 0);
@@ -730,7 +801,9 @@ await t("edge H2: crash leaves planned, resume adopts without re-sending", async
   svc.flags.throwOnDeliveryInsertAt = 2; // crash on the 2nd token's insert
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const crashed = await callEdge({});
+  // Option A: the crash happens in the publish step, after plan + poster.
+  await planAndFinalize();
+  const crashed = await callEdge({ publish_planned: true });
   assert.equal(crashed.status, 500);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   assert.equal(svc.tables.daily_content_publications[0].status, "planned");
@@ -738,7 +811,7 @@ await t("edge H2: crash leaves planned, resume adopts without re-sending", async
     svc.tables.daily_content_deliveries.filter((d) => d.status === "sent").length,
     1,
   );
-  const resumed = await callEdge({});
+  const resumed = await callEdge({ publish_planned: true });
   assert.equal(resumed.json.ok, true);
   assert.equal(svc.tables.daily_content_publications.length, 1); // no duplicate row
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
@@ -758,25 +831,22 @@ await t("edge H2: stale pending delivery is promoted for the retry tick", async 
     tokens: [token("t1", "d1"), token("t2", "d2")],
   });
   stubs.holder.svc = svc;
-  setWebpush(ok201);
   // Simulate an older crashed run: a planned row with one pending delivery.
-  svc.tables.daily_content_publications.push({
-    id: "pub-old",
-    kolkata_date: TODAY,
-    status: "planned",
-    push: { title: "T", body: "B" },
-    cards: [],
-  });
+  svc.tables.daily_content_publications.push(plannedRow());
   svc.tables.daily_content_deliveries.push({
     id: "del-old",
-    publication_id: "pub-old",
+    publication_id: "pub-plan",
     token_id: "t2",
     device_id: "d2",
     status: "pending",
     attempts: 0,
   });
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  // Option A: the promotion happens in the publish step (sendAndPublish),
+  // after the poster is finalized onto the planned row.
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const res = await callEdge({ publish_planned: true });
   assert.equal(res.json.ok, true);
   const promoted = svc.tables.daily_content_deliveries.find((d) => d.id === "del-old");
   assert.equal(promoted.status, "retryable");
@@ -806,8 +876,9 @@ await t("edge H2: published day dedupes with zero sends", async () => {
 
 // Phase 4: a scheduler that fires twice for the same date (double cron,
 // overlapping triggers, manual re-run) must not double-publish or
-// double-send. Two sequential LIVE daily calls: the first publishes and
-// sends once; the second dedupes with zero additional sends.
+// double-send. Option A: the first trigger is the full split flow
+// (plan -> poster -> publish, sends once); the second is a bare call,
+// which dedupes with zero additional sends.
 await t("edge Phase 4: a second daily trigger for the same date dedupes with zero extra sends", async () => {
   const svc = makeSvc({
     settings: [{ enabled: true }],
@@ -817,7 +888,7 @@ await t("edge Phase 4: a second daily trigger for the same date dedupes with zer
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const first = await callEdge({});
+  const first = await publishViaSplitFlow();
   assert.equal(first.json.ok, true);
   assert.equal(calls.length, 1);
   assert.equal(svc.tables.daily_content_publications.length, 1);
@@ -843,11 +914,14 @@ await t("edge H2: insert race adopts the planned row", async () => {
   svc.flags.hideTodayRowOnce = true; // first today-row read misses the row
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
+  // Option A: the race-adopted row is planned, never sent, by the bare
+  // call — adoption is the behaviour under test, not the send.
   const res = await callEdge({});
   assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
   assert.equal(svc.tables.daily_content_publications.length, 1);
-  assert.equal(svc.tables.daily_content_publications[0].status, "published");
-  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(calls.length, 0);
 });
 
 await t("edge retry-only: never creates a publication", async () => {
@@ -945,7 +1019,7 @@ await t("edge M2: 410 disables even without digits in the message", async () => 
   });
   stubs.holder.svc = svc;
   setWebpush(throwWith(Object.assign(new Error("gone"), { statusCode: 410 })));
-  await callEdge({});
+  await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(svc.tables.device_push_tokens[0].enabled, false);
   // First-send path records the classification itself: 'disabled' is a
   // terminal delivery status (the migration allows it), so the row is
@@ -962,7 +1036,7 @@ await t("edge M2: digit-bearing message without a status code stays retryable", 
   });
   stubs.holder.svc = svc;
   setWebpush(throwWith(new Error("upstream https://x.example/410 returned html")));
-  await callEdge({});
+  await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(svc.tables.device_push_tokens[0].enabled, true);
   assert.equal(svc.tables.daily_content_deliveries[0].status, "retryable");
   assert.ok(svc.tables.daily_content_deliveries[0].next_attempt_at);
@@ -978,7 +1052,7 @@ await t("edge M2: 429 and 500 are retryable with a next attempt", async () => {
     });
     stubs.holder.svc = svc;
     setWebpush(throwWith(Object.assign(new Error(`HTTP ${code}`), { statusCode: code })));
-    await callEdge({});
+    await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
     assert.equal(svc.tables.daily_content_deliveries[0].status, "retryable");
     assert.ok(svc.tables.daily_content_deliveries[0].next_attempt_at);
     assert.equal(svc.tables.device_push_tokens[0].enabled, true);
@@ -1034,13 +1108,21 @@ await t("edge H2: same-date rerun repairs a failed no-Hadith publication", async
   });
   stubs.holder.svc = svc;
   setWebpush(ok201);
+  // Option A: the bare call repairs the failed row in place and stops
+  // at planned; the split flow then publishes it (no tokens, no sends).
   const res = await callEdge({});
   assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   const pub = svc.tables.daily_content_publications[0];
   assert.equal(pub.id, "pub-fail"); // repaired in place, not replaced
-  assert.equal(pub.status, "published");
+  assert.equal(pub.status, "planned");
   assert.ok(pub.hadith_ref);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const published = await callEdge({ publish_planned: true });
+  assert.equal(published.json.ok, true);
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
 });
 
 await t("edge H2: failed row stays failed while the plan is still invalid", async () => {
@@ -1073,10 +1155,18 @@ await t("edge H2: corrupt planned row is repaired in place, never re-inserted", 
   });
   stubs.holder.svc = svc;
   setWebpush(ok201);
+  // Option A: the bare call repairs the corrupt row in place and stops
+  // at planned; the split flow then publishes it.
   const res = await callEdge({});
   assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
   assert.equal(svc.tables.daily_content_publications.length, 1);
   assert.equal(svc.tables.daily_content_publications[0].id, "pub-corrupt");
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const published = await callEdge({ publish_planned: true });
+  assert.equal(published.json.ok, true);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
 });
 
@@ -1139,10 +1229,17 @@ await t("edge H2: past-date planned row is superseded, never reused", async () =
   assert.equal(calls.length, 0); // stale content is never sent
   const daily = await callEdge({});
   assert.equal(daily.json.ok, true);
+  assert.equal(daily.json.planned, true);
   assert.equal(svc.tables.daily_content_publications.length, 2);
   const today = svc.tables.daily_content_publications.find((p) => p.kolkata_date === TODAY);
-  assert.equal(today.status, "published");
+  assert.equal(today.status, "planned");
   assert.notEqual(today.push.title, "STALE");
+  // Option A: today's row is published only by the split flow.
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const published = await callEdge({ publish_planned: true });
+  assert.equal(published.json.ok, true);
+  assert.equal(today.status, "published");
 });
 
 await t("edge H1: retryable rows of a superseded publication are never sent", async () => {
@@ -1212,11 +1309,13 @@ await t("edge H2: publication flip failure recovers without re-sending", async (
   svc.flags.throwOnPublicationUpdate = true; // flip to published throws after all sends
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const crashed = await callEdge({});
+  // Option A: the crash happens in the publish step, after plan + poster.
+  await planAndFinalize();
+  const crashed = await callEdge({ publish_planned: true });
   assert.equal(crashed.status, 500);
   assert.equal(svc.tables.daily_content_publications[0].status, "planned");
   assert.equal(svc.tables.daily_content_deliveries[0].status, "sent");
-  const resumed = await callEdge({});
+  const resumed = await callEdge({ publish_planned: true });
   assert.equal(resumed.json.ok, true);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
   assert.equal(calls.length, 1); // the completed delivery is never sent again
@@ -1229,7 +1328,9 @@ await t("edge H2: promotion failure leaves the row planned and recoverable", asy
     duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
     tokens: [token("t2", "d2")],
     publications: [
-      { id: "pub-plan", kolkata_date: TODAY, status: "planned", push: { title: "T", body: "B" }, cards: [] },
+      // Gate-valid planned row (the publish step runs the 8-validation
+      // gate before sendAndPublish promotes the stale delivery).
+      plannedRow(),
     ],
     deliveries: [
       { id: "del-p", publication_id: "pub-plan", token_id: "t2", device_id: "d2", status: "pending", attempts: 0 },
@@ -1238,11 +1339,15 @@ await t("edge H2: promotion failure leaves the row planned and recoverable", asy
   svc.flags.throwOnPromotionUpdate = true;
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const failed = await callEdge({});
+  // Option A: the promotion happens in the publish step (sendAndPublish),
+  // so the seeded row must be gate-valid and poster-finalized first.
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const failed = await callEdge({ publish_planned: true });
   assert.equal(failed.status, 500);
   assert.equal(svc.tables.daily_content_publications[0].status, "planned");
   assert.equal(svc.tables.daily_content_deliveries[0].status, "pending");
-  const resumed = await callEdge({});
+  const resumed = await callEdge({ publish_planned: true });
   assert.equal(resumed.json.ok, true);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
   assert.equal(svc.tables.daily_content_deliveries[0].status, "retryable");
@@ -1266,7 +1371,7 @@ await t("edge mixed: 410, 201 and 429 outcomes in a single run", async () => {
     if (ep.endsWith("/t3")) throw Object.assign(new Error("HTTP 429"), { statusCode: 429 });
     return { statusCode: 201 };
   });
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow();
   assert.equal(res.json.ok, true);
   assert.deepEqual(
     { total: res.json.delivery.total, sent: res.json.delivery.sent, failed: res.json.delivery.failed, skipped: res.json.delivery.skipped },
@@ -1290,7 +1395,7 @@ await t("edge M3: NULL and empty device_ids are skipped, never sent", async () =
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow();
   assert.equal(res.json.ok, true);
   // Delivery-count fix: total counts EVERY enabled token fetched, so
   // the 3 NULL/empty devices are in total too (skipped, never sent).
@@ -1314,9 +1419,11 @@ await t("edge M3: NULL devices stay skipped across crash and resume", async () =
   svc.flags.throwOnPublicationUpdate = true; // crash after t1's send
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const crashed = await callEdge({});
+  // Option A: the crash happens in the publish step, after plan + poster.
+  await planAndFinalize();
+  const crashed = await callEdge({ publish_planned: true });
   assert.equal(crashed.status, 500);
-  const resumed = await callEdge({});
+  const resumed = await callEdge({ publish_planned: true });
   assert.equal(resumed.json.ok, true);
   assert.equal(calls.length, 1);
   assert.equal(svc.tables.daily_content_deliveries.length, 1);
@@ -1341,11 +1448,13 @@ await t("edge M3: same token identity is never sent twice, even after a device_i
   svc.flags.throwOnPublicationUpdate = true; // crash after t1's send
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const crashed = await callEdge({});
+  // Option A: the crash happens in the publish step, after plan + poster.
+  await planAndFinalize();
+  const crashed = await callEdge({ publish_planned: true });
   assert.equal(crashed.status, 500);
   // The token re-registers under a new device_id before the resume.
   svc.tables.device_push_tokens.find((x) => x.id === "t1").device_id = "d2";
-  const resumed = await callEdge({});
+  const resumed = await callEdge({ publish_planned: true });
   assert.equal(resumed.json.ok, true);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
   assert.equal(calls.length, 1); // token pre-check skips the re-registered device
@@ -1561,7 +1670,7 @@ await t("edge H3: zero-row sent update is not counted as success", async () => {
   svc.flags.zeroRowSentUpdateAt = 2; // t2's sent-update succeeds with zero rows
   stubs.holder.svc = svc;
   setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   // t1 sent normally; t2's push went out but its row never flipped, so
   // it degrades to retryable and is NOT counted sent.
@@ -1581,7 +1690,7 @@ await t("edge H3: sent-update database error degrades to retryable, batch contin
   svc.flags.throwOnSentUpdate = true; // t1's sent-update throws
   stubs.holder.svc = svc;
   setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   assert.equal(svc.tables.daily_content_deliveries.find((d) => d.device_id === "d1").status, "retryable");
   assert.equal(svc.tables.daily_content_deliveries.find((d) => d.device_id === "d2").status, "sent");
@@ -1599,7 +1708,9 @@ await t("edge H3: zero-row publication flip is not reported as published", async
   svc.flags.zeroRowFlip = true; // flip succeeds with zero rows
   stubs.holder.svc = svc;
   setWebpush(ok201);
-  const res = await callEdge({});
+  // Option A: the flip happens in the publish step, after plan + poster.
+  await planAndFinalize();
+  const res = await callEdge({ publish_planned: true });
   assert.equal(res.status, 500);
   assert.equal(svc.tables.daily_content_publications[0].status, "planned");
 });
@@ -1651,7 +1762,10 @@ await t("edge H3: concurrent repair conflict never clobbers a published row", as
   });
   stubs.holder.svc = svc;
   setWebpush(ok201);
-  const [a, b] = await Promise.all([callEdge({}), callEdge({})]);
+  // Option A: the flip race now happens on the publish step — two
+  // concurrent publish_planned calls after plan + poster.
+  await planAndFinalize();
+  const [a, b] = await Promise.all([callEdge({ publish_planned: true }), callEdge({ publish_planned: true })]);
   // S-5 (2026-11-08): the flip is conditional on status = 'planned',
   // so exactly one run flips the row to published; the other matches
   // zero rows and reports the flip failure instead of silently
@@ -1675,7 +1789,7 @@ await t("edge hardening A: first-send sent update commits but ack is lost — ro
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
   svc.flags.commitThenThrowSentUpdate = true; // commit, then lose the ack
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   assert.equal(svc.tables.daily_content_deliveries[0].status, "sent"); // catch patch matched zero rows
   assert.equal(calls.length, 1);
@@ -1723,7 +1837,7 @@ await t("edge hardening B: push timeout is retryable and never disables the toke
     });
     stubs.holder.svc = svc;
     const calls = setWebpush(() => new Promise(() => {})); // provider never responds
-    const res = await callEdge({});
+    const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
     assert.equal(res.json.ok, true);
     const row = svc.tables.daily_content_deliveries[0];
     assert.equal(row.status, "retryable");
@@ -1894,7 +2008,7 @@ await t("edge Phase 3: an opt-out on the second preferences page is respected on
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   assert.equal(calls.length, 5);
   assert.ok(calls.every((c) => c.sub.endpoint.startsWith("https://push.example/t-clean-")));
@@ -2021,7 +2135,7 @@ await t("edge Phase 7: first send reaches all 1,200 tokens past the 1,000-row ca
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   assert.equal(res.json.delivery.total, 1200);
   assert.equal(res.json.delivery.sent, 1200);
@@ -2292,7 +2406,9 @@ await t("edge Phase 9: a live daily run publishes the approved hadith and record
     tokens: [token("t1", "d1")],
   });
   stubs.holder.svc = svc;
-  const res = await callEdge({});
+  // Option A: the live run is now the split flow — the bare call plans
+  // only, and publish_planned sends with the image.
+  const res = await publishViaSplitFlow();
   assert.equal(res.status, 200);
   assert.equal(res.json.ok, true);
   const pub = svc.tables.daily_content_publications[0];
@@ -2322,51 +2438,13 @@ await t("edge Phase 9: with no approved run the plan stays seeded and carries th
 });
 
 // ---- Phase 3 (Master Mission) — split plan -> poster -> publish ----
-// The default daily path ({}) still plans, sends, and publishes in one
-// call (covered by the H2 tests above). These cases cover the two new
-// explicit modes and the set_poster change (planned rows accepted).
-const posterUrlFor = (date) => `http://stub/storage/v1/object/public/daily-content-posters/${date}/portrait.png`;
-const posterBody = (over = {}) => ({
-  action: "set_poster",
-  kolkata_date: TODAY,
-  poster_qc_status: "passed",
-  poster_url: posterUrlFor(TODAY),
-  poster_asset_id: `poster:${TODAY}`,
-  poster_storage_path: `daily-content-posters/${TODAY}/portrait.png`,
-  poster_checksum: "a".repeat(64),
-  // The fixture hadith is chapter 1 with synthetic text: the engine
-  // classifies it "intentions" via the chapter prior, so the fixture
-  // scene is the intentions concept's scene (the gate's V5 enforces
-  // the topic<->scene match at publish time).
-  poster_scene_id: "intention-sunrise",
-  ...over,
-});
-const plannedPush = () => ({
-  title: "T",
-  body: "B",
-  deep_link: "/hadith",
-  icon: "https://www.noorapp.in/notification-icon.png",
-  badge: "https://www.noorapp.in/badge-icon.png",
-  image_url: null,
-});
-const plannedRow = (over = {}) => ({
-  id: "pub-plan",
-  kolkata_date: TODAY,
-  status: "planned",
-  hadith_ref: "hadith:h1",
-  hadith_source_line: "Sahih al-Bukhari, Hadith 1",
-  // The gate (V1/V2/V3) verifies the stored cards against the live
-  // rows at publish time, so the fixture row carries a complete,
-  // verbatim hadith card for the seeded live hadith h1.
-  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
-  push: plannedPush(),
-  hadith_cycle: 1,
-  card_cycle: 1,
-  error: null,
-  poster_qc_status: null,
-  poster_url: null,
-  ...over,
-});
+// The default daily path ({}) now plans only (Option A conversion,
+// 2026-11-17) and never sends; the H2 send tests above drive the split
+// flow via publishViaSplitFlow. These cases cover the two new explicit
+// modes and the set_poster change (planned rows accepted).
+// (posterUrlFor / posterBody / plannedPush / plannedRow live near the
+// top of this file — the split-flow helpers need them before this
+// section is evaluated.)
 
 // ---- Delivery-count arithmetic: the 1-token gap (FIXED) ----
 // Observed in production 2026-11-15 (total 17, sent 8, failed 8),
@@ -2395,7 +2473,7 @@ await t("edge delivery-count: duplicate device_id is counted skipped, never doub
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   const d = res.json.delivery;
   assert.equal(calls.length, 1); // one device, one send — never double-sent
@@ -2446,7 +2524,7 @@ await t("edge delivery-count: lost first-send claim is counted skipped, never se
   svc.flags.zeroRowClaimUpdates = 2;
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   const d = res.json.delivery;
   assert.equal(calls.length, 0); // lost the race — never sent
@@ -2497,7 +2575,7 @@ await t("edge delivery-count: 2026-11-15 production shape 17/8/8/8 balances with
     if (n >= 9 && n <= 16) throw Object.assign(new Error("gone"), { statusCode: 410 });
     return { statusCode: 201 };
   });
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   const d = res.json.delivery;
   assert.equal(calls.length, 16);
@@ -2522,7 +2600,7 @@ await t("edge delivery-count: 2026-11-17 E2E shape 17/0/16 balances with one ski
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(async () => { throw Object.assign(new Error("gone"), { statusCode: 410 }); });
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   const d = res.json.delivery;
   assert.equal(calls.length, 16);
@@ -2543,7 +2621,7 @@ await t("edge delivery-count: 2026-11-16 clean shape 9/9/0 balances", async () =
   });
   stubs.holder.svc = svc;
   const calls = setWebpush(ok201);
-  const res = await callEdge({});
+  const res = await publishViaSplitFlow(); // Option A: the send now happens in publish_planned
   assert.equal(res.json.ok, true);
   const d = res.json.delivery;
   assert.equal(calls.length, 9);
@@ -3155,12 +3233,35 @@ await t("edge gate: a previously held row publishes once fixed, and the flip cle
   assert.equal(row.error, null, "the successful flip clears the stale gate_hold verdict");
 });
 
-await t("edge gate: the default daily branch does NOT run the gate (adopt path unchanged)", async () => {
-  // The gate lives in publish_planned (the Mode A path) ONLY. The
-  // default daily branch adopts a planned row and sends as before —
-  // its gate lands with the Phase 3 §6 cutover, not here. This test
-  // pins that the branch is untouched: a row whose cards would fail
-  // the gate still publishes through the daily branch.
+// ---- Option A conversion (overnight mission 2026-11-17): the bare
+// daily call plans only and never sends. The old test pinned the
+// removed behaviour (a gate-failing row publishing through the daily
+// branch); these tests pin the conversion instead.
+await t("edge conversion: bare daily call plans only — zero sends, row stays planned, no delivery rows", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
+  assert.equal(res.json.kolkata_date, TODAY);
+  assert.equal(typeof res.json.publication_id, "string");
+  assert.equal(res.json.delivery, undefined, "a plan-only call carries no delivery counts");
+  assert.equal(calls.length, 0, "the bare call sends nothing");
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+  const row = svc.tables.daily_content_publications[0];
+  assert.equal(row.status, "planned");
+  assert.equal(row.push.image_url, null, "the stored push still carries image_url null — it is never sent as-is");
+});
+
+await t("edge conversion: bare call on a gate-failing planned row plans only and never publishes it", async () => {
+  // A row whose cards would fail the gate must never reach any send
+  // through the daily branch — the bare call adopts it and stops.
   const svc = makeSvc({
     settings: [{ enabled: true }],
     hadiths: [hadithRow()],
@@ -3173,8 +3274,110 @@ await t("edge gate: the default daily branch does NOT run the gate (adopt path u
   const calls = setWebpush(ok201);
   const res = await callEdge({});
   assert.equal(res.json.ok, true);
-  assert.equal(calls.length, 1);
+  assert.equal(res.json.planned, true);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+  // And publish_planned still refuses it: the gate holds the row.
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.status, 409);
+  assert.equal(pub.json.reason, "gate_hold");
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+});
+
+await t("edge conversion: bare call on a poster-less planned row never sends text-only", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    publications: [plannedRow()],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  // No poster was ever finalized, so publish_planned refuses it too.
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.status, 409);
+  assert.equal(pub.json.reason, "poster_not_ready");
+  assert.equal(calls.length, 0);
+});
+
+await t("edge conversion: bare call on a poster-failed planned row holds and never sends", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    publications: [plannedRow({ poster_qc_status: "failed", poster_error: "render failed" })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.planned, true);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.status, 409);
+  assert.equal(pub.json.reason, "poster_not_ready");
+  assert.equal(calls.length, 0);
+});
+
+await t("edge conversion: bare call twice is idempotent — one row, zero sends", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const first = await callEdge({});
+  assert.equal(first.json.ok, true);
+  assert.equal(first.json.planned, true);
+  // A second bare call adopts the same planned row (plan_only semantics)
+  // — still planned, still zero sends, still exactly one row. Only a
+  // published day dedupes.
+  const second = await callEdge({});
+  assert.equal(second.json.ok, true);
+  assert.equal(second.json.planned, true);
+  assert.equal(svc.tables.daily_content_publications.length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_deliveries.length, 0);
+});
+
+await t("edge conversion: split flow after the bare call publishes WITH the image", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d2")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const planned = await callEdge({});
+  assert.equal(planned.json.planned, true);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.json.ok, true);
+  assert.equal(pub.json.publication_id, planned.json.publication_id);
+  assert.equal(pub.json.delivery.sent, 2);
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
+  assert.equal(calls.length, 2);
+  assert.equal(JSON.parse(calls[0].payload).image_url, posterUrlFor(TODAY));
+  assert.equal(JSON.parse(calls[1].payload).image_url, posterUrlFor(TODAY));
+  // A second publish dedupes — nothing is sent twice.
+  const again = await callEdge({ publish_planned: true });
+  assert.equal(again.json.deduped, true);
+  assert.equal(calls.length, 2);
 });
 
 await t("edge gate: parity — lib gate and edge gate agree exactly on identical fixtures", async () => {

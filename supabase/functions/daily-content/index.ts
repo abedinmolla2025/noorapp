@@ -23,12 +23,14 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *
  * Publication state machine (all transitions date-scoped; the unique
  * date is never violated, so no schema change was needed):
- *  - (none) --daily run, valid plan--> planned --send finishes--> published
+ *  - (none) --daily run, valid plan--> planned (the bare call stops
+ *    here — Option A conversion, 2026-11-17; publish_planned finishes
+ *    it after the poster is finalized, never text-only)
  *  - (none) --daily run, no valid plan--> failed (one row per date; a
  *    later same-date run with a valid plan repairs it in place, it does
  *    NOT insert a second row and the date is never blocked)
- *  - planned --daily run, same date--> adopted (stored push is sent;
- *    never re-planned mid-flight) or repaired in place (corrupt row
+ *  - planned --daily run, same date--> adopted (row returned, nothing
+ *    sent; never re-planned mid-flight) or repaired in place (corrupt row
  *    without a push, or failed row, rewritten to the fresh plan)
  *  - planned --tick, same date--> pending deliveries promoted to
  *    retryable and sent by the tick; the row itself stays planned
@@ -154,9 +156,11 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    by the poster QC gate at publish_planned; duplicate prevention
  *    by the cycle checks + kolkata_date UNIQUE. Mode A end-to-end
  *    automatic publication is therefore realized ONLY through the
- *    split flow (plan_only -> poster -> publish_planned); the default
- *    daily branch (single-call text-only send) is UNCHANGED in this
- *    phase — it is a cutover dependency (Phase 3 §6). Per-channel
+ *    split flow (plan_only -> poster -> publish_planned). The default
+ *    daily branch was converted to plan_only semantics by the Option A
+ *    conversion (overnight mission 2026-11-17): the bare call plans
+ *    and stops — it never sends, so no text-only publication path
+ *    remains in the function. Per-channel
  *    switches: website_auto_publish === false refuses publish_planned
  *    (409 website_paused, row stays planned); push_enabled === false
  *    flips the row WITHOUT sending (delivery zeroed, push_paused
@@ -2234,11 +2238,11 @@ async function runTick(svc: Svc, kolkataDate: string): Promise<{
 }
 
 // ---- Phase 3 (Master Mission) — split plan -> poster -> publish ----
-// The default daily path (plan -> send -> publish in one call) sends the
-// first push text-only, because `set_poster` could only finalize onto an
-// already-published row (Production Blocker #1). The split flow breaks
-// that call into three explicit steps, each behind the same CRON-secret
-// gate and the same fail-closed settings gate:
+// The old default daily path (plan -> send -> publish in one call) sent
+// the first push text-only, because `set_poster` could only finalize
+// onto an already-published row (Production Blocker #1). The split flow
+// breaks that call into three explicit steps, each behind the same
+// CRON-secret gate and the same fail-closed settings gate:
 //   1. plan_only        — plan the day, insert the row as `planned`,
 //                          send nothing, publish nothing.
 //   2. poster workflow  — render + QC + `set_poster` onto the planned
@@ -2248,8 +2252,10 @@ async function runTick(svc: Svc, kolkataDate: string): Promise<{
 //   3. publish_planned  — publish ONLY a planned row whose poster is
 //                          QC-passed, sending the first push with the
 //                          finalized poster as `image_url`.
-// The default daily path ({}) is unchanged: it still plans, sends, and
-// publishes in one call. The split flow is opt-in via the two new modes.
+// The default daily path ({}) was converted by Option A (overnight
+// mission 2026-11-17): it now plans and stops — plan_only semantics —
+// and never sends. The split flow is the ONLY publish path:
+// publish_planned after the poster workflow finalizes the row.
 // A planned row that never publishes is superseded by the next day's
 // tick (existing runTick behaviour) — a poster outage loses that day,
 // and the system recovers the next day automatically.
@@ -2534,8 +2540,9 @@ async function facebookDispositionAfterPublish(svc: Svc, kolkataDate: string): P
 // takes the planned content plus the LIVE rows it must be verified
 // against and returns a structured verdict (per-validation pass/fail +
 // reason, overall publish/hold). It is wired into publishPlanned ONLY
-// (the Mode A publish path); the default daily branch and Mode B are
-// untouched.
+// (the single publish path); the default daily branch no longer
+// publishes at all (Option A conversion, 2026-11-17), and Mode B
+// approval at plan time is untouched.
 //
 // CANONICAL SOURCE: src/lib/dailyContent/autonomousGate.ts (the lib
 // file is canonical; this section is its verbatim port, same pattern
@@ -5181,10 +5188,10 @@ Deno.serve(async (req: Request) => {
     }
     // Phase 3 (split-flow heal): `heal` is a modifier of the retry
     // tick, never a standalone mode — a bare { heal: true } must not
-    // fall through to the daily branch (which sends). It also cannot
-    // combine with plan_only or publish_planned (the heal step calls
-    // those paths itself, in the right order). Rejected before planDay
-    // so a bad combination performs nothing.
+    // fall through to the daily branch (which would plan the day).
+    // It also cannot combine with plan_only or publish_planned (the
+    // heal step calls those paths itself, in the right order). Rejected
+    // before planDay so a bad combination performs nothing.
     if (body.heal === true && body.retry_only !== true) {
       return jsonResponse({ ok: false, error: "heal requires retry_only." }, 400);
     }
@@ -5265,8 +5272,19 @@ Deno.serve(async (req: Request) => {
       return jsonResponse({ ok: true, planned: true, kolkata_date: kolkataDate, publication_id: r.publicationId });
     }
 
-    // Valid plan: resolve today's publication row (shared helper —
-    // plan_only uses the same resolution, then stops before sending).
+    // Daily branch — Option A conversion (overnight mission 2026-11-17):
+    // the bare call now has plan_only semantics. Plan + resolve today's
+    // publication row, then STOP. It never sends and never flips to
+    // published. Publication happens ONLY through publish_planned
+    // (poster QC + 8-validation gate + per-channel switches), after the
+    // poster workflow finalizes onto the row. A bare call can therefore
+    // never publish text-only, in either mode. The old single-call send
+    // lived here; sendAndPublish is now called only from publishPlanned
+    // (and publishWithoutPush, the push-paused case). The production
+    // daily cron becomes a 3-dispatch chain (plan -> poster ->
+    // publish_planned) in a separate, owner-approved step (Phase 7
+    // step 6); until then a bare cron call plans the day and the
+    // heal/retry path finishes it — never text-only.
     const r = await ensurePlannedRow(svc, kolkataDate, plan);
     if (r.kind === "deduped") {
       return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
@@ -5274,20 +5292,7 @@ Deno.serve(async (req: Request) => {
     if (r.kind === "conflict") {
       return jsonResponse({ ok: false, error: r.error }, 500);
     }
-    const publicationId = r.publicationId;
-    const pushForSend = r.pushForSend;
-    // Send + flip (shared helper — publish_planned sends identically).
-    let result;
-    try {
-      result = await sendAndPublish(svc, publicationId, pushForSend);
-    } catch (e) {
-      // Send aborted mid-flight: the row stays `planned`. Only a later
-      // daily-path run adopts it; a retry tick recovers its pending and
-      // retryable deliveries but never adopts or publishes it. Never
-      // mark published here.
-      return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
-    }
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery });
+    return jsonResponse({ ok: true, planned: true, kolkata_date: kolkataDate, publication_id: r.publicationId });
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
