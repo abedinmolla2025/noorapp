@@ -27,6 +27,14 @@
  * fetches the public URL and verifies HTTP 200 + a matching
  * content-length before reporting success.
  *
+ * Bounded retry (Phase 3 — Hold/Quarantine + self-healing): the
+ * sign-in + upload + verify chain is retried ONCE (max 2 attempts,
+ * 5 s apart) on a transient failure (network blip, storage 5xx,
+ * public-URL fetch failure). Invalid login credentials are
+ * deterministic and are never retried. The upload is an upsert to a
+ * deterministic path, so a retry cannot create a duplicate asset.
+ * The result JSON carries `attempts` (1 or 2).
+ *
  * Prints a single JSON result line on stdout; exits non-zero on any
  * failure. Never prints credentials.
  */
@@ -55,7 +63,9 @@ if (!/^\d{4}-\d{2}-\d{2}\/(compare\/[abc]-(portrait|square|wide|story)\.png|(por
   process.exit(2);
 }
 
-try {
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+async function uploadOnce() {
   const bytes = fs.readFileSync(file);
   if (bytes.length < 20000) throw new Error(`poster_too_small:${bytes.length} bytes`);
   const checksum = crypto.createHash("sha256").update(bytes).digest("hex");
@@ -89,14 +99,26 @@ try {
     throw new Error(`public_url_size_mismatch:fetched_${fetched.length}_vs_local_${bytes.length}`);
   }
 
-  console.log(JSON.stringify({
-    ok: true,
-    objectPath,
-    publicUrl,
-    checksum,
-    bytes: bytes.length,
-  }));
-} catch (e) {
-  console.error(JSON.stringify({ ok: false, error: e instanceof Error ? e.message : String(e) }));
-  process.exit(1);
+  return { ok: true, objectPath, publicUrl, checksum, bytes: bytes.length };
 }
+
+let lastError = null;
+let attempts = 0;
+for (let attempt = 1; attempt <= 2; attempt++) {
+  attempts = attempt;
+  try {
+    const result = await uploadOnce();
+    console.log(JSON.stringify({ ...result, attempts: attempt }));
+    process.exit(0);
+  } catch (e) {
+    lastError = e;
+    const msg = e instanceof Error ? e.message : String(e);
+    // Invalid credentials are deterministic — retrying cannot fix them.
+    if (msg.startsWith("admin_sign_in_failed:Invalid login credentials")) break;
+    if (attempt === 2) break;
+    console.error(JSON.stringify({ ok: false, error: msg, attempt, retrying: true }));
+    await sleep(5000);
+  }
+}
+console.error(JSON.stringify({ ok: false, error: lastError instanceof Error ? lastError.message : String(lastError), attempts }));
+process.exit(1);

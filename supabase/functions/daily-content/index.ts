@@ -33,6 +33,33 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *  - planned --tick, same date--> pending deliveries promoted to
  *    retryable and sent by the tick; the row itself stays planned
  *    (a tick NEVER adopts content, plans, publishes, or creates a row)
+ *  - planned --heal tick, same date--> the heal step reads the row and
+ *    NEVER sends a text-only push and NEVER flips it: a row whose
+ *    poster is QC-passed is published through publishPlanned (the
+ *    same gate the poster workflow uses, so the first send carries
+ *    the poster image); a row whose poster failed is HELD (see
+ *    below); a row whose poster is still pending is left for the
+ *    poster workflow. A planned row with no stored push (corrupt)
+ *    is repaired in place by re-planning, exactly as the daily path
+ *    repairs corrupt rows.
+ *  - (none) / failed --heal tick--> plan-only: a planned row is
+ *    created (or a failed row repaired in place) and the heal stops
+ *    there — send nothing, flip nothing. The poster workflow is the
+ *    next step (dispatched by the retry workflow when the heal
+ *    reports healed:"planned" or a poster hold). A heal tick can
+ *    never create a published row.
+ *  - Hold / Quarantine (Phase 3 — derived from existing columns, no
+ *    migration): a planned row with poster_qc_status='failed' is
+ *    HELD — publish_planned refuses it (409 poster_not_ready), so
+ *    nothing downstream can distribute that day. The poster workflow
+ *    may retry it once; a second failure in the same day is recorded
+ *    by set_poster with poster_error starting `quarantined:` and the
+ *    row is QUARANTINED — no automatic attempt retries it (the heal
+ *    tick reports hold:"quarantined" and the poster workflow skips
+ *    it unless force-dispatched). A successful set_poster pass clears
+ *    the error and ends the hold. A status='failed' row (no valid
+ *    plan) is a hold of a different kind: a later heal tick repairs
+ *    it in place when a valid plan exists.
  *  - planned --tick, past date--> failed ("superseded") + its pending
  *    AND retryable deliveries failed, so no stale notification can
  *    survive supersede. Stale content is NEVER reused as another day's
@@ -72,6 +99,17 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *  - retry_only + dry_run combined is a client error (400) at both
  *    the endpoint and the edge: it performs no planning, publication,
  *    or sending.
+ *  - Split-flow self-healing (Phase 3, owner-authorized 2026-11-16;
+ *    supersedes the text-only heal of the self-healing branch): a
+ *    retry tick with { "retry_only": true, "heal": true } runs the
+ *    retry pass unchanged, then heals ONLY through the split flow —
+ *    it plans (plan-only semantics, never sends, never flips) or
+ *    publishes a row whose poster is already QC-passed. It NEVER
+ *    publishes text-only. There is no text-only fallback: the
+ *    fallback question needs explicit owner approval and is NOT
+ *    implemented. `heal` without `retry_only` is a client error
+ *    (400), as is combining `heal` with `plan_only` or
+ *    `publish_planned`.
  * ------------------------------------------------------------------ */
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -768,6 +806,20 @@ function isValidChecksum(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
 }
 
+// ---- Phase 3 (Hold/Quarantine) — quarantine marker (no migration) ----
+// A poster failure is recorded by set_poster with poster_error set to
+// the workflow's reason. A SECOND failure for the same row on the same
+// Kolkata day is recorded with the `quarantined:` prefix instead: the
+// row failed twice, so no automatic attempt retries it. The heal tick
+// and the poster workflow both read this prefix (see isQuarantined).
+// A successful set_poster pass clears poster_error (ends the hold).
+// The prefix is a convention on the existing poster_error text column
+// — no new column, no migration. The 500-char cap of the input
+// validation is preserved when the prefix is added.
+const QUARANTINE_PREFIX = "quarantined:";
+const isQuarantined = (posterError: unknown): boolean =>
+  typeof posterError === "string" && posterError.startsWith(QUARANTINE_PREFIX);
+
 async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise<Response> {
   const kolkataDate = body.kolkata_date;
   const qcStatus = body.poster_qc_status;
@@ -833,12 +885,12 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
 
   const { data: row, error: readError } = await svc
     .from("daily_content_publications")
-    .select("id, status, poster_url, poster_qc_status, push")
+    .select("id, status, poster_url, poster_qc_status, poster_error, poster_generated_at, push")
     .eq("kolkata_date", kolkataDate)
     .maybeSingle();
   if (readError) return jsonResponse({ ok: false, error: "failed to read publication" }, 500);
   if (!row) return jsonResponse({ ok: false, error: "no publication for date" }, 404);
-  const pub = row as { id: string; status: string; poster_url: string | null; poster_qc_status: string | null; push: Record<string, unknown> | null };
+  const pub = row as { id: string; status: string; poster_url: string | null; poster_qc_status: string | null; poster_error: string | null; poster_generated_at: string | null; push: Record<string, unknown> | null };
   if (pub.status !== "published" && pub.status !== "planned") {
     return jsonResponse({ ok: false, error: "publication is neither planned nor published" }, 409);
   }
@@ -848,6 +900,21 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
   }
 
   const now = new Date().toISOString();
+  // Phase 3 (Hold/Quarantine): a second poster failure for the same
+  // row on the same Kolkata day quarantines it — the stored error
+  // gains the `quarantined:` prefix, so no automatic attempt retries
+  // the row. The first failure of the day is stored as given. The
+  // day is compared in Asia/Kolkata (the row's date), not UTC: a
+  // failure recorded at 02:00 IST and another at 09:00 IST are the
+  // same Kolkata day even though their UTC dates differ.
+  const priorFailedToday = qcStatus === "failed"
+    && pub.poster_qc_status === "failed"
+    && typeof pub.poster_generated_at === "string"
+    && kolkataDateString(new Date(pub.poster_generated_at)) === kolkataDate
+    && !isQuarantined(pub.poster_error);
+  const storedError = qcStatus === "failed"
+    ? (priorFailedToday ? `${QUARANTINE_PREFIX}${posterError as string}`.slice(0, 500) : (posterError as string))
+    : null;
   const update = qcStatus === "passed"
     ? {
         poster_asset_id: assetId as string,
@@ -868,7 +935,7 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
       }
     : {
         poster_qc_status: "failed",
-        poster_error: posterError as string,
+        poster_error: storedError,
         poster_generated_at: now,
       };
   const { data: updated, error: updateError } = await svc
@@ -881,7 +948,14 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
   if (!((updated as unknown[] | null)?.length)) {
     return jsonResponse({ ok: false, error: "publication update affected 0 rows" }, 409);
   }
-  return jsonResponse({ ok: true, kolkata_date: kolkataDate, poster_qc_status: qcStatus });
+  return jsonResponse({
+    ok: true,
+    kolkata_date: kolkataDate,
+    poster_qc_status: qcStatus,
+    // Phase 3: the workflow log can see a quarantine without reading
+    // the row back — a second same-day failure quarantines the row.
+    ...(qcStatus === "failed" && isQuarantined(storedError) ? { quarantined: true } : {}),
+  });
 }
 
 // ---- Phase 9 — approved recommendation runs (daily automation) ----
@@ -1798,6 +1872,134 @@ async function sendAndPublish(
   return { publication_id: publicationId, delivery };
 }
 
+/** Split-flow self-healing tick (Phase 3 — supersedes the text-only
+ *  heal of the self-healing branch, which published via publishPlan()
+ *  with image_url null).
+ *
+ *  Runs AFTER the plain retry pass (tick). It NEVER sends a text-only
+ *  push and NEVER flips a row to published on its own. The only send
+ *  in this function is publishPlanned, which refuses any row whose
+ *  poster is not QC-passed — so a healed day always carries the
+ *  finalized poster image, exactly like the E2E split flow.
+ *
+ *  Outcomes (kolkata_date is always today):
+ *   - published row                 -> healed:false (nothing to do)
+ *   - planned + poster QC-passed    -> publishPlanned (healed:true
+ *     with the delivery counts; the poster workflow's publish step
+ *     failed after set_poster — the heal finishes it, with the image)
+ *   - planned + quarantined poster -> healed:false, hold:"quarantined"
+ *     (alert: critical — needs owner/admin review; no dispatch)
+ *   - planned + poster failed      -> healed:false, hold:"poster_failed"
+ *     (alert: warn — the poster workflow should retry; dispatch it)
+ *   - planned + poster pending     -> healed:false, hold:"poster_pending"
+ *     (no alert — the poster workflow has not run yet; dispatch it)
+ *   - planned + no stored push     -> repaired in place by re-planning
+ *     (corrupt row, same rule as the daily path), healed:"planned"
+ *   - no row / status='failed'     -> planDay + ensurePlannedRow
+ *     (plan-only semantics: send nothing, flip nothing),
+ *     healed:"planned" (dispatch the poster workflow) — or, when no
+ *     valid plan exists, one failed row + hold:"no_valid_plan"
+ *     (alert: critical — the day will be lost without intervention)
+ *
+ *  The response also carries per-channel status (website / push /
+ *  facebook) and an `alert` object when a human should look: the
+ *  retry workflow logs it (there is no email/webhook channel yet —
+ *  that needs an owner decision; see the Phase 3 report §5).
+ *  `healed` is "planned" when a planned row was created, true when a
+ *  QC-passed row was published, false otherwise. */
+async function healSplitFlow(
+  svc: Svc,
+  kolkataDate: string,
+  tick: Awaited<ReturnType<typeof runTick>>,
+): Promise<Response> {
+  const channels = (website: string, push: unknown) => ({
+    website,
+    push: push ?? null,
+    facebook: "not_implemented",
+  });
+  const alertFor = (level: "warn" | "critical", reason: string, publicationId: string | null) => ({
+    level,
+    reason,
+    kolkata_date: kolkataDate,
+    publication_id: publicationId,
+  });
+  const { data: row } = await svc.from("daily_content_publications")
+    .select("id, status, poster_qc_status, poster_error, poster_url, push")
+    .eq("kolkata_date", kolkataDate)
+    .maybeSingle();
+  const pub = row as {
+    id: string;
+    status: string;
+    poster_qc_status: string | null;
+    poster_error: string | null;
+    poster_url: string | null;
+    push: Record<string, unknown> | null;
+  } | null;
+
+  if (pub?.status === "published") {
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, channels: channels("published", null) });
+  }
+
+  if (pub?.status === "planned" && pub.push) {
+    if (isQuarantined(pub.poster_error)) {
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "quarantined", publication_id: pub.id,
+        channels: channels("quarantined", null),
+        alert: alertFor("critical", "quarantined: poster failed twice; needs owner/admin review", pub.id) });
+    }
+    if (pub.poster_qc_status === "passed" && pub.poster_url) {
+      // The poster is QC-passed but the row never published — the
+      // poster workflow's publish step failed after set_poster.
+      // Finish it here, through the same gate, with the image.
+      const published = await publishPlanned(svc, kolkataDate);
+      const pj = (await published.json().catch(() => ({}))) as Record<string, unknown>;
+      if (pj.ok === true && pj.deduped !== true) {
+        return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: true, hold: null, publication_id: pj.publication_id,
+          channels: channels("published", pj.delivery ?? null) });
+      }
+      if (pj.deduped === true) {
+        return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+          channels: channels("published", null) });
+      }
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "publish_failed", publication_id: pub.id,
+        channels: channels("planned", null),
+        alert: alertFor("warn", `publish_planned failed: ${typeof pj.error === "string" ? pj.error : "unknown"}`, pub.id) });
+    }
+    if (pub.poster_qc_status === "failed") {
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_failed", publication_id: pub.id,
+        channels: channels("held", null),
+        alert: alertFor("warn", "poster failed; poster workflow retry needed", pub.id) });
+    }
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_pending", publication_id: pub.id,
+      channels: channels("planned", null) });
+  }
+
+  // No row, a failed row (no valid plan), or a planned row with no
+  // stored push (corrupt): plan the day with plan-only semantics.
+  // ensurePlannedRow repairs a failed/corrupt row in place or inserts
+  // a fresh planned row. Never sends, never flips.
+  const plan = await planDay(svc, kolkataDate);
+  if (!plan.hadith || !plan.push) {
+    const recorded = await recordFailedPlan(svc, kolkataDate, plan);
+    if (recorded === "deduped") {
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+        channels: channels("published", null) });
+    }
+    return jsonResponse({ ok: false, kolkata_date: kolkataDate, tick, healed: false, hold: "no_valid_plan", reason: plan.hadithEmptyReason,
+      channels: channels("failed", null),
+      alert: alertFor("critical", `no valid plan: ${plan.hadithEmptyReason ?? "unknown"}`, pub?.id ?? null) });
+  }
+  const r = await ensurePlannedRow(svc, kolkataDate, plan);
+  if (r.kind === "deduped") {
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+      channels: channels("published", null) });
+  }
+  if (r.kind === "conflict") {
+    return jsonResponse({ ok: false, error: r.error }, 500);
+  }
+  return jsonResponse({ ok: true, kolkata_date: kolkataDate, tick, healed: "planned", hold: null, publication_id: r.publicationId,
+    channels: channels("planned", null) });
+}
+
 /** Publish step 3 of the split flow: publish a planned row ONLY when
  *  its poster is finalized (QC-passed), sending the first push with the
  *  finalized poster as `image_url`. Refuses anything else — a failed
@@ -1893,6 +2095,18 @@ Deno.serve(async (req: Request) => {
     if (body.plan_only === true && body.publish_planned === true) {
       return jsonResponse({ ok: false, error: "plan_only and publish_planned cannot be combined." }, 400);
     }
+    // Phase 3 (split-flow heal): `heal` is a modifier of the retry
+    // tick, never a standalone mode — a bare { heal: true } must not
+    // fall through to the daily branch (which sends). It also cannot
+    // combine with plan_only or publish_planned (the heal step calls
+    // those paths itself, in the right order). Rejected before planDay
+    // so a bad combination performs nothing.
+    if (body.heal === true && body.retry_only !== true) {
+      return jsonResponse({ ok: false, error: "heal requires retry_only." }, 400);
+    }
+    if (body.heal === true && (body.plan_only === true || body.publish_planned === true)) {
+      return jsonResponse({ ok: false, error: "heal cannot combine with plan_only or publish_planned." }, 400);
+    }
     // DECIDED POLICY (launch preparation): pause stops retry ticks too.
     // The settings gate applies to the retry branch exactly as it does
     // to the daily branch, so a paused system sends nothing at all.
@@ -1903,7 +2117,15 @@ Deno.serve(async (req: Request) => {
       if (!settings || (settings as { enabled: boolean }).enabled !== true) {
         return jsonResponse({ ok: false, reason: "paused" });
       }
-      return jsonResponse({ ok: true, ...(await runTick(svc, kolkataDate)) });
+      const tick = await runTick(svc, kolkataDate);
+      if (body.heal !== true) {
+        // Plain tick: unchanged — never plans, publishes, or creates
+        // a row. The tick object is the whole response.
+        return jsonResponse({ ok: true, ...tick });
+      }
+      // Split-flow heal (Phase 3): run the retry pass, then heal ONLY
+      // through the split flow — never a text-only send.
+      return await healSplitFlow(svc, kolkataDate, tick);
     }
     // Phase 3 (split flow), step 3: publish a planned row whose poster
     // is finalized. Needs no fresh plan — it publishes what plan_only
