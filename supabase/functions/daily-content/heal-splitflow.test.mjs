@@ -75,6 +75,11 @@ function makeSvc(seed = {}) {
     daily_content_recommendations: seed.recommendations ?? [],
   };
   let seq = 1000;
+  // Fault injection (tests only): when set, the next publication-flip
+  // update (patch status "published") matches zero rows — the
+  // concurrency-guard failure a second worker winning the flip
+  // produces in production. Fires once, then clears itself.
+  const flags = { zeroRowFlip: false };
   class Q {
     constructor(table) {
       this.table = table; this.filters = []; this.orderings = [];
@@ -131,6 +136,11 @@ function makeSvc(seed = {}) {
     then(resolve, reject) {
       try {
         if (this.patch) {
+          if (flags.zeroRowFlip && this.table === "daily_content_publications" && this.patch?.status === "published") {
+            flags.zeroRowFlip = false;
+            resolve({ data: [], error: null }); // success, zero rows — no mutation
+            return;
+          }
           const rs = this.rows();
           for (const r of rs) Object.assign(r, this.patch);
           resolve({ data: rs, error: null });
@@ -140,7 +150,7 @@ function makeSvc(seed = {}) {
       } catch (e) { reject(e); }
     }
   }
-  return { tables, from: (table) => new Q(table) };
+  return { tables, flags, from: (table) => new Q(table) };
 }
 
 const todayKolkata = () => {
@@ -377,6 +387,46 @@ const plannedRow = (over = {}) => ({
     assert.equal(svc.tables.daily_content_publications[0].status, "planned");
     assert.equal(svc.tables.daily_content_publications[0].error, "gate_hold:bengali_editorial_quality");
     assert.equal(calls.length, 0, "a held row sends nothing");
+  });
+
+  await checkAsync("heal on a QC-passed row whose publish flip matches zero rows -> hold:'publish_failed' + warn alert, then a second tick recovers without re-sending", async () => {
+    // D-P1-7 (was code-reviewed only): the publish_failed hold branch
+    // executes when publishPlanned fails for a reason other than a gate
+    // hold. The flip fails AFTER the send, so the push went out once
+    // and the row stays planned; the next tick publishes it without
+    // sending the same device twice.
+    const url = posterUrlFor(todayKolkata());
+    const svc = makeSvc({ ...baseSeed(), publications: [plannedRow({
+      poster_qc_status: "passed", poster_url: url,
+      poster_urls: { portrait: url },
+      poster_asset_id: `poster:${todayKolkata()}`,
+      poster_storage_path: `daily-content-posters/${todayKolkata()}/portrait.png`,
+      poster_checksum: "a".repeat(64),
+      poster_checksums: { portrait: "a".repeat(64) },
+      poster_scene_id: "intention-sunrise",
+      poster_generated_at: `${todayKolkata()}T02:00:00.000Z`,
+    })] });
+    svc.flags.zeroRowFlip = true; // the publish flip matches zero rows (another worker won)
+    stubs.holder.svc = svc;
+    const calls = setWebpush(stubs, () => ({ statusCode: 201 }));
+    const res = await callEdge(handler, { retry_only: true, heal: true });
+    assert.equal(res.status, 200);
+    assert.equal(res.json.ok, true);
+    assert.equal(res.json.healed, false);
+    assert.equal(res.json.hold, "publish_failed");
+    assert.equal(res.json.alert.level, "warn");
+    assert.match(res.json.alert.reason, /publish_planned failed: Publication flip affected 0 rows/);
+    assert.equal(svc.tables.daily_content_publications[0].status, "planned", "a failed flip never marks the row published");
+    assert.equal(calls.length, 1, "the send happened before the flip failed — the push went out once");
+    assert.equal(svc.tables.daily_content_deliveries.filter((d) => d.status === "sent").length, 1);
+    // Second tick: the flag is spent, so the flip succeeds; the
+    // already-sent device is skipped, never re-sent.
+    const second = await callEdge(handler, { retry_only: true, heal: true });
+    assert.equal(second.json.ok, true);
+    assert.equal(second.json.healed, true);
+    assert.equal(second.json.hold, null);
+    assert.equal(svc.tables.daily_content_publications[0].status, "published");
+    assert.equal(calls.length, 1, "recovery never re-sends the same device");
   });
 
   await checkAsync("heal tick with a published row -> healed:false, retries only, no re-send", async () => {
