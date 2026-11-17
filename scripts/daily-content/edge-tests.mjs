@@ -128,6 +128,7 @@ function makeSvc(seed = {}) {
     commitThenThrowSentUpdate: false,
     zeroRowSentUpdateAt: null,
     zeroRowFlip: false,
+    zeroRowClaimUpdates: null,
   };
   const matches = (rows, filters) => rows.filter((r) => filters.every((f) => f(r)));
 
@@ -291,6 +292,15 @@ function makeSvc(seed = {}) {
           flags.zeroRowSentUpdateAt = null;
           return { data: [], error: null }; // success, zero rows — no mutation
         }
+      }
+      // Delivery-count tests only: force the next N claim-shaped updates
+      // (patch carries next_attempt_at and no status — the first-send
+      // claim in sendToTokens and the retry claim in runRetries) to
+      // match zero rows, i.e. the claim lost the race to another worker.
+      if (flags.zeroRowClaimUpdates != null && flags.zeroRowClaimUpdates > 0 && this.table === "daily_content_deliveries" && this.patch?.next_attempt_at != null && !("status" in (this.patch ?? {}))) {
+        flags.zeroRowClaimUpdates--;
+        if (flags.zeroRowClaimUpdates === 0) flags.zeroRowClaimUpdates = null;
+        return { data: [], error: null }; // claim matched zero rows — lost the race
       }
       if (flags.zeroRowFlip && this.table === "daily_content_publications" && this.patch?.status === "published") {
         flags.zeroRowFlip = false;
@@ -476,8 +486,15 @@ await t("edge opt-out: daily_enabled=false device is skipped, no row, no send", 
   assert.equal(res.json.ok, true);
   const pub = svc.tables.daily_content_publications[0];
   assert.equal(pub.status, "published");
-  assert.equal(pub.recipients_total, 1);
+  // Delivery-count fix: total counts EVERY enabled token fetched, so
+  // the opted-out device is in total too (skipped, never sent). Before
+  // the fix total was 1 here — it understated the fleet.
+  assert.equal(pub.recipients_total, 2);
   assert.equal(pub.recipients_sent, 1);
+  assert.equal(res.json.delivery.total, 2);
+  assert.equal(res.json.delivery.sent, 1);
+  assert.equal(res.json.delivery.skipped, 1);
+  assert.equal(res.json.delivery.total, res.json.delivery.sent + res.json.delivery.failed + res.json.delivery.skipped);
   assert.equal(calls.length, 1);
   assert.equal(svc.tables.daily_content_deliveries.length, 1);
   assert.equal(svc.tables.daily_content_deliveries[0].device_id, "d1");
@@ -1242,9 +1259,13 @@ await t("edge M3: NULL and empty device_ids are skipped, never sent", async () =
   const calls = setWebpush(ok201);
   const res = await callEdge({});
   assert.equal(res.json.ok, true);
+  // Delivery-count fix: total counts EVERY enabled token fetched, so
+  // the 3 NULL/empty devices are in total too (skipped, never sent).
+  // Before the fix total was 1 here — it understated the fleet.
   assert.equal(res.json.delivery.skipped, 3);
-  assert.equal(res.json.delivery.total, 1);
+  assert.equal(res.json.delivery.total, 4);
   assert.equal(res.json.delivery.sent, 1);
+  assert.equal(res.json.delivery.total, res.json.delivery.sent + res.json.delivery.failed + res.json.delivery.skipped);
   assert.equal(calls.length, 1);
   assert.equal(svc.tables.daily_content_deliveries.length, 1);
   assert.equal(svc.tables.daily_content_deliveries[0].device_id, "d1");
@@ -1267,7 +1288,14 @@ await t("edge M3: NULL devices stay skipped across crash and resume", async () =
   assert.equal(calls.length, 1);
   assert.equal(svc.tables.daily_content_deliveries.length, 1);
   assert.equal(svc.tables.daily_content_deliveries[0].device_id, "d1");
-  assert.equal(resumed.json.delivery.skipped, 1);
+  // Delivery-count fix: the resumed call counts BOTH tokens — t1 is
+  // skipped (its prior row exists) and t2 is skipped (NULL device_id).
+  // Before the fix skipped was 1 here: t1's silent prior-row skip was
+  // masked by t2's skip, and total was 1, not 2.
+  assert.equal(resumed.json.delivery.total, 2);
+  assert.equal(resumed.json.delivery.sent, 0);
+  assert.equal(resumed.json.delivery.skipped, 2);
+  assert.equal(resumed.json.delivery.total, resumed.json.delivery.sent + resumed.json.delivery.failed + resumed.json.delivery.skipped);
 });
 
 await t("edge M3: same token identity is never sent twice, even after a device_id change", async () => {
@@ -1289,6 +1317,13 @@ await t("edge M3: same token identity is never sent twice, even after a device_i
   assert.equal(svc.tables.daily_content_publications[0].status, "published");
   assert.equal(calls.length, 1); // token pre-check skips the re-registered device
   assert.equal(svc.tables.daily_content_deliveries.length, 1);
+  // Delivery-count fix: the resumed call counts the one token as
+  // skipped (its prior row exists) instead of dropping it silently.
+  assert.equal(resumed.json.delivery.total, 1);
+  assert.equal(resumed.json.delivery.sent, 0);
+  assert.equal(resumed.json.delivery.failed, 0);
+  assert.equal(resumed.json.delivery.skipped, 1);
+  assert.equal(resumed.json.delivery.total, resumed.json.delivery.sent + resumed.json.delivery.failed + resumed.json.delivery.skipped);
 });
 
 // ---- Decided owner policies (launch preparation) ----
@@ -2289,6 +2324,190 @@ const plannedRow = (over = {}) => ({
   poster_url: null,
   ...over,
 });
+
+// ---- Delivery-count arithmetic: the 1-token gap (FIXED) ----
+// Observed in production 2026-11-15 (total 17, sent 8, failed 8),
+// the 2026-11-16 heal test and the 2026-11-17 E2E (17/0/16): one
+// token was unaccounted — total exceeded sent + failed + skipped by
+// exactly one. Root cause: four silent `continue` branches in
+// sendToTokens exited without counting the token in any bucket, and
+// two terminal-close branches in runRetries did the same for `failed`.
+// The counting contract now: total counts every enabled token row
+// fetched; every token lands in exactly one bucket (sent / failed /
+// skipped); disabled is a SUB-count of failed. Invariant:
+// total == sent + failed + skipped, asserted on every shape below.
+// These four tests first reproduced the gap (each showed a 1-token
+// shortfall); they now assert the balanced numbers.
+const assertBalanced = (d) => assert.equal(d.total, d.sent + d.failed + d.skipped, `unbalanced delivery: ${JSON.stringify(d)}`);
+
+await t("edge delivery-count: duplicate device_id is counted skipped, never double-sent", async () => {
+  // Production holds 5 duplicate (device_id, platform) groups. The
+  // second token row for one device collides on the per-(publication,
+  // device) cap insert — counted skipped, never sent.
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1"), token("t2", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  const d = res.json.delivery;
+  assert.equal(calls.length, 1); // one device, one send — never double-sent
+  assert.deepEqual(
+    { total: d.total, sent: d.sent, failed: d.failed, skipped: d.skipped },
+    { total: 2, sent: 1, failed: 0, skipped: 1 },
+  );
+  assertBalanced(d);
+});
+
+await t("edge delivery-count: prior delivery row is counted skipped, never re-sent", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "del-p", publication_id: "pub-plan", token_id: "t1", device_id: "d1", status: "pending", attempts: 0 },
+    ],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.json.ok, true);
+  const d = res.json.delivery;
+  assert.equal(calls.length, 0); // the prior row means never re-sent
+  assert.deepEqual(
+    { total: d.total, sent: d.sent, failed: d.failed, skipped: d.skipped },
+    { total: 1, sent: 0, failed: 0, skipped: 1 },
+  );
+  assertBalanced(d);
+});
+
+await t("edge delivery-count: lost first-send claim is counted skipped, never sent", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens: [token("t1", "d1")],
+  });
+  // Both claim attempts (due + never-leased) match zero rows: another
+  // worker owns the row, so this pass must never send — and now counts
+  // the token skipped instead of dropping it silently.
+  svc.flags.zeroRowClaimUpdates = 2;
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  const d = res.json.delivery;
+  assert.equal(calls.length, 0); // lost the race — never sent
+  assert.deepEqual(
+    { total: d.total, sent: d.sent, failed: d.failed, skipped: d.skipped },
+    { total: 1, sent: 0, failed: 0, skipped: 1 },
+  );
+  assertBalanced(d);
+});
+
+await t("edge delivery-count: retry tick counts a parentless row as failed", async () => {
+  // runRetries' H1 branch: a retryable whose parent publication is
+  // gone is closed terminally as failed — now counted, like its
+  // sibling branches (stale date, no push, opt-out, S-6).
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    tokens: [token("t1", "d1")],
+    deliveries: [
+      { id: "r1", publication_id: "pub-gone", token_id: "t1", device_id: "d1", status: "retryable", attempts: 1, next_attempt_at: "2000-01-01T00:00:00.000Z" },
+    ],
+  });
+  stubs.holder.svc = svc;
+  setWebpush(ok201);
+  const res = await callEdge({ retry_only: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(svc.tables.daily_content_deliveries[0].status, "failed"); // closed, terminally
+  assert.equal(res.json.retried, 0); // never attempted — correct
+  assert.equal(res.json.failed, 1); // the failed close, counted
+});
+
+// Known observed shapes: the invariant must hold on each, with the
+// exact numbers the owner saw (plus the one skip the fix accounts).
+await t("edge delivery-count: 2026-11-15 production shape 17/8/8/8 balances with one skip", async () => {
+  // 17 token rows, 16 distinct devices (t17 duplicates d1), 8 sends
+  // succeed, 8 fail 410 (disabled), the duplicate is counted skipped.
+  const tokens = Array.from({ length: 16 }, (_, i) => token(`t${i + 1}`, `d${i + 1}`));
+  tokens.push(token("t17", "d1"));
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens,
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(async (sub) => {
+    const ep = JSON.parse(typeof sub === "string" ? sub : JSON.stringify(sub)).endpoint ?? "";
+    const n = Number(ep.split("/").pop().slice(1));
+    if (n >= 9 && n <= 16) throw Object.assign(new Error("gone"), { statusCode: 410 });
+    return { statusCode: 201 };
+  });
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  const d = res.json.delivery;
+  assert.equal(calls.length, 16);
+  assert.deepEqual(
+    { total: d.total, sent: d.sent, failed: d.failed, disabled: d.disabled, skipped: d.skipped },
+    { total: 17, sent: 8, failed: 8, disabled: 8, skipped: 1 },
+  );
+  assertBalanced(d);
+});
+
+await t("edge delivery-count: 2026-11-17 E2E shape 17/0/16 balances with one skip", async () => {
+  // 17 token rows, 16 distinct devices (t17 duplicates d1), every
+  // distinct device fails 410 (stale rehearsal tokens), the duplicate
+  // is counted skipped.
+  const tokens = Array.from({ length: 16 }, (_, i) => token(`t${i + 1}`, `d${i + 1}`));
+  tokens.push(token("t17", "d1"));
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens,
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(async () => { throw Object.assign(new Error("gone"), { statusCode: 410 }); });
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  const d = res.json.delivery;
+  assert.equal(calls.length, 16);
+  assert.deepEqual(
+    { total: d.total, sent: d.sent, failed: d.failed, disabled: d.disabled, skipped: d.skipped },
+    { total: 17, sent: 0, failed: 16, disabled: 16, skipped: 1 },
+  );
+  assertBalanced(d);
+});
+
+await t("edge delivery-count: 2026-11-16 clean shape 9/9/0 balances", async () => {
+  const tokens = Array.from({ length: 9 }, (_, i) => token(`t${i + 1}`, `d${i + 1}`));
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    duas: ["s1"].map((s) => duaRow(s)),
+    tokens,
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  const d = res.json.delivery;
+  assert.equal(calls.length, 9);
+  assert.deepEqual(
+    { total: d.total, sent: d.sent, failed: d.failed, skipped: d.skipped },
+    { total: 9, sent: 9, failed: 0, skipped: 0 },
+  );
+  assertBalanced(d);
+});
+
 
 await t("edge Phase 3: plan_only plans without sending or publishing", async () => {
   const svc = makeSvc({

@@ -1588,7 +1588,23 @@ async function sendToTokens(
   let failed = 0;
   let disabled = 0;
   let skipped = 0;
+  // Delivery-count contract (1-token gap fix, 2026-11-17): `total`
+  // counts every enabled token row fetched, and every token lands in
+  // exactly one bucket — sent, failed, or skipped — so the invariant
+  // total == sent + failed + skipped holds for every call. `disabled`
+  // is a SUB-count of `failed` (tokens disabled for 404/410/401/403),
+  // never a separate bucket. Before this fix, four `continue` branches
+  // exited without counting the token (opted-out snapshot, prior row,
+  // cap-insert conflict, lost claim) — a duplicate device_id
+  // (production holds 5 duplicate (device_id, platform) groups) hit
+  // the cap-insert branch and produced the observed 17-total /
+  // 16-accounted gap (2026-11-15 production, 2026-11-16 heal test,
+  // 2026-11-17 E2E). The invariant is asserted by the edge tests on
+  // every send shape; there is no runtime log guard because edge
+  // console output has no reader in this project (Supabase logs are
+  // not agent-readable) — the enforced CI suite is the guard.
   for (const t of tokens) {
+    total++;
     // M3: never send without a stable device identity. A NULL or empty
     // device_id cannot be capped (Postgres treats NULLs as distinct in
     // the unique constraint), cannot be opted out, and cannot be matched
@@ -1601,8 +1617,11 @@ async function sendToTokens(
       skipped++;
       continue;
     }
-    if (optedOut.has(t.device_id)) continue;
-    total++;
+    // Opted out at snapshot: skipped, never sent, no delivery row.
+    if (optedOut.has(t.device_id)) {
+      skipped++;
+      continue;
+    }
     // Defense-in-depth: skip if a delivery row already exists for this
     // publication + token, even if the device_id changed since the row
     // was written. The DB unique constraint on (publication, device)
@@ -1612,7 +1631,10 @@ async function sendToTokens(
       .eq("publication_id", publicationId)
       .eq("token_id", t.id)
       .limit(1);
-    if ((prior as unknown[] | null)?.length) continue;
+    if ((prior as unknown[] | null)?.length) {
+      skipped++;
+      continue;
+    }
     // Per-device daily cap: one delivery row per (publication, device).
     // R-5 claim protocol: every pending row carries a due
     // next_attempt_at from birth, so the first-send claim below can
@@ -1628,7 +1650,14 @@ async function sendToTokens(
       attempts: 0,
       next_attempt_at: new Date().toISOString(),
     } as never);
-    if (capErr) continue; // Already attempted for this device today — skip (no double-send).
+    if (capErr) {
+      // Already attempted for this device today — skip (no double-send).
+      // A duplicate token row for one device lands here: the first row
+      // owns the (publication, device) delivery row, so the second
+      // collides on the cap insert. It is counted skipped, never sent.
+      skipped++;
+      continue;
+    }
     // R-5 first-send claim: lease this row for 10 minutes before the
     // provider call. The claim matches only while the row is still
     // pending and due — a retry tick that already promoted/claimed
@@ -1652,7 +1681,13 @@ async function sendToTokens(
     if (!((claimed as unknown[] | null)?.length)) {
       ({ data: claimed } = await claimBase().is("next_attempt_at", null).select("id"));
     }
-    if (!((claimed as unknown[] | null)?.length)) continue; // lost the race — never send
+    if (!((claimed as unknown[] | null)?.length)) {
+      // lost the race — never send. The row stays pending/leased for
+      // its owner (a concurrent run or the retry tick), which counts
+      // the send; this pass counts the token skipped.
+      skipped++;
+      continue;
+    }
     // S-6 re-check: an opt-out that landed after the snapshot (or after
     // the claim) is respected HERE, before the provider call. Close the
     // row terminally so it is never sent and never re-read.
@@ -1759,6 +1794,11 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
         status: "failed",
         error: !pub ? "parent publication missing" : "parent publication failed",
       } as never).eq("id", row.id);
+      // Counted: the row was closed terminally as failed this tick.
+      // (Delivery-count fix: this was the one runRetries branch that
+      // closed a row failed without counting it — its siblings
+      // stale-date, no-push, opt-out and S-6 all count.)
+      failed++;
       continue;
     }
     // Phase 7 (R-6): a retryable whose publication is for a past Kolkata
@@ -1832,6 +1872,7 @@ async function runRetries(svc: Svc): Promise<{ retried: number; sent: number; fa
     const { data: pubFresh } = await svc.from("daily_content_publications").select("status").eq("id", row.publication_id).maybeSingle();
     if (!pubFresh || (pubFresh as { status: string }).status === "failed") {
       await svc.from("daily_content_deliveries").update({ status: "failed", error: "parent publication failed" } as never).eq("id", row.id);
+      failed++; // counted: same terminal close as the H1 branch above
       continue;
     }
     // S-6 re-check (retry path): an opt-out that landed after the
