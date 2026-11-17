@@ -5,7 +5,7 @@
 //   node scripts/daily-content/visual-integration-tests.mjs
 //
 // Test inputs are VERIFIED texts, copied from the engine's own self-test
-// (visual-intel/visual-concept-engine.test.ts, 47/47) for the 7-hadith
+// (visual-intel/visual-concept-engine.test.ts, 82/82) for the 7-hadith
 // plan, plus the two live renders:
 //  - bukhari-66-5022: Bengali transcribed from the verified E2E portrait
 //    (NOORAPP-E2E-REPORT-2026-11-17, checksum 7c7427f4...); Arabic +
@@ -24,6 +24,7 @@ const engine = await import(path.join(dir, ".out/visualConceptEngine.js"));
 const vs = await import(path.join(dir, ".out/visualSelection.js"));
 const bg = await import(path.join(dir, ".out/backgrounds.js"));
 const sem = await import(path.join(dir, ".out/semantic.js"));
+const pal = await import(path.join(dir, ".out/palettes.js"));
 
 let n = 0;
 const pending = [];
@@ -113,6 +114,46 @@ const INPUTS = {
     arabic: "حَدَّثَنَا مُحَمَّدُ بْنُ يُوسُفَ، حَدَّثَنَا مَالِكُ بْنُ مِغْوَلٍ، حَدَّثَنَا طَلْحَةُ، قَالَ سَأَلْتُ عَبْدَ اللَّهِ بْنَ أَبِي أَوْفَى أَوْصَى النَّبِيُّ صلى الله عليه وسلم فَقَالَ لاَ‏.‏ فَقُلْتُ كَيْفَ كُتِبَ عَلَى النَّاسِ الْوَصِيَّةُ، أُمِرُوا بِهَا وَلَمْ يُوصِ قَالَ أَوْصَى بِكِتَابِ اللَّهِ‏.‏",
     english: "Narrated Talha: I asked `Abdullah bin Abi `Aufa, \"Did the Prophet (ﷺ) make a will (to appoint his successor or bequeath wealth)?\" He replied, \"No.\" I said, \"How is it prescribed then for the people to make wills, and they are ordered to do so while the Prophet (ﷺ) did not make any will?\" He said, \"He made a will wherein he recommended Allah's Book",
     sourceLine: "Sahih al-Bukhari, Hadith 5022",
+  }),
+  // Master mission Phase 2 — bukhari-9-527, verbatim from bundled sahih_bukhari_en.json
+  // (Bengali is DB-only, so bengali is "" here, as in h876).
+  parents527: H({
+    ref: "hadith:bukhari-9-527", bookKey: "bukhari", chapterId: 9,
+    chapterTitleEn: null,
+    bengali: "",
+    arabic: "حَدَّثَنَا أَبُو الْوَلِيدِ، هِشَامُ بْنُ عَبْدِ الْمَلِكِ قَالَ حَدَّثَنَا شُعْبَةُ، قَالَ الْوَلِيدُ بْنُ الْعَيْزَارِ أَخْبَرَنِي قَالَ سَمِعْتُ أَبَا عَمْرٍو الشَّيْبَانِيَّ، يَقُولُ حَدَّثَنَا صَاحِبُ، هَذِهِ الدَّارِ وَأَشَارَ إِلَى دَارِ عَبْدِ اللَّهِ قَالَ سَأَلْتُ النَّبِيَّ صلى الله عليه وسلم أَىُّ الْعَمَلِ أَحَبُّ إِلَى اللَّهِ قَالَ ‏\"‏ الصَّلاَةُ عَلَى وَقْتِهَا ‏\"‏‏.‏ قَالَ ثُمَّ أَىُّ قَالَ ‏\"‏ ثُمَّ بِرُّ الْوَالِدَيْنِ ‏\"‏‏.‏ قَالَ ثُمَّ أَىُّ قَالَ ‏\"‏ الْجِهَادُ فِي سَبِيلِ اللَّهِ ‏\"‏‏.‏ قَالَ حَدَّثَنِي بِهِنَّ وَلَوِ اسْتَزَدْتُهُ لَزَادَنِي‏.‏",
+    english: "Narrated `Abdullah:I asked the Prophet (ﷺ) \"Which deed is the dearest to Allah?\" He replied, \"To offer the prayers at their early stated fixed times.\" I asked, \"What is the next (in goodness)?\" He replied, \"To be good and dutiful to your parents\" I again asked, \"What is the next (in goodness)?\" He replied, 'To participate in Jihad (religious fighting) in Allah's cause.\" `Abdullah added, \"I asked only that much and if I had asked more, the Prophet (ﷺ) would have told me more",
+    sourceLine: "Sahih al-Bukhari, Hadith 527",
+  }),
+  // Master mission Phase 2 — bukhari-24-1410, verbatim from bundled sahih_bukhari_en.json
+  // (Bengali is DB-only, so bengali is "" here, as in h876).
+  charity1410: H({
+    ref: "hadith:bukhari-24-1410", bookKey: "bukhari", chapterId: 24,
+    chapterTitleEn: null,
+    bengali: "",
+    arabic: "حَدَّثَنَا عَبْدُ اللَّهِ بْنُ مُنِيرٍ، سَمِعَ أَبَا النَّضْرِ، حَدَّثَنَا عَبْدُ الرَّحْمَنِ ـ هُوَ ابْنُ عَبْدِ اللَّهِ بْنِ دِينَارٍ ـ عَنْ أَبِيهِ، عَنْ أَبِي صَالِحٍ، عَنْ أَبِي هُرَيْرَةَ ـ رضى الله عنه ـ قَالَ قَالَ رَسُولُ اللَّهِ صلى الله عليه وسلم ‏ \"‏ مَنْ تَصَدَّقَ بِعَدْلِ تَمْرَةٍ مِنْ كَسْبٍ طَيِّبٍ ـ وَلاَ يَقْبَلُ اللَّهُ إِلاَّ الطَّيِّبَ ـ وَإِنَّ اللَّهَ يَتَقَبَّلُهَا بِيَمِينِهِ، ثُمَّ يُرَبِّيهَا لِصَاحِبِهِ كَمَا يُرَبِّي أَحَدُكُمْ فَلُوَّهُ حَتَّى تَكُونَ مِثْلَ الْجَبَلِ ‏\"‏‏.‏ تَابَعَهُ سُلَيْمَانُ عَنِ ابْنِ دِينَارٍ‏.‏ وَقَالَ وَرْقَاءُ عَنِ ابْنِ دِينَارٍ، عَنْ سَعِيدِ بْنِ يَسَارٍ، عَنْ أَبِي هُرَيْرَةَ ـ رضى الله عنه ـ عَنِ النَّبِيِّ صلى الله عليه وسلم‏.‏ وَرَوَاهُ مُسْلِمُ بْنُ أَبِي مَرْيَمَ وَزَيْدُ بْنُ أَسْلَمَ وَسُهَيْلٌ عَنْ أَبِي صَالِحٍ عَنْ أَبِي هُرَيْرَةَ ـ رضى الله عنه ـ عَنِ النَّبِيِّ صلى الله عليه وسلم‏.‏",
+    english: "Narrated Abu Huraira:Allah's Messenger (ﷺ) said, \"If one gives in charity what equals one date-fruit from the honestly earned money and Allah accepts only the honestly earned money --Allah takes it in His right (hand) and then enlarges its reward for that person (who has given it), as anyone of you brings up his baby horse, so much so that it becomes as big as a mountain",
+    sourceLine: "Sahih al-Bukhari, Hadith 1410",
+  }),
+  // Master mission Phase 2 — bukhari-23-1252, verbatim from bundled sahih_bukhari_en.json
+  // (Bengali is DB-only, so bengali is "" here, as in h876).
+  patience1252: H({
+    ref: "hadith:bukhari-23-1252", bookKey: "bukhari", chapterId: 23,
+    chapterTitleEn: null,
+    bengali: "",
+    arabic: "حَدَّثَنَا آدَمُ، حَدَّثَنَا شُعْبَةُ، حَدَّثَنَا ثَابِتٌ، عَنْ أَنَسِ بْنِ مَالِكٍ ـ رضى الله عنه ـ قَالَ مَرَّ النَّبِيُّ صلى الله عليه وسلم بِامْرَأَةٍ عِنْدَ قَبْرٍ وَهِيَ تَبْكِي فَقَالَ ‏ \"‏ اتَّقِي اللَّهَ وَاصْبِرِي ‏\"‏‏.‏",
+    english: "Narrated Anas bin Malik:The Prophet (ﷺ) passed by a woman who was sitting and weeping beside a grave and said to her, \"Fear Allah and be patient",
+    sourceLine: "Sahih al-Bukhari, Hadith 1252",
+  }),
+  // Master mission Phase 2 — bukhari-78-6000, verbatim from bundled sahih_bukhari_en.json
+  // (Bengali is DB-only, so bengali is "" here, as in h876).
+  mercy6000: H({
+    ref: "hadith:bukhari-78-6000", bookKey: "bukhari", chapterId: 78,
+    chapterTitleEn: null,
+    bengali: "",
+    arabic: "حَدَّثَنَا الْحَكَمُ بْنُ نَافِعٍ، أَخْبَرَنَا شُعَيْبٌ، عَنِ الزُّهْرِيِّ، أَخْبَرَنَا سَعِيدُ بْنُ الْمُسَيَّبِ، أَنَّ أَبَا هُرَيْرَةَ، قَالَ سَمِعْتُ رَسُولَ اللَّهِ صلى الله عليه وسلم يَقُولُ ‏ \"‏ جَعَلَ اللَّهُ الرَّحْمَةَ مِائَةَ جُزْءٍ، فَأَمْسَكَ عِنْدَهُ تِسْعَةً وَتِسْعِينَ جُزْءًا، وَأَنْزَلَ فِي الأَرْضِ جُزْءًا وَاحِدًا، فَمِنْ ذَلِكَ الْجُزْءِ يَتَرَاحَمُ الْخَلْقُ، حَتَّى تَرْفَعَ الْفَرَسُ حَافِرَهَا عَنْ وَلَدِهَا خَشْيَةَ أَنْ تُصِيبَهُ ‏\"‏‏.‏",
+    english: "Narrated Abu Huraira:I heard Allah's Messenger (ﷺ) saying, Allah divided Mercy into one hundred parts. He kept ninety nine parts with Him and sent down one part to the earth, and because of that, its one single part, His Creations are merciful to each other, so that even the mare lifts up its hoofs away from its baby animal, lest it should trample on it",
+    sourceLine: "Sahih al-Bukhari, Hadith 6000",
   }),
   // Jumu'ah phase — Bukhari 876, first hadith of book 11 "Friday Prayer",
   // verbatim from bundled sahih_bukhari_en.json (Bengali is DB-only, so
@@ -353,6 +394,149 @@ t("buildHadithInput parses book/chapter from the record, nulls without one", () 
   const withoutRecord = vs.buildHadithInput(cardFor(INPUTS.intentions), null);
   assert.equal(withoutRecord.chapterId, null);
   assert.equal(withoutRecord.english, null);
+});
+
+
+// --- Master mission Phase 2: richer concept output, palettes, prompts ---
+t("12-field concept output: every concept carries direction/palette/lighting/tone/reviewStatus", () => {
+  const paletteIds = new Set(Object.keys(pal.PALETTES));
+  const directionIds = new Set(engine.VISUAL_DIRECTIONS.map((d) => d.id));
+  assert.equal(engine.VISUAL_CONCEPTS.length, 29);
+  for (const c of engine.VISUAL_CONCEPTS) {
+    assert.ok(paletteIds.has(c.paletteId), `${c.id}: unknown palette ${c.paletteId}`);
+    assert.ok(directionIds.has(c.visualDirection), `${c.id}: unknown direction ${c.visualDirection}`);
+    assert.ok(c.lighting.length > 0, `${c.id}: empty lighting`);
+    assert.ok(c.tone.length >= 2, `${c.id}: tone needs >= 2 words`);
+    assert.equal(c.reviewStatus, c.sceneId === null ? "pending-human-review" : "reviewed", `${c.id}: reviewStatus mismatch`);
+  }
+  assert.equal(engine.VISUAL_DIRECTIONS.length, 10);
+  const used = new Set(engine.VISUAL_CONCEPTS.map((c) => c.visualDirection));
+  assert.deepEqual([...engine.VISUAL_DIRECTIONS.map((d) => d.id)].filter((id) => !used.has(id)).sort(), ["contemporary-graphic", "illustrated"]);
+});
+t("tone keywords occur in the chosen scene's text (tone is measured, not vacuous)", () => {
+  for (const c of engine.VISUAL_CONCEPTS) {
+    const text = c.sceneId
+      ? (() => { const sc = bg.CARD_BACKGROUNDS.find((x) => x.id === c.sceneId); return `${sc.scene} ${sc.subjects.join(" ")} ${sc.prompt}`.toLowerCase(); })()
+      : c.newScenePrompt.toLowerCase();
+    for (const w of c.tone) {
+      assert.ok(text.includes(w), `${c.id}: tone word "${w}" not in its scene text`);
+    }
+  }
+});
+t("profile tone is the concept tone; the chosen scene scores 15/15 on emotional", () => {
+  const { sel, score } = selectAndQc(INPUTS.h5022);
+  const profile = vs.buildVisualProfile(cardFor(INPUTS.h5022), sel.selection.topicId, sel.selection.chosen);
+  assert.deepEqual(profile.toneKeywords, ["reverent", "focused", "calm"]);
+  assert.deepEqual(profile.tone, ["reverent", "focused", "calm"]);
+  const emotional = score.components.find((x) => x.key === "emotional");
+  assert.equal(emotional.points, 15, `emotional ${emotional.points}/15`);
+  assert.equal(score.total, 100);
+});
+t("all 15 catalog prompts carry the structured tail (topic/mood/lighting/composition/camera/text-safe zones)", () => {
+  const markers = ["Topic:", "Mood:", "Lighting:", "Composition:", "Camera:", "Text-safe zones:", "darker areas"];
+  for (const sc of bg.CARD_BACKGROUNDS) {
+    for (const m of markers) assert.ok(sc.prompt.includes(m), `${sc.id}: prompt lacks "${m}"`);
+    assert.ok(/no text/i.test(sc.prompt), `${sc.id}: prompt lacks a no-text marker`);
+  }
+});
+t("all 11 new-scene prompts carry the structured tail and never ask for rendered text", () => {
+  const markers = ["Topic:", "Mood:", "Lighting:", "Composition:", "Camera:", "Text-safe zones:", "darker areas"];
+  for (const c of engine.VISUAL_CONCEPTS.filter((x) => x.sceneId === null)) {
+    for (const m of markers) assert.ok(c.newScenePrompt.includes(m), `${c.id}: prompt lacks "${m}"`);
+    assert.ok(!/render.*(bengali|arabic)|logo/i.test(c.newScenePrompt), `${c.id}: prompt asks for rendered text/logo`);
+  }
+});
+t("secondary topic: 5022 reports knowledge as runner-up; message carries topic + concept", () => {
+  const { sel } = selectAndQc(INPUTS.h5022);
+  assert.equal(sel.selection.secondaryTopicId, "knowledge");
+  // Live-path input (full English + chapter 66): knowledge scores 2
+  // (Arabic "كتاب" + English "Book"); the canonical card-only input
+  // scores 1 — same runner-up, different evidence.
+  assert.equal(sel.selection.secondaryScore, 2);
+  assert.equal(sel.selection.message.en, "Quran — Quran on a rehal");
+  assert.equal(sel.selection.message.bn, "কুরআন — রেহালে কুরআন");
+  assert.equal(sel.selection.toneLabelBn, "শ্রদ্ধাশীল ও মনোযোগী");
+  assert.equal(sel.selection.paletteId, "soft-gold");
+  assert.equal(sel.selection.visualDirection, "heritage-editorial");
+});
+t("palette contrast: every palette reaches 4.5 vs #0b1526 (readability is non-negotiable)", () => {
+  assert.equal(pal.POSTER_BG, "#0b1526");
+  assert.equal(pal.PALETTE_MIN_CONTRAST, 4.5);
+  assert.ok(pal.contrastRatio("#ffffff", "#000000") === 21);
+  for (const p of Object.values(pal.PALETTES)) {
+    const r = pal.checkPaletteContrast(p);
+    assert.equal(r.ok, true, `${p.id} (${p.accent}) contrast ${r.ratio} < 4.5`);
+  }
+  assert.equal(pal.paletteById("no-such-palette"), null);
+});
+t("six-topic selection: parents 527 / patience 1252 / mercy 6000 render; charity 1410 HOLDs", () => {
+  const cases = [
+    ["parents527", "parents", "parents-hands", "parents-hands", "warm-cream"],
+    ["patience1252", "patience", "patience-tree", "patience-tree", "muted-blue"],
+    ["mercy6000", "kindness", "helping-hands", "helping-hands", "gentle-green"],
+  ];
+  for (const [key, topic, concept, scene, palette] of cases) {
+    const { sel, qc, score } = selectAndQc(INPUTS[key], NO_HISTORY, undefined, 0);
+    assert.equal(sel.selection.topicId, topic, `${key}: topic ${sel.selection.topicId}`);
+    assert.equal(sel.selection.chosen.id, concept, `${key}: concept`);
+    assert.equal(sel.scene.id, scene, `${key}: scene`);
+    assert.equal(sel.selection.paletteId, palette, `${key}: palette`);
+    assert.equal(qc.ok, true, `${key}: QC failed: ${qc.failures.join("; ")}`);
+    assert.ok(score.total >= 85, `${key}: semantic ${score.total} < 85`);
+  }
+  const charity = selectAndQc(INPUTS.charity1410);
+  assert.equal(charity.sel.selection.topicId, "charity");
+  assert.equal(charity.sel.scene, null);
+  assert.equal(charity.sel.hold.reason, "visual_needs_new_scene");
+  assert.equal(charity.sel.selection.needsNewScene, true);
+  assert.equal(charity.sel.selection.paletteId, null, "a held topic carries no palette (no fake design)");
+});
+t("QC hard-fails an unknown palette id (fail closed, never silent gold)", () => {
+  const input = INPUTS.quran5027;
+  const card = cardFor(input);
+  const record = recordFor(input, 5027);
+  const sel = vs.selectPosterVisual(card, record, NO_HISTORY, TODAY);
+  const badConcept = { ...sel.selection.chosen, paletteId: "no-such-palette" };
+  const qc = vs.checkVisualQC({
+    card, topicId: sel.selection.topicId, concept: badConcept,
+    scene: sel.scene, history: NO_HISTORY, today: TODAY,
+  });
+  assert.equal(qc.ok, false);
+  assert.ok(qc.failures.some((f) => f.startsWith("visual_palette_unknown")));
+});
+t("history variation: same palette as yesterday for the same topic warns, never holds", () => {
+  // Synthetic yesterday entry (the situation arises once catalog growth
+  // adds a second same-palette scene, e.g. quran-dawn): yesterday's
+  // forgiveness poster used sunrise-gold; today's dawn-forgiveness
+  // concept also uses sunrise-gold, with a different scene.
+  const input = INPUTS.quran5027; // only used for a card; topic overridden below
+  const card = cardFor(input);
+  const concept = engine.VISUAL_CONCEPTS.find((c) => c.id === "dawn-forgiveness");
+  const scene = bg.CARD_BACKGROUNDS.find((s) => s.id === "dawn-forgiveness");
+  const history = [{
+    date: "2026-11-16", contentRef: "hadith:synthetic", sceneId: "forgiveness-leaf",
+    conceptId: "forgiveness-leaf", topicId: "forgiveness",
+    paletteId: "sunrise-gold", composition: "centered",
+  }];
+  const qc = vs.checkVisualQC({
+    card, topicId: "forgiveness", concept, scene, history, today: TODAY,
+  });
+  assert.equal(qc.ok, true, `QC should pass with a warning only: ${qc.failures.join("; ")}`);
+  assert.ok(qc.warnings.some((w) => w.startsWith("visual_variation: same palette (sunrise-gold)")), qc.warnings.join(" | "));
+});
+t("visualStatusJson carries the 12-field concept output for the render JSON", () => {
+  const { sel, qc } = selectAndQc(INPUTS.h5022);
+  const json = vs.visualStatusJson(sel.selection, sel.scene, qc);
+  assert.equal(json.topicId, "quran");
+  assert.equal(json.secondaryTopicId, "knowledge");
+  assert.equal(json.messageEn, "Quran — Quran on a rehal");
+  assert.deepEqual(json.tone, ["reverent", "focused", "calm"]);
+  assert.equal(json.paletteId, "soft-gold");
+  assert.equal(json.lighting, "Warm brass lamp glow from the side");
+  assert.equal(json.visualDirection, "heritage-editorial");
+  assert.equal(json.composition, "centered");
+  assert.equal(json.reviewStatus, "reviewed");
+  assert.equal(json.semanticScore, 100);
 });
 
 await Promise.all(pending);

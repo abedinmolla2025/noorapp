@@ -79,6 +79,7 @@ import {
   type VisualStatusJson,
 } from "@/lib/dailyContent/visualSelection";
 import { checkOgCardBatch, checkOgVerbatim, effectiveBengaliFirstLayout, ogExportSize, OG_STAGE_SIZE, parsePosterLayout, type OgFitRecord, type OgFormat, type PosterLayout } from "@/lib/dailyContent/ogQc";
+import { paletteById } from "@/lib/dailyContent/palettes";
 import { buildHadithCard, hadithCanonicalLink, hadithSourceLine } from "@/lib/dailyContent/cards";
 import { extractHadithMatn, transliterateArabic } from "@/lib/dailyContent/transliteration";
 import type { CardPayload, HadithRecord } from "@/lib/dailyContent/types";
@@ -581,7 +582,7 @@ export default function PosterRender() {
       </div>
       {card && background && (
         <div id="poster-stage" ref={stageRef} style={{ width: stage.width, height: stage.height }}>
-          <OgShareCard card={card} backgroundUrl={backgroundUrl(background)} badgeLabel={badgeLabelForCard(card)} format={format} layout={layout} />
+          <OgShareCard card={card} backgroundUrl={backgroundUrl(background)} badgeLabel={badgeLabelForCard(card)} format={format} layout={layout} palette={status.visual ? paletteById(status.visual.paletteId) : null} />
         </div>
       )}
       {status.status === "error" && (

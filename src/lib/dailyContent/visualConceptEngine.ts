@@ -60,6 +60,9 @@ export type Topic = {
   id: TopicId;
   labelBn: string;
   labelEn: string;
+  /** Bengali display label for the topic's emotional tone (output
+   *  field — the measurable tone keywords live on each concept). */
+  toneLabelBn: string;
   /** Bengali keywords. RULE: never a bare <=3-char word (e.g. "মা" matches
    *  inside "আমার"); use full or inflected forms ("মা-বাবা", "বাবার"). */
   keywordsBn: string[];
@@ -81,7 +84,7 @@ export type Topic = {
 
 export const TOPICS: Topic[] = [
   {
-    id: "salah", labelBn: "সালাত ও ইবাদত", labelEn: "Prayer & worship",
+    id: "salah", toneLabelBn: "শান্ত ও বিনম্র", labelBn: "সালাত ও ইবাদত", labelEn: "Prayer & worship",
     keywordsBn: ["নামাজ", "সালাত", "মসজিদ", "জামাত", "আজান", "ফজর", "ইবাদত", "সিজদা", "রুকু", "তাহাজ্জুদ", "জুম্মা", "জুমা"],
     keywordsAr: ["صلاة", "مسجد", "أذان", "فجر", "سجود", "ركوع", "تهجد", "جمعة"],
     keywordsEn: ["prayer", "mosque", "adhan", "fajr", "prostrat", "worship", "friday", "jumu"],
@@ -94,119 +97,119 @@ export const TOPICS: Topic[] = [
     chapterHints: [10, 11, 31, 33],
   },
   {
-    id: "quran", labelBn: "কুরআন", labelEn: "Quran",
+    id: "quran", toneLabelBn: "শ্রদ্ধাশীল ও মনোযোগী", labelBn: "কুরআন", labelEn: "Quran",
     keywordsBn: ["কুরআন", "কোরআন", "তিলাওয়াত", "আয়াত", "সূরা"],
     keywordsAr: ["قرآن", "تلاوة", "آية", "سورة", "كتاب الله"],
     keywordsEn: ["quran", "qur'an", "recit"],
     chapterHints: [66],
   },
   {
-    id: "knowledge", labelBn: "জ্ঞান অর্জন", labelEn: "Seeking knowledge",
+    id: "knowledge", toneLabelBn: "মনোযোগী ও শ্রদ্ধাশীল", labelBn: "জ্ঞান অর্জন", labelEn: "Seeking knowledge",
     keywordsBn: ["জ্ঞান", "শেখা", "পড়া", "বই", "শিক্ষা", "আলেম", "অন্বেষণ"],
     keywordsAr: ["علم", "تعلم", "كتاب", "عالم"],
     keywordsEn: ["knowledge", "learn", "seeking knowledge", "scholar", "book"],
     chapterHints: [],
   },
   {
-    id: "charity", labelBn: "দান ও সদকা", labelEn: "Charity & sadaqah",
+    id: "charity", toneLabelBn: "উদার ও বিনম্র", labelBn: "দান ও সদকা", labelEn: "Charity & sadaqah",
     keywordsBn: ["দান", "সদকা", "সাদাকা", "যাকাত", "গরিব", "মিসকিন", "সাহায্য", "অভাবী"],
     keywordsAr: ["صدقة", "زكاة", "فقير", "مسكين"],
     keywordsEn: ["charity", "sadaqah", "zakat", "poor", "give", "alms"],
     chapterHints: [73],
   },
   {
-    id: "parents", labelBn: "মা-বাবার অধিকার", labelEn: "Parents' rights",
+    id: "parents", toneLabelBn: "স্নেহময় ও শ্রদ্ধাশীল", labelBn: "মা-বাবার অধিকার", labelEn: "Parents' rights",
     keywordsBn: ["পিতা-মাতা", "মা-বাবা", "পিতামাতা", "বাবা-মা", "বাবার", "মায়ের", "বৃদ্ধ পিতা", "পিতার", "মাতার"],
     keywordsAr: ["والدين", "بر الوالدين"],
     keywordsEn: ["parent", "mother", "father", "elderly parent"],
     chapterHints: [],
   },
   {
-    id: "family", labelBn: "পরিবার ও সন্তান", labelEn: "Family & children",
+    id: "family", toneLabelBn: "উষ্ণ ও আশাবাদী", labelBn: "পরিবার ও সন্তান", labelEn: "Family & children",
     keywordsBn: ["পরিবার", "সন্তান", "সন্তানের", "স্ত্রী", "স্বামী", "ঘর", "বাড়ি"],
     keywordsAr: ["أسرة", "ولد", "أهل", "بيت"],
     keywordsEn: ["family", "child", "offspring", "household", "spouse"],
     chapterHints: [13],
   },
   {
-    id: "patience", labelBn: "ধৈর্য", labelEn: "Patience",
+    id: "patience", toneLabelBn: "দৃঢ় ও শান্ত", labelBn: "ধৈর্য", labelEn: "Patience",
     keywordsBn: ["ধৈর্য", "সবর", "দৃঢ়তা", "সহনশীল"],
     keywordsAr: ["صبر", "صابر"],
     keywordsEn: ["patience", "patient", "steadfast", "endur"],
     chapterHints: [25, 27, 28, 33],
   },
   {
-    id: "kindness", labelBn: "দয়া ও উত্তম আচরণ", labelEn: "Kindness & good conduct",
+    id: "kindness", toneLabelBn: "কোমল ও শ্রদ্ধাশীল", labelBn: "দয়া ও উত্তম আচরণ", labelEn: "Kindness & good conduct",
     keywordsBn: ["দয়া", "সদাচরণ", "চরিত্র", "উত্তম আচরণ", "সদয়", "নম্র", "ভদ্র"],
     keywordsAr: ["خلق", "رفق", "إحسان", "رحمة"],
     keywordsEn: ["kindness", "character", "good conduct", "gentle", "compassion"],
     chapterHints: [78],
   },
   {
-    id: "forgiveness", labelBn: "ক্ষমা ও তওবা", labelEn: "Forgiveness & repentance",
+    id: "forgiveness", toneLabelBn: "আশাবাদী ও শান্ত", labelBn: "ক্ষমা ও তওবা", labelEn: "Forgiveness & repentance",
     keywordsBn: ["ক্ষমা", "তওবা", "গুনাহ", "মাফ", "তাওবা", "ইস্তিগফার"],
     keywordsAr: ["استغفار", "توبة", "مغفرة", "ذنب"],
     keywordsEn: ["forgive", "repent", "pardon", "mercy", "sin"],
     chapterHints: [32],
   },
   {
-    id: "gratitude", labelBn: "কৃতজ্ঞতা", labelEn: "Gratitude",
+    id: "gratitude", toneLabelBn: "শান্ত ও কৃতজ্ঞ", labelBn: "কৃতজ্ঞতা", labelEn: "Gratitude",
     keywordsBn: ["কৃতজ্ঞতা", "শুকরিয়া", "শোকর", "কৃতজ্ঞ"],
     keywordsAr: ["شكر", "نعمة", "حمد"],
     keywordsEn: ["grateful", "gratitude", "thank", "blessing"],
     chapterHints: [13],
   },
   {
-    id: "creation", labelBn: "আল্লাহর সৃষ্টি", labelEn: "Allah's creation",
+    id: "creation", toneLabelBn: "বিস্ময় ও বিনম্রতা", labelBn: "আল্লাহর সৃষ্টি", labelEn: "Allah's creation",
     keywordsBn: ["সৃষ্টি", "প্রকৃতি", "আকাশ", "পাহাড়", "সাগর", "নক্ষত্র", "চাঁদ", "সূর্য"],
     keywordsAr: ["خلق", "طبيعة", "سماء", "نجم", "قمر", "شمس"],
     keywordsEn: ["creation", "nature", "sky", "mountain", "star", "moon", "sea"],
     chapterHints: [],
   },
   {
-    id: "intentions", labelBn: "নিয়ত ও আন্তরিকতা", labelEn: "Intentions & sincerity",
+    id: "intentions", toneLabelBn: "শান্ত ও আশাবাদী", labelBn: "নিয়ত ও আন্তরিকতা", labelEn: "Intentions & sincerity",
     keywordsBn: ["নিয়ত", "ইখলাস", "আন্তরিকতা", "উদ্দেশ্য"],
     keywordsAr: ["نية", "نيات", "إخلاص"],
     keywordsEn: ["intention", "sincer", "deed"],
     chapterHints: [1],
   },
   {
-    id: "speech", labelBn: "জিহ্বা ও কথা", labelEn: "Speech & the tongue",
+    id: "speech", toneLabelBn: "শান্ত ও সংযত", labelBn: "জিহ্বা ও কথা", labelEn: "Speech & the tongue",
     keywordsBn: ["কথা", "জিহ্বা", "চুপ", "নীরব", "ভালো কথা", "জবান"],
     keywordsAr: ["لسان", "كلام", "صمت", "قول"],
     keywordsEn: ["tongue", "speech", "speak", "silent", "silence", "words"],
     chapterHints: [78],
   },
   {
-    id: "modesty", labelBn: "লজ্জাশীলতা", labelEn: "Modesty",
+    id: "modesty", toneLabelBn: "মর্যাদাপূর্ণ ও শান্ত", labelBn: "লজ্জাশীলতা", labelEn: "Modesty",
     keywordsBn: ["লজ্জা", "শালীনতা", "লজ্জাশীল"],
     keywordsAr: ["حياء"],
     keywordsEn: ["modest", "modesty", "shy", "bashful"],
     chapterHints: [],
   },
   {
-    id: "protection", labelBn: "হেফাজত ও নিরাপত্তা", labelEn: "Protection & safety",
+    id: "protection", toneLabelBn: "নিরাপদ ও শান্ত", labelBn: "হেফাজত ও নিরাপত্তা", labelEn: "Protection & safety",
     keywordsBn: ["হেফাজত", "নিরাপত্তা", "রক্ষা", "ভয়", "অন্ধকার", "নিরাপদ"],
     keywordsAr: ["أمان", "خوف", "حفظ", "ليل"],
     keywordsEn: ["protect", "safety", "safe", "fear", "night", "harm"],
     chapterHints: [],
   },
   {
-    id: "guidance", labelBn: "হেদায়াত ও সরল পথ", labelEn: "Guidance & the straight path",
+    id: "guidance", toneLabelBn: "শান্ত ও আশাবাদী", labelBn: "হেদায়াত ও সরল পথ", labelEn: "Guidance & the straight path",
     keywordsBn: ["হেদায়াত", "সরল পথ", "পথ", "হিদায়াত", "সঠিক পথ"],
     keywordsAr: ["هداية", "صراط", "طريق"],
     keywordsEn: ["guidance", "straight path", "right path"],
     chapterHints: [25, 27, 28],
   },
   {
-    id: "fasting", labelBn: "রোজা ও রমজান", labelEn: "Fasting & Ramadan",
+    id: "fasting", toneLabelBn: "শান্ত ও বরকতময়", labelBn: "রোজা ও রমজান", labelEn: "Fasting & Ramadan",
     keywordsBn: ["রোজা", "সিয়াম", "সেহরি", "ইফতার", "রমজান"],
     keywordsAr: ["صوم", "صيام", "رمضان", "سحور", "إفطار"],
     keywordsEn: ["fast", "ramadan", "suhur", "iftar"],
     chapterHints: [30, 31, 33],
   },
   {
-    id: "faith", labelBn: "ঈমান", labelEn: "Faith",
+    id: "faith", toneLabelBn: "আশাবাদী ও শান্ত", labelBn: "ঈমান", labelEn: "Faith",
     keywordsBn: ["ঈমান", "বিশ্বাস", "মুমিন", "আখিরাত", "পরকাল"],
     keywordsAr: ["إيمان", "مؤمن", "آخرة"],
     keywordsEn: ["faith", "believe", "believer", "hereafter"],
@@ -224,8 +227,63 @@ export const DEFAULT_TOPIC_ID: TopicId = "guidance";
 /* ------------------------------------------------------------------ */
 /* Visual concepts — one topic, 2-3 concepts; each concept is either   */
 /* an existing catalog scene or a NEW scene proposal (sceneId null).   */
-/* A concept is a scene + a composition, never a colour theme.        */
+/* A concept is a scene + a composition + a visual direction + a      */
+/* palette + lighting + an emotional tone. The palette drives the card */
+/* chrome (title / divider / accent) — never the photograph, and      */
+/* never at the cost of the contrast guarantees: brand gold stays on  */
+/* the logo, badge and source pill, and every palette accent is       */
+/* contrast-checked against the dark card background before it may    */
+/* render. (Master mission Phase 2, 2026-11-17: the old "never a      */
+/* colour theme" rule is deliberately revised here — see the master    */
+/* poster report §3.)                                                 */
 /* ------------------------------------------------------------------ */
+
+/** Topic-driven card-chrome palettes (accent colour only — the Bengali
+ *  text stays white on dark glass and the brand gold stays on the
+ *  logo / badge / source pill). Hex values live in the repo's
+ *  palettes.ts; the engine carries only the id, so this file stays
+ *  standalone. Every accent is contrast-checked (>= 4.5 vs #0b1526)
+ *  by checkVisualQC before it may render. */
+export type PaletteId =
+  | "emerald" | "dawn-gold" | "soft-gold" | "deep-blue" | "warm-amber"
+  | "warm-cream" | "muted-gold" | "muted-blue" | "sunrise-gold"
+  | "gentle-green" | "forest-green";
+
+/** Controlled library of visual directions (Master mission Phase 2).
+ *  A direction is selected by topic relevance — never by random
+ *  rotation, never one fixed background. "illustrated" and
+ *  "contemporary-graphic" have no scene yet; they are available for
+ *  future catalog growth, never selected without a scene. */
+export type VisualDirectionId =
+  | "cinematic-islamic" | "premium-editorial" | "architectural"
+  | "nature-storytelling" | "warm-human" | "minimal-symbolic"
+  | "illustrated" | "atmospheric" | "heritage-editorial"
+  | "contemporary-graphic";
+
+export type VisualDirection = {
+  id: VisualDirectionId;
+  labelEn: string;
+  labelBn: string;
+  /** When this direction is the right one (topic relevance, not taste). */
+  useWhen: string;
+};
+
+export const VISUAL_DIRECTIONS: VisualDirection[] = [
+  { id: "cinematic-islamic", labelEn: "Cinematic Islamic photography", labelBn: "সিনেমাটিক ইসলামিক ফটোগ্রাফি", useWhen: "Sacred spaces, night devotion, the guided path — reverent, filmic, dark with warm light." },
+  { id: "premium-editorial", labelEn: "Premium editorial photography", labelBn: "প্রিমিয়াম সম্পাদকীয় ফটোগ্রাফি", useWhen: "Domestic and table scenes (home, suhur, iftar) — clean, composed, magazine-quiet." },
+  { id: "architectural", labelEn: "Architectural", labelBn: "স্থাপত্য", useWhen: "Mosque courtyards and arches — geometry and light carry the meaning." },
+  { id: "nature-storytelling", labelEn: "Nature storytelling", labelBn: "প্রকৃতির গল্প", useWhen: "Creation, patience, gratitude — landscape as the message, no people needed." },
+  { id: "warm-human", labelEn: "Warm human-centered", labelBn: "উষ্ণ মানবকেন্দ্রিক", useWhen: "Hands, family, neighbours, giving — closeness and care, faces never shown." },
+  { id: "minimal-symbolic", labelEn: "Minimal symbolic", labelBn: "মিনিমাল প্রতীকী", useWhen: "Speech, modesty, forgiveness — one quiet object or empty space says it." },
+  { id: "illustrated", labelEn: "Illustrated", labelBn: "ইলাস্ট্রেটেড", useWhen: "Future catalog growth only — no scene uses this direction yet." },
+  { id: "atmospheric", labelEn: "Atmospheric environmental", labelBn: "বায়ুমণ্ডলীয়", useWhen: "Dawn, mist, still water, first light — mood and air carry the meaning." },
+  { id: "heritage-editorial", labelEn: "Heritage editorial", labelBn: "ঐতিহ্য সম্পাদকীয়", useWhen: "Quran and study — books, rehal, lamp, old wood; reverent and focused." },
+  { id: "contemporary-graphic", labelEn: "Contemporary graphic", labelBn: "সমসাময়িক গ্রাফিক", useWhen: "Future catalog growth only — no scene uses this direction yet." },
+];
+
+export function directionById(id: VisualDirectionId): VisualDirection {
+  return VISUAL_DIRECTIONS.find((d) => d.id === id) as VisualDirection;
+}
 
 export type VisualConcept = {
   id: string;
@@ -235,6 +293,21 @@ export type VisualConcept = {
   /** Existing scene id in CARD_BACKGROUNDS, or null = scene must be generated first. */
   sceneId: string | null;
   composition: "centered" | "lower-third";
+  /** Controlled visual direction (selection by topic relevance only). */
+  visualDirection: VisualDirectionId;
+  /** Card-chrome palette id (accent only; hex + contrast in palettes.ts). */
+  paletteId: PaletteId;
+  /** Lighting direction, in words (copied from the scene prompt prose). */
+  lighting: string;
+  /** Emotional tone keywords — every word MUST occur in the scene's
+   *  prompt/subjects text, so the semantic scorer measures tone for
+   *  real instead of awarding max for an empty list (the old design).
+   *  Verified by test (tone words ⊆ scene text). */
+  tone: string[];
+  /** "reviewed" = the scene JPG exists and was human-reviewed;
+   *  "pending-human-review" = prompt-only, HOLD by design until the
+   *  scene is generated + reviewed. Never render the latter. */
+  reviewStatus: "reviewed" | "pending-human-review";
   /** Scene description (existing scene's description, or the new-scene brief). */
   sceneDescription: string;
   /** Generation prompt for a NEW scene (Dua OG style: photorealistic,
@@ -249,35 +322,35 @@ const NEW_SCENE_GUARD =
   "No faces, no identifiable people. Generous darker areas at the top and bottom for text overlay.";
 
 export const VISUAL_CONCEPTS: VisualConcept[] = [
-  { id: "mosque-courtyard", topicId: "salah", labelBn: "মসজিদের আঙিনায় নামাজ", labelEn: "Prayer in a mosque courtyard", sceneId: "courtyard-prayer", composition: "centered", sceneDescription: "Man from behind in quiet prayer in a mosque courtyard at dusk, arches and lamps", newScenePrompt: null },
-  { id: "fajr-window", topicId: "salah", labelBn: "ফজরের ভোর", labelEn: "Fajr dawn at home", sceneId: "morning-window", composition: "lower-third", sceneDescription: "Quiet bedroom at first morning light, dawn through sheer curtains, prayer cap on side table", newScenePrompt: null },
-  { id: "quran-rehal", topicId: "quran", labelBn: "রেহালে কুরআন", labelEn: "Quran on a rehal", sceneId: "library", composition: "centered", sceneDescription: "Quiet Islamic library reading corner — open Quran on a carved wooden rehal stand, warm brass lamp", newScenePrompt: null },
-  { id: "quran-dawn", topicId: "quran", labelBn: "ভোরের আলোয় কুরআন", labelEn: "Quran in dawn light", sceneId: null, composition: "centered", sceneDescription: "NEW: open Quran on a wooden rehal beside a window, soft dawn light falling across blank warm pages, quiet and reverent, no people", newScenePrompt: `${NEW_SCENE_GUARD} An open Quran resting on a carved wooden rehal stand beside a tall window, soft golden dawn light falling across the pages, deep green and warm gold tones, quiet reverent atmosphere.` },
-  { id: "library-study", topicId: "knowledge", labelBn: "পাঠাগারে অধ্যয়ন", labelEn: "Study in the library", sceneId: "library", composition: "centered", sceneDescription: "Quiet Islamic library reading corner — wooden shelves of old books, warm brass reading lamp (shared scene with quran-rehal; see report §4)", newScenePrompt: null },
-  { id: "study-desk", topicId: "knowledge", labelBn: "পড়ার টেবিল", labelEn: "Study desk with books", sceneId: null, composition: "centered", sceneDescription: "NEW: a wooden study desk with stacked old books, an ink pot and a warm lamp glow, deep green and gold tones, no people", newScenePrompt: `${NEW_SCENE_GUARD} A wooden study desk with a stack of old cloth-bound books, an ink pot and a warm brass lamp glowing softly, deep green and warm gold tones, focused calm atmosphere of learning, no people.` },
-  { id: "food-sharing", topicId: "charity", labelBn: "খাবার বিতরণ", labelEn: "Sharing food", sceneId: null, composition: "lower-third", sceneDescription: "NEW: hands offering a bowl of dates and bread across a simple wooden table in warm light, no faces", newScenePrompt: `${NEW_SCENE_GUARD} Two pairs of hands across a simple wooden table, one gently offering a bowl of dates and bread to the other, warm golden light, humble and generous atmosphere, close-up on hands only.` },
-  { id: "giving-hands", topicId: "charity", labelBn: "দানের হাত", labelEn: "Hands giving", sceneId: null, composition: "centered", sceneDescription: "NEW: an open palm offering coins and dates in warm sunlight, soft green bokeh background, no faces", newScenePrompt: `${NEW_SCENE_GUARD} An open palm gently offering a few coins and dates in warm sunlight, soft green bokeh background, generous and humble atmosphere, close-up on hands only.` },
-  { id: "parents-hands", topicId: "parents", labelBn: "পিতা-মাতার হাত", labelEn: "Parents' hands", sceneId: "parents-hands", composition: "lower-third", sceneDescription: "An adult child's hands gently holding an elderly parent's wrinkled hands in warm golden window light", newScenePrompt: null },
-  { id: "family-path", topicId: "parents", labelBn: "পরিবারের পথ", labelEn: "Family on a garden path", sceneId: "family-child", composition: "centered", sceneDescription: "Parents and a young child walking together on a garden path at golden hour, seen from behind", newScenePrompt: null },
-  { id: "home-welcome", topicId: "family", labelBn: "ঘরের দুয়ার", labelEn: "Home entrance", sceneId: "home-entrance", composition: "lower-third", sceneDescription: "Warm home entrance at golden hour, open carved wooden door, plants and courtyard", newScenePrompt: null },
-  { id: "patience-tree", topicId: "patience", labelBn: "ঝড়ে দাঁড়িয়ে থাকা গাছ", labelEn: "Tree standing firm in the storm", sceneId: "patience-tree", composition: "centered", sceneDescription: "A single strong old tree standing firm on a rocky mountain slope in difficult weather, a break of golden light", newScenePrompt: null },
-  { id: "still-water", topicId: "patience", labelBn: "শান্ত জল", labelEn: "Still water at dawn", sceneId: null, composition: "centered", sceneDescription: "NEW: a perfectly still lake at dawn reflecting soft gold light, mist over the water, deep calm", newScenePrompt: `${NEW_SCENE_GUARD} A perfectly still mountain lake at dawn reflecting soft golden light, thin mist over the water, deep teal and gold tones, profound calm and steadiness.` },
-  { id: "helping-hands", topicId: "kindness", labelBn: "সাহায্যের হাত", labelEn: "Hands helping", sceneId: "helping-hands", composition: "centered", sceneDescription: "Two hands gently offering a cup of tea to an elderly person in a warm sunlit home, no faces", newScenePrompt: null },
-  { id: "neighbour-greeting", topicId: "kindness", labelBn: "প্রতিবেশীর সাক্ষাৎ", labelEn: "Neighbours greeting", sceneId: null, composition: "centered", sceneDescription: "NEW: two neighbours sharing tea at a doorway at golden hour, seen from behind, warm and respectful, no faces", newScenePrompt: `${NEW_SCENE_GUARD} Two neighbours sharing tea at an open doorway at golden hour, seen from behind, warm respectful atmosphere, soft golden light, deep green and gold tones.` },
-  { id: "dawn-forgiveness", topicId: "forgiveness", labelBn: "ভোরের ক্ষমা", labelEn: "Dawn breaking through darkness", sceneId: "dawn-forgiveness", composition: "lower-third", sceneDescription: "First dawn light breaking through darkness over a calm valley with mist and a lake", newScenePrompt: null },
-  { id: "forgiveness-leaf", topicId: "forgiveness", labelBn: "বৃষ্টিধোয়া পাতা", labelEn: "Rain-washed leaf", sceneId: "forgiveness-leaf", composition: "centered", sceneDescription: "Rain-washed green leaf with droplets in golden light", newScenePrompt: null },
-  { id: "gratitude-garden", topicId: "gratitude", labelBn: "কৃতজ্ঞতার বাগান", labelEn: "Garden of gratitude", sceneId: "gratitude-garden", composition: "centered", sceneDescription: "Morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist", newScenePrompt: null },
-  { id: "creation-mountains", topicId: "creation", labelBn: "সৃষ্টির পাহাড়", labelEn: "Mountains of creation", sceneId: "guidance-path", composition: "centered", sceneDescription: "Winding path through misty green hills at dawn, distant mosque silhouette", newScenePrompt: null },
-  { id: "night-sky", topicId: "creation", labelBn: "তারাভরা আকাশ", labelEn: "Star-filled night sky", sceneId: null, composition: "centered", sceneDescription: "NEW: a vast night sky full of stars over quiet dark hills, a single warm lantern glow low in the frame", newScenePrompt: `${NEW_SCENE_GUARD} A vast night sky full of bright stars over quiet dark hills, a single small warm lantern glowing low in the frame, deep blue-black and gold tones, awe and humility.` },
-  { id: "intention-sunrise", topicId: "intentions", labelBn: "নিয়তের সূর্যোদয়", labelEn: "Sunrise of intention", sceneId: "intention-sunrise", composition: "centered", sceneDescription: "Golden sunrise over layered mountains and a valley river", newScenePrompt: null },
-  { id: "quiet-garden", topicId: "speech", labelBn: "নীরব বাগান", labelEn: "Quiet garden", sceneId: null, composition: "centered", sceneDescription: "NEW: a quiet garden path at dawn with still air and soft light, an empty wooden bench, no people", newScenePrompt: `${NEW_SCENE_GUARD} A quiet garden path at dawn, still air, soft golden light through trees, an empty wooden bench, deep green and gold tones, silence and restraint.` },
-  { id: "still-water-speech", topicId: "speech", labelBn: "শান্ত জল (কথা)", labelEn: "Still water (speech)", sceneId: null, composition: "centered", sceneDescription: "NEW: same still-water scene as patience (shared concept file) — a perfectly still lake at dawn; one scene file serves both topics, flagged by the similarity check", newScenePrompt: `${NEW_SCENE_GUARD} A perfectly still mountain lake at dawn reflecting soft golden light, thin mist over the water, deep teal and gold tones, profound calm and restraint.` },
-  { id: "latticed-light", topicId: "modesty", labelBn: "জালির আলো", labelEn: "Light through a lattice", sceneId: null, composition: "centered", sceneDescription: "NEW: soft light falling through a carved wooden lattice window onto a quiet floor, no people", newScenePrompt: `${NEW_SCENE_GUARD} Soft golden light falling through a carved wooden lattice window onto a quiet stone floor, deep shadows and warm light, dignified private calm, no people.` },
-  { id: "night-lantern", topicId: "protection", labelBn: "রাতের লণ্ঠন", labelEn: "Lantern in the night", sceneId: "night-lantern", composition: "centered", sceneDescription: "Ornate lantern glowing on a branch in a dark night forest, stars above", newScenePrompt: null },
-  { id: "guidance-path", topicId: "guidance", labelBn: "সরল পথ", labelEn: "The straight path", sceneId: "guidance-path", composition: "centered", sceneDescription: "Winding path through misty green hills at dawn, distant mosque silhouette", newScenePrompt: null },
-  { id: "suhur-meal", topicId: "fasting", labelBn: "সেহরির খাবার", labelEn: "Suhur meal", sceneId: "suhur-meal", composition: "lower-third", sceneDescription: "A simple pre-dawn suhur meal on a wooden table — dates, water, bread — with a warm lantern", newScenePrompt: null },
-  { id: "iftar-table", topicId: "fasting", labelBn: "ইফতারের টেবিল", labelEn: "Iftar table at dusk", sceneId: null, composition: "lower-third", sceneDescription: "NEW: a simple iftar spread at dusk — dates, water, bread — warm lantern light, deep blue dusk through a window", newScenePrompt: `${NEW_SCENE_GUARD} A simple iftar spread on a wooden table at dusk — dates in a small bowl, a glass of water, bread — warm lantern light and deep blue dusk through a window, calm blessed atmosphere, no people.` },
-  { id: "dawn-valley", topicId: "faith", labelBn: "ভোরের উপত্যকা", labelEn: "Valley at dawn", sceneId: "dawn-forgiveness", composition: "lower-third", sceneDescription: "First dawn light breaking through darkness over a calm valley with mist and a lake (shared scene with forgiveness)", newScenePrompt: null },
+  { id: "mosque-courtyard", topicId: "salah", labelBn: "মসজিদের আঙিনায় নামাজ", labelEn: "Prayer in a mosque courtyard", sceneId: "courtyard-prayer", composition: "centered", visualDirection: "architectural", paletteId: "emerald", lighting: "Dusk lamplight, warm lamps from the sides", tone: ["serene", "humble", "contemplative"], reviewStatus: "reviewed", sceneDescription: "Man from behind in quiet prayer in a mosque courtyard at dusk, arches and lamps", newScenePrompt: null },
+  { id: "fajr-window", topicId: "salah", labelBn: "ফজরের ভোর", labelEn: "Fajr dawn at home", sceneId: "morning-window", composition: "lower-third", visualDirection: "atmospheric", paletteId: "dawn-gold", lighting: "Soft golden dawn through sheer curtains", tone: ["calm", "peaceful", "quiet"], reviewStatus: "reviewed", sceneDescription: "Quiet bedroom at first morning light, dawn through sheer curtains, prayer cap on side table", newScenePrompt: null },
+  { id: "quran-rehal", topicId: "quran", labelBn: "রেহালে কুরআন", labelEn: "Quran on a rehal", sceneId: "library", composition: "centered", visualDirection: "heritage-editorial", paletteId: "soft-gold", lighting: "Warm brass lamp glow from the side", tone: ["reverent", "focused", "calm"], reviewStatus: "reviewed", sceneDescription: "Quiet Islamic library reading corner — open Quran on a carved wooden rehal stand, warm brass lamp", newScenePrompt: null },
+  { id: "quran-dawn", topicId: "quran", labelBn: "ভোরের আলোয় কুরআন", labelEn: "Quran in dawn light", sceneId: null, composition: "centered", visualDirection: "heritage-editorial", paletteId: "soft-gold", lighting: "Soft golden dawn light from the window", tone: ["quiet", "reverent", "peaceful"], reviewStatus: "pending-human-review", sceneDescription: "NEW: open Quran on a wooden rehal beside a window, soft dawn light falling across blank warm pages, quiet and reverent, no people", newScenePrompt: `${NEW_SCENE_GUARD} An open Quran resting on a carved wooden rehal stand beside a tall window, soft golden dawn light falling across the pages, deep green and warm gold tones, quiet reverent atmosphere. Topic: Quran. Mood: quiet, reverent, peaceful. Lighting: soft golden dawn light from the window. Composition: centered — the content sits in the middle of the frame. Camera: medium interior shot, eye-level, rehal and window in the middle. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "library-study", topicId: "knowledge", labelBn: "পাঠাগারে অধ্যয়ন", labelEn: "Study in the library", sceneId: "library", composition: "centered", visualDirection: "heritage-editorial", paletteId: "deep-blue", lighting: "Warm brass lamp glow from the side", tone: ["reverent", "focused", "calm"], reviewStatus: "reviewed", sceneDescription: "Quiet Islamic library reading corner — wooden shelves of old books, warm brass reading lamp (shared scene with quran-rehal; see report §4)", newScenePrompt: null },
+  { id: "study-desk", topicId: "knowledge", labelBn: "পড়ার টেবিল", labelEn: "Study desk with books", sceneId: null, composition: "centered", visualDirection: "heritage-editorial", paletteId: "deep-blue", lighting: "Warm lamp glow, soft shadows", tone: ["focused", "calm", "quiet"], reviewStatus: "pending-human-review", sceneDescription: "NEW: a wooden study desk with stacked old books, an ink pot and a warm lamp glow, deep green and gold tones, no people", newScenePrompt: `${NEW_SCENE_GUARD} A wooden study desk with a stack of old cloth-bound books, an ink pot and a warm brass lamp glowing softly, deep green and warm gold tones, focused calm atmosphere of learning, no people. Topic: seeking knowledge. Mood: focused, calm, quiet. Lighting: warm lamp glow, soft shadows. Composition: centered — the content sits in the middle of the frame. Camera: medium tabletop shot, slightly high angle, desk in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "food-sharing", topicId: "charity", labelBn: "খাবার বিতরণ", labelEn: "Sharing food", sceneId: null, composition: "lower-third", visualDirection: "warm-human", paletteId: "warm-amber", lighting: "Warm golden light from above", tone: ["humble", "generous", "warm"], reviewStatus: "pending-human-review", sceneDescription: "NEW: hands offering a bowl of dates and bread across a simple wooden table in warm light, no faces", newScenePrompt: `${NEW_SCENE_GUARD} Two pairs of hands across a simple wooden table, one gently offering a bowl of dates and bread to the other, warm golden light, humble and generous atmosphere, close-up on hands only. Topic: charity and sadaqah. Mood: humble, generous, warm. Lighting: warm golden light from above. Composition: lower-third — the content sits low in the frame. Camera: close-up, eye-level, hands and table in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "giving-hands", topicId: "charity", labelBn: "দানের হাত", labelEn: "Hands giving", sceneId: null, composition: "centered", visualDirection: "warm-human", paletteId: "warm-amber", lighting: "Warm sunlight, soft green bokeh", tone: ["generous", "humble", "warm"], reviewStatus: "pending-human-review", sceneDescription: "NEW: an open palm offering coins and dates in warm sunlight, soft green bokeh background, no faces", newScenePrompt: `${NEW_SCENE_GUARD} An open palm gently offering a few coins and dates in warm sunlight, soft green bokeh background, generous and humble atmosphere, close-up on hands only. Topic: charity and sadaqah. Mood: generous, humble, warm. Lighting: warm sunlight, soft green bokeh. Composition: centered — the content sits in the middle of the frame. Camera: close-up, eye-level, open palm centred in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "parents-hands", topicId: "parents", labelBn: "পিতা-মাতার হাত", labelEn: "Parents' hands", sceneId: "parents-hands", composition: "lower-third", visualDirection: "warm-human", paletteId: "warm-cream", lighting: "Warm golden window light from the side", tone: ["tender", "reverent", "warm"], reviewStatus: "reviewed", sceneDescription: "An adult child's hands gently holding an elderly parent's wrinkled hands in warm golden window light", newScenePrompt: null },
+  { id: "family-path", topicId: "parents", labelBn: "পরিবারের পথ", labelEn: "Family on a garden path", sceneId: "family-child", composition: "centered", visualDirection: "warm-human", paletteId: "muted-gold", lighting: "Soft morning light through trees", tone: ["serene", "peaceful", "hopeful"], reviewStatus: "reviewed", sceneDescription: "Parents and a young child walking together on a garden path at golden hour, seen from behind", newScenePrompt: null },
+  { id: "home-welcome", topicId: "family", labelBn: "ঘরের দুয়ার", labelEn: "Home entrance", sceneId: "home-entrance", composition: "lower-third", visualDirection: "premium-editorial", paletteId: "warm-amber", lighting: "Golden-hour light spilling from the doorway", tone: ["warm", "peaceful", "welcoming"], reviewStatus: "reviewed", sceneDescription: "Warm home entrance at golden hour, open carved wooden door, plants and courtyard", newScenePrompt: null },
+  { id: "patience-tree", topicId: "patience", labelBn: "ঝড়ে দাঁড়িয়ে থাকা গাছ", labelEn: "Tree standing firm in the storm", sceneId: "patience-tree", composition: "centered", visualDirection: "nature-storytelling", paletteId: "muted-blue", lighting: "Break of golden light through dramatic clouds", tone: ["resilient", "steadfast", "firm"], reviewStatus: "reviewed", sceneDescription: "A single strong old tree standing firm on a rocky mountain slope in difficult weather, a break of golden light", newScenePrompt: null },
+  { id: "still-water", topicId: "patience", labelBn: "শান্ত জল", labelEn: "Still water at dawn", sceneId: null, composition: "centered", visualDirection: "atmospheric", paletteId: "sunrise-gold", lighting: "Soft golden dawn light on still water", tone: ["calm", "steady", "peaceful"], reviewStatus: "pending-human-review", sceneDescription: "NEW: a perfectly still lake at dawn reflecting soft gold light, mist over the water, deep calm", newScenePrompt: `${NEW_SCENE_GUARD} A perfectly still mountain lake at dawn reflecting soft golden light, thin mist over the water, deep teal and gold tones, profound calm and steadiness. Topic: patience. Mood: calm, steady, peaceful. Lighting: soft golden dawn light on still water. Composition: centered — the content sits in the middle of the frame. Camera: wide landscape, eye-level, lake filling the lower two-thirds. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "helping-hands", topicId: "kindness", labelBn: "সাহায্যের হাত", labelEn: "Hands helping", sceneId: "helping-hands", composition: "centered", visualDirection: "warm-human", paletteId: "gentle-green", lighting: "Soft golden light from a window", tone: ["respectful", "tender", "warm"], reviewStatus: "reviewed", sceneDescription: "Two hands gently offering a cup of tea to an elderly person in a warm sunlit home, no faces", newScenePrompt: null },
+  { id: "neighbour-greeting", topicId: "kindness", labelBn: "প্রতিবেশীর সাক্ষাৎ", labelEn: "Neighbours greeting", sceneId: null, composition: "centered", visualDirection: "warm-human", paletteId: "gentle-green", lighting: "Golden-hour light at the doorway", tone: ["warm", "respectful", "peaceful"], reviewStatus: "pending-human-review", sceneDescription: "NEW: two neighbours sharing tea at a doorway at golden hour, seen from behind, warm and respectful, no faces", newScenePrompt: `${NEW_SCENE_GUARD} Two neighbours sharing tea at an open doorway at golden hour, seen from behind, warm respectful atmosphere, soft golden light, deep green and gold tones. Topic: kindness and good conduct. Mood: warm, respectful, peaceful. Lighting: golden-hour light at the doorway. Composition: centered — the content sits in the middle of the frame. Camera: medium shot, eye-level, doorway centred, figures seen from behind. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "dawn-forgiveness", topicId: "forgiveness", labelBn: "ভোরের ক্ষমা", labelEn: "Dawn breaking through darkness", sceneId: "dawn-forgiveness", composition: "lower-third", visualDirection: "atmospheric", paletteId: "sunrise-gold", lighting: "First dawn light, golden rays through mist", tone: ["hopeful", "peaceful", "calm"], reviewStatus: "reviewed", sceneDescription: "First dawn light breaking through darkness over a calm valley with mist and a lake", newScenePrompt: null },
+  { id: "forgiveness-leaf", topicId: "forgiveness", labelBn: "বৃষ্টিধোয়া পাতা", labelEn: "Rain-washed leaf", sceneId: "forgiveness-leaf", composition: "centered", visualDirection: "minimal-symbolic", paletteId: "gentle-green", lighting: "Soft golden sunlight through droplets", tone: ["pure", "refreshing"], reviewStatus: "reviewed", sceneDescription: "Rain washed green leaf with droplets in golden light", newScenePrompt: null },
+  { id: "gratitude-garden", topicId: "gratitude", labelBn: "কৃতজ্ঞতার বাগান", labelEn: "Garden of gratitude", sceneId: "gratitude-garden", composition: "centered", visualDirection: "nature-storytelling", paletteId: "forest-green", lighting: "Morning sunlight, golden rays through leaves", tone: ["peaceful", "grateful"], reviewStatus: "reviewed", sceneDescription: "Morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist", newScenePrompt: null },
+  { id: "creation-mountains", topicId: "creation", labelBn: "সৃষ্টির পাহাড়", labelEn: "Mountains of creation", sceneId: "guidance-path", composition: "centered", visualDirection: "nature-storytelling", paletteId: "forest-green", lighting: "Warm golden sunlight on the horizon at dawn", tone: ["peaceful", "serene"], reviewStatus: "reviewed", sceneDescription: "Winding path through misty green hills at dawn, distant mosque silhouette", newScenePrompt: null },
+  { id: "night-sky", topicId: "creation", labelBn: "তারাভরা আকাশ", labelEn: "Star-filled night sky", sceneId: null, composition: "centered", visualDirection: "nature-storytelling", paletteId: "muted-blue", lighting: "Starlight, a single warm lantern glow low in the frame", tone: ["awe", "humility", "quiet"], reviewStatus: "pending-human-review", sceneDescription: "NEW: a vast night sky full of stars over quiet dark hills, a single warm lantern glow low in the frame", newScenePrompt: `${NEW_SCENE_GUARD} A vast night sky full of bright stars over quiet dark hills, a single small warm lantern glowing low in the frame, deep blue-black and gold tones, awe and humility. Topic: Allah's creation. Mood: awe, humility, quiet. Lighting: starlight, a single warm lantern glow low in the frame. Composition: centered — the content sits in the middle of the frame. Camera: wide landscape, low angle, sky filling the upper two-thirds. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "intention-sunrise", topicId: "intentions", labelBn: "নিয়তের সূর্যোদয়", labelEn: "Sunrise of intention", sceneId: "intention-sunrise", composition: "centered", visualDirection: "atmospheric", paletteId: "sunrise-gold", lighting: "Golden sunrise, soft rays through clouds", tone: ["serene", "hopeful", "calm"], reviewStatus: "reviewed", sceneDescription: "Golden sunrise over layered mountains and a valley river", newScenePrompt: null },
+  { id: "quiet-garden", topicId: "speech", labelBn: "নীরব বাগান", labelEn: "Quiet garden", sceneId: null, composition: "centered", visualDirection: "minimal-symbolic", paletteId: "gentle-green", lighting: "Soft golden light through trees at dawn", tone: ["quiet", "silence", "restraint"], reviewStatus: "pending-human-review", sceneDescription: "NEW: a quiet garden path at dawn with still air and soft light, an empty wooden bench, no people", newScenePrompt: `${NEW_SCENE_GUARD} A quiet garden path at dawn, still air, soft golden light through trees, an empty wooden bench, deep green and gold tones, silence and restraint. Topic: speech and the tongue. Mood: quiet, silence, restraint. Lighting: soft golden light through trees at dawn. Composition: centered — the content sits in the middle of the frame. Camera: medium garden shot, eye-level, path leading into the frame. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "still-water-speech", topicId: "speech", labelBn: "শান্ত জল (কথা)", labelEn: "Still water (speech)", sceneId: null, composition: "centered", visualDirection: "minimal-symbolic", paletteId: "muted-blue", lighting: "Soft golden dawn light on still water", tone: ["calm", "restraint", "still"], reviewStatus: "pending-human-review", sceneDescription: "NEW: same still-water scene as patience (shared concept file) — a perfectly still lake at dawn; one scene file serves both topics, flagged by the similarity check", newScenePrompt: `${NEW_SCENE_GUARD} A perfectly still mountain lake at dawn reflecting soft golden light, thin mist over the water, deep teal and gold tones, profound calm and restraint. Topic: speech and the tongue. Mood: calm, restraint, still. Lighting: soft golden dawn light on still water. Composition: centered — the content sits in the middle of the frame. Camera: wide landscape, eye-level, lake filling the lower two-thirds. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "latticed-light", topicId: "modesty", labelBn: "জালির আলো", labelEn: "Light through a lattice", sceneId: null, composition: "centered", visualDirection: "minimal-symbolic", paletteId: "warm-cream", lighting: "Soft golden light through a lattice window", tone: ["dignified", "calm", "private"], reviewStatus: "pending-human-review", sceneDescription: "NEW: soft light falling through a carved wooden lattice window onto a quiet floor, no people", newScenePrompt: `${NEW_SCENE_GUARD} Soft golden light falling through a carved wooden lattice window onto a quiet stone floor, deep shadows and warm light, dignified private calm, no people. Topic: modesty. Mood: dignified, calm, private. Lighting: soft golden light through a lattice window. Composition: centered — the content sits in the middle of the frame. Camera: medium interior shot, eye-level, lattice window in the upper half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "night-lantern", topicId: "protection", labelBn: "রাতের লণ্ঠন", labelEn: "Lantern in the night", sceneId: "night-lantern", composition: "centered", visualDirection: "cinematic-islamic", paletteId: "warm-amber", lighting: "Warm golden lantern light radiating into dark blue-black", tone: ["safety", "protection", "quiet"], reviewStatus: "reviewed", sceneDescription: "Ornate lantern glowing on a branch in a dark night forest, stars above", newScenePrompt: null },
+  { id: "guidance-path", topicId: "guidance", labelBn: "সরল পথ", labelEn: "The straight path", sceneId: "guidance-path", composition: "centered", visualDirection: "cinematic-islamic", paletteId: "emerald", lighting: "Warm golden sunlight breaking on the horizon at dawn", tone: ["peaceful", "serene"], reviewStatus: "reviewed", sceneDescription: "Winding path through misty green hills at dawn, distant mosque silhouette", newScenePrompt: null },
+  { id: "suhur-meal", topicId: "fasting", labelBn: "সেহরির খাবার", labelEn: "Suhur meal", sceneId: "suhur-meal", composition: "lower-third", visualDirection: "premium-editorial", paletteId: "warm-amber", lighting: "Warm lantern light, faint blue pre-dawn glow", tone: ["calm", "blessed", "quiet"], reviewStatus: "reviewed", sceneDescription: "A simple pre-dawn suhur meal on a wooden table — dates, water, bread — with a warm lantern", newScenePrompt: null },
+  { id: "iftar-table", topicId: "fasting", labelBn: "ইফতারের টেবিল", labelEn: "Iftar table at dusk", sceneId: null, composition: "lower-third", visualDirection: "premium-editorial", paletteId: "warm-amber", lighting: "Warm lantern light, deep blue dusk through a window", tone: ["calm", "blessed", "warm"], reviewStatus: "pending-human-review", sceneDescription: "NEW: a simple iftar spread at dusk — dates, water, bread — warm lantern light, deep blue dusk through a window", newScenePrompt: `${NEW_SCENE_GUARD} A simple iftar spread on a wooden table at dusk — dates in a small bowl, a glass of water, bread — warm lantern light and deep blue dusk through a window, calm blessed atmosphere, no people. Topic: fasting and Ramadan. Mood: calm, blessed, warm. Lighting: warm lantern light, deep blue dusk through a window. Composition: lower-third — the content sits low in the frame. Camera: tabletop close-up, slightly high angle, spread in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.` },
+  { id: "dawn-valley", topicId: "faith", labelBn: "ভোরের উপত্যকা", labelEn: "Valley at dawn", sceneId: "dawn-forgiveness", composition: "lower-third", visualDirection: "atmospheric", paletteId: "sunrise-gold", lighting: "First dawn light, golden rays through mist", tone: ["hopeful", "peaceful", "calm"], reviewStatus: "reviewed", sceneDescription: "First dawn light breaking through darkness over a calm valley with mist and a lake (shared scene with forgiveness)", newScenePrompt: null },
 ];
 
 export function conceptsForTopic(topicId: TopicId): VisualConcept[] {
@@ -358,6 +431,12 @@ export type Classification = {
   method: ClassificationMethod;
   /** Distinct keyword hits per topic (chapter prior adds +1.5). */
   scores: Array<{ topicId: TopicId; score: number }>;
+  /** Runner-up topic when it scored > 0, else null — a hadith spanning
+   *  two topics is no longer forced silently into one. The runner-up
+   *  is reported, never acted on: selection still uses the primary. */
+  secondaryTopicId: TopicId | null;
+  /** Runner-up score (0 when there is no secondary topic). */
+  secondaryScore: number;
   reasoning: string[];
   /** True when no rule fired at all — the AI fallback MAY refine this
    *  (Gemini Free / Groq Free, closed taxonomy list). The default topic
@@ -411,6 +490,10 @@ export function classifyHadith(input: HadithInput): Classification {
     topicId = DEFAULT_TOPIC_ID;
   }
 
+  const runnerUp = sorted[1];
+  const secondaryTopicId: TopicId | null = runnerUp && runnerUp.score > 0 ? runnerUp.topicId : null;
+  const secondaryScore = runnerUp && runnerUp.score > 0 ? runnerUp.score : 0;
+
   const reasoning: string[] = [];
   if (method === "keyword") {
     reasoning.push(`keyword match: ${best.hits.filter((h) => !h.startsWith("chapter:")).join(", ")} (score ${best.score})`);
@@ -420,7 +503,6 @@ export function classifyHadith(input: HadithInput): Classification {
   } else {
     reasoning.push("no keyword or chapter rule fired — safe default topic (guidance); AI fallback MAY refine");
   }
-  const runnerUp = sorted[1];
   if (runnerUp && runnerUp.score > 0 && runnerUp.score === best.score) {
     reasoning.push(`tie with ${topicById(runnerUp.topicId).labelEn} at ${runnerUp.score} — taxonomy order breaks the tie (deterministic)`);
   }
@@ -429,6 +511,8 @@ export function classifyHadith(input: HadithInput): Classification {
     topicId,
     method,
     scores: sorted.map(({ topicId: id, score }) => ({ topicId: id, score })),
+    secondaryTopicId,
+    secondaryScore,
     reasoning,
     needsAiFallback: method === "default",
   };
@@ -446,6 +530,10 @@ export type VisualHistoryEntry = {
   sceneId: string;
   conceptId: string;
   topicId: TopicId;
+  /** Card-chrome palette of that day's poster (variation tracking). */
+  paletteId: string;
+  /** Composition of that day's poster (variation tracking). */
+  composition: "centered" | "lower-third";
 };
 
 export type SimilarityCheck = { ok: boolean; warnings: string[]; blocked: boolean };
@@ -518,12 +606,34 @@ export function isNearDuplicateBackground(hashA: string, hashB: string, threshol
 /* Concept selection — the pipeline entry point.                       */
 /* ------------------------------------------------------------------ */
 
+export type ConceptMessage = {
+  /** Curated topic → concept statement (labels only — never invented
+   *  religious text; the hadith's own meaning is its Bengali text). */
+  bn: string;
+  en: string;
+};
+
 export type ConceptSelection = {
   classification: Classification;
   /** Effective topic: the override when one was supplied, else the classified topic. */
   topicId: TopicId;
   /** True when a curated topic override was applied (admin / AI-reviewed). */
   overrideApplied: boolean;
+  /** Runner-up topic from the classifier (null when none scored > 0). */
+  secondaryTopicId: TopicId | null;
+  secondaryScore: number;
+  /** Message / meaning of the chosen concept (topic → concept labels). */
+  message: ConceptMessage;
+  /** Emotional tone of the chosen concept (measurable keywords); the
+   *  topic's Bengali tone label is carried alongside for display. */
+  tone: string[];
+  toneLabelBn: string;
+  /** Card-chrome palette / lighting / direction / composition of the
+   *  chosen concept (null when held — no concept, no design). */
+  paletteId: PaletteId | null;
+  lighting: string | null;
+  visualDirection: VisualDirectionId | null;
+  composition: "centered" | "lower-third" | null;
   /** Ranked concepts for the topic (existing scenes first). */
   candidates: VisualConcept[];
   /** Chosen concept, or null when every candidate is blocked or the
@@ -596,10 +706,23 @@ export function selectVisualConcept(
     }
   }
 
+  const topic = topicById(topicId);
+  const message: ConceptMessage = chosen
+    ? { bn: `${topic.labelBn} — ${chosen.labelBn}`, en: `${topic.labelEn} — ${chosen.labelEn}` }
+    : { bn: `${topic.labelBn} — (এখনো কোনো দৃশ্য নেই)`, en: `${topic.labelEn} — (no scene yet)` };
   return {
     classification,
     topicId,
     overrideApplied,
+    secondaryTopicId: classification.secondaryTopicId,
+    secondaryScore: classification.secondaryScore,
+    message,
+    tone: chosen ? [...chosen.tone] : [],
+    toneLabelBn: topic.toneLabelBn,
+    paletteId: chosen ? chosen.paletteId : null,
+    lighting: chosen ? chosen.lighting : null,
+    visualDirection: chosen ? chosen.visualDirection : null,
+    composition: chosen ? chosen.composition : null,
     candidates,
     chosen,
     needsNewScene: chosen === null && candidates.some((c) => c.sceneId === null),

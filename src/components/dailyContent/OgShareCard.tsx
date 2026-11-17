@@ -3,6 +3,7 @@ import type { CardPayload } from "@/lib/dailyContent/types";
 import type { OgFormat } from "@/lib/dailyContent/ogQc";
 import { OG_LAYOUT, OG_STAGE_SIZE, effectiveBengaliFirstLayout, isShortPosterContent, type BengaliFirstLayout, type PosterLayout } from "@/lib/dailyContent/ogQc";
 import type { Composition } from "@/lib/dailyContent/visuals";
+import { accentRgba, type PosterPalette } from "@/lib/dailyContent/palettes";
 
 const GOLD = "#e9c15c";
 const GOLD_BORDER = "rgba(233, 193, 92, 0.85)";
@@ -22,21 +23,22 @@ function BookIcon({ size = 26 }: { size?: number }) {
   );
 }
 
-/** Gold divider: thin line, diamond ornament, thin line. */
-function Divider({ width = "100%" }: { width?: string }) {
+/** Gold divider: thin line, diamond ornament, thin line. Color is the
+ *  palette accent on the Bengali-first path (brand gold by default). */
+function Divider({ width = "100%", color = GOLD }: { width?: string; color?: string }) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 8, width }}>
-      <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${GOLD})` }} />
+      <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, transparent, ${color})` }} />
       <span
         style={{
           width: 9,
           height: 9,
           transform: "rotate(45deg)",
-          border: `1.5px solid ${GOLD}`,
+          border: `1.5px solid ${color}`,
           flexShrink: 0,
         }}
       />
-      <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${GOLD}, transparent)` }} />
+      <span style={{ flex: 1, height: 1, background: `linear-gradient(90deg, ${color}, transparent)` }} />
     </div>
   );
 }
@@ -141,6 +143,14 @@ type OgShareCardProps = {
    * "legacy" remain available as explicit overrides.
    */
   layout?: PosterLayout;
+  /**
+   * Topic palette (Master mission Phase 2): the accent colours the
+   * Bengali-first title, divider, quote marks, accent bar and Arabic
+   * footnote border. Brand gold stays on the logo, badge and source
+   * pill; the Bengali text stays white. Null/absent = brand gold
+   * everywhere (back-compat for admin preview + legacy layouts).
+   */
+  palette?: PosterPalette | null;
 };
 
 /**
@@ -188,6 +198,11 @@ function AutoFitBengali({
    * overflow the body at base size (see isShortPosterContent).
    */
   shrinkToContent = false,
+  /**
+   * Palette accent (Master mission Phase 2): quote marks + accent bar
+   * use the topic palette; brand gold when no palette is passed.
+   */
+  accent = GOLD,
 }: {
   text: string;
   baseSize: number;
@@ -199,6 +214,7 @@ function AutoFitBengali({
   resetSignal?: number;
   panelPaddingV?: number;
   shrinkToContent?: boolean;
+  accent?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(baseSize);
@@ -287,7 +303,7 @@ function AutoFitBengali({
               borderRadius: 18,
               padding: `${panelPaddingV}px 20px`,
               boxSizing: "border-box",
-              ...(accentBar ? { borderLeft: `4px solid ${GOLD}` } : {}),
+              ...(accentBar ? { borderLeft: `4px solid ${accent}` } : {}),
             }
           : {}),
       }}
@@ -310,9 +326,9 @@ function AutoFitBengali({
           // phase can fix without changing the text (forbidden).
         }}
       >
-        <span style={{ color: GOLD, fontSize: size + 4, fontWeight: 700 }}>“</span>
+        <span style={{ color: accent, fontSize: size + 4, fontWeight: 700 }}>“</span>
         {text}
-        <span style={{ color: GOLD, fontSize: size + 4, fontWeight: 700 }}>”</span>
+        <span style={{ color: accent, fontSize: size + 4, fontWeight: 700 }}>”</span>
       </div>
     </div>
   );
@@ -347,6 +363,12 @@ function AutoFitArabic({
   footnote = false,
   arabicPadding = "12px 16px",
   onSettled,
+  /**
+   * Palette accent border for the Layout C footnote glass strip
+   * (Master mission Phase 2); brand gold border by default. The panel
+   * variants (A/B) keep the brand gold border.
+   */
+  accentBorder = GOLD_BORDER,
 }: {
   text: string;
   baseSize: number;
@@ -361,6 +383,7 @@ function AutoFitArabic({
   arabicPadding?: string;
   /** Called once when this block's fit pass completes. */
   onSettled?: () => void;
+  accentBorder?: string;
 }) {
   const ref = useRef<HTMLDivElement>(null);
   const [size, setSize] = useState(baseSize);
@@ -446,7 +469,7 @@ function AutoFitArabic({
                 // vs the old hairline-only footnote; the Arabic cap was
                 // restored to 0.25 to hold it (see ogQc.ts).
                 background: "rgba(6,15,28,0.60)",
-                border: `1px solid ${GOLD_BORDER}`,
+                border: `1px solid ${accentBorder}`,
                 borderRadius: 12,
                 padding: arabicPadding,
               }
@@ -517,10 +540,15 @@ function SourcePill({ sourceLine, paddingV = 6 }: { sourceLine: string; paddingV
  * content stack is vertically centered, so the frame rebalances itself
  * with no empty space where a banner used to be.
  */
-export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait", composition = "centered", layout: posterLayout = "c" }: OgShareCardProps) {
+export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait", composition = "centered", layout: posterLayout = "c", palette = null }: OgShareCardProps) {
   const stage = OG_STAGE_SIZE[format];
   const ogLayout = OG_LAYOUT[format];
   const lowerThird = composition === "lower-third" && !ogLayout.horizontal;
+  // Topic palette accent (Master mission Phase 2) — title, divider,
+  // quotes, accent bar, footnote border. Everything brand (logo,
+  // badge, source pill, panel borders) stays GOLD above.
+  const accent = palette?.accent ?? GOLD;
+  const accentBorder = (palette ? accentRgba(palette.accent, 0.85) : null) ?? GOLD_BORDER;
   // Joint-fit epoch: incremented each time the Arabic block settles, so
   // the Bengali block re-fits against the final geometry (its container
   // grows as the Arabic box shrinks). Legacy renders no autofit blocks,
@@ -655,7 +683,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
             {/* Eyebrow title — a label, deliberately smaller than the Bengali hero. */}
             <div
               style={{
-                color: GOLD,
+                color: accent,
                 fontWeight: 800,
                 fontSize: bfLayout.titleSize,
                 lineHeight: 1.3,
@@ -670,7 +698,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
                 (bfLayout.hideDivider, Phase 2 headroom): the divider is
                 chrome, and its height + one gap (~15 px) go to the
                 Bengali panel instead. */}
-            {!bfLayout.hideDivider && <Divider width={posterLayout === "b" ? "60%" : "78%"} />}
+            {!bfLayout.hideDivider && <Divider width={posterLayout === "b" ? "60%" : "78%"} color={accent} />}
             {/* Bengali hero — auto-fit, never truncated (rules 6–7). */}
             {card.bengali.trim() !== "" && (
               <AutoFitBengali
@@ -684,6 +712,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
                 resetSignal={arabicEpoch}
                 panelPaddingV={bfLayout.panelPaddingV}
                 shrinkToContent={isShortPosterContent(card.bengali.length, card.arabic.length)}
+                accent={accent}
               />
             )}
             {/* Arabic second — smaller, verbatim, never reworded (rule 4).
@@ -700,6 +729,7 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
               footnote={posterLayout === "c"}
               arabicPadding={bfLayout.arabicPadding}
               onSettled={() => setArabicEpoch((e) => e + 1)}
+              accentBorder={accentBorder}
             />
             {/* Source pill — only when the source left the header badge (B/C). */}
             {!bfLayout.sourceInBadge && <SourcePill sourceLine={card.sourceLine} paddingV={bfLayout.sourcePillPaddingV} />}

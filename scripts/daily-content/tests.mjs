@@ -22,6 +22,7 @@ const recPlan = await import(path.join(dir, ".out/recommendationPlan.js"));
 const share = await import(path.join(dir, ".out/dailyShare.js"));
 const mon = await import(path.join(dir, ".out/monitoring.js"));
 const gate = await import(path.join(dir, ".out/autonomousGate.js"));
+const pal = await import(path.join(dir, ".out/palettes.js"));
 const cal = await import(path.join(dir, ".out-cal/context.js"));
 const reqFor = (d) => recs.buildRecommendRequest(d, cal.getIslamicContextForKey(d));
 
@@ -1533,6 +1534,71 @@ t("gate: two failures -> hold listing both", () => {
   assert.equal(v.decision, "hold");
   assert.deepEqual(v.failed, ["bengali_readability_image_quality", "finalized_asset_integrity"]);
   assert.equal(v.reasons.length, 2);
+});
+
+
+// --- palettes (Master mission Phase 2: dynamic color system) ---
+t("palettes: contrast math — white/black is 21, brand gold vs #0b1526 is 10.65", () => {
+  assert.equal(pal.contrastRatio("#ffffff", "#000000"), 21);
+  assert.equal(pal.contrastRatio("#000000", "#ffffff"), 21);
+  assert.equal(pal.contrastRatio("#e9c15c", "#0b1526"), 10.65);
+  assert.equal(pal.contrastRatio("#ffffff", "#0b1526"), 18.27);
+  assert.equal(pal.contrastRatio("not-a-color", "#0b1526"), null);
+  assert.equal(pal.relativeLuminance("#ffffff"), 1);
+  assert.equal(pal.relativeLuminance("#000000"), 0);
+});
+t("palettes: all 11 topic palettes reach the 4.5 contrast floor (readability non-negotiable)", () => {
+  assert.equal(Object.keys(pal.PALETTES).length, 11);
+  for (const p of Object.values(pal.PALETTES)) {
+    const r = pal.checkPaletteContrast(p);
+    assert.equal(r.ok, true, `${p.id} (${p.accent}) contrast ${r.ratio} < 4.5`);
+    assert.ok(r.ratio >= 4.5);
+  }
+  assert.equal(pal.PALETTE_MIN_CONTRAST, 4.5);
+  assert.equal(pal.BRAND_GOLD, "#e9c15c");
+  assert.equal(pal.POSTER_BG, "#0b1526");
+});
+t("palettes: lookup by id; unknown id is null (never a silent fallback)", () => {
+  assert.equal(pal.paletteById("emerald").accent, "#7fd4a8");
+  assert.equal(pal.paletteById("gentle-green").name, "Gentle green");
+  assert.equal(pal.paletteById("no-such-palette"), null);
+  assert.equal(pal.accentRgba("#7fd4a8", 0.85), "rgba(127, 212, 168, 0.85)");
+  assert.equal(pal.accentRgba("bad", 0.85), null);
+});
+
+// --- sharing: one finalized asset, every channel (Master mission Phase 2 §9) ---
+t("dailyShare: one asset — native file share, download and links all use the same finalized poster URL", async () => {
+  const rec = shareRec();
+  const seen = [];
+  const nav = {
+    share: async (data) => { seen.push(data); },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(rec, { nav, fetchImpl: imageFetch });
+  assert.equal(res.method, "native-file");
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].files[0].name, "noorapp-hadith-2026-11-17-portrait.png");
+  assert.ok(seen[0].text.includes("BENGALI-TEST"));
+  const dl = await share.downloadPoster(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", {
+    fetchImpl: imageFetch,
+    createObjectUrl: () => "blob:fake",
+    revokeObjectUrl: () => {},
+    clickAnchor: (href, name) => { seen.push({ href, name }); },
+  });
+  assert.equal(dl.method, "downloaded");
+  assert.equal(seen[1].name, "noorapp-hadith-2026-11-17-portrait.png");
+  const caption = share.dailyShareCaption(rec);
+  assert.ok(share.dailyWhatsappShareUrl(caption).includes(encodeURIComponent("https://www.noorapp.in/")));
+  assert.ok(share.dailyFacebookShareUrl(share.dailyShareUrl(), caption).includes(encodeURIComponent("https://www.noorapp.in/")));
+});
+t("dailyShare: a non-finalized URL never yields a file share (same gate as download)", async () => {
+  const nav = { share: async () => {}, canShare: () => true };
+  const res = await share.shareDailyPoster(
+    shareRec({ posterUrl: "https://example.com/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png" }),
+    { nav, fetchImpl: imageFetch },
+  );
+  assert.equal(res.method, "failed");
+  assert.equal(res.detail, "no finalized poster to share");
 });
 
 await Promise.all(pending);

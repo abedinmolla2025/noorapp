@@ -56,6 +56,7 @@ import {
 } from "./visualConceptEngine.js";
 import { CARD_BACKGROUNDS, type BackgroundScene } from "./backgrounds.js";
 import { scoreScene, SEMANTIC_THRESHOLD, type SceneScore, type SemanticProfile } from "./semantic.js";
+import { checkPaletteContrast, paletteById } from "./palettes.js";
 import type { CardPayload, HadithRecord } from "./types.js";
 
 /** One published publication row as read for the history rebuild. */
@@ -164,6 +165,8 @@ export function buildHistoryEntries(
       sceneId: row.poster_scene_id,
       conceptId: concept.id,
       topicId: classification.topicId,
+      paletteId: concept.paletteId,
+      composition: concept.composition,
     });
   }
   return entries;
@@ -231,9 +234,13 @@ export function selectPosterVisual(
  *   the meaning keywords.
  * - meaning: topic label words + concept scene-description words (<=12).
  * - action/object: concept scene-description words (<=8).
- * - tone: unmeasured for hadith records (no tone vocabulary) — the
- *   scorer gives max for an empty keyword list; documented, not hidden.
- *   The effective bar is therefore 70/85 on the measured components.
+ * - tone: MEASURED since Master mission Phase 2 (2026-11-17) — the
+ *   concept's tone keywords (every word occurs in the chosen scene's
+ *   prompt/subjects text, verified by test). The old design set
+ *   tone: [] and the scorer awarded max for the empty list, so the
+ *   effective bar was 70/85 on the measured components; the bar is
+ *   now the full 85, and the calibration (master calibration script)
+ *   re-proves chosen scenes at 92-100 with exactly one scene >= 85.
  * Calibration (phase2-working/calibrate-semantic.mjs): chosen scenes
  * score 92-100, next-best scene 36-56, exactly one scene >= 85 each
  * time. Threshold 85 is unchanged; the scorer is unchanged.
@@ -249,7 +256,7 @@ export function buildVisualProfile(card: CardPayload, topicId: TopicId, concept:
     people: [],
     objects: [],
     actions: [],
-    tone: [],
+    tone: [...concept.tone],
     environment: "",
     metaphor: concept.sceneDescription,
     unsuitable: ["mosque", "lantern", "crescent", "generic Islamic background"],
@@ -257,7 +264,7 @@ export function buildVisualProfile(card: CardPayload, topicId: TopicId, concept:
     subjectKeywords: uniq(labelWords(concept.labelEn)),
     meaningKeywords: uniq([...labelWords(topic.labelEn), ...descWords]).slice(0, 12),
     objectKeywords: uniq(descWords).slice(0, 8),
-    toneKeywords: [],
+    toneKeywords: [...concept.tone],
   };
 }
 
@@ -307,12 +314,16 @@ export type VisualQcResult = {
 /**
  * The mandatory Content-Visual Match QC for the chosen scene.
  * Hard fails (HOLD): engine match false, semantic score < 85,
- * similarity blocked (14-day scene / 7-day concept), safety fail.
+ * similarity blocked (14-day scene / 7-day concept), safety fail,
+ * unknown palette, palette contrast below the 4.5 floor.
  * Warning (recorded): no "darker areas" text-safe marker — Layout C's
  * Bengali panel provides the contrast, and the autofit gate still
  * enforces fit; blocking three catalog scenes (guidance-path,
  * intention-sunrise, forgiveness-leaf) over a prompt wording gap would
  * strand whole topics, so this stays a warning until catalog growth.
+ * Warning (recorded): same palette as yesterday for the same topic —
+ * the scene / composition / lighting still differ, but the variation
+ * is named so a repeat is visible in the render JSON.
  */
 export function checkVisualQC(args: {
   card: CardPayload;
@@ -346,19 +357,69 @@ export function checkVisualQC(args: {
   const safetyOk = safety.safe;
   if (!safetyOk) failures.push(`visual_safety: ${safety.reasons.join("; ")}`);
 
+  // Palette contrast (Master mission Phase 2): the accent must reach
+  // 4.5:1 against the dark card background. An unknown palette id is a
+  // data error, not a fallback to gold — fail closed.
+  const palette = paletteById(args.concept.paletteId);
+  if (!palette) {
+    failures.push(`visual_palette_unknown: concept ${args.concept.id} names palette ${args.concept.paletteId}, which has no definition`);
+  } else {
+    const contrast = checkPaletteContrast(palette);
+    if (!contrast.ok) {
+      failures.push(`visual_palette_contrast:${contrast.ratio} < 4.5 for palette ${palette.id} (accent ${palette.accent})`);
+    }
+  }
+
   if (!hasTextSafeArea(args.scene)) {
     warnings.push(`text_safe_area: scene ${args.scene.id} prompt has no 'darker areas' marker — Layout C panel provides contrast; verify readability by eye`);
   }
   if (similarity.warnings.length > 0 && similarityOk) {
     warnings.push(...similarity.warnings);
   }
+  // Palette / composition variation vs yesterday (same topic): the
+  // 14-day scene block already forces a different scene; this names a
+  // repeated palette so the render JSON shows whether the day's poster
+  // actually looks different from yesterday's.
+  const yesterday = args.history.find((h) => h.date === addDays(args.today, -1));
+  if (yesterday && yesterday.topicId === args.topicId) {
+    if (yesterday.paletteId === args.concept.paletteId) {
+      warnings.push(
+        `visual_variation: same palette (${args.concept.paletteId}) as yesterday for topic ${args.topicId} — scene differs (${yesterday.sceneId} -> ${args.scene.id}), composition ${yesterday.composition} -> ${args.concept.composition}, lighting differs; verify by eye that the poster does not look like a repeat`,
+      );
+    } else if (yesterday.composition === args.concept.composition) {
+      warnings.push(`visual_variation: same composition (${args.concept.composition}) as yesterday for topic ${args.topicId}, palette differs (${yesterday.paletteId} -> ${args.concept.paletteId})`);
+    }
+  }
 
   return { ok: failures.length === 0, score, matchOk, safetyOk, similarityOk, failures, warnings };
+}
+
+/** YYYY-MM-DD minus/plus days (local helper — the render route has its own). */
+function addDays(dateStr: string, days: number): string {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  d.setUTCDate(d.getUTCDate() + days);
+  return d.toISOString().slice(0, 10);
 }
 
 /** Render-JSON shape for the visual selection (surfaced in PosterStatus). */
 export type VisualStatusJson = {
   topicId: TopicId;
+  /** Runner-up topic (null when none scored > 0). */
+  secondaryTopicId: TopicId | null;
+  secondaryScore: number;
+  /** Message / meaning of the chosen concept (topic → concept labels). */
+  messageBn: string;
+  messageEn: string;
+  /** Emotional tone (measured keywords) + the topic's Bengali label. */
+  tone: string[];
+  toneLabelBn: string;
+  /** Card-chrome palette / lighting / direction / composition. */
+  paletteId: string;
+  lighting: string;
+  visualDirection: string;
+  composition: "centered" | "lower-third";
+  /** "reviewed" = scene JPG exists + human-reviewed; "pending-human-review" = HOLD. */
+  reviewStatus: "reviewed" | "pending-human-review";
   conceptId: string;
   sceneId: string;
   semanticScore: number;
@@ -374,8 +435,20 @@ export function visualStatusJson(
   scene: BackgroundScene,
   qc: VisualQcResult,
 ): VisualStatusJson {
+  const chosen = selection.chosen;
   return {
     topicId: selection.topicId,
+    secondaryTopicId: selection.secondaryTopicId,
+    secondaryScore: selection.secondaryScore,
+    messageBn: selection.message.bn,
+    messageEn: selection.message.en,
+    tone: selection.tone,
+    toneLabelBn: selection.toneLabelBn,
+    paletteId: selection.paletteId ?? "",
+    lighting: selection.lighting ?? "",
+    visualDirection: selection.visualDirection ?? "",
+    composition: selection.composition ?? "centered",
+    reviewStatus: chosen?.reviewStatus ?? "pending-human-review",
     conceptId: selection.chosen?.id ?? "",
     sceneId: scene.id,
     semanticScore: qc.score?.total ?? 0,
