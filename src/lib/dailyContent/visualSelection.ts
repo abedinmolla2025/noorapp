@@ -23,9 +23,9 @@
  * - It does not run the full 8-validation autonomous gate
  *   (evaluateSafetyGate): validations 1-4, 6-8 live elsewhere (planner,
  *   ogQc/autofit, set_poster). This module evidences #5
- *   (content_visual_consistency) and the visual part of #6. The
- *   autonomous gate as a whole stays NOT switched on until Phase 3/5
- *   close or explicitly accept the remaining partials (owner decision).
+ *   (content_visual_consistency) and the visual part of #6. The gate
+ *   itself (autonomousGate.ts, 2026-11-17) consumes this module's V5
+ *   evidence at publish time via publishPlanned.
  * - It does not persist concept/topic: there is no column for them yet
  *   (migration sketch in the Phase 2 report §7 — DO NOT APPLY without
  *   its own owner approval). Scene id persists via set_poster as before;

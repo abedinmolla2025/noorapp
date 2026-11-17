@@ -197,9 +197,22 @@ const posterUrlFor = (date) =>
 const plannedRow = (over = {}) => ({
   id: "pub-planned", kolkata_date: todayKolkata(), status: "planned",
   hadith_ref: "hadith:h1", hadith_source_line: "Sahih al-Bukhari, Hadith 1",
-  cards: [{ kind: "hadith" }], push: pushPayload(), hadith_cycle: 1, card_cycle: 1,
+  // The gate (V1/V2/V3/V8) verifies the stored cards + poster fields
+  // against the live rows at publish time, so the fixture row carries
+  // a complete, verbatim hadith card for the seeded live hadith h1
+  // and the full set_poster-valid poster fields. The fixture hadith
+  // is chapter 1 with synthetic text -> the engine classifies it
+  // "intentions" (chapter prior), so the scene is intention-sunrise.
+  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  push: pushPayload(), hadith_cycle: 1, card_cycle: 1,
   error: null, poster_qc_status: "passed", poster_url: posterUrlFor(todayKolkata()),
   poster_urls: { portrait: posterUrlFor(todayKolkata()) },
+  poster_asset_id: `poster:${todayKolkata()}`,
+  poster_storage_path: `daily-content-posters/${todayKolkata()}/portrait.png`,
+  poster_checksum: "a".repeat(64),
+  poster_checksums: { portrait: "a".repeat(64) },
+  poster_scene_id: "intention-sunrise",
+  poster_generated_at: `${todayKolkata()}T02:00:00.000Z`,
   ...over,
 });
 const publishedRow = (over = {}) => ({
@@ -803,11 +816,13 @@ const pendingRun = (over = {}) => runRow({
       ...baseSeed(),
       settings: [fbSettings({ facebook_auto_publish_enabled: true, facebook_approval_required: true })],
       publications: [plannedRow({
+        // The gate verifies the stored cards against the live rows at
+        // publish time, so the row carries the complete, verbatim
+        // hadith card (the pre-gate fixture used a partial card with
+        // no recordRef/Arabic, which the gate now correctly holds).
         cards: [{
-          kind: "hadith",
-          bengali: "বাংলা হাদিসের পাঠ — সংক্ষিপ্ত উদ্ধৃতি।",
+          kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H",
           sourceLine: "Sahih al-Bukhari, Hadith 1",
-          canonicalLink: "/hadith/bukhari/1",
         }],
         hadith_source_line: "Sahih al-Bukhari, Hadith 1",
       })],

@@ -13,6 +13,7 @@ echo "== compile dailyContent lib =="
   src/lib/dailyContent/recommendationPlan.ts src/lib/dailyContent/semantic.ts \
   src/lib/dailyContent/visualConceptEngine.ts src/lib/dailyContent/visualSelection.ts \
   src/lib/dailyContent/dailyShare.ts src/lib/dailyContent/monitoring.ts \
+  src/lib/dailyContent/bengaliQuality.ts src/lib/dailyContent/autonomousGate.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 # Separate invocation for the Islamic Calendar lib: its own outDir (.out-cal).
 # Mixing it into the lib compile would change the common rootDir and move

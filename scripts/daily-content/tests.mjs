@@ -21,6 +21,7 @@ const recs = await import(path.join(dir, ".out/recommendations.js"));
 const recPlan = await import(path.join(dir, ".out/recommendationPlan.js"));
 const share = await import(path.join(dir, ".out/dailyShare.js"));
 const mon = await import(path.join(dir, ".out/monitoring.js"));
+const gate = await import(path.join(dir, ".out/autonomousGate.js"));
 const cal = await import(path.join(dir, ".out-cal/context.js"));
 const reqFor = (d) => recs.buildRecommendRequest(d, cal.getIslamicContextForKey(d));
 
@@ -1207,6 +1208,265 @@ t("monitoring: snapshot — quarantined today -> missed schedule + critical aler
   assert.equal(snap.alerts[0].level, "critical");
   assert.equal(snap.recent_failures.length, 1);
   assert.equal(snap.recent_failures[0].reason, "quarantined:bengali_overflow_at_min");
+});
+
+// --- 8-validation autonomous gate ---
+// A valid (publishable) input: synthetic texts only ("ARABIC-TEST" /
+// "BENGALI-TEST" carry no topic keywords, and the fixture hadith is
+// chapter 1, so the engine classifies it "intentions" via the chapter
+// prior — the fixture scene is the intentions concept's scene
+// "intention-sunrise").
+const gatePoster = (over = {}) => ({
+  url: "http://stub/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+  urls: { portrait: "http://stub/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png" },
+  assetId: "poster:2026-11-17",
+  storagePath: "daily-content-posters/2026-11-17/portrait.png",
+  checksum: "a".repeat(64),
+  checksums: { portrait: "a".repeat(64) },
+  sceneId: "intention-sunrise",
+  qcStatus: "passed",
+  generatedAt: "2026-11-17T02:00:00.000Z",
+  ...over,
+});
+const gateInput = (over = {}) => ({
+  kolkataDate: "2026-11-17",
+  hadithRef: "hadith:h1",
+  hadithSourceLine: "Sahih al-Bukhari, Hadith 1",
+  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  push: { title: "TITLE", body: "BODY" },
+  poster: gatePoster(),
+  liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", english: null },
+  liveDuas: {},
+  history: [],
+  hadithCycle: 1,
+  cardCycle: 1,
+  posterBaseUrl: "http://stub",
+  ...over,
+});
+const gateResult = (verdict, id) => verdict.results.find((r) => r.id === id);
+const gateHistRow = (over = {}) => ({
+  kolkata_date: "2026-11-16", hadith_ref: null, cards: [], poster_scene_id: null, hadith_cycle: 1, card_cycle: 1, ...over,
+});
+
+t("gate: valid input -> publish, all 8 pass", () => {
+  const v = gate.evaluateAutonomousGate(gateInput());
+  assert.equal(v.decision, "publish");
+  assert.deepEqual(v.failed, []);
+  assert.equal(v.results.length, 8);
+  assert.ok(v.results.every((r) => r.pass));
+});
+t("gate: valid input + one dua card -> publish", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s1", arabic: "ARABIC-s1", bengali: "BENGALI-s1", sourceLine: "REF-s1" },
+    ],
+    liveDuas: { s1: { slug: "s1", title: "TITLE-s1", content: "BENGALI-s1", content_arabic: "ARABIC-s1", metadata: { reference: "REF-s1", source_type: "Dua" }, status: "published", content_type: "dua" } },
+  }));
+  assert.equal(v.decision, "publish");
+});
+t("gate V1: source line number mismatch -> fail (V1 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ hadithSourceLine: "Sahih al-Bukhari, Hadith 2" }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["source_reference_integrity"]);
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: malformed hadith_ref -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ hadithRef: "bukhari-10-869" }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: live hadith missing -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ liveHadith: null }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+  assert.equal(v.decision, "hold");
+});
+t("gate V1: two hadith cards -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "hadith", recordRef: "hadith:h2", arabic: "ARABIC-H2", bengali: "BENGALI-H2", sourceLine: "Sahih al-Bukhari, Hadith 2" },
+    ],
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: duplicate card refs -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "REF" },
+    ],
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: zero cards -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ cards: [] }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: dua card with no live row -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s9", arabic: "ARABIC-s9", bengali: "BENGALI-s9", sourceLine: "REF-s9" },
+    ],
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V2: card Arabic differs from live -> fail (V2 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-CHANGED", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["arabic_integrity"]);
+});
+t("gate V2: empty card Arabic -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "  ", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  }));
+  assert.equal(gateResult(v, "arabic_integrity").pass, false);
+});
+t("gate V3: card Bengali differs from live -> fail (V3 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-CHANGED", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_editorial_quality"]);
+});
+t("gate V3: meaning failure (পিতৃসত্তা) -> fail (V3 only)", () => {
+  // The corpus case: a translation containing পিতৃসত্তা is a meaning
+  // distortion (Qur'an 112:3) — the gate must hold it even when the
+  // card matches the live row verbatim. The word is the pattern under
+  // test, not transcribed content.
+  const bn = "BENGALI-TEST পিতৃসত্তা";
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: bn, sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: bn, english: null },
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_editorial_quality"]);
+  assert.match(gateResult(v, "bengali_editorial_quality").detail, /পিতৃসত্তা/);
+});
+t("gate V3: soft issues (repetition) are warnings, never blocking", () => {
+  const bn = "BENGALI-TEST। BENGALI-TEST।";
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: bn, sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: bn, english: null },
+  }));
+  assert.equal(v.decision, "publish");
+  assert.ok(gateResult(v, "bengali_editorial_quality").warnings.some((w) => w.includes("Repetition")));
+});
+t("gate V4: claim word introduced in the push -> fail (V4 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ push: { title: "TITLE", body: "BODY সওয়াব" } }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["fabricated_claims_detection"]);
+});
+t("gate V4: claim word that is the live source's own wording -> pass, noted", () => {
+  // The corpus case: 5/218 bundled duas faithfully contain সওয়াব /
+  // নিশ্চিত / পুরস্কার from their Qur'an source — those are NOT
+  // fabricated claims. The word is the pattern under test.
+  const bn = "BENGALI-TEST সওয়াব";
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: bn, sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: bn, english: null },
+  }));
+  assert.equal(v.decision, "publish");
+  assert.match(gateResult(v, "fabricated_claims_detection").detail, /source.s own wording/);
+});
+t("gate V5: scene from another topic -> fail (V5 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ sceneId: "courtyard-prayer" }) }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["content_visual_consistency"]);
+});
+t("gate V5: same scene used yesterday -> fail (14-day window)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-16", poster_scene_id: "intention-sunrise" })],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["content_visual_consistency"]);
+});
+t("gate V5: same scene 15 days ago -> pass (window expired)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-02", poster_scene_id: "intention-sunrise" })],
+  }));
+  assert.equal(v.decision, "publish");
+});
+t("gate V5: poster QC not passed -> fail (V5 + V6)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ qcStatus: "failed" }) }));
+  assert.equal(v.decision, "hold");
+  assert.equal(gateResult(v, "content_visual_consistency").pass, false);
+  assert.equal(gateResult(v, "bengali_readability_image_quality").pass, false);
+});
+t("gate V6: empty push body -> fail (V6 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ push: { title: "TITLE", body: "  " } }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_readability_image_quality"]);
+});
+t("gate V7: published row already exists for today -> fail (V7 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-17", hadith_ref: "hadith:h9" })],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["duplicate_prevention"]);
+});
+t("gate V7: same hadith already published in this cycle -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-16", hadith_ref: "hadith:h1", hadith_cycle: 1 })],
+  }));
+  assert.equal(gateResult(v, "duplicate_prevention").pass, false);
+});
+t("gate V7: same hadith in an older cycle -> pass", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-16", hadith_ref: "hadith:h1", hadith_cycle: 0 })],
+    hadithCycle: 1,
+  }));
+  assert.equal(v.decision, "publish");
+});
+t("gate V7: same dua card already published in this card cycle -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s1", arabic: "ARABIC-s1", bengali: "BENGALI-s1", sourceLine: "REF-s1" },
+    ],
+    liveDuas: { s1: { slug: "s1", title: "TITLE-s1", content: "BENGALI-s1", content_arabic: "ARABIC-s1", metadata: { reference: "REF-s1", source_type: "Dua" }, status: "published", content_type: "dua" } },
+    history: [gateHistRow({ kolkata_date: "2026-11-16", cards: [{ recordRef: "content:s1" }], card_cycle: 1 })],
+  }));
+  assert.equal(gateResult(v, "duplicate_prevention").pass, false);
+});
+t("gate V7: missing cycle numbers -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ hadithCycle: null, cardCycle: null }));
+  assert.equal(gateResult(v, "duplicate_prevention").pass, false);
+});
+t("gate V8: bad checksum -> fail (V8 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ checksum: "xyz" }) }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["finalized_asset_integrity"]);
+});
+t("gate V8: poster generated on another date -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ generatedAt: "2026-11-16T02:00:00.000Z" }) }));
+  assert.equal(gateResult(v, "finalized_asset_integrity").pass, false);
+});
+t("gate V8: wrong asset id -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ assetId: "poster:2026-11-16" }) }));
+  assert.equal(gateResult(v, "finalized_asset_integrity").pass, false);
+});
+t("gate V8: no poster base URL -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ posterBaseUrl: "" }));
+  assert.equal(gateResult(v, "finalized_asset_integrity").pass, false);
+});
+t("gate: malformed cards (missing recordRef / non-string text) -> hold, never throw", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", bengali: "BENGALI-H" }],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.ok(v.failed.includes("source_reference_integrity"));
+});
+t("gate: two failures -> hold listing both", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    poster: gatePoster({ checksum: "xyz" }),
+    push: { title: "TITLE", body: "  " },
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_readability_image_quality", "finalized_asset_integrity"]);
+  assert.equal(v.reasons.length, 2);
 });
 
 await Promise.all(pending);

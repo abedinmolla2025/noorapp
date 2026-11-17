@@ -230,7 +230,11 @@ const baseSeed = () => ({
 const plannedRow = (over = {}) => ({
   id: "pub-planned", kolkata_date: todayKolkata(), status: "planned",
   hadith_ref: "hadith:h1", hadith_source_line: "Sahih al-Bukhari, Hadith 1",
-  cards: [{ kind: "hadith" }], push: pushPayload(), hadith_cycle: 1, card_cycle: 1,
+  // The gate (V1/V2/V3) verifies the stored cards against the live
+  // rows at publish time, so the fixture row carries a complete,
+  // verbatim hadith card for the seeded live hadith h1.
+  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  push: pushPayload(), hadith_cycle: 1, card_cycle: 1,
   error: null, poster_qc_status: null, poster_error: null, poster_url: null,
   ...over,
 });
@@ -297,7 +301,7 @@ const plannedRow = (over = {}) => ({
     assert.equal(res.json.publication_id, "pub-planned");
     assert.equal(svc.tables.daily_content_publications.length, 1);
     assert.equal(svc.tables.daily_content_publications[0].status, "planned", "a held row stays planned");
-    assert.deepEqual(svc.tables.daily_content_publications[0].cards, [{ kind: "hadith" }], "the plan is not rewritten");
+    assert.deepEqual(svc.tables.daily_content_publications[0].cards, [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }], "the plan is not rewritten");
     assert.equal(calls.length, 0, "a held row is never sent text-only");
   });
 
@@ -316,7 +320,19 @@ const plannedRow = (over = {}) => ({
 
   await checkAsync("heal on a planned row with a QC-passed poster -> publishes WITH the image, healed:true", async () => {
     const url = posterUrlFor(todayKolkata());
-    const svc = makeSvc({ ...baseSeed(), publications: [plannedRow({ poster_qc_status: "passed", poster_url: url })] });
+    // Full poster fields: the gate (V8) re-validates the stored
+    // poster at publish time. Scene intention-sunrise: the fixture
+    // hadith is chapter 1 -> classified "intentions" (V5).
+    const svc = makeSvc({ ...baseSeed(), publications: [plannedRow({
+      poster_qc_status: "passed", poster_url: url,
+      poster_urls: { portrait: url },
+      poster_asset_id: `poster:${todayKolkata()}`,
+      poster_storage_path: `daily-content-posters/${todayKolkata()}/portrait.png`,
+      poster_checksum: "a".repeat(64),
+      poster_checksums: { portrait: "a".repeat(64) },
+      poster_scene_id: "intention-sunrise",
+      poster_generated_at: `${todayKolkata()}T02:00:00.000Z`,
+    })] });
     stubs.holder.svc = svc;
     const calls = setWebpush(stubs, () => ({ statusCode: 201 }));
     const res = await callEdge(handler, { retry_only: true, heal: true });
@@ -332,6 +348,35 @@ const plannedRow = (over = {}) => ({
     const sentPayload = typeof calls[0].payload === "string" ? JSON.parse(calls[0].payload) : calls[0].payload;
     assert.equal(sentPayload.image_url, url, "the first send carries the finalized poster image");
     assert.equal(svc.tables.daily_content_deliveries.filter((d) => d.status === "sent").length, 1);
+  });
+
+  await checkAsync("heal on a planned row whose content fails the gate -> hold:'gate_hold', zero sends, row stays planned", async () => {
+    const url = posterUrlFor(todayKolkata());
+    // The poster is QC-passed, but the stored card's Bengali differs
+    // from the live hadith — the gate (V3) holds the publication and
+    // heal maps it to its own hold state, not publish_failed.
+    const svc = makeSvc({ ...baseSeed(), publications: [plannedRow({
+      cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-CHANGED", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+      poster_qc_status: "passed", poster_url: url,
+      poster_urls: { portrait: url },
+      poster_asset_id: `poster:${todayKolkata()}`,
+      poster_storage_path: `daily-content-posters/${todayKolkata()}/portrait.png`,
+      poster_checksum: "a".repeat(64),
+      poster_checksums: { portrait: "a".repeat(64) },
+      poster_scene_id: "intention-sunrise",
+      poster_generated_at: `${todayKolkata()}T02:00:00.000Z`,
+    })] });
+    stubs.holder.svc = svc;
+    const calls = setWebpush(stubs, () => ({ statusCode: 201 }));
+    const res = await callEdge(handler, { retry_only: true, heal: true });
+    assert.equal(res.status, 200);
+    assert.equal(res.json.ok, true);
+    assert.equal(res.json.healed, false);
+    assert.equal(res.json.hold, "gate_hold");
+    assert.ok(res.json.alerts.some((a) => a.reason.includes("bengali_editorial_quality")), "the alert names the failed validation");
+    assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+    assert.equal(svc.tables.daily_content_publications[0].error, "gate_hold:bengali_editorial_quality");
+    assert.equal(calls.length, 0, "a held row sends nothing");
   });
 
   await checkAsync("heal tick with a published row -> healed:false, retries only, no re-send", async () => {
@@ -451,7 +496,18 @@ const plannedRow = (over = {}) => ({
 
   await checkAsync("heal on a planned row with a corrupt (null) push + passed poster -> repair, then publish with image", async () => {
     const url = posterUrlFor(todayKolkata());
-    const svc = makeSvc({ ...baseSeed(), publications: [plannedRow({ push: null, poster_qc_status: "passed", poster_url: url })] });
+    // Full poster fields (see the QC-passed test above): the second
+    // tick publishes the repaired row through the gate (V8).
+    const svc = makeSvc({ ...baseSeed(), publications: [plannedRow({
+      push: null, poster_qc_status: "passed", poster_url: url,
+      poster_urls: { portrait: url },
+      poster_asset_id: `poster:${todayKolkata()}`,
+      poster_storage_path: `daily-content-posters/${todayKolkata()}/portrait.png`,
+      poster_checksum: "a".repeat(64),
+      poster_checksums: { portrait: "a".repeat(64) },
+      poster_scene_id: "intention-sunrise",
+      poster_generated_at: `${todayKolkata()}T02:00:00.000Z`,
+    })] });
     stubs.holder.svc = svc;
     const calls = setWebpush(stubs, () => ({ statusCode: 201 }));
     const first = await callEdge(handler, { retry_only: true, heal: true });

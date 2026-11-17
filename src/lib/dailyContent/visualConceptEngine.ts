@@ -639,43 +639,43 @@ export type MandatoryValidation = {
 export const MANDATORY_VALIDATIONS: MandatoryValidation[] = [
   {
     id: "source_reference_integrity", label: "Islamic source & reference integrity",
-    currentStatus: "partial",
-    evidence: "Ref integrity EXISTS server-side: recommend drops any ref not in the live eligible pool; planner re-validates approved runs slot-by-slot (Phase 3). GAP: no per-publication re-verification that hadith text matches its cited source — the corpus is trusted, not re-checked at runtime (autonomous audit §2).",
+    currentStatus: "exists",
+    evidence: "EXISTS: recommend drops any ref not in the live eligible pool; planner re-validates approved runs slot-by-slot (Phase 3); the 8-validation autonomous gate (autonomousGate.ts, 2026-11-17) re-verifies refs at publish time — ref well-formed, resolves in the live pool, eligible, source line matches the live record's book + number (gate V1).",
   },
   {
     id: "arabic_integrity", label: "Arabic text integrity",
-    currentStatus: "partial",
-    evidence: "eligibleHadith requires non-empty Arabic; poster QC is character-exact vs the source record (ogQc checkOgVerbatim, poster branch only). GAP: no Arabic integrity check beyond non-empty in the planner (autonomous audit §2).",
+    currentStatus: "exists",
+    evidence: "EXISTS: eligibleHadith requires non-empty Arabic; poster QC is character-exact vs the source record (ogQc checkOgVerbatim); the autonomous gate (2026-11-17) re-verifies every card's Arabic verbatim against its live row at publish time (gate V2).",
   },
   {
     id: "bengali_editorial_quality", label: "Bengali translation & editorial quality",
     currentStatus: "partial",
-    evidence: "Editorial Standard v1.0 in all 5 AI function prompts; 168-test quality suite green (Phase 4). GAP: generate-hadith-seo has NO server-side virtue gate (prompt-only) and writes directly to live hadiths with no pending review; fix-dua-content also writes directly; bengali-quality.ts is NOT imported by any function (test-only) (Phases 3/4, autonomous audit §2).",
+    evidence: "Editorial Standard v1.0 in all 5 AI function prompts; 168-test quality suite green (Phase 4); the autonomous gate (2026-11-17) re-verifies every card's Bengali verbatim against its live row and fails on meaning-level failure (classifyBengali meaningFidelity FAIL) at publish time (gate V3). GAP REMAINS: generate-hadith-seo has NO server-side virtue gate (prompt-only) and writes directly to live hadiths with no pending review; fix-dua-content also writes directly (Phases 3/4).",
   },
   {
     id: "fabricated_claims_detection", label: "Misleading / fabricated religious claims detection",
     currentStatus: "partial",
-    evidence: "Recommend FORBIDDEN_REASON_PATTERNS + validation loop; enrich Option A suppresses unsupported virtue claims; generate-dua-seo VIRTUE_BLOCKLIST + validateGeneratedOutput() (Phase 3). GAP: generate-hadith-seo prompt-only, no server-side gate; no claim detection at poster/publication time; patterns are 5 shapes only — no general fabricated-claim detector; soft-benefit language decision still open (autonomous audit §2).",
+    evidence: "Recommend FORBIDDEN_REASON_PATTERNS + validation loop; enrich Option A suppresses unsupported virtue claims; generate-dua-seo VIRTUE_BLOCKLIST + validateGeneratedOutput() (Phase 3); the autonomous gate (2026-11-17) scans cards + push for claim patterns at publish time and fails only on wording NOT in the live source text (gate V4). GAP REMAINS: generate-hadith-seo prompt-only, no server-side gate; patterns are 6 shapes only — no general fabricated-claim detector; soft-benefit language decision still open.",
   },
   {
     id: "content_visual_consistency", label: "Content-visual consistency",
-    currentStatus: "missing",
-    evidence: "No topic<->scene check exists in the poster path; matchBackground is keyword subject-match only (Phase 12 Gap 8). The semantic scorer (semantic.ts, 85/100 threshold) exists but is demo-only, never called from the poster path. This module + report design the check; it is NOT yet wired into the pipeline.",
+    currentStatus: "exists",
+    evidence: "EXISTS (Phase 2, 2026-11-17): selectPosterVisual + checkVisualQC in the poster path — engine match + semantic score >= 85 + similarity windows (14-day scene / 7-day concept) + isSafeScene + text-safe-area warning; render fails closed. The autonomous gate (2026-11-17) re-checks the topic match + similarity windows at publish time against the stored scene (gate V5).",
   },
   {
     id: "bengali_readability_image_quality", label: "Bengali readability & image quality",
-    currentStatus: "partial",
-    evidence: "ogQc checks dimensions, file size, public-URL 200, verbatim, no-repeat, long-text warnings (Phase 6). GAP: fit is warning-only (no enforcement, no font adjustment); Arabic is LARGER than Bengali in every format (Phase 12 Gap 8); contrast is visual-only by design. Bengali-first layout enforcement is in progress (separate workstream).",
+    currentStatus: "exists",
+    evidence: "EXISTS: ogQc checks dimensions, file size, public-URL 200, verbatim, no-repeat, long-text warnings (Phase 6); the poster render enforces fit (autofit gate) and the autonomous gate (2026-11-17) consumes poster_qc_status === 'passed' at publish time (gate V6). Fit is render-time evidence only — the row carries no fit measurement; the gate documents this rather than re-measuring it.",
   },
   {
     id: "duplicate_prevention", label: "Duplicate content & duplicate publication prevention",
     currentStatus: "exists",
-    evidence: "kolkata_date UNIQUE, delivery UNIQUE (publication_id, device_id) with NULL hole (worked around in code), 30-day repeat check in recommend (HISTORY_DAYS=30), cycle-based no-repeat in planner (hadithUsed/cardUsed), resolveRow dedup, idempotent set_poster (Phases 9/10/11, autonomous audit §2). Residuals (observability, not prevention): documented at-least-once windows, no provider-side idempotency, no recipients_disabled column, 1 unaccounted token in the first production run.",
+    evidence: "kolkata_date UNIQUE, delivery UNIQUE (publication_id, device_id) with NULL hole (worked around in code), 30-day repeat check in recommend (HISTORY_DAYS=30), cycle-based no-repeat in planner (hadithUsed/cardUsed), resolveRow dedup, idempotent set_poster (Phases 9/10/11, autonomous audit §2); the autonomous gate (2026-11-17) re-checks same-date + same-cycle reuse at publish time (gate V7). Residuals (observability, not prevention): documented at-least-once windows, no provider-side idempotency, no recipients_disabled column.",
   },
   {
     id: "finalized_asset_integrity", label: "Finalized asset integrity",
-    currentStatus: "partial",
-    evidence: "EXISTS on the poster branch: set_poster validates URL prefix, 64-hex checksum, asset ID poster:<date>, storage path, scene slug; published-only; conditional update; idempotent; failed attempts never persist a URL (Phase 6/11). MISSING on main/production: no set_poster, no poster columns (autonomous audit §2).",
+    currentStatus: "exists",
+    evidence: "EXISTS on the poster branch: set_poster validates URL prefix, 64-hex checksum, asset ID poster:<date>, storage path, scene slug; published-only; conditional update; idempotent; failed attempts never persist a URL (Phase 6/11); the autonomous gate (2026-11-17) re-validates the STORED poster fields with the same validators at publish time (gate V8). MISSING on main/production: no set_poster, no poster columns.",
   },
 ];
 

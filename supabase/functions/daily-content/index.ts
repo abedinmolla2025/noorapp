@@ -2424,6 +2424,9 @@ async function sendAndPublish(
     recipients_total: delivery.total,
     recipients_sent: delivery.sent,
     recipients_failed: delivery.failed,
+    // A successful publish clears a stale gate_hold verdict (the row
+    // was held, then fixed and re-published) — bookkeeping only.
+    error: null,
   } as never).eq("id", publicationId).eq("status", "planned").select("id");
   // H3: a flip that matches zero rows must not be reported as
   // published. The row stays planned and the next run recovers it.
@@ -2523,6 +2526,1258 @@ async function facebookDispositionAfterPublish(svc: Svc, kolkataDate: string): P
  *  that needs an owner decision; see the Phase 3 report §5).
  *  `healed` is "planned" when a planned row was created, true when a
  *  QC-passed row was published, false otherwise. */
+// ============================================================================
+// 8-Validation Autonomous Gate (owner's Section 7 amendment, 2026-11-15
+// ~23:03 IST — binding): content is publishable WITHOUT owner review
+// ONLY if ALL 8 mandatory server-side validations pass; ANY failure ->
+// Held/Quarantined, never published. The gate is a PURE function — it
+// takes the planned content plus the LIVE rows it must be verified
+// against and returns a structured verdict (per-validation pass/fail +
+// reason, overall publish/hold). It is wired into publishPlanned ONLY
+// (the Mode A publish path); the default daily branch and Mode B are
+// untouched.
+//
+// CANONICAL SOURCE: src/lib/dailyContent/autonomousGate.ts (the lib
+// file is canonical; this section is its verbatim port, same pattern
+// as Phase 10's monitoring.ts port). The engine pieces + the Bengali
+// classifier below are extracted VERBATIM from
+// src/lib/dailyContent/visualConceptEngine.ts and
+// src/lib/dailyContent/bengaliQuality.ts by
+// ~/workspace/noorapp-ai-daily-content/gate-working/extract-edge-port.py
+// (asserted anchors — a drifted source file fails the extraction
+// loudly). Never edit a ported block in one place only: fix the
+// canonical file first, then re-extract.
+// ============================================================================
+
+// ---- ENGINE (verbatim port of src/lib/dailyContent/visualConceptEngine.ts) ----
+export type HadithInput = {
+  /** e.g. "hadith:bukhari-1-1" or "hadith:fixture-intentions". */
+  ref: string;
+  /** e.g. "bukhari". */
+  bookKey: string;
+  /** Bukhari book/chapter number (1-97), or null when unknown. */
+  chapterId: number | null;
+  /** Verified English chapter title, when known. */
+  chapterTitleEn?: string | null;
+  /** Bengali translation (verbatim from the record). */
+  bengali: string;
+  /** Arabic matn (diacritics optional; stripped before matching). */
+  arabic: string;
+  /** English text, when available (bundled data). */
+  english?: string | null;
+  /** Verbatim source line, e.g. "Sahih al-Bukhari, Hadith 1". */
+  sourceLine?: string | null;
+};
+
+export type TopicId =
+  | "salah" | "quran" | "knowledge" | "charity" | "parents" | "family"
+  | "patience" | "kindness" | "forgiveness" | "gratitude" | "creation"
+  | "intentions" | "speech" | "modesty" | "protection" | "guidance"
+  | "fasting" | "faith";
+
+export type Topic = {
+  id: TopicId;
+  labelBn: string;
+  labelEn: string;
+  /** Bengali keywords. RULE: never a bare <=3-char word (e.g. "মা" matches
+   *  inside "আমার"); use full or inflected forms ("মা-বাবা", "বাবার"). */
+  keywordsBn: string[];
+  /** Arabic keywords (matched after diacritic stripping + alef norm).
+   *  SAME RULE as Bengali: never a bare <=2-char word — Arabic matching
+   *  is substring over the FULL text INCLUDING the isnad, so "أب" fires
+   *  on "ابن" (ibn — in nearly every isnad) and "أم" fires on "امروا"
+   *  (were commanded) / "امرأة" (woman). Removed from parents
+   *  2026-11-17 after bukhari-66-5022 misclassified as parents in
+   *  card-only mode (score 2 from "ابن أبي أوفى" + "أمروا", beating
+   *  quran's 1 from Bengali "কুরআন"). Parents still fires via
+   *  "والدين" / "بر الوالدين" + the Bengali compounds + English. */
+  keywordsAr: string[];
+  /** English keywords (lowercased substring). */
+  keywordsEn: string[];
+  /** Bukhari chapter ids whose title hints at this topic (weak prior). */
+  chapterHints: number[];
+};
+
+export const TOPICS: Topic[] = [
+  {
+    id: "salah", labelBn: "সালাত ও ইবাদত", labelEn: "Prayer & worship",
+    keywordsBn: ["নামাজ", "সালাত", "মসজিদ", "জামাত", "আজান", "ফজর", "ইবাদত", "সিজদা", "রুকু", "তাহাজ্জুদ", "জুম্মা", "জুমা"],
+    keywordsAr: ["صلاة", "مسجد", "أذان", "فجر", "سجود", "ركوع", "تهجد", "جمعة"],
+    keywordsEn: ["prayer", "mosque", "adhan", "fajr", "prostrat", "worship", "friday", "jumu"],
+    // Friday keywords (2026-11-17, Jumu'ah): a Friday hadith is prayer
+    // content — "জুমার নামাজ" already matched on "নামাজ", but a text
+    // that says only "জুম্মার দিন" did not. "جمعة" is 4 letters (the
+    // Phase 2 fix removed bare 2-letter Arabic words); "jumu" matches
+    // jumu'ah / jumuah. Chapter 11 is the canonical "Friday Prayer"
+    // book (forensic reconstruction, 97/97).
+    chapterHints: [10, 11, 31, 33],
+  },
+  {
+    id: "quran", labelBn: "কুরআন", labelEn: "Quran",
+    keywordsBn: ["কুরআন", "কোরআন", "তিলাওয়াত", "আয়াত", "সূরা"],
+    keywordsAr: ["قرآن", "تلاوة", "آية", "سورة", "كتاب الله"],
+    keywordsEn: ["quran", "qur'an", "recit"],
+    chapterHints: [66],
+  },
+  {
+    id: "knowledge", labelBn: "জ্ঞান অর্জন", labelEn: "Seeking knowledge",
+    keywordsBn: ["জ্ঞান", "শেখা", "পড়া", "বই", "শিক্ষা", "আলেম", "অন্বেষণ"],
+    keywordsAr: ["علم", "تعلم", "كتاب", "عالم"],
+    keywordsEn: ["knowledge", "learn", "seeking knowledge", "scholar", "book"],
+    chapterHints: [],
+  },
+  {
+    id: "charity", labelBn: "দান ও সদকা", labelEn: "Charity & sadaqah",
+    keywordsBn: ["দান", "সদকা", "সাদাকা", "যাকাত", "গরিব", "মিসকিন", "সাহায্য", "অভাবী"],
+    keywordsAr: ["صدقة", "زكاة", "فقير", "مسكين"],
+    keywordsEn: ["charity", "sadaqah", "zakat", "poor", "give", "alms"],
+    chapterHints: [73],
+  },
+  {
+    id: "parents", labelBn: "মা-বাবার অধিকার", labelEn: "Parents' rights",
+    keywordsBn: ["পিতা-মাতা", "মা-বাবা", "পিতামাতা", "বাবা-মা", "বাবার", "মায়ের", "বৃদ্ধ পিতা", "পিতার", "মাতার"],
+    keywordsAr: ["والدين", "بر الوالدين"],
+    keywordsEn: ["parent", "mother", "father", "elderly parent"],
+    chapterHints: [],
+  },
+  {
+    id: "family", labelBn: "পরিবার ও সন্তান", labelEn: "Family & children",
+    keywordsBn: ["পরিবার", "সন্তান", "সন্তানের", "স্ত্রী", "স্বামী", "ঘর", "বাড়ি"],
+    keywordsAr: ["أسرة", "ولد", "أهل", "بيت"],
+    keywordsEn: ["family", "child", "offspring", "household", "spouse"],
+    chapterHints: [13],
+  },
+  {
+    id: "patience", labelBn: "ধৈর্য", labelEn: "Patience",
+    keywordsBn: ["ধৈর্য", "সবর", "দৃঢ়তা", "সহনশীল"],
+    keywordsAr: ["صبر", "صابر"],
+    keywordsEn: ["patience", "patient", "steadfast", "endur"],
+    chapterHints: [25, 27, 28, 33],
+  },
+  {
+    id: "kindness", labelBn: "দয়া ও উত্তম আচরণ", labelEn: "Kindness & good conduct",
+    keywordsBn: ["দয়া", "সদাচরণ", "চরিত্র", "উত্তম আচরণ", "সদয়", "নম্র", "ভদ্র"],
+    keywordsAr: ["خلق", "رفق", "إحسان", "رحمة"],
+    keywordsEn: ["kindness", "character", "good conduct", "gentle", "compassion"],
+    chapterHints: [78],
+  },
+  {
+    id: "forgiveness", labelBn: "ক্ষমা ও তওবা", labelEn: "Forgiveness & repentance",
+    keywordsBn: ["ক্ষমা", "তওবা", "গুনাহ", "মাফ", "তাওবা", "ইস্তিগফার"],
+    keywordsAr: ["استغفار", "توبة", "مغفرة", "ذنب"],
+    keywordsEn: ["forgive", "repent", "pardon", "mercy", "sin"],
+    chapterHints: [32],
+  },
+  {
+    id: "gratitude", labelBn: "কৃতজ্ঞতা", labelEn: "Gratitude",
+    keywordsBn: ["কৃতজ্ঞতা", "শুকরিয়া", "শোকর", "কৃতজ্ঞ"],
+    keywordsAr: ["شكر", "نعمة", "حمد"],
+    keywordsEn: ["grateful", "gratitude", "thank", "blessing"],
+    chapterHints: [13],
+  },
+  {
+    id: "creation", labelBn: "আল্লাহর সৃষ্টি", labelEn: "Allah's creation",
+    keywordsBn: ["সৃষ্টি", "প্রকৃতি", "আকাশ", "পাহাড়", "সাগর", "নক্ষত্র", "চাঁদ", "সূর্য"],
+    keywordsAr: ["خلق", "طبيعة", "سماء", "نجم", "قمر", "شمس"],
+    keywordsEn: ["creation", "nature", "sky", "mountain", "star", "moon", "sea"],
+    chapterHints: [],
+  },
+  {
+    id: "intentions", labelBn: "নিয়ত ও আন্তরিকতা", labelEn: "Intentions & sincerity",
+    keywordsBn: ["নিয়ত", "ইখলাস", "আন্তরিকতা", "উদ্দেশ্য"],
+    keywordsAr: ["نية", "نيات", "إخلاص"],
+    keywordsEn: ["intention", "sincer", "deed"],
+    chapterHints: [1],
+  },
+  {
+    id: "speech", labelBn: "জিহ্বা ও কথা", labelEn: "Speech & the tongue",
+    keywordsBn: ["কথা", "জিহ্বা", "চুপ", "নীরব", "ভালো কথা", "জবান"],
+    keywordsAr: ["لسان", "كلام", "صمت", "قول"],
+    keywordsEn: ["tongue", "speech", "speak", "silent", "silence", "words"],
+    chapterHints: [78],
+  },
+  {
+    id: "modesty", labelBn: "লজ্জাশীলতা", labelEn: "Modesty",
+    keywordsBn: ["লজ্জা", "শালীনতা", "লজ্জাশীল"],
+    keywordsAr: ["حياء"],
+    keywordsEn: ["modest", "modesty", "shy", "bashful"],
+    chapterHints: [],
+  },
+  {
+    id: "protection", labelBn: "হেফাজত ও নিরাপত্তা", labelEn: "Protection & safety",
+    keywordsBn: ["হেফাজত", "নিরাপত্তা", "রক্ষা", "ভয়", "অন্ধকার", "নিরাপদ"],
+    keywordsAr: ["أمان", "خوف", "حفظ", "ليل"],
+    keywordsEn: ["protect", "safety", "safe", "fear", "night", "harm"],
+    chapterHints: [],
+  },
+  {
+    id: "guidance", labelBn: "হেদায়াত ও সরল পথ", labelEn: "Guidance & the straight path",
+    keywordsBn: ["হেদায়াত", "সরল পথ", "পথ", "হিদায়াত", "সঠিক পথ"],
+    keywordsAr: ["هداية", "صراط", "طريق"],
+    keywordsEn: ["guidance", "straight path", "right path"],
+    chapterHints: [25, 27, 28],
+  },
+  {
+    id: "fasting", labelBn: "রোজা ও রমজান", labelEn: "Fasting & Ramadan",
+    keywordsBn: ["রোজা", "সিয়াম", "সেহরি", "ইফতার", "রমজান"],
+    keywordsAr: ["صوم", "صيام", "رمضان", "سحور", "إفطار"],
+    keywordsEn: ["fast", "ramadan", "suhur", "iftar"],
+    chapterHints: [30, 31, 33],
+  },
+  {
+    id: "faith", labelBn: "ঈমান", labelEn: "Faith",
+    keywordsBn: ["ঈমান", "বিশ্বাস", "মুমিন", "আখিরাত", "পরকাল"],
+    keywordsAr: ["إيمان", "مؤمن", "آخرة"],
+    keywordsEn: ["faith", "believe", "believer", "hereafter"],
+    chapterHints: [2],
+  },
+];
+
+export function topicById(id: TopicId): Topic {
+  return TOPICS.find((t) => t.id === id) as Topic;
+}
+
+/** The safe default when no rule fires: guidance, never invented. */
+export const DEFAULT_TOPIC_ID: TopicId = "guidance";
+
+export type VisualConcept = {
+  id: string;
+  topicId: TopicId;
+  labelBn: string;
+  labelEn: string;
+  /** Existing scene id in CARD_BACKGROUNDS, or null = scene must be generated first. */
+  sceneId: string | null;
+  composition: "centered" | "lower-third";
+  /** Scene description (existing scene's description, or the new-scene brief). */
+  sceneDescription: string;
+  /** Generation prompt for a NEW scene (Dua OG style: photorealistic,
+   *  text-free, no faces / no identifiable people, dark areas top+bottom
+   *  for text). Null when the scene already exists. */
+  newScenePrompt: string | null;
+};
+
+const NEW_SCENE_GUARD =
+  "Photorealistic premium cinematic photograph, tall vertical portrait orientation. " +
+  "Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. " +
+  "No faces, no identifiable people. Generous darker areas at the top and bottom for text overlay.";
+
+export const VISUAL_CONCEPTS: VisualConcept[] = [
+  { id: "mosque-courtyard", topicId: "salah", labelBn: "মসজিদের আঙিনায় নামাজ", labelEn: "Prayer in a mosque courtyard", sceneId: "courtyard-prayer", composition: "centered", sceneDescription: "Man from behind in quiet prayer in a mosque courtyard at dusk, arches and lamps", newScenePrompt: null },
+  { id: "fajr-window", topicId: "salah", labelBn: "ফজরের ভোর", labelEn: "Fajr dawn at home", sceneId: "morning-window", composition: "lower-third", sceneDescription: "Quiet bedroom at first morning light, dawn through sheer curtains, prayer cap on side table", newScenePrompt: null },
+  { id: "quran-rehal", topicId: "quran", labelBn: "রেহালে কুরআন", labelEn: "Quran on a rehal", sceneId: "library", composition: "centered", sceneDescription: "Quiet Islamic library reading corner — open Quran on a carved wooden rehal stand, warm brass lamp", newScenePrompt: null },
+  { id: "quran-dawn", topicId: "quran", labelBn: "ভোরের আলোয় কুরআন", labelEn: "Quran in dawn light", sceneId: null, composition: "centered", sceneDescription: "NEW: open Quran on a wooden rehal beside a window, soft dawn light falling across blank warm pages, quiet and reverent, no people", newScenePrompt: `${NEW_SCENE_GUARD} An open Quran resting on a carved wooden rehal stand beside a tall window, soft golden dawn light falling across the pages, deep green and warm gold tones, quiet reverent atmosphere.` },
+  { id: "library-study", topicId: "knowledge", labelBn: "পাঠাগারে অধ্যয়ন", labelEn: "Study in the library", sceneId: "library", composition: "centered", sceneDescription: "Quiet Islamic library reading corner — wooden shelves of old books, warm brass reading lamp (shared scene with quran-rehal; see report §4)", newScenePrompt: null },
+  { id: "study-desk", topicId: "knowledge", labelBn: "পড়ার টেবিল", labelEn: "Study desk with books", sceneId: null, composition: "centered", sceneDescription: "NEW: a wooden study desk with stacked old books, an ink pot and a warm lamp glow, deep green and gold tones, no people", newScenePrompt: `${NEW_SCENE_GUARD} A wooden study desk with a stack of old cloth-bound books, an ink pot and a warm brass lamp glowing softly, deep green and warm gold tones, focused calm atmosphere of learning, no people.` },
+  { id: "food-sharing", topicId: "charity", labelBn: "খাবার বিতরণ", labelEn: "Sharing food", sceneId: null, composition: "lower-third", sceneDescription: "NEW: hands offering a bowl of dates and bread across a simple wooden table in warm light, no faces", newScenePrompt: `${NEW_SCENE_GUARD} Two pairs of hands across a simple wooden table, one gently offering a bowl of dates and bread to the other, warm golden light, humble and generous atmosphere, close-up on hands only.` },
+  { id: "giving-hands", topicId: "charity", labelBn: "দানের হাত", labelEn: "Hands giving", sceneId: null, composition: "centered", sceneDescription: "NEW: an open palm offering coins and dates in warm sunlight, soft green bokeh background, no faces", newScenePrompt: `${NEW_SCENE_GUARD} An open palm gently offering a few coins and dates in warm sunlight, soft green bokeh background, generous and humble atmosphere, close-up on hands only.` },
+  { id: "parents-hands", topicId: "parents", labelBn: "পিতা-মাতার হাত", labelEn: "Parents' hands", sceneId: "parents-hands", composition: "lower-third", sceneDescription: "An adult child's hands gently holding an elderly parent's wrinkled hands in warm golden window light", newScenePrompt: null },
+  { id: "family-path", topicId: "parents", labelBn: "পরিবারের পথ", labelEn: "Family on a garden path", sceneId: "family-child", composition: "centered", sceneDescription: "Parents and a young child walking together on a garden path at golden hour, seen from behind", newScenePrompt: null },
+  { id: "home-welcome", topicId: "family", labelBn: "ঘরের দুয়ার", labelEn: "Home entrance", sceneId: "home-entrance", composition: "lower-third", sceneDescription: "Warm home entrance at golden hour, open carved wooden door, plants and courtyard", newScenePrompt: null },
+  { id: "patience-tree", topicId: "patience", labelBn: "ঝড়ে দাঁড়িয়ে থাকা গাছ", labelEn: "Tree standing firm in the storm", sceneId: "patience-tree", composition: "centered", sceneDescription: "A single strong old tree standing firm on a rocky mountain slope in difficult weather, a break of golden light", newScenePrompt: null },
+  { id: "still-water", topicId: "patience", labelBn: "শান্ত জল", labelEn: "Still water at dawn", sceneId: null, composition: "centered", sceneDescription: "NEW: a perfectly still lake at dawn reflecting soft gold light, mist over the water, deep calm", newScenePrompt: `${NEW_SCENE_GUARD} A perfectly still mountain lake at dawn reflecting soft golden light, thin mist over the water, deep teal and gold tones, profound calm and steadiness.` },
+  { id: "helping-hands", topicId: "kindness", labelBn: "সাহায্যের হাত", labelEn: "Hands helping", sceneId: "helping-hands", composition: "centered", sceneDescription: "Two hands gently offering a cup of tea to an elderly person in a warm sunlit home, no faces", newScenePrompt: null },
+  { id: "neighbour-greeting", topicId: "kindness", labelBn: "প্রতিবেশীর সাক্ষাৎ", labelEn: "Neighbours greeting", sceneId: null, composition: "centered", sceneDescription: "NEW: two neighbours sharing tea at a doorway at golden hour, seen from behind, warm and respectful, no faces", newScenePrompt: `${NEW_SCENE_GUARD} Two neighbours sharing tea at an open doorway at golden hour, seen from behind, warm respectful atmosphere, soft golden light, deep green and gold tones.` },
+  { id: "dawn-forgiveness", topicId: "forgiveness", labelBn: "ভোরের ক্ষমা", labelEn: "Dawn breaking through darkness", sceneId: "dawn-forgiveness", composition: "lower-third", sceneDescription: "First dawn light breaking through darkness over a calm valley with mist and a lake", newScenePrompt: null },
+  { id: "forgiveness-leaf", topicId: "forgiveness", labelBn: "বৃষ্টিধোয়া পাতা", labelEn: "Rain-washed leaf", sceneId: "forgiveness-leaf", composition: "centered", sceneDescription: "Rain-washed green leaf with droplets in golden light", newScenePrompt: null },
+  { id: "gratitude-garden", topicId: "gratitude", labelBn: "কৃতজ্ঞতার বাগান", labelEn: "Garden of gratitude", sceneId: "gratitude-garden", composition: "centered", sceneDescription: "Morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist", newScenePrompt: null },
+  { id: "creation-mountains", topicId: "creation", labelBn: "সৃষ্টির পাহাড়", labelEn: "Mountains of creation", sceneId: "guidance-path", composition: "centered", sceneDescription: "Winding path through misty green hills at dawn, distant mosque silhouette", newScenePrompt: null },
+  { id: "night-sky", topicId: "creation", labelBn: "তারাভরা আকাশ", labelEn: "Star-filled night sky", sceneId: null, composition: "centered", sceneDescription: "NEW: a vast night sky full of stars over quiet dark hills, a single warm lantern glow low in the frame", newScenePrompt: `${NEW_SCENE_GUARD} A vast night sky full of bright stars over quiet dark hills, a single small warm lantern glowing low in the frame, deep blue-black and gold tones, awe and humility.` },
+  { id: "intention-sunrise", topicId: "intentions", labelBn: "নিয়তের সূর্যোদয়", labelEn: "Sunrise of intention", sceneId: "intention-sunrise", composition: "centered", sceneDescription: "Golden sunrise over layered mountains and a valley river", newScenePrompt: null },
+  { id: "quiet-garden", topicId: "speech", labelBn: "নীরব বাগান", labelEn: "Quiet garden", sceneId: null, composition: "centered", sceneDescription: "NEW: a quiet garden path at dawn with still air and soft light, an empty wooden bench, no people", newScenePrompt: `${NEW_SCENE_GUARD} A quiet garden path at dawn, still air, soft golden light through trees, an empty wooden bench, deep green and gold tones, silence and restraint.` },
+  { id: "still-water-speech", topicId: "speech", labelBn: "শান্ত জল (কথা)", labelEn: "Still water (speech)", sceneId: null, composition: "centered", sceneDescription: "NEW: same still-water scene as patience (shared concept file) — a perfectly still lake at dawn; one scene file serves both topics, flagged by the similarity check", newScenePrompt: `${NEW_SCENE_GUARD} A perfectly still mountain lake at dawn reflecting soft golden light, thin mist over the water, deep teal and gold tones, profound calm and restraint.` },
+  { id: "latticed-light", topicId: "modesty", labelBn: "জালির আলো", labelEn: "Light through a lattice", sceneId: null, composition: "centered", sceneDescription: "NEW: soft light falling through a carved wooden lattice window onto a quiet floor, no people", newScenePrompt: `${NEW_SCENE_GUARD} Soft golden light falling through a carved wooden lattice window onto a quiet stone floor, deep shadows and warm light, dignified private calm, no people.` },
+  { id: "night-lantern", topicId: "protection", labelBn: "রাতের লণ্ঠন", labelEn: "Lantern in the night", sceneId: "night-lantern", composition: "centered", sceneDescription: "Ornate lantern glowing on a branch in a dark night forest, stars above", newScenePrompt: null },
+  { id: "guidance-path", topicId: "guidance", labelBn: "সরল পথ", labelEn: "The straight path", sceneId: "guidance-path", composition: "centered", sceneDescription: "Winding path through misty green hills at dawn, distant mosque silhouette", newScenePrompt: null },
+  { id: "suhur-meal", topicId: "fasting", labelBn: "সেহরির খাবার", labelEn: "Suhur meal", sceneId: "suhur-meal", composition: "lower-third", sceneDescription: "A simple pre-dawn suhur meal on a wooden table — dates, water, bread — with a warm lantern", newScenePrompt: null },
+  { id: "iftar-table", topicId: "fasting", labelBn: "ইফতারের টেবিল", labelEn: "Iftar table at dusk", sceneId: null, composition: "lower-third", sceneDescription: "NEW: a simple iftar spread at dusk — dates, water, bread — warm lantern light, deep blue dusk through a window", newScenePrompt: `${NEW_SCENE_GUARD} A simple iftar spread on a wooden table at dusk — dates in a small bowl, a glass of water, bread — warm lantern light and deep blue dusk through a window, calm blessed atmosphere, no people.` },
+  { id: "dawn-valley", topicId: "faith", labelBn: "ভোরের উপত্যকা", labelEn: "Valley at dawn", sceneId: "dawn-forgiveness", composition: "lower-third", sceneDescription: "First dawn light breaking through darkness over a calm valley with mist and a lake (shared scene with forgiveness)", newScenePrompt: null },
+];
+
+export function conceptsForTopic(topicId: TopicId): VisualConcept[] {
+  return VISUAL_CONCEPTS.filter((c) => c.topicId === topicId);
+}
+
+export const SELECTION_WINDOWS = {
+  /** Same scene id must not repeat within this many days (hard block). */
+  sceneReuseDays: 14,
+  /** Same visual concept must not repeat within this many days (hard block). */
+  conceptReuseDays: 7,
+  /** Same topic two days running is allowed but flagged (soft warning). */
+  topicSoftDays: 2,
+  /** Target scene window once the catalog grows to >= 30 scenes. */
+  targetSceneWindowDays: 30,
+  /** Minimum catalog size for the 30-day target window. */
+  targetCatalogSize: 30,
+} as const;
+
+/** Strip Arabic diacritics + tatweel; normalise alef/yeh/teh forms. */
+export function normalizeArabic(s: string): string {
+  return s
+    .replace(/[ً-ٰٓـ]/g, "")
+    .replace(/[أإآ]/g, "ا")
+    .replace(/ى/g, "ي")
+    .replace(/ة/g, "ه");
+}
+
+export function normalizeText(s: string): string {
+  return s.toLowerCase();
+}
+
+export type ClassificationMethod = "keyword" | "chapter" | "default";
+
+export type Classification = {
+  topicId: TopicId;
+  method: ClassificationMethod;
+  /** Distinct keyword hits per topic (chapter prior adds +1.5). */
+  scores: Array<{ topicId: TopicId; score: number }>;
+  reasoning: string[];
+  /** True when no rule fired at all — the AI fallback MAY refine this
+   *  (Gemini Free / Groq Free, closed taxonomy list). The default topic
+   *  is still safe to use without AI. */
+  needsAiFallback: boolean;
+};
+
+export function classifyHadith(input: HadithInput): Classification {
+  const bn = normalizeText(input.bengali);
+  const ar = normalizeArabic(input.arabic);
+  const en = normalizeText(input.english ?? "");
+  const chapterTitle = normalizeText(input.chapterTitleEn ?? "");
+  const hayBn = bn;
+  const hayAr = ar;
+  const hayEn = `${en} ${chapterTitle} ${input.sourceLine ?? ""}`.toLowerCase();
+
+  const scores = TOPICS.map((t) => {
+    let score = 0;
+    const hits: string[] = [];
+    for (const k of t.keywordsBn) {
+      if (k && hayBn.includes(k.toLowerCase())) { score += 1; hits.push(`bn:${k}`); }
+    }
+    for (const k of t.keywordsAr) {
+      if (k && hayAr.includes(normalizeArabic(k))) { score += 1; hits.push(`ar:${k}`); }
+    }
+    for (const k of t.keywordsEn) {
+      if (k && hayEn.includes(k.toLowerCase())) { score += 1; hits.push(`en:${k}`); }
+    }
+    if (input.chapterId !== null && t.chapterHints.includes(input.chapterId)) {
+      score += 1.5;
+      hits.push(`chapter:${input.chapterId}`);
+    }
+    return { topicId: t.id, score, hits };
+  });
+
+  const sorted = [...scores].sort((a, b) => b.score - a.score || TOPICS.findIndex((t) => t.id === a.topicId) - TOPICS.findIndex((t) => t.id === b.topicId));
+  const best = sorted[0];
+  const keywordHit = best.hits.some((h) => h.startsWith("bn:") || h.startsWith("ar:") || h.startsWith("en:"));
+  const chapterHit = best.hits.some((h) => h.startsWith("chapter:"));
+
+  let method: ClassificationMethod;
+  let topicId: TopicId;
+  if (best.score > 0 && keywordHit) {
+    method = "keyword";
+    topicId = best.topicId;
+  } else if (best.score > 0 && chapterHit) {
+    method = "chapter";
+    topicId = best.topicId;
+  } else {
+    method = "default";
+    topicId = DEFAULT_TOPIC_ID;
+  }
+
+  const reasoning: string[] = [];
+  if (method === "keyword") {
+    reasoning.push(`keyword match: ${best.hits.filter((h) => !h.startsWith("chapter:")).join(", ")} (score ${best.score})`);
+    if (chapterHit) reasoning.push(`chapter prior agrees (chapter ${input.chapterId})`);
+  } else if (method === "chapter") {
+    reasoning.push(`no keyword hit; chapter ${input.chapterId} hints at ${topicById(topicId).labelEn}`);
+  } else {
+    reasoning.push("no keyword or chapter rule fired — safe default topic (guidance); AI fallback MAY refine");
+  }
+  const runnerUp = sorted[1];
+  if (runnerUp && runnerUp.score > 0 && runnerUp.score === best.score) {
+    reasoning.push(`tie with ${topicById(runnerUp.topicId).labelEn} at ${runnerUp.score} — taxonomy order breaks the tie (deterministic)`);
+  }
+
+  return {
+    topicId,
+    method,
+    scores: sorted.map(({ topicId: id, score }) => ({ topicId: id, score })),
+    reasoning,
+    needsAiFallback: method === "default",
+  };
+}
+
+export type VisualHistoryEntry = {
+  /** Asia/Kolkata date, YYYY-MM-DD. */
+  date: string;
+  contentRef: string;
+  sceneId: string;
+  conceptId: string;
+  topicId: TopicId;
+};
+
+export type SimilarityCheck = { ok: boolean; warnings: string[]; blocked: boolean };
+
+export function checkVisualSimilarity(
+  candidate: { sceneId: string; conceptId: string; topicId: TopicId },
+  history: readonly VisualHistoryEntry[],
+  today: string,
+): SimilarityCheck {
+  const warnings: string[] = [];
+  let blocked = false;
+  if (history.length === 0) return { ok: true, warnings, blocked };
+  const sorted = [...history].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const dayMs = 86_400_000;
+  const todayMs = Date.parse(`${today}T00:00:00Z`);
+  const gapDays = (d: string): number => Math.round((todayMs - Date.parse(`${d}T00:00:00Z`)) / dayMs);
+
+  for (const e of sorted) {
+    const gap = gapDays(e.date);
+    if (e.sceneId === candidate.sceneId && gap >= 0 && gap <= SELECTION_WINDOWS.sceneReuseDays) {
+      warnings.push(`scene ${candidate.sceneId} was used ${gap === 0 ? "today" : `${gap} day(s) ago`} (${e.date} · ${e.contentRef}) — inside the ${SELECTION_WINDOWS.sceneReuseDays}-day window; BLOCKED`);
+      blocked = true;
+      break;
+    }
+  }
+  for (const e of sorted) {
+    const gap = gapDays(e.date);
+    if (e.conceptId === candidate.conceptId && gap >= 0 && gap <= SELECTION_WINDOWS.conceptReuseDays) {
+      warnings.push(`concept ${candidate.conceptId} was used ${gap === 0 ? "today" : `${gap} day(s) ago`} (${e.date}) — inside the ${SELECTION_WINDOWS.conceptReuseDays}-day window; BLOCKED`);
+      blocked = true;
+      break;
+    }
+  }
+  const yesterday = sorted[0];
+  if (yesterday && yesterday.topicId === candidate.topicId && gapDays(yesterday.date) <= SELECTION_WINDOWS.topicSoftDays) {
+    warnings.push(`same topic as ${yesterday.date} (${topicById(candidate.topicId).labelEn}) — allowed, but the visual MUST differ`);
+  }
+  return { ok: !blocked, warnings, blocked };
+}
+
+/** Does this scene belong to the classified topic? (Content-Visual Match.) */
+export function contentVisualMatch(topicId: TopicId, sceneId: string): boolean {
+  return VISUAL_CONCEPTS.some((c) => c.topicId === topicId && c.sceneId === sceneId);
+}
+
+export type ValidationId =
+  | "source_reference_integrity"
+  | "arabic_integrity"
+  | "bengali_editorial_quality"
+  | "fabricated_claims_detection"
+  | "content_visual_consistency"
+  | "bengali_readability_image_quality"
+  | "duplicate_prevention"
+  | "finalized_asset_integrity";
+
+export type ValidationStatus = "exists" | "partial" | "missing";
+
+export type MandatoryValidation = {
+  id: ValidationId;
+  label: string;
+  /** Current state in the pipeline (audited 2026-11-15; see report §7). */
+  currentStatus: ValidationStatus;
+  evidence: string;
+};
+
+export const MANDATORY_VALIDATIONS: MandatoryValidation[] = [
+  {
+    id: "source_reference_integrity", label: "Islamic source & reference integrity",
+    currentStatus: "exists",
+    evidence: "EXISTS: recommend drops any ref not in the live eligible pool; planner re-validates approved runs slot-by-slot (Phase 3); the 8-validation autonomous gate (autonomousGate.ts, 2026-11-17) re-verifies refs at publish time — ref well-formed, resolves in the live pool, eligible, source line matches the live record's book + number (gate V1).",
+  },
+  {
+    id: "arabic_integrity", label: "Arabic text integrity",
+    currentStatus: "exists",
+    evidence: "EXISTS: eligibleHadith requires non-empty Arabic; poster QC is character-exact vs the source record (ogQc checkOgVerbatim); the autonomous gate (2026-11-17) re-verifies every card's Arabic verbatim against its live row at publish time (gate V2).",
+  },
+  {
+    id: "bengali_editorial_quality", label: "Bengali translation & editorial quality",
+    currentStatus: "partial",
+    evidence: "Editorial Standard v1.0 in all 5 AI function prompts; 168-test quality suite green (Phase 4); the autonomous gate (2026-11-17) re-verifies every card's Bengali verbatim against its live row and fails on meaning-level failure (classifyBengali meaningFidelity FAIL) at publish time (gate V3). GAP REMAINS: generate-hadith-seo has NO server-side virtue gate (prompt-only) and writes directly to live hadiths with no pending review; fix-dua-content also writes directly (Phases 3/4).",
+  },
+  {
+    id: "fabricated_claims_detection", label: "Misleading / fabricated religious claims detection",
+    currentStatus: "partial",
+    evidence: "Recommend FORBIDDEN_REASON_PATTERNS + validation loop; enrich Option A suppresses unsupported virtue claims; generate-dua-seo VIRTUE_BLOCKLIST + validateGeneratedOutput() (Phase 3); the autonomous gate (2026-11-17) scans cards + push for claim patterns at publish time and fails only on wording NOT in the live source text (gate V4). GAP REMAINS: generate-hadith-seo prompt-only, no server-side gate; patterns are 6 shapes only — no general fabricated-claim detector; soft-benefit language decision still open.",
+  },
+  {
+    id: "content_visual_consistency", label: "Content-visual consistency",
+    currentStatus: "exists",
+    evidence: "EXISTS (Phase 2, 2026-11-17): selectPosterVisual + checkVisualQC in the poster path — engine match + semantic score >= 85 + similarity windows (14-day scene / 7-day concept) + isSafeScene + text-safe-area warning; render fails closed. The autonomous gate (2026-11-17) re-checks the topic match + similarity windows at publish time against the stored scene (gate V5).",
+  },
+  {
+    id: "bengali_readability_image_quality", label: "Bengali readability & image quality",
+    currentStatus: "exists",
+    evidence: "EXISTS: ogQc checks dimensions, file size, public-URL 200, verbatim, no-repeat, long-text warnings (Phase 6); the poster render enforces fit (autofit gate) and the autonomous gate (2026-11-17) consumes poster_qc_status === 'passed' at publish time (gate V6). Fit is render-time evidence only — the row carries no fit measurement; the gate documents this rather than re-measuring it.",
+  },
+  {
+    id: "duplicate_prevention", label: "Duplicate content & duplicate publication prevention",
+    currentStatus: "exists",
+    evidence: "kolkata_date UNIQUE, delivery UNIQUE (publication_id, device_id) with NULL hole (worked around in code), 30-day repeat check in recommend (HISTORY_DAYS=30), cycle-based no-repeat in planner (hadithUsed/cardUsed), resolveRow dedup, idempotent set_poster (Phases 9/10/11, autonomous audit §2); the autonomous gate (2026-11-17) re-checks same-date + same-cycle reuse at publish time (gate V7). Residuals (observability, not prevention): documented at-least-once windows, no provider-side idempotency, no recipients_disabled column.",
+  },
+  {
+    id: "finalized_asset_integrity", label: "Finalized asset integrity",
+    currentStatus: "exists",
+    evidence: "EXISTS on the poster branch: set_poster validates URL prefix, 64-hex checksum, asset ID poster:<date>, storage path, scene slug; published-only; conditional update; idempotent; failed attempts never persist a URL (Phase 6/11); the autonomous gate (2026-11-17) re-validates the STORED poster fields with the same validators at publish time (gate V8). MISSING on main/production: no set_poster, no poster columns.",
+  },
+];
+
+export type ValidationResult = { id: ValidationId; pass: boolean; detail?: string };
+
+export type SafetyGateResult =
+  | { decision: "publish"; failed: [] }
+  | { decision: "hold"; failed: ValidationId[]; reasons: string[] };
+
+/** All 8 must be present AND pass, else HOLD. Unknown id -> HOLD (fail-closed). */
+export function evaluateSafetyGate(results: ValidationResult[]): SafetyGateResult {
+  const byId = new Map(results.map((r) => [r.id, r]));
+  const failed: ValidationId[] = [];
+  const reasons: string[] = [];
+  for (const v of MANDATORY_VALIDATIONS) {
+    const r = byId.get(v.id);
+    if (!r) {
+      failed.push(v.id);
+      reasons.push(`${v.label}: no result recorded — HOLD (fail-closed)`);
+    } else if (!r.pass) {
+      failed.push(v.id);
+      reasons.push(`${v.label}: FAILED${r.detail ? ` — ${r.detail}` : ""}`);
+    }
+  }
+  if (failed.length > 0) return { decision: "hold", failed, reasons };
+  return { decision: "publish", failed: [] };
+}
+
+// ---- BENGALI QUALITY (verbatim port of src/lib/dailyContent/bengaliQuality.ts) ----
+export type BengaliQualityCategory =
+  | "Natural Bengali"
+  | "Literal AI Translation"
+  | "Awkward Word Choice"
+  | "Repetition"
+  | "Meaning Distortion"
+  | "Unsupported Religious Claim"
+  | "Scholar Review Required";
+
+export interface BengaliQualityResult {
+  /** Categories that apply (empty + no issues = Natural Bengali). */
+  categories: BengaliQualityCategory[];
+  /** 0-100. 100 = no issues found. Deducted per issue. */
+  languageQualityScore: number;
+  /** Meaning fidelity vs the English parallel / source: PASS | CHECK | FAIL. */
+  meaningFidelity: "PASS" | "CHECK" | "FAIL";
+  /** Religious safety: PASS | REVIEW (a claim or distortion needs a human). */
+  religiousSafety: "PASS" | "REVIEW";
+  /** Whether a human must review this text before it is used. */
+  humanReviewRequired: boolean;
+  /** Human-readable issue list (what was found and where). */
+  issues: string[];
+}
+
+// --- Patterns ---
+
+// Words that are always wrong in Bengali Islamic content.
+const AWKWARD_WORDS: Array<{ re: RegExp; label: string }> = [
+  { re: /পিতৃসত্তা/, label: "পিতৃসত্তা — Allah is never 'father' (Qur'an 112:3); use প্রতিপালক" },
+  { re: /প্রফেট/, label: "প্রফেট — English loanword; use নবী / রাসুলুল্লাহ ﷺ / নবীজি ﷺ" },
+  { re: /হস্তগত/, label: "হস্তগত — unnatural heavy word; use নাযিল হওয়া / পাওয়া / অবতীর্ণ হওয়া" },
+];
+
+// AI-style empty phrases (no information; literal English filler).
+const AI_PHRASES: Array<{ re: RegExp; label: string }> = [
+  { re: /এটি আমাদের অনুপ্রাণিত করে|এটি আমাদেরকে অনুপ্রেরণা দেয়/, label: "AI filler: 'এটি আমাদের অনুপ্রাণিত করে'" },
+  { re: /আত্মউন্নতির লক্ষ্য(কে)? প্রকাশ করে/, label: "AI filler: 'আত্মউন্নতির লক্ষ্য প্রকাশ করে'" },
+  { re: /জীবন(কে)? সুশৃঙ্খল করে|জীবন সুশৃঙ্খল হয়/, label: "AI filler: 'জীবনকে সুশৃঙ্খল করে'" },
+  { re: /বাস্তবে, এটি আমাদেরকে .* অভ্যাস গড়ে তুলতে অনুপ্রেরণা দেয়/, label: "AI filler: 'বাস্তবে, এটি আমাদেরকে ... অভ্যাস গড়ে তুলতে অনুপ্রেরণা দেয়'" },
+  { re: /এটি আমাদের শেখার ইচ্ছা প্রকাশ করে/, label: "AI filler: 'এটি আমাদের শেখার ইচ্ছা প্রকাশ করে'" },
+];
+
+// Literal-translation markers (English sentence shapes copied into Bengali).
+const LITERAL_MARKERS: Array<{ re: RegExp; label: string }> = [
+  { re: /এটি জোর দেয় যে/, label: "literal translation: 'এটি জোর দেয় যে' (it underscores that)" },
+  { re: /এটি গুরুত্বপূর্ণ যে/, label: "literal translation: 'এটি গুরুত্বপূর্ণ যে' (it is important that)" },
+  { re: /বাস্তবে,/, label: "literal translation: sentence starting with 'বাস্তবে,' (in everyday life)" },
+];
+
+// Unsupported religious claims (same shapes as the server-side validators).
+// Exported (port addition): the autonomous gate's V4 scans the same
+// patterns and exempts a hit only when the matched word is the live
+// source text's own wording.
+export const RELIGIOUS_CLAIM_PATTERNS: Array<{ re: RegExp; label: string }> = [
+  { re: /ফজিলত|ফযীলত|সওয়াব|সাওয়াব/, label: "unsupported virtue/reward claim (ফজিলত/সওয়াব)" },
+  { re: /নিশ্চিত|গ্যারান্টি|guaranteed/i, label: "guarantee claim (নিশ্চিত/গ্যারান্টি)" },
+  { re: /reward|পুরস্কার/, label: "reward claim (reward/পুরস্কার)" },
+  { re: /ক্ষমা করা হবে|মাফ করা হবে|জান্নাত(ের)? নিশ্চিত|জান্নাতে (যাবে|যাওয়া)/, label: "forgiveness / Paradise guarantee claim" },
+  { re: /[০-৯0-9]+\s*বার/, label: "prayer-count claim" },
+  { re: /কদর.*২৭|২৭.*কদর/, label: "Laylatul Qadr exact-night claim" },
+];
+
+// Known bn/en mismatches (the English parallel proves the Bengali wrong).
+// Each entry: the English word/phrase that must NOT be rendered as the
+// Bengali word. Only the concrete cases we have evidence for.
+const BN_EN_MISMATCHES: Array<{
+  enRe: RegExp;
+  bnRe: RegExp;
+  label: string;
+}> = [
+  {
+    enRe: /humility/i,
+    bnRe: /নীরবতা/,
+    label: "bn/en mismatch: English says 'humility' but Bengali says 'নীরবতা' (silence) — should be 'নম্রতা'",
+  },
+];
+
+function splitSentences(text: string): string[] {
+  return text
+    .split(/[।!?]+/)
+    .map((s) => s.trim())
+    .filter((s) => s.length > 0);
+}
+
+export function classifyBengali(input: {
+  bn: string;
+  en?: string;
+}): BengaliQualityResult {
+  const bn = input.bn ?? "";
+  const en = input.en ?? "";
+  const issues: string[] = [];
+  const categories = new Set<BengaliQualityCategory>();
+  let score = 100;
+
+  // 1. Awkward word choice (always wrong).
+  for (const { re, label } of AWKWARD_WORDS) {
+    if (re.test(bn)) {
+      issues.push(label);
+      categories.add("Awkward Word Choice");
+      score -= 25;
+    }
+  }
+
+  // 2. AI-style empty phrases.
+  for (const { re, label } of AI_PHRASES) {
+    if (re.test(bn)) {
+      issues.push(label);
+      categories.add("Literal AI Translation");
+      score -= 15;
+    }
+  }
+
+  // 3. Literal-translation markers.
+  for (const { re, label } of LITERAL_MARKERS) {
+    if (re.test(bn)) {
+      issues.push(label);
+      categories.add("Literal AI Translation");
+      score -= 10;
+    }
+  }
+
+  // 4. Unsupported religious claims.
+  for (const { re, label } of RELIGIOUS_CLAIM_PATTERNS) {
+    if (re.test(bn)) {
+      issues.push(label);
+      categories.add("Unsupported Religious Claim");
+      score -= 30;
+    }
+  }
+
+  // 5. Repetition: the same sentence (or the same opening words)
+  // appears more than once.
+  const sentences = splitSentences(bn);
+  const seen = new Map<string, number>();
+  for (const s of sentences) {
+    const key = s.slice(0, 30);
+    seen.set(key, (seen.get(key) ?? 0) + 1);
+  }
+  for (const [key, count] of seen) {
+    if (count >= 2) {
+      issues.push(`Repetition: the same sentence/opening repeats ${count} times ("${key}…")`);
+      categories.add("Repetition");
+      score -= 10;
+      break;
+    }
+  }
+
+  // 6. bn/en consistency (only when the English parallel is given).
+  if (en) {
+    for (const { enRe, bnRe, label } of BN_EN_MISMATCHES) {
+      if (enRe.test(en) && bnRe.test(bn)) {
+        issues.push(label);
+        categories.add("Meaning Distortion");
+        score -= 25;
+      }
+    }
+  }
+
+  // 7. Meaning distortion follows from a theological error: calling
+  // Allah "father" (পিতৃসত্তা) distorts the meaning of Rabb.
+  if (/পিতৃসত্তা/.test(bn)) {
+    categories.add("Meaning Distortion");
+  }
+
+  // Scholar review is required when there is a meaning distortion,
+  // an unsupported religious claim, or a theological error.
+  const needsScholar =
+    categories.has("Meaning Distortion") ||
+    categories.has("Unsupported Religious Claim") ||
+    /পিতৃসত্তা/.test(bn);
+  if (needsScholar) {
+    categories.add("Scholar Review Required");
+  }
+
+  const meaningFidelity: "PASS" | "CHECK" | "FAIL" = categories.has(
+    "Meaning Distortion",
+  )
+    ? "FAIL"
+    : categories.has("Awkward Word Choice") ||
+        categories.has("Literal AI Translation")
+      ? "CHECK"
+      : "PASS";
+  const religiousSafety: "PASS" | "REVIEW" = needsScholar ? "REVIEW" : "PASS";
+  const humanReviewRequired =
+    issues.length > 0 || needsScholar;
+
+  if (issues.length === 0) {
+    categories.add("Natural Bengali");
+  }
+
+  return {
+    categories: [...categories],
+    languageQualityScore: Math.max(0, score),
+    meaningFidelity,
+    religiousSafety,
+    humanReviewRequired,
+    issues,
+  };
+}
+
+// ---- VISUAL SELECTION BRIDGE (verbatim port of the two functions the
+// gate needs from src/lib/dailyContent/visualSelection.ts:
+// buildHadithInput + buildHistoryEntries. The rest of that module —
+// selectPosterVisual, checkVisualQC, the semantic scorer — is NOT
+// needed at publish time: the render already ran it and the gate
+// consumes poster_qc_status === "passed" as its evidence. Type
+// annotations are adapted to the edge's loose row shapes; the bodies
+// are identical. ----
+
+type GateCardShape = {
+  kind: string;
+  recordRef: string;
+  arabic: string;
+  bengali: string;
+  sourceLine: string | null;
+};
+
+type GateHadithShape = {
+  id: string;
+  book_key: string;
+  chapter_id: number | null;
+  hadith_number: number;
+  arabic: string;
+  bengali: string | null;
+  english?: string | null;
+};
+
+function gateBuildHadithInput(card: GateCardShape, record?: GateHadithShape | null): HadithInput {
+  const bookKey = record?.book_key ?? card.recordRef.replace(/^hadith:/, "").split("-")[0] ?? "bukhari";
+  return {
+    ref: card.recordRef,
+    bookKey,
+    chapterId: record?.chapter_id ?? null,
+    chapterTitleEn: null,
+    bengali: card.bengali,
+    arabic: card.arabic,
+    english: record?.english ?? null,
+    sourceLine: card.sourceLine,
+  };
+}
+
+function gateBuildHistoryEntries(
+  rows: readonly { kolkata_date: string; hadith_ref: string | null; cards: unknown; poster_scene_id: string | null }[],
+  today: string,
+  records?: ReadonlyMap<string, { chapter_id: number | null; english: string | null }>,
+): VisualHistoryEntry[] {
+  const entries: VisualHistoryEntry[] = [];
+  for (const row of rows) {
+    if (!row.poster_scene_id) continue;
+    if (row.kolkata_date === today) continue;
+    const cards = Array.isArray(row.cards) ? (row.cards as Record<string, unknown>[]) : [];
+    const stored = cards.find((c) => c.kind === "hadith") as
+      | { recordRef?: string; arabic?: string; bengali?: string; sourceLine?: string }
+      | undefined;
+    if (!stored || typeof stored.recordRef !== "string") continue;
+    const recordId = stored.recordRef.replace(/^hadith:/, "");
+    const record = records?.get(recordId);
+    const classification = classifyHadith({
+      ref: stored.recordRef,
+      bookKey: "bukhari",
+      chapterId: record?.chapter_id ?? null,
+      bengali: typeof stored.bengali === "string" ? stored.bengali : "",
+      arabic: typeof stored.arabic === "string" ? stored.arabic : "",
+      english: record?.english ?? null,
+      sourceLine: typeof stored.sourceLine === "string" ? stored.sourceLine : null,
+    });
+    const concept = conceptsForTopic(classification.topicId).find((c) => c.sceneId === row.poster_scene_id);
+    if (!concept) continue;
+    entries.push({
+      date: row.kolkata_date,
+      contentRef: stored.recordRef,
+      sceneId: row.poster_scene_id,
+      conceptId: concept.id,
+      topicId: classification.topicId,
+    });
+  }
+  return entries;
+}
+
+// ---- THE GATE (verbatim port of src/lib/dailyContent/autonomousGate.ts)
+// The lib file is canonical; this is the same logic, same verdict
+// shape, same failure messages. Differences (mechanical only):
+//  - kolkataDateString (already in this file, same Intl algorithm)
+//    replaces the lib's kolkataDateOf;
+//  - isValidPosterUrl / isValidChecksum / POSTER_FORMATS are the ones
+//    already in this file (set_poster's validators, reused, not copied);
+//  - input types are the edge's row shapes.
+// A parity test (lib gate vs edge gate on identical fixtures) guards
+// drift. Exported so the edge tests can call it directly.
+
+export type GateLiveDuaShape = {
+  slug: string;
+  title: string | null;
+  content: string | null;
+  content_arabic: string | null;
+  metadata: { reference?: string | null; source?: string | null; source_type?: string | null } | null;
+  status: string;
+  content_type: string;
+};
+
+export type GatePosterShape = {
+  url: string | null;
+  urls?: Record<string, unknown> | null;
+  assetId: string | null;
+  storagePath: string | null;
+  checksum: string | null;
+  checksums?: Record<string, unknown> | null;
+  sceneId: string | null;
+  qcStatus: string | null;
+  generatedAt: string | null;
+};
+
+export type GateHistoryRowShape = {
+  kolkata_date: string;
+  hadith_ref: string | null;
+  cards: unknown;
+  poster_scene_id: string | null;
+  hadith_cycle: number | null;
+  card_cycle: number | null;
+};
+
+export type GateInputShape = {
+  kolkataDate: string;
+  hadithRef: string | null;
+  hadithSourceLine: string | null;
+  cards: GateCardShape[];
+  push: { title: string; body: string } | null;
+  poster: GatePosterShape;
+  liveHadith: GateHadithShape | null;
+  liveDuas: Map<string, GateLiveDuaShape> | Record<string, GateLiveDuaShape>;
+  history: GateHistoryRowShape[];
+  historyRecords?: ReadonlyMap<string, { chapter_id: number | null; english: string | null }>;
+  hadithCycle: number | null;
+  cardCycle: number | null;
+};
+
+export type GateValidationResultShape = {
+  id: ValidationId;
+  pass: boolean;
+  detail: string;
+  warnings: string[];
+};
+
+export type GateVerdictShape = {
+  decision: "publish" | "hold";
+  results: GateValidationResultShape[];
+  failed: ValidationId[];
+  reasons: string[];
+};
+
+const gateOk = (id: ValidationId, detail: string, warnings: string[] = []): GateValidationResultShape => ({ id, pass: true, detail, warnings });
+const gateFail = (id: ValidationId, detail: string, warnings: string[] = []): GateValidationResultShape => ({ id, pass: false, detail, warnings });
+
+function gateParseHadithRef(ref: string | null): string | null {
+  if (typeof ref !== "string") return null;
+  const m = /^hadith:([A-Za-z0-9-]+)$/.exec(ref);
+  return m ? m[1] : null;
+}
+
+function gateParseContentRef(ref: string): string | null {
+  const m = /^content:([A-Za-z0-9-]+)$/.exec(ref);
+  return m ? m[1] : null;
+}
+
+function gateLiveDuaFor(liveDuas: GateInputShape["liveDuas"], slug: string): GateLiveDuaShape | null {
+  if (liveDuas instanceof Map) return liveDuas.get(slug) ?? null;
+  return (liveDuas as Record<string, GateLiveDuaShape>)[slug] ?? null;
+}
+
+function gateLiveRowForCard(
+  card: GateCardShape,
+  input: GateInputShape,
+): { arabic: string; bengali: string; english?: string | null } | null {
+  if (card.recordRef.startsWith("hadith:")) {
+    const h = input.liveHadith;
+    if (!h) return null;
+    return { arabic: h.arabic, bengali: h.bengali ?? "", english: h.english ?? null };
+  }
+  const slug = gateParseContentRef(card.recordRef);
+  if (slug === null) return null;
+  const d = gateLiveDuaFor(input.liveDuas, slug);
+  if (!d) return null;
+  return { arabic: d.content_arabic ?? "", bengali: d.content ?? "" };
+}
+
+export function gateEvalSourceReferenceIntegrity(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "source_reference_integrity";
+  const cards = Array.isArray(input.cards) ? input.cards : [];
+  if (cards.length < 1 || cards.length > 5) {
+    return gateFail(id, `cards must be 1-5, got ${cards.length}`);
+  }
+  const hadithCards = cards.filter((c) => c.recordRef.startsWith("hadith:"));
+  if (hadithCards.length !== 1) {
+    return gateFail(id, `exactly one hadith card required, got ${hadithCards.length}`);
+  }
+  const contentCards = cards.filter((c) => c.recordRef.startsWith("content:"));
+  if (hadithCards.length + contentCards.length !== cards.length) {
+    return gateFail(id, "every card must be hadith:<id> or content:<slug>");
+  }
+  const refs = cards.map((c) => c.recordRef);
+  if (new Set(refs).size !== refs.length) {
+    return gateFail(id, `duplicate card refs: ${refs.join(", ")}`);
+  }
+  const hadithId = gateParseHadithRef(input.hadithRef);
+  if (hadithId === null) {
+    return gateFail(id, `hadith_ref malformed: ${JSON.stringify(input.hadithRef)}`);
+  }
+  const hadithCard = hadithCards[0];
+  if (hadithCard.recordRef !== input.hadithRef) {
+    return gateFail(id, `hadith card ref ${hadithCard.recordRef} != hadith_ref ${input.hadithRef}`);
+  }
+  if (hadithCard.kind !== "hadith") {
+    return gateFail(id, `hadith card kind must be "hadith", got ${JSON.stringify(hadithCard.kind)}`);
+  }
+  for (const c of contentCards) {
+    if (c.kind !== "dua" && c.kind !== "quran" && c.kind !== "hadith") {
+      return gateFail(id, `content card ${c.recordRef} kind must be dua/quran/hadith, got ${JSON.stringify(c.kind)}`);
+    }
+  }
+  if (!hasText(hadithCard.sourceLine) || hadithCard.sourceLine !== input.hadithSourceLine) {
+    return gateFail(id, "hadith card sourceLine does not match the row's hadith_source_line");
+  }
+  const live = input.liveHadith;
+  if (!live) {
+    return gateFail(id, `live hadith ${hadithId} not found — cannot verify refs (fail-closed)`);
+  }
+  if (live.id !== hadithId) {
+    return gateFail(id, `live hadith id ${live.id} != ref id ${hadithId}`);
+  }
+  if (!hasText(live.arabic) || !hasText(live.bengali)) {
+    return gateFail(id, `live hadith ${hadithId} is ineligible (empty Arabic or Bengali)`);
+  }
+  if (live.book_key !== "bukhari") {
+    return gateFail(id, `live hadith ${hadithId} book_key ${JSON.stringify(live.book_key)} is not bukhari — unknown book (fail-closed)`);
+  }
+  const expectedSourceLine = `Sahih al-Bukhari, Hadith ${live.hadith_number}`;
+  if (input.hadithSourceLine !== expectedSourceLine) {
+    return gateFail(id, `hadith_source_line ${JSON.stringify(input.hadithSourceLine)} != expected ${JSON.stringify(expectedSourceLine)}`);
+  }
+  for (const c of contentCards) {
+    const slug = gateParseContentRef(c.recordRef);
+    if (slug === null) return gateFail(id, `content card ref malformed: ${c.recordRef}`);
+    const d = gateLiveDuaFor(input.liveDuas, slug);
+    if (!d) {
+      return gateFail(id, `live dua ${slug} not found — cannot verify refs (fail-closed)`);
+    }
+    if (d.status !== "published") {
+      return gateFail(id, `live dua ${slug} status ${JSON.stringify(d.status)} != published`);
+    }
+    if (typeof d.content_type !== "string" || d.content_type.toLowerCase() !== "dua") {
+      return gateFail(id, `live dua ${slug} content_type ${JSON.stringify(d.content_type)} != dua`);
+    }
+    const reference = d.metadata?.reference ?? d.metadata?.source ?? null;
+    if (!hasText(d.content) || !hasText(d.content_arabic) || !hasText(reference)) {
+      return gateFail(id, `live dua ${slug} is ineligible (empty content, Arabic, or reference)`);
+    }
+  }
+  return gateOk(id, `hadith ${input.hadithRef} + ${contentCards.length} content card(s) resolve in the live pools; source line ${expectedSourceLine}`);
+}
+
+export function gateEvalArabicIntegrity(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "arabic_integrity";
+  for (const card of input.cards) {
+    if (!hasText(card.arabic)) {
+      return gateFail(id, `card ${card.recordRef} has empty Arabic`);
+    }
+    const live = gateLiveRowForCard(card, input);
+    if (!live) {
+      return gateFail(id, `card ${card.recordRef} has no live row to verify Arabic against (fail-closed)`);
+    }
+    if (card.arabic !== live.arabic) {
+      return gateFail(id, `card ${card.recordRef} Arabic differs from the live row (introduced in transit)`);
+    }
+  }
+  return gateOk(id, `${input.cards.length} card(s) Arabic verbatim vs live rows`);
+}
+
+export function gateEvalBengaliEditorialQuality(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "bengali_editorial_quality";
+  const warnings: string[] = [];
+  for (const card of input.cards) {
+    if (!hasText(card.bengali)) {
+      return gateFail(id, `card ${card.recordRef} has empty Bengali`);
+    }
+    const live = gateLiveRowForCard(card, input);
+    if (!live) {
+      return gateFail(id, `card ${card.recordRef} has no live row to verify Bengali against (fail-closed)`);
+    }
+    if (card.bengali !== live.bengali) {
+      return gateFail(id, `card ${card.recordRef} Bengali differs from the live row (introduced in transit)`);
+    }
+    const result = classifyBengali({ bn: card.bengali, en: live.english ?? undefined });
+    if (result.meaningFidelity === "FAIL") {
+      return gateFail(id, `card ${card.recordRef} meaning failure: ${result.issues.join(" | ")}`);
+    }
+    if (result.issues.length > 0) {
+      warnings.push(`${card.recordRef}: ${result.issues.join(" | ")}`);
+    }
+    if (!live.english) {
+      warnings.push(`${card.recordRef}: no English parallel — bn/en mismatch check not run`);
+    }
+  }
+  return gateOk(id, `${input.cards.length} card(s) Bengali verbatim vs live rows; no meaning failure`, warnings);
+}
+
+export function gateEvalFabricatedClaimsDetection(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "fabricated_claims_detection";
+  const liveTexts: string[] = [];
+  for (const card of input.cards) {
+    const live = gateLiveRowForCard(card, input);
+    if (!live) {
+      return gateFail(id, `card ${card.recordRef} has no live row to discriminate claim wording against (fail-closed)`);
+    }
+    liveTexts.push(live.bengali);
+  }
+  const texts: Array<{ where: string; text: string }> = input.cards.map((c) => ({ where: `card ${c.recordRef}`, text: c.bengali }));
+  if (input.push) {
+    texts.push({ where: "push title", text: input.push.title });
+    texts.push({ where: "push body", text: input.push.body });
+  }
+  const noted: string[] = [];
+  for (const { where, text } of texts) {
+    if (!text) continue;
+    for (const { re, label } of RELIGIOUS_CLAIM_PATTERNS) {
+      const m = re.exec(text);
+      if (!m) continue;
+      const matched = m[0];
+      if (liveTexts.some((live) => live.includes(matched))) {
+        noted.push(`${where}: "${matched}" is the live source's own wording (${label}) — noted, pass`);
+      } else {
+        return gateFail(id, `${where}: claim pattern hit "${matched}" (${label}) not present in any live source text — introduced in transit`);
+      }
+    }
+  }
+  return gateOk(
+    id,
+    noted.length > 0
+      ? `${noted.length} claim-pattern hit(s), all source wording: ${noted.join(" | ")}`
+      : "no claim-pattern hits in cards or push",
+  );
+}
+
+export function gateEvalContentVisualConsistency(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "content_visual_consistency";
+  const poster = input.poster;
+  if (poster.qcStatus !== "passed") {
+    return gateFail(id, `poster_qc_status ${JSON.stringify(poster.qcStatus)} != passed — no render QC evidence`);
+  }
+  const hadithCard = input.cards.find((c) => c.recordRef.startsWith("hadith:"));
+  if (!hadithCard) {
+    return gateFail(id, "no hadith card to classify");
+  }
+  if (!hasText(poster.sceneId)) {
+    return gateFail(id, "poster_scene_id is empty");
+  }
+  const sceneId = poster.sceneId as string;
+  const engineInput = gateBuildHadithInput(hadithCard, input.liveHadith);
+  const classification = classifyHadith(engineInput);
+  const topicId = classification.topicId;
+  if (!contentVisualMatch(topicId, sceneId)) {
+    return gateFail(id, `scene ${sceneId} does not belong to topic ${topicId} (classified ${classification.method}: ${classification.reasoning.join(" | ")})`);
+  }
+  const concept = conceptsForTopic(topicId).find((c) => c.sceneId === sceneId);
+  if (!concept) {
+    return gateFail(id, `no concept in topic ${topicId} uses scene ${sceneId}`);
+  }
+  const historyRows = (input.history ?? []).filter((r) => r.kolkata_date !== input.kolkataDate);
+  const entries = gateBuildHistoryEntries(
+    historyRows.map((r) => ({ kolkata_date: r.kolkata_date, hadith_ref: r.hadith_ref, cards: r.cards, poster_scene_id: r.poster_scene_id })),
+    input.kolkataDate,
+    input.historyRecords,
+  );
+  const similarity = checkVisualSimilarity(
+    { sceneId, conceptId: concept.id, topicId },
+    entries,
+    input.kolkataDate,
+  );
+  if (similarity.blocked) {
+    return gateFail(id, `visual repetition: ${similarity.warnings.join(" | ")}`);
+  }
+  const dayMs = 86_400_000;
+  const todayMs = Date.parse(`${input.kolkataDate}T00:00:00Z`);
+  for (const r of historyRows) {
+    if (r.poster_scene_id !== sceneId) continue;
+    const gap = Math.round((todayMs - Date.parse(`${r.kolkata_date}T00:00:00Z`)) / dayMs);
+    if (gap >= 0 && gap <= SELECTION_WINDOWS.sceneReuseDays) {
+      return gateFail(id, `scene ${sceneId} was used ${gap === 0 ? "today" : `${gap} day(s) ago`} (${r.kolkata_date}) — inside the ${SELECTION_WINDOWS.sceneReuseDays}-day window; BLOCKED`);
+    }
+  }
+  const warnings = [...similarity.warnings];
+  return gateOk(id, `topic ${topicId} (${classification.method}) matches scene ${sceneId} (concept ${concept.id}); similarity windows clear`, warnings);
+}
+
+export function gateEvalBengaliReadabilityImageQuality(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "bengali_readability_image_quality";
+  if (input.poster.qcStatus !== "passed") {
+    return gateFail(id, `poster_qc_status ${JSON.stringify(input.poster.qcStatus)} != passed — no render QC evidence`);
+  }
+  if (input.cards.length < 1) {
+    return gateFail(id, "no cards to render");
+  }
+  if (!input.push || !hasText(input.push.title) || !hasText(input.push.body)) {
+    return gateFail(id, "push title/body empty — nothing readable to send");
+  }
+  return gateOk(id, "poster QC passed for these cards; push title/body present (fit is render-time evidence)");
+}
+
+export function gateEvalDuplicatePrevention(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "duplicate_prevention";
+  if (input.hadithCycle === null || input.cardCycle === null) {
+    return gateFail(id, "hadith_cycle / card_cycle missing — cycle windows cannot be checked (fail-closed)");
+  }
+  const history = input.history ?? [];
+  for (const r of history) {
+    if (r.kolkata_date === input.kolkataDate && r.hadith_ref) {
+      return gateFail(id, `a published row already exists for ${input.kolkataDate} (duplicate publication)`);
+    }
+  }
+  const hadithCycle = input.hadithCycle;
+  const cardCycle = input.cardCycle;
+  for (const r of history) {
+    if ((r.hadith_cycle ?? 1) === hadithCycle && r.hadith_ref === input.hadithRef) {
+      return gateFail(id, `hadith ${input.hadithRef} already published in hadith_cycle ${hadithCycle} (${r.kolkata_date})`);
+    }
+  }
+  const refs = new Set(input.cards.map((c) => c.recordRef));
+  for (const r of history) {
+    if ((r.card_cycle ?? 1) !== cardCycle) continue;
+    const cards = Array.isArray(r.cards) ? (r.cards as Array<{ recordRef?: unknown }>) : [];
+    for (const c of cards) {
+      if (typeof c.recordRef === "string" && refs.has(c.recordRef)) {
+        return gateFail(id, `card ${c.recordRef} already published in card_cycle ${cardCycle} (${r.kolkata_date})`);
+      }
+    }
+  }
+  return gateOk(id, `no duplicate publication for ${input.kolkataDate}; hadith + ${refs.size} card(s) unused in cycles ${hadithCycle}/${cardCycle}`);
+}
+
+export function gateEvalFinalizedAssetIntegrity(input: GateInputShape): GateValidationResultShape {
+  const id: ValidationId = "finalized_asset_integrity";
+  const p = input.poster;
+  const date = input.kolkataDate;
+  if (!isValidPosterUrl(p.url, date)) {
+    return gateFail(id, `poster_url is not a daily-content-posters URL for ${date} and a known format`);
+  }
+  if (p.urls !== undefined && p.urls !== null) {
+    if (typeof p.urls !== "object" || Array.isArray(p.urls)) {
+      return gateFail(id, "poster_urls must be an object");
+    }
+    for (const [format, url] of Object.entries(p.urls)) {
+      if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidPosterUrl(url, date)) {
+        return gateFail(id, `poster_urls[${format}] is not a valid poster URL`);
+      }
+    }
+  }
+  if (typeof p.sceneId !== "string" || !/^[a-z0-9-]{1,64}$/.test(p.sceneId)) {
+    return gateFail(id, "poster_scene_id must be a lowercase slug");
+  }
+  if (p.assetId !== `poster:${date}`) {
+    return gateFail(id, `poster_asset_id must be poster:${date}`);
+  }
+  if (p.storagePath !== `daily-content-posters/${date}/portrait.png`) {
+    return gateFail(id, `poster_storage_path must be daily-content-posters/${date}/portrait.png`);
+  }
+  if (!isValidChecksum(p.checksum)) {
+    return gateFail(id, "poster_checksum must be a SHA-256 hex string");
+  }
+  if (p.checksums !== undefined && p.checksums !== null) {
+    if (typeof p.checksums !== "object" || Array.isArray(p.checksums)) {
+      return gateFail(id, "poster_checksums must be an object");
+    }
+    for (const [format, sum] of Object.entries(p.checksums)) {
+      if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidChecksum(sum)) {
+        return gateFail(id, `poster_checksums[${format}] must be a SHA-256 hex string`);
+      }
+    }
+  }
+  if (!hasText(p.generatedAt)) {
+    return gateFail(id, "poster_generated_at is missing");
+  }
+  const generatedDate = new Date(p.generatedAt as string);
+  if (Number.isNaN(generatedDate.getTime())) {
+    return gateFail(id, "poster_generated_at is not a valid timestamp");
+  }
+  if (kolkataDateString(generatedDate) !== date) {
+    return gateFail(id, `poster_generated_at is dated ${kolkataDateString(generatedDate)}, not ${date}`);
+  }
+  return gateOk(id, `poster ${p.assetId} validated: URL, storage path, checksum, scene ${p.sceneId}, generated ${date}`);
+}
+
+export function evaluateAutonomousGate(input: GateInputShape): GateVerdictShape {
+  // Normalize first: a stored row with a corrupt card (missing
+  // recordRef / non-string text) or a missing poster object must HOLD,
+  // never throw. A gate that crashes on malformed input is not
+  // fail-closed — it is a 500, and the heal tick would misread it.
+  const normalizeCard = (card: unknown): GateCardShape => {
+    const c = (card ?? {}) as Record<string, unknown>;
+    return {
+      kind: typeof c.kind === "string" ? c.kind : "",
+      recordRef: typeof c.recordRef === "string" ? c.recordRef : "",
+      arabic: typeof c.arabic === "string" ? c.arabic : "",
+      bengali: typeof c.bengali === "string" ? c.bengali : "",
+      sourceLine: typeof c.sourceLine === "string" ? c.sourceLine : null,
+    };
+  };
+  const safe: GateInputShape = {
+    ...input,
+    cards: (Array.isArray(input.cards) ? input.cards : []).map(normalizeCard),
+    poster: input.poster ?? {
+      url: null, urls: null, assetId: null, storagePath: null,
+      checksum: null, checksums: null, sceneId: null, qcStatus: null, generatedAt: null,
+    },
+    history: input.history ?? [],
+  };
+  const results: GateValidationResultShape[] = [
+    gateEvalSourceReferenceIntegrity(safe),
+    gateEvalArabicIntegrity(safe),
+    gateEvalBengaliEditorialQuality(safe),
+    gateEvalFabricatedClaimsDetection(safe),
+    gateEvalContentVisualConsistency(safe),
+    gateEvalBengaliReadabilityImageQuality(safe),
+    gateEvalDuplicatePrevention(safe),
+    gateEvalFinalizedAssetIntegrity(safe),
+  ];
+  const combined = evaluateSafetyGate(results.map((r) => ({ id: r.id, pass: r.pass, detail: r.detail })));
+  if (combined.decision === "publish") {
+    return { decision: "publish", results, failed: [], reasons: [] };
+  }
+  return { decision: "hold", results, failed: combined.failed, reasons: combined.reasons };
+}
+
 async function healSplitFlow(
   svc: Svc,
   kolkataDate: string,
@@ -2605,9 +3860,16 @@ async function healSplitFlow(
         return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
           channels: channels("published", null, fb) });
       }
-      return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "publish_failed", publication_id: pub.id,
+      // A gate hold is its own hold state (not a publish failure):
+      // the content failed validation and stays planned for review.
+      // Any other non-ok publish result keeps the publish_failed hold.
+      const hold = pj.reason === "gate_hold" ? "gate_hold" : "publish_failed";
+      const alertReason = pj.reason === "gate_hold"
+        ? `autonomous gate held the publication: ${Array.isArray(pj.failed) ? (pj.failed as string[]).join(",") : "unknown"}`
+        : `publish_planned failed: ${typeof pj.error === "string" ? pj.error : "unknown"}`;
+      return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold, publication_id: pub.id,
         channels: channels("planned", null),
-        alert: alertFor("warn", `publish_planned failed: ${typeof pj.error === "string" ? pj.error : "unknown"}`, pub.id) });
+        alert: alertFor("warn", alertReason, pub.id) });
     }
     if (pub.poster_qc_status === "failed") {
       return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "poster_failed", publication_id: pub.id,
@@ -2645,6 +3907,119 @@ async function healSplitFlow(
     channels: channels("planned", null) });
 }
 
+/** The 8-validation autonomous gate, run at publish time (publishPlanned
+ *  ONLY — the Mode A publish path). Fetches the live rows the gate must
+ *  verify against with targeted by-id / by-slug queries (never the full
+ *  pools), the published history, and the history rows' hadith records
+ *  for the visual-history rebuild. A live row that cannot be fetched is
+ *  passed as null, and the gate FAILS CLOSED on the missing row (V1 /
+ *  V2 / V3 / V4) — a fetch failure never becomes a publish. */
+async function runPublishGate(
+  svc: Svc,
+  pub: {
+    hadith_ref: string | null;
+    hadith_source_line: string | null;
+    cards: unknown;
+    push: Record<string, unknown> | null;
+    poster_url: string | null;
+    poster_urls: Record<string, unknown> | null;
+    poster_asset_id: string | null;
+    poster_storage_path: string | null;
+    poster_checksum: string | null;
+    poster_checksums: Record<string, unknown> | null;
+    poster_scene_id: string | null;
+    poster_qc_status: string | null;
+    poster_generated_at: string | null;
+    hadith_cycle: number | null;
+    card_cycle: number | null;
+  },
+  kolkataDate: string,
+): Promise<GateVerdictShape> {
+  const cards = Array.isArray(pub.cards) ? (pub.cards as GateCardShape[]) : [];
+  const hadithId = gateParseHadithRef(pub.hadith_ref);
+  let liveHadith: GateHadithShape | null = null;
+  if (hadithId) {
+    const { data } = await svc.from("hadiths")
+      .select("id, book_key, chapter_id, hadith_number, arabic, bengali")
+      .eq("id", hadithId)
+      .maybeSingle();
+    const h = data as { id: string; book_key: string; chapter_id: number | null; hadith_number: number; arabic: string; bengali: string | null } | null;
+    if (h) {
+      // The hadiths table carries no English column (planDay selects
+      // the same six columns) — the gate's bn/en mismatch check does
+      // not run for hadiths; V3 records that as a warning, not a pass.
+      liveHadith = { ...h, english: null };
+    }
+  }
+  const slugs = [...new Set(
+    cards
+      .filter((c) => typeof c.recordRef === "string" && c.recordRef.startsWith("content:"))
+      .map((c) => gateParseContentRef(c.recordRef))
+      .filter((s): s is string => s !== null),
+  )];
+  const liveDuas: Record<string, GateLiveDuaShape> = {};
+  if (slugs.length > 0) {
+    const { data } = await svc.from("admin_content")
+      .select("slug, title, content, content_arabic, metadata, status, content_type")
+      .in("slug", slugs);
+    for (const d of (data ?? []) as Array<{ slug: string; title: string | null; content: string | null; content_arabic: string | null; metadata: GateLiveDuaShape["metadata"]; status: string; content_type: string }>) {
+      liveDuas[d.slug] = d;
+    }
+  }
+  const { data: pubs } = await svc.from("daily_content_publications")
+    .select("kolkata_date, hadith_ref, cards, poster_scene_id, hadith_cycle, card_cycle")
+    .eq("status", "published")
+    .order("kolkata_date", { ascending: false })
+    .limit(500);
+  const history = (pubs ?? []) as GateHistoryRowShape[];
+  // History rows' hadith records (chapter_id) for the visual-history
+  // rebuild — without them classification is card-only, which can drop
+  // a history entry and hide a scene reuse.
+  const historyIds = [...new Set(
+    history.flatMap((r) => (Array.isArray(r.cards) ? (r.cards as Array<{ recordRef?: unknown }>) : [])
+      .filter((c) => typeof c.recordRef === "string" && (c.recordRef as string).startsWith("hadith:"))
+      .map((c) => (c.recordRef as string).slice("hadith:".length))),
+  )];
+  const historyRecords = new Map<string, { chapter_id: number | null; english: string | null }>();
+  if (historyIds.length > 0) {
+    const { data } = await svc.from("hadiths").select("id, chapter_id").in("id", historyIds);
+    for (const h of (data ?? []) as Array<{ id: string; chapter_id: number | null }>) {
+      historyRecords.set(h.id, { chapter_id: h.chapter_id ?? null, english: null });
+    }
+  }
+  const storedPush = pub.push && typeof pub.push === "object" ? pub.push : null;
+  const push = storedPush
+    ? {
+        title: typeof storedPush.title === "string" ? storedPush.title : "",
+        body: typeof storedPush.body === "string" ? storedPush.body : "",
+      }
+    : null;
+  return evaluateAutonomousGate({
+    kolkataDate,
+    hadithRef: pub.hadith_ref ?? null,
+    hadithSourceLine: pub.hadith_source_line ?? null,
+    cards,
+    push,
+    poster: {
+      url: pub.poster_url ?? null,
+      urls: pub.poster_urls ?? null,
+      assetId: pub.poster_asset_id ?? null,
+      storagePath: pub.poster_storage_path ?? null,
+      checksum: pub.poster_checksum ?? null,
+      checksums: pub.poster_checksums ?? null,
+      sceneId: pub.poster_scene_id ?? null,
+      qcStatus: pub.poster_qc_status ?? null,
+      generatedAt: pub.poster_generated_at ?? null,
+    },
+    liveHadith,
+    liveDuas,
+    history,
+    historyRecords,
+    hadithCycle: pub.hadith_cycle ?? null,
+    cardCycle: pub.card_cycle ?? null,
+  });
+}
+
 /** Publish step 3 of the split flow: publish a planned row ONLY when
  *  its poster is finalized (QC-passed), sending the first push with the
  *  finalized poster as `image_url`. Refuses anything else — a failed
@@ -2652,7 +4027,7 @@ async function healSplitFlow(
  *  to distribute that day. An already-published row dedupes. */
 async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> {
   const { data: row } = await svc.from("daily_content_publications")
-    .select("id, status, push, poster_url, poster_qc_status")
+    .select("id, status, push, poster_url, poster_qc_status, hadith_ref, hadith_source_line, cards, poster_asset_id, poster_storage_path, poster_checksum, poster_checksums, poster_urls, poster_scene_id, poster_generated_at, hadith_cycle, card_cycle")
     .eq("kolkata_date", kolkataDate)
     .maybeSingle();
   const pub = row as {
@@ -2661,6 +4036,18 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
     push: Record<string, unknown> | null;
     poster_url: string | null;
     poster_qc_status: string | null;
+    hadith_ref: string | null;
+    hadith_source_line: string | null;
+    cards: unknown;
+    poster_asset_id: string | null;
+    poster_storage_path: string | null;
+    poster_checksum: string | null;
+    poster_checksums: Record<string, unknown> | null;
+    poster_urls: Record<string, unknown> | null;
+    poster_scene_id: string | null;
+    poster_generated_at: string | null;
+    hadith_cycle: number | null;
+    card_cycle: number | null;
   } | null;
   if (!pub) return jsonResponse({ ok: false, error: "no publication for date" }, 404);
   if (pub.status === "published") return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
@@ -2675,6 +4062,21 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
   }
   const storedPush = pub.push && typeof pub.push === "object" ? (pub.push as Record<string, unknown>) : null;
   if (!storedPush) return jsonResponse({ ok: false, error: "planned row has no push payload" }, 500);
+  // The 8-validation autonomous gate (Section 7): ALL 8 must pass or
+  // the row is HELD, never published. The verdict is recorded in the
+  // row's error column (gate_hold:<failed ids>) so the admin page and
+  // the heal tick can see why; the row stays planned. This runs AFTER
+  // the poster check (preserving the poster_not_ready contract) and
+  // BEFORE the per-channel switches, so it applies to both send paths
+  // (including push-paused publishWithoutPush).
+  const verdict = await runPublishGate(svc, pub, kolkataDate);
+  if (verdict.decision === "hold") {
+    // Best-effort verdict record: a failed write must not turn a hold
+    // into a publish — the 409 below is returned regardless, and it
+    // carries the full per-validation results.
+    await svc.from("daily_content_publications").update({ error: `gate_hold:${verdict.failed.join(",")}` } as never).eq("id", pub.id).eq("status", "planned");
+    return jsonResponse({ ok: false, reason: "gate_hold", failed: verdict.failed, validations: verdict.results }, 409);
+  }
   // Phase 6 — per-channel switches. website_auto_publish === false
   // refuses the website publication (the row stays planned); a
   // paused website channel never publishes. push_enabled === false
@@ -2724,6 +4126,8 @@ async function publishWithoutPush(
     recipients_total: 0,
     recipients_sent: 0,
     recipients_failed: 0,
+    // A successful publish clears a stale gate_hold verdict — see sendAndPublish.
+    error: null,
   } as never).eq("id", publicationId).eq("status", "planned").select("id");
   if (!((flipped as unknown[] | null)?.length)) throw new Error("Publication flip affected 0 rows");
   return { publication_id: publicationId, delivery: { total: 0, sent: 0, failed: 0, disabled: 0, skipped: 0, push_paused: true } };

@@ -2334,7 +2334,11 @@ const posterBody = (over = {}) => ({
   poster_asset_id: `poster:${TODAY}`,
   poster_storage_path: `daily-content-posters/${TODAY}/portrait.png`,
   poster_checksum: "a".repeat(64),
-  poster_scene_id: "courtyard-prayer",
+  // The fixture hadith is chapter 1 with synthetic text: the engine
+  // classifies it "intentions" via the chapter prior, so the fixture
+  // scene is the intentions concept's scene (the gate's V5 enforces
+  // the topic<->scene match at publish time).
+  poster_scene_id: "intention-sunrise",
   ...over,
 });
 const plannedPush = () => ({
@@ -2349,10 +2353,16 @@ const plannedRow = (over = {}) => ({
   id: "pub-plan",
   kolkata_date: TODAY,
   status: "planned",
-  hadith_ref: "hadith:seed-h1",
+  hadith_ref: "hadith:h1",
   hadith_source_line: "Sahih al-Bukhari, Hadith 1",
-  cards: [],
+  // The gate (V1/V2/V3) verifies the stored cards against the live
+  // rows at publish time, so the fixture row carries a complete,
+  // verbatim hadith card for the seeded live hadith h1.
+  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
   push: plannedPush(),
+  hadith_cycle: 1,
+  card_cycle: 1,
+  error: null,
   poster_qc_status: null,
   poster_url: null,
   ...over,
@@ -2399,6 +2409,9 @@ await t("edge delivery-count: duplicate device_id is counted skipped, never doub
 await t("edge delivery-count: prior delivery row is counted skipped, never re-sent", async () => {
   const svc = makeSvc({
     settings: [{ enabled: true }],
+    // The gate verifies the stored cards against the live hadith at
+    // publish time, so the live hadith is seeded.
+    hadiths: [hadithRow()],
     publications: [plannedRow()],
     tokens: [token("t1", "d1")],
     deliveries: [
@@ -2632,7 +2645,7 @@ await t("edge Phase 3: set_poster finalizes onto a planned row", async () => {
   assert.equal(pub.poster_url, posterUrlFor(TODAY));
   assert.equal(pub.poster_asset_id, `poster:${TODAY}`);
   assert.equal(pub.poster_qc_status, "passed");
-  assert.equal(pub.poster_scene_id, "courtyard-prayer");
+  assert.equal(pub.poster_scene_id, "intention-sunrise");
   assert.equal(pub.push.image_url, posterUrlFor(TODAY));
 });
 
@@ -2796,6 +2809,9 @@ await t("edge Phase 3: plan_only with dry_run returns the plan and writes nothin
 await t("edge Phase 8: publish_planned with all push sends failing still publishes the website (push failure never blocks publication)", async () => {
   const svc = makeSvc({
     settings: [{ enabled: true }],
+    // The gate verifies the stored cards against the live hadith at
+    // publish time, so the live hadith is seeded.
+    hadiths: [hadithRow()],
     publications: [plannedRow()],
     tokens: [token("t1", "d1"), token("t2", "d2")],
   });
@@ -3070,6 +3086,139 @@ await t("edge calendar_correction: missing table -> 500 corrections_table_missin
   assert.equal(res.status, 500);
   assert.equal(res.json.error, "corrections_table_missing");
   assert.equal(svc.tables.islamic_calendar_corrections.length, 0);
+});
+
+// ---- 8-validation autonomous gate: publish_planned wiring ----
+const gateLib = await import(path.join(dir, ".out/autonomousGate.js"));
+
+await t("edge gate: card Bengali differs from live -> 409 gate_hold, zero sends, row stays planned, error set", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    publications: [plannedRow({
+      cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-CHANGED", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.status, 409);
+  assert.equal(res.json.reason, "gate_hold");
+  assert.deepEqual(res.json.failed, ["bengali_editorial_quality"]);
+  assert.equal(res.json.validations.find((v) => v.id === "bengali_editorial_quality").pass, false);
+  assert.equal(calls.length, 0, "a held row sends nothing");
+  const row = svc.tables.daily_content_publications[0];
+  assert.equal(row.status, "planned");
+  assert.equal(row.error, "gate_hold:bengali_editorial_quality");
+});
+
+await t("edge gate: scene from another topic -> 409 gate_hold (V5)", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    publications: [plannedRow()],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  // courtyard-prayer is a salah scene; the fixture hadith classifies
+  // "intentions" — the gate holds the mismatch.
+  const finalized = await callEdge(posterBody({ poster_scene_id: "courtyard-prayer" }));
+  assert.equal(finalized.json.ok, true);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.status, 409);
+  assert.equal(res.json.reason, "gate_hold");
+  assert.deepEqual(res.json.failed, ["content_visual_consistency"]);
+  assert.equal(calls.length, 0);
+  assert.equal(svc.tables.daily_content_publications[0].status, "planned");
+});
+
+await t("edge gate: a previously held row publishes once fixed, and the flip clears the gate_hold error", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    publications: [plannedRow({ error: "gate_hold:bengali_editorial_quality" })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const finalized = await callEdge(posterBody());
+  assert.equal(finalized.json.ok, true);
+  const res = await callEdge({ publish_planned: true });
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 1);
+  const row = svc.tables.daily_content_publications[0];
+  assert.equal(row.status, "published");
+  assert.equal(row.error, null, "the successful flip clears the stale gate_hold verdict");
+});
+
+await t("edge gate: the default daily branch does NOT run the gate (adopt path unchanged)", async () => {
+  // The gate lives in publish_planned (the Mode A path) ONLY. The
+  // default daily branch adopts a planned row and sends as before —
+  // its gate lands with the Phase 3 §6 cutover, not here. This test
+  // pins that the branch is untouched: a row whose cards would fail
+  // the gate still publishes through the daily branch.
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    hadiths: [hadithRow()],
+    publications: [plannedRow({
+      cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-CHANGED", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    })],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const res = await callEdge({});
+  assert.equal(res.json.ok, true);
+  assert.equal(calls.length, 1);
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
+});
+
+await t("edge gate: parity — lib gate and edge gate agree exactly on identical fixtures", async () => {
+  const poster = {
+    url: "http://stub/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+    urls: { portrait: "http://stub/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png" },
+    assetId: "poster:2026-11-17",
+    storagePath: "daily-content-posters/2026-11-17/portrait.png",
+    checksum: "a".repeat(64),
+    checksums: { portrait: "a".repeat(64) },
+    sceneId: "intention-sunrise",
+    qcStatus: "passed",
+    generatedAt: "2026-11-17T02:00:00.000Z",
+  };
+  const base = {
+    kolkataDate: "2026-11-17",
+    hadithRef: "hadith:h1",
+    hadithSourceLine: "Sahih al-Bukhari, Hadith 1",
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    push: { title: "TITLE", body: "BODY" },
+    poster,
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-H", bengali: "BENGALI-H", english: null },
+    liveDuas: {},
+    history: [],
+    hadithCycle: 1,
+    cardCycle: 1,
+  };
+  const cases = [
+    { name: "valid", input: base },
+    { name: "V3 meaning fail", input: { ...base, cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H পিতৃসত্তা", sourceLine: "Sahih al-Bukhari, Hadith 1" }], liveHadith: { ...base.liveHadith, bengali: "BENGALI-H পিতৃসত্তা" } } },
+    { name: "V5 mismatch", input: { ...base, poster: { ...poster, sceneId: "courtyard-prayer" } } },
+    { name: "V8 bad checksum", input: { ...base, poster: { ...poster, checksum: "xyz" } } },
+  ];
+  for (const { name, input } of cases) {
+    const libVerdict = gateLib.evaluateAutonomousGate({ ...input, posterBaseUrl: "http://stub" });
+    const edgeVerdict = edgeMod.evaluateAutonomousGate(input);
+    assert.equal(edgeVerdict.decision, libVerdict.decision, `${name}: decision`);
+    assert.deepEqual(edgeVerdict.failed, libVerdict.failed, `${name}: failed`);
+    assert.deepEqual(
+      edgeVerdict.results.map((r) => [r.id, r.pass]),
+      libVerdict.results.map((r) => [r.id, r.pass]),
+      `${name}: per-validation pass/fail`,
+    );
+  }
 });
 
 console.log(`edge tests: ${n} passed`);
