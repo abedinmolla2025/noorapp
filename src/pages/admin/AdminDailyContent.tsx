@@ -43,6 +43,15 @@ function formatKolkata(iso: string): string {
  * production publication runs in the `daily-content` edge function, and the
  * browser never calls it with a secret (the status check sends no
  * Authorization header, so the function answers 401 before any logic).
+ * Facebook (Phase 4): the card below is READ-ONLY. It shows the Page
+ * connection, the auto-publish / approval switches (disabled by design
+ * until owner approval — same two-layer pattern as the live Enable
+ * toggle), and the `daily_content_facebook_posts` log. This page never
+ * posts to Facebook and never approves a post; posting runs only through
+ * the daily-content edge function (CRON-secret gated, Mode B approval
+ * required by default). Until the Facebook migration is applied the log
+ * query fails honestly with "table not available" instead of inventing
+ * rows.
  */
 
 // Deployed edge function (mission state: ACTIVE, verify_jwt=false).
@@ -51,6 +60,14 @@ const EDGE_URL = "https://llicfiepatzgllmjhzbw.supabase.co/functions/v1/daily-co
 interface LiveSettings {
   enabled: boolean;
   updated_at: string;
+  // Facebook (Phase 4) — present only after the Facebook migration.
+  facebook_auto_publish_enabled?: boolean;
+  facebook_approval_required?: boolean;
+  facebook_posting_enabled?: boolean;
+  facebook_page_id?: string | null;
+  facebook_page_name?: string | null;
+  facebook_token_health?: string | null;
+  facebook_token_checked_at?: string | null;
 }
 
 interface LivePublication {
@@ -81,6 +98,24 @@ interface LiveDelivery {
   next_attempt_at: string | null;
   created_at: string;
 }
+
+interface LiveFacebookPost {
+  id: string;
+  publication_id: string;
+  page_id: string;
+  post_id: string | null;
+  asset_id: string;
+  poster_url: string;
+  status: string;
+  attempt: number;
+  error_code: number | null;
+  error_message: string | null;
+  permalink_url: string | null;
+  approved_at: string | null;
+  approved_by: string | null;
+  next_attempt_at: string | null;
+  created_at: string;
+}
 export default function AdminDailyContent() {
   const [enabled, setEnabled] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -97,6 +132,9 @@ export default function AdminDailyContent() {
   const [liveSettings, setLiveSettings] = useState<LiveSettings | null>(null);
   const [livePublications, setLivePublications] = useState<LivePublication[]>([]);
   const [liveDeliveries, setLiveDeliveries] = useState<LiveDelivery[]>([]);
+  const [liveFacebook, setLiveFacebook] = useState<LiveFacebookPost[] | null>(null);
+  const [liveFacebookError, setLiveFacebookError] = useState<string | null>(null);
+  const [liveFacebookMessage, setLiveFacebookMessage] = useState<string | null>(null);
   const [liveToggling, setLiveToggling] = useState(false);
   const [edgeStatus, setEdgeStatus] = useState<string | null>(null);
   const [edgeChecking, setEdgeChecking] = useState(false);
@@ -148,7 +186,9 @@ export default function AdminDailyContent() {
       const { data: s, error: sErr } = await supabase
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         .from("daily_content_settings" as any)
-        .select("enabled, updated_at")
+        // select("*"): the Facebook columns exist only after the
+        // Facebook migration; a wildcard returns whatever is present.
+        .select("*")
         .eq("id", 1)
         .maybeSingle();
       if (sErr) throw sErr;
@@ -167,6 +207,27 @@ export default function AdminDailyContent() {
         .order("next_attempt_at", { ascending: true })
         .limit(50);
       if (dErr) throw dErr;
+      // Facebook log (Phase 4): read-only, best-effort. Until the
+      // Facebook migration is applied this table does not exist — that
+      // failure must NOT fail the whole live load; it is reported on
+      // the Facebook card instead.
+      try {
+        const { data: f, error: fErr } = await supabase
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .from("daily_content_facebook_posts" as any)
+          .select("id, publication_id, page_id, post_id, asset_id, poster_url, status, attempt, error_code, error_message, permalink_url, approved_at, approved_by, next_attempt_at, created_at")
+          .order("created_at", { ascending: false })
+          .limit(10);
+        if (fErr) throw fErr;
+        setLiveFacebook((f ?? []) as unknown as LiveFacebookPost[]);
+        setLiveFacebookError(null);
+      } catch (e) {
+        setLiveFacebook(null);
+        setLiveFacebookError(
+          "Facebook log table not available — the Facebook migration has not been applied yet. " +
+            (e instanceof Error ? e.message : ""),
+        );
+      }
       setLiveSettings((s ?? null) as unknown as LiveSettings | null);
       setLivePublications((p ?? []) as unknown as LivePublication[]);
       setLiveDeliveries((d ?? []) as unknown as LiveDelivery[]);
@@ -216,6 +277,17 @@ export default function AdminDailyContent() {
     },
     [loadLive],
   );
+
+  const toggleFacebook = useCallback((_key: string, _checked: boolean) => {
+    // Phase 4: Facebook controls are disabled by design until owner
+    // approval (G1–G3 + the auto-publish activation gate). Same
+    // two-layer pattern as toggleLive: the switches render the live
+    // values, and any attempt to change them is refused here.
+    // Unlike the local-preview Switch, these controls never write
+    // browser localStorage — Facebook state lives only in the
+    // database, changed only by the owner-approved path.
+    setLiveFacebookMessage("Facebook automation is disabled — awaiting owner approval. No change was made.");
+  }, []);
 
   const checkEdge = useCallback(async () => {
     setEdgeChecking(true);
@@ -459,6 +531,109 @@ export default function AdminDailyContent() {
             <p className="text-xs text-muted-foreground mt-3">
               Production retries run through the 15-minute retry trigger after its separate
               approval — this page does not send retries.
+            </p>
+          </CardContent>
+        </Card>
+      )}
+
+      {liveAvailable && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Facebook Page publication</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-1 text-sm">
+              <p>
+                <span className="font-semibold">Page: </span>
+                {liveSettings?.facebook_page_name ??
+                  liveSettings?.facebook_page_id ??
+                  "Not connected — G1 Page authorization pending."}
+              </p>
+              <p>
+                <span className="font-semibold">Token health: </span>
+                {liveSettings?.facebook_token_health
+                  ? `${liveSettings.facebook_token_health}${liveSettings.facebook_token_checked_at ? ` (checked ${formatKolkata(liveSettings.facebook_token_checked_at)})` : ""}`
+                  : "Unknown — G3 token pending."}
+              </p>
+            </div>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={liveSettings?.facebook_auto_publish_enabled ?? false}
+                  onCheckedChange={(v) => toggleFacebook("facebook_auto_publish_enabled", v)}
+                />
+                <span className="text-sm">
+                  Auto-publish to Facebook {liveSettings?.facebook_auto_publish_enabled ? "(on)" : "(off)"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={liveSettings?.facebook_approval_required ?? true}
+                  onCheckedChange={(v) => toggleFacebook("facebook_approval_required", v)}
+                />
+                <span className="text-sm">
+                  Admin approval required — Mode B{" "}
+                  {liveSettings?.facebook_approval_required === false ? "(off — Mode A)" : "(on)"}
+                </span>
+              </div>
+              <div className="flex items-center gap-3">
+                <Switch
+                  checked={liveSettings?.facebook_posting_enabled ?? true}
+                  onCheckedChange={(v) => toggleFacebook("facebook_posting_enabled", v)}
+                />
+                <span className="text-sm">
+                  Facebook posting enabled{" "}
+                  {liveSettings?.facebook_posting_enabled === false ? "(paused)" : "(on)"}
+                </span>
+              </div>
+              {liveFacebookMessage && (
+                <p className="text-sm text-destructive">{liveFacebookMessage}</p>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Disabled by design until owner approval. Publishing format: portrait (Layout C).
+                Caption is Bengali-first with the source line and the website link. The 2026
+                organic link-post restriction is UNVERIFIED — daily link posts are not finalized
+                until tested on the real Page.
+              </p>
+            </div>
+            <div>
+              <p className="font-semibold text-sm mb-2">Recent Facebook posts</p>
+              {liveFacebookError ? (
+                <p className="text-sm text-muted-foreground">{liveFacebookError}</p>
+              ) : liveFacebook && liveFacebook.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No Facebook posts yet.</p>
+              ) : (
+                <ul className="space-y-2 text-sm">
+                  {(liveFacebook ?? []).map((f) => (
+                    <li key={f.id} className="flex flex-wrap gap-2 items-center">
+                      <span>{f.asset_id}</span>
+                      <Badge
+                        variant={
+                          f.status === "posted"
+                            ? "default"
+                            : f.status === "failed"
+                              ? "destructive"
+                              : "secondary"
+                        }
+                      >
+                        {f.status}
+                      </Badge>
+                      <span>attempts: {f.attempt}</span>
+                      {f.permalink_url && (
+                        <a className="underline" href={f.permalink_url} target="_blank" rel="noreferrer">
+                          View post
+                        </a>
+                      )}
+                      {f.error_message && <span className="text-destructive">{f.error_message}</span>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              This page never posts to Facebook and never approves a post. Posting runs only
+              through the daily-content edge function (CRON-secret gated, Mode B approval
+              required by default).
             </p>
           </CardContent>
         </Card>

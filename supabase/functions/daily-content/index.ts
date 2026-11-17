@@ -110,6 +110,28 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    implemented. `heal` without `retry_only` is a client error
  *    (400), as is combining `heal` with `plan_only` or
  *    `publish_planned`.
+ *  - Facebook Page publication (Phase 4, owner-authorized 2026-11-16;
+ *    rehearsal-only; audit NOORAPP-FACEBOOK-AUTOMATION-AUDIT-
+ *    2026-11-16.md): the finalized poster for a PUBLISHED publication
+ *    is posted to the Page through the official Meta Graph API only
+ *    (FB_API_VERSION = "v27.0", pinned, never unversioned), two-step
+ *    photo upload (published=false) + /feed with attached_media, then
+ *    a verification read — HTTP 200 alone is not proof. Publish ONLY
+ *    a QC-passed finalized poster (409 poster_not_ready otherwise);
+ *    a Facebook failure NEVER rolls back a website publication. Mode
+ *    B (default): no Graph call before facebook_approve. Bounded
+ *    retry max 4, backoff [5, 15, 45] min, H2 10-min lease claim;
+ *    error 190 (subcodes 463/460/458), 200/10, 368, 100, 506 are
+ *    TERMINAL, never retried; 4/17/32/613/80001 and transport
+ *    failures are retryable. Idempotency: UNIQUE (publication_id,
+ *    page_id) + one log row whose retry_history IS the attempt list.
+ *    The Page token is a lazy env var (FACEBOOK_PAGE_ACCESS_TOKEN) —
+ *    never a column, never logged. G1–G3 (Page authorization, Meta
+ *    App + Business Verification + App Review, token + secret) are
+ *    owner dashboard actions — BLOCKED here. The 2026 organic
+ *    link-post restriction is UNVERIFIED (single source): no
+ *    daily-link design is finalized before a real-Page test; do NOT
+ *    pay for Meta One (INR 0). The migration is a SKETCH ONLY.
  * ------------------------------------------------------------------ */
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
@@ -2042,6 +2064,738 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
   }
 }
 
+// ============================================================================
+// Phase 4 — Facebook Page publication (rehearsal-only, M1–M14;
+// owner-authorized 2026-11-16; design authority:
+// NOORAPP-FACEBOOK-AUTOMATION-AUDIT-2026-11-16.md).
+//
+// WHAT THIS IS
+//   The finalized poster for a PUBLISHED publication is posted to the
+//   NoorApp Facebook Page through the OFFICIAL Meta Graph API only — no
+//   unofficial API, no browser automation, no unversioned calls. One
+//   pinned constant, FB_API_VERSION = "v27.0" (released 2026-11-04),
+//   prefixes every request. The Page post uses the SAME finalized asset
+//   as push and the homepage (same poster_url, same checksum); Facebook
+//   never gets a different image.
+//
+// ACTIONS (all CRON-secret gated, same as set_poster):
+//   - { "action": "facebook_publish", "kolkata_date"?, "page_id"?,
+//       "format"? } — publish today's (or the given date's) finalized
+//     poster to the Page. Creates the log row on first call (the Mode B
+//     decision record); in Mode B it stops at { queued:true } until
+//     facebook_approve has run. One publish attempt = photo upload +
+//     feed post + verification read (see fbPublishOnce).
+//   - { "action": "facebook_approve", "kolkata_date"?, "page_id"?,
+//       "approved_by" } — Mode B approval: records approved_at +
+//     approved_by on the log row (conditional claim: only an unapproved
+//     row can be approved). Also writes one admin_audit_log row when
+//     approved_by is a real admin profile UUID (the edge holds no admin
+//     JWT, so it cannot invent an actor_id — see handleFacebookApprove).
+//   - { "action": "facebook_token_health" } — debug_token health check
+//     for the Page token (valid, type PAGE, required scopes, expiry
+//     > 14 days). Best-effort settings write (skipped until the
+//     Facebook migration adds the columns).
+//
+// GATES (a Facebook failure NEVER rolls back a website publication —
+// the publication row is never touched by this section):
+//   - settings.enabled !== true -> { ok:false, reason:"paused" }.
+//   - settings.facebook_posting_enabled === false -> per-channel pause
+//     ({ ok:false, reason:"facebook_paused" }).
+//   - publication status !== "published" -> 409 not_published.
+//   - poster_qc_status !== "passed" or no finalized poster_url for the
+//     requested format -> 409 poster_not_ready (the same gate
+//     publish_planned uses). No poster, no post — never.
+//   - Mode B (facebook_approval_required !== false, the default) with
+//     no approved_at on the log row -> { ok:true, queued:true }.
+//   - The Page token is read LAZILY (Deno.env.get at call time, the
+//     VAPID pattern): a missing FACEBOOK_PAGE_ACCESS_TOKEN fails only
+//     the Facebook action (500, env-var name only), never the function
+//     at boot. The token VALUE never appears in code, logs, or
+//     responses; only the Page ID and Post ID are stored or returned.
+//
+// TWO-STEP IMAGE + LINK FLOW (audit §6.5): /{page-id}/photos has NO
+// link field, so a single-call photo post would carry the website link
+// only as plain caption text. Instead: (1) POST /{page-id}/photos
+// with url=<poster_url> and published=false -> photo id; (2) POST
+// /{page-id}/feed with message=<caption>, link=<canonical link>,
+// attached_media=[{media_fbid: photo id}] -> post id; (3) GET
+// /{post-id}?fields=id,message,created_time,permalink_url,
+// attachments{media_type,media} and require the returned id to match
+// — an HTTP 200 alone is NOT proof of a visible post. If the url
+// upload fails with code 100 (Meta cannot fetch the URL) or a
+// retryable error, the same attempt fetches the poster binary and
+// re-uploads it as multipart `source` (one rescue try inside the
+// attempt; the final error still governs retry/terminal).
+//
+// ERROR CLASSIFICATION (audit §6.6/§6.8, classifyFacebookError):
+//   - 190 token invalid/expired (subcodes 463 expired, 460 password
+//     changed, 458 app not installed) -> TERMINAL, never retried.
+//   - 200 / 10 permission missing -> TERMINAL.
+//   - 368 policy block -> TERMINAL (stop posting).
+//   - 100 invalid parameter -> TERMINAL (fix, don't retry).
+//   - 506 duplicate post -> TERMINAL as a post (the row is failed, NOT
+//     marked posted: a 506 carries no post id to verify against, so
+//     the operator verifies on the Page; a future facebook_reconcile
+//     action is the reconciliation path, not implemented here).
+//   - 4 app rate limit, 17 user rate limit, 32 Pages limit, 613 custom
+//     limit, 80001 Pages BUC limit -> RETRYABLE.
+//   - network/transport failure (no Graph error body) -> RETRYABLE.
+//   - any other Graph code -> NOT retryable (stop and report).
+// Bounded retry: max FB_MAX_ATTEMPTS = 4 attempts total, backoff
+// [5, 15, 45] minutes (FB_BACKOFF_MIN[attempt-1]); a retryable
+// failure stores next_attempt_at = now + backoff; a terminal failure
+// stores next_attempt_at = null (never due) and keeps its error_code,
+// so the claim can never pick it up again. Per-attempt claims reuse
+// the push H2 pattern: one conditional UPDATE moves next_attempt_at
+// 10 minutes out (the lease) only if the row is still pending/failed,
+// under the cap, and due (lte, then is-null — the same two-step
+// claim the push retry uses); losers match zero rows and dedupe.
+//
+// IDEMPOTENCY (audit §6.7/§11): UNIQUE (publication_id, page_id) is
+// the anchor (migration sketch). The log table holds ONE row per
+// (publication, page); every attempt is an entry in retry_history
+// (jsonb) — the attempt count comes from retry_history.length, never
+// from separate counters, so the push 1-token arithmetic gap cannot
+// recur here. A second publish on a posted row returns
+// { ok:true, deduped:true, post_id, permalink_url } with ZERO Graph
+// calls. A second approve returns { ok:true, deduped:true }.
+//
+// CAPTION (audit §6.4, buildFacebookCaption): Bengali-first — the
+// hadith card's Bengali excerpt (clamped to 400 units), then the
+// source line ("Sahih al-Bukhari, Hadith 5022"), then the canonical
+// website link, then "— NoorApp" and "#NoorApp #Hadith" (two tags
+// only). No exaggerated claims, no unverified virtue, no QC text:
+// validateFacebookCaption rejects a caption without its source line,
+// a caption over 2000 characters, a caption containing "যাচাই করা
+// হয়নি", or any poster_qc/QC text. A caption cannot be built without
+// a source line or a Bengali excerpt (400, caption_missing_source /
+// caption_missing_excerpt).
+//
+// UNVERIFIED — NOT DECIDED HERE (audit §6.9/§10, single source):
+// the 2026 organic link-post restriction (Pages without a qualifying
+// Meta One subscription may include links in only two organic
+// posts/comments per calendar month; Meta One Advanced from
+// $49.99/month). NO daily-link-in-every-post design is finalized:
+// every feed post in this phase still carries the link (that is what
+// the rehearsal test must measure), and the caption-text URL and
+// link-in-first-comment fallbacks are recorded as TEST CANDIDATES,
+// not decisions. Do NOT pay for Meta One (INR 0).
+// Poster PNGs (~1.3–1.7 MB) exceed Meta's 1 MB PNG recommendation
+// (possible pixelation, not rejection) — a rehearsal-test item; no
+// quality reduction in this phase.
+//
+// BLOCKERS (owner actions, NOT attempted here): G1 Page
+// authorization (dashboard), G2 Meta App + Business Verification +
+// App Review, G3 token creation + Supabase secret
+// (FACEBOOK_PAGE_ACCESS_TOKEN, FACEBOOK_APP_ACCESS_TOKEN). No
+// rehearsal test can run until G1–G3 exist; the 12 Facebook
+// rehearsal tests (Post ID + permalink + visible post on the real
+// Page) need their own approval (G7 test post). The migration that
+// creates daily_content_facebook_posts + the settings columns is a
+// SKETCH ONLY (phase4-working/) — DO NOT APPLY without its own owner
+// approval; until it exists, facebook_publish / facebook_approve
+// fail closed with facebook_log_unavailable (500) and zero Graph
+// calls.
+// ============================================================================
+
+export const FB_API_VERSION = "v27.0";
+const FB_GRAPH_BASE = "https://graph.facebook.com";
+const FB_MAX_ATTEMPTS = 4;
+const FB_BACKOFF_MIN = [5, 15, 45];
+const FB_LEASE_MIN = 10;
+const FB_REQUEST_TIMEOUT_MS = 30_000;
+const FB_CAPTION_MAX_LENGTH = 2000;
+const FB_EXCERPT_MAX_UNITS = 400;
+const FB_ERROR_MAX_LENGTH = 500;
+const FB_PAGE_TOKEN_ENV = "FACEBOOK_PAGE_ACCESS_TOKEN";
+const FB_APP_TOKEN_ENV = "FACEBOOK_APP_ACCESS_TOKEN";
+const FB_REQUIRED_SCOPES = ["pages_manage_posts", "pages_read_engagement", "pages_show_list"];
+const FB_TERMINAL_CODES = [100, 190, 200, 368, 506];
+
+export type FacebookErrorKind =
+  | "terminal_token"
+  | "terminal_permission"
+  | "terminal_policy"
+  | "invalid_parameter"
+  | "rate_limit"
+  | "duplicate"
+  | "transient"
+  | "unknown";
+
+export type FacebookClassification = {
+  kind: FacebookErrorKind;
+  retryable: boolean;
+  code: number | null;
+  subcode: number | null;
+  message: string;
+};
+
+type FbErrorCarrier = Error & {
+  code?: number;
+  subcode?: number;
+  fbError?: unknown;
+  httpStatus?: number;
+};
+
+/** Branch on error.code + error_subcode (audit §6.6). Accepts a thrown
+ *  fbGraphCall error (carrying .fbError), a raw Graph error body, or a
+ *  transport error. A network failure has no code -> transient. An
+ *  unknown Graph code is NOT retryable: stop and report, don't guess. */
+export function classifyFacebookError(err: unknown): FacebookClassification {
+  let code: number | null = null;
+  let subcode: number | null = null;
+  let message = "";
+  const raw = err as { fbError?: unknown; error?: unknown; code?: unknown; error_subcode?: unknown; message?: unknown } | null;
+  const body = (raw?.fbError ?? raw?.error ?? raw) as { code?: unknown; error_subcode?: unknown; message?: unknown } | null;
+  if (body && typeof body === "object") {
+    if (typeof body.code === "number") code = body.code;
+    if (typeof body.error_subcode === "number") subcode = body.error_subcode;
+    if (typeof body.message === "string") message = body.message;
+  }
+  if (!message && typeof raw?.message === "string") message = raw.message;
+  if (!message) message = "Facebook request failed";
+  if (code === 190) return { kind: "terminal_token", retryable: false, code, subcode, message };
+  if (code === 200 || code === 10) return { kind: "terminal_permission", retryable: false, code, subcode, message };
+  if (code === 368) return { kind: "terminal_policy", retryable: false, code, subcode, message };
+  if (code === 100) return { kind: "invalid_parameter", retryable: false, code, subcode, message };
+  if (code === 506) return { kind: "duplicate", retryable: false, code, subcode, message };
+  if (code === 4 || code === 17 || code === 32 || code === 613 || code === 80001) {
+    return { kind: "rate_limit", retryable: true, code, subcode, message };
+  }
+  if (code === null) return { kind: "transient", retryable: true, code, subcode, message };
+  return { kind: "unknown", retryable: false, code, subcode, message };
+}
+
+export type FacebookCaptionInput = {
+  hadith_source_line: string | null;
+  cards: Array<{
+    kind?: string;
+    bengali?: string | null;
+    sourceLine?: string | null;
+    canonicalLink?: string | null;
+  }> | null;
+  push: { deep_link?: string | null } | null;
+};
+
+/** Bengali-first caption (audit §6.4). Throws caption_missing_source
+ *  / caption_missing_excerpt when the row cannot supply them — the
+ *  caller turns that into a 400, never a post without attribution. */
+export function buildFacebookCaption(pub: FacebookCaptionInput): {
+  caption: string;
+  link: string;
+  sourceLine: string;
+  excerpt: string;
+} {
+  const cards = Array.isArray(pub.cards) ? pub.cards : [];
+  const hadithCard = cards.find((c) => c?.kind === "hadith" && typeof c?.bengali === "string" && c.bengali.trim().length > 0)
+    ?? cards.find((c) => typeof c?.bengali === "string" && c.bengali.trim().length > 0);
+  const sourceLine = (hadithCard?.sourceLine ?? pub.hadith_source_line ?? "").trim();
+  if (!sourceLine) throw new Error("caption_missing_source");
+  if (!hadithCard || !hadithCard.bengali) throw new Error("caption_missing_excerpt");
+  const excerpt = clampText(hadithCard.bengali.trim(), FB_EXCERPT_MAX_UNITS);
+  const linkPath = (hadithCard.canonicalLink ?? pub.push?.deep_link ?? "/hadith").trim() || "/hadith";
+  const link = linkPath.startsWith("http")
+    ? linkPath
+    : `https://noorapp.in${linkPath.startsWith("/") ? linkPath : `/${linkPath}`}`;
+  const caption = [
+    "📿 আজকের হাদিস",
+    "",
+    excerpt,
+    "",
+    `📖 ${sourceLine}`,
+    "",
+    `🔗 ${link}`,
+    "",
+    "— NoorApp",
+    "#NoorApp #Hadith",
+  ].join("\n");
+  return { caption, link, sourceLine, excerpt };
+}
+
+/** The caption that goes out must carry its source, stay within the
+ *  length budget, and never contain an unverified-virtue claim or any
+ *  QC/internal text. */
+export function validateFacebookCaption(caption: string, sourceLine: string): { ok: boolean; error?: string } {
+  if (caption.length > FB_CAPTION_MAX_LENGTH) return { ok: false, error: "caption_too_long" };
+  if (!sourceLine || !caption.includes(sourceLine)) return { ok: false, error: "caption_missing_source" };
+  if (/যাচাই করা হয়নি/.test(caption)) return { ok: false, error: "caption_forbidden_unverified_claim" };
+  if (/poster_qc|QC (failed|warning)/i.test(caption)) return { ok: false, error: "caption_contains_qc_text" };
+  return { ok: true };
+}
+
+/** One Graph API call, always versioned (FB_API_VERSION), always
+ *  bounded by a timeout. Non-2xx responses throw an Error carrying
+ *  the Graph error body (.fbError) + .code/.subcode/.httpStatus for
+ *  classifyFacebookError. A 200 body that still carries .error throws
+ *  the same way. `body` (multipart FormData) is for the photo `source`
+ *  fallback — it already carries its own access_token. */
+export async function fbGraphCall(
+  path: string,
+  params: Record<string, string>,
+  token: string,
+  opts: { method?: "GET" | "POST"; timeoutMs?: number; body?: BodyInit } = {},
+): Promise<any> {
+  const method = opts.method ?? "POST";
+  const url = `${FB_GRAPH_BASE}/${FB_API_VERSION}${path}`;
+  const timeout = opts.timeoutMs ?? FB_REQUEST_TIMEOUT_MS;
+  let res: Response;
+  if (method === "GET") {
+    const qs = new URLSearchParams({ ...params, access_token: token });
+    res = await fetch(`${url}?${qs.toString()}`, { signal: AbortSignal.timeout(timeout) });
+  } else if (opts.body) {
+    res = await fetch(url, { method: "POST", body: opts.body, signal: AbortSignal.timeout(timeout) });
+  } else {
+    res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({ ...params, access_token: token }).toString(),
+      signal: AbortSignal.timeout(timeout),
+    });
+  }
+  const text = await res.text();
+  let parsed: any = null;
+  try {
+    parsed = text ? JSON.parse(text) : null;
+  } catch {
+    parsed = null;
+  }
+  const fbError = parsed?.error ?? null;
+  if (!res.ok || fbError) {
+    const err = new Error(fbError?.message ?? `Facebook API HTTP ${res.status}`) as FbErrorCarrier;
+    if (fbError && typeof fbError.code === "number") err.code = fbError.code;
+    if (fbError && typeof fbError.error_subcode === "number") err.subcode = fbError.error_subcode;
+    err.fbError = fbError;
+    err.httpStatus = res.status;
+    throw err;
+  }
+  return parsed;
+}
+
+/** Photo upload, step 1 of the two-step flow. The `url` method first;
+ *  when Meta cannot fetch the URL (code 100) or the call fails
+ *  retryably, the same attempt fetches the poster binary and re-uploads
+ *  it as multipart `source`. A terminal first error is rethrown
+ *  untouched — the fallback cannot rescue a bad token or a policy
+ *  block. */
+async function fbUploadPhoto(pageId: string, posterUrl: string, token: string): Promise<string> {
+  try {
+    const photo = await fbGraphCall(`/${pageId}/photos`, { url: posterUrl, published: "false" }, token);
+    if (typeof photo?.id !== "string" || !photo.id) throw new Error("facebook_photo_no_id");
+    return photo.id;
+  } catch (err) {
+    const cls = classifyFacebookError(err);
+    if (!cls.retryable && cls.code !== 100) throw err;
+    const bin = await fetch(posterUrl, { signal: AbortSignal.timeout(FB_REQUEST_TIMEOUT_MS) });
+    if (!bin.ok) throw err;
+    const buf = await bin.arrayBuffer();
+    const form = new FormData();
+    form.append("source", new Blob([buf], { type: "image/png" }), "poster.png");
+    form.append("published", "false");
+    form.append("access_token", token);
+    const photo = await fbGraphCall(`/${pageId}/photos`, {}, token, { body: form });
+    if (typeof photo?.id !== "string" || !photo.id) throw new Error("facebook_photo_no_id");
+    return photo.id;
+  }
+}
+
+/** One publish attempt: photo upload (published=false) -> feed post
+ *  with attached_media -> verification read. Returns the post id
+ *  (the full PAGEID_POSTID form Meta returns) and its permalink.
+ *  The verification read is mandatory: HTTP 200 alone is not proof
+ *  of a visible post. */
+async function fbPublishOnce(
+  pageId: string,
+  posterUrl: string,
+  caption: string,
+  link: string,
+  token: string,
+): Promise<{ postId: string; permalinkUrl: string }> {
+  const photoId = await fbUploadPhoto(pageId, posterUrl, token);
+  const feed = await fbGraphCall(`/${pageId}/feed`, {
+    message: caption,
+    link,
+    attached_media: JSON.stringify([{ media_fbid: photoId }]),
+  }, token);
+  const postId = typeof feed?.id === "string" ? feed.id : "";
+  if (!postId) throw new Error("facebook_feed_no_id");
+  const verified = await fbGraphCall(`/${postId}`, {
+    fields: "id,message,created_time,permalink_url,attachments{media_type,media}",
+  }, token, { method: "GET" });
+  if (verified?.id !== postId) throw new Error("facebook_verify_id_mismatch");
+  const permalink = typeof verified?.permalink_url === "string" && verified.permalink_url
+    ? verified.permalink_url
+    : `https://www.facebook.com/${postId}`;
+  return { postId, permalinkUrl: permalink };
+}
+
+/** The daily_content_facebook_posts table does not exist until the
+ *  Facebook migration is applied (sketch only, owner approval). A
+ *  missing table must fail closed with a named error — never a
+ *  generic 500, never a Graph call. */
+function isMissingTableError(err: { message?: string; code?: string } | null | undefined): boolean {
+  if (!err) return false;
+  const msg = typeof err.message === "string" ? err.message : "";
+  return err.code === "42P01" || err.code === "PGRST205"
+    || /Could not find the table/i.test(msg)
+    || /relation .* does not exist/i.test(msg);
+}
+
+function isTerminalFbErrorCode(code: unknown): boolean {
+  return typeof code === "number" && FB_TERMINAL_CODES.includes(code);
+}
+
+/** H2-style lease claim, copied from the push retry claim: one
+ *  conditional UPDATE moves next_attempt_at 10 minutes out only if
+ *  the row is still pending/failed, under the cap, and due (lte,
+ *  then is-null). Losers match zero rows and dedupe. The caller has
+ *  already refused terminal rows (JS pre-check), so the is-null
+ *  branch can only match a fresh pending row. */
+async function claimFacebookRow(svc: Svc, row: { id: string; status: string; attempt: number }, nowIso: string, leaseUntil: string): Promise<boolean> {
+  const attempt = row.attempt + 1;
+  const base = () =>
+    svc.from("daily_content_facebook_posts")
+      .update({ attempt, next_attempt_at: leaseUntil })
+      .eq("id", row.id)
+      .eq("status", row.status);
+  const lteClaim = await base().lte("next_attempt_at", nowIso).select("id").limit(1);
+  if (!lteClaim.error && Array.isArray(lteClaim.data) && lteClaim.data.length > 0) return true;
+  const nullClaim = await base().is("next_attempt_at", null).select("id").limit(1);
+  if (!nullClaim.error && Array.isArray(nullClaim.data) && nullClaim.data.length > 0) return true;
+  return false;
+}
+
+/** facebook_publish: post the finalized poster for a PUBLISHED
+ *  publication to the Page. Never touches the publication row, so a
+ *  Facebook failure can never roll back a website publication. */
+async function handleFacebookPublish(body: Record<string, unknown>, svc: Svc): Promise<Response> {
+  const now = new Date();
+  const nowIso = now.toISOString();
+  if (body.dry_run === true || body.plan_only === true || body.publish_planned === true || body.retry_only === true || body.heal === true) {
+    return jsonResponse({ ok: false, error: "facebook_publish is not combinable with plan_only, publish_planned, retry_only, heal or dry_run" }, 400);
+  }
+  const kolkataDate = typeof body.kolkata_date === "string" && body.kolkata_date.trim()
+    ? body.kolkata_date.trim()
+    : kolkataDateString(now);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(kolkataDate)) {
+    return jsonResponse({ ok: false, error: "invalid kolkata_date" }, 400);
+  }
+  const format = typeof body.format === "string" ? body.format : "portrait";
+  if (format !== "portrait" && format !== "square") {
+    return jsonResponse({ ok: false, error: "invalid format — portrait or square only" }, 400);
+  }
+  const token = Deno.env.get(FB_PAGE_TOKEN_ENV);
+  if (!token) return jsonResponse({ ok: false, error: `${FB_PAGE_TOKEN_ENV} is not configured` }, 500);
+  const settings = await svc.from("daily_content_settings").select("*").limit(1).maybeSingle();
+  if (settings.error) {
+    return jsonResponse({ ok: false, error: "failed to read settings", detail: settings.error.message }, 500);
+  }
+  const sRow = settings.data;
+  if (!sRow || sRow.enabled !== true) return jsonResponse({ ok: false, reason: "paused" });
+  if (sRow.facebook_posting_enabled === false) return jsonResponse({ ok: false, reason: "facebook_paused" });
+  const settingsPageId = typeof sRow.facebook_page_id === "string" ? sRow.facebook_page_id.trim() : "";
+  const bodyPageId = typeof body.page_id === "string" ? body.page_id.trim() : "";
+  const pageId = bodyPageId || settingsPageId;
+  if (!pageId) return jsonResponse({ ok: false, error: "facebook_page_id is not configured" }, 400);
+  if (!/^\d{1,32}$/.test(pageId)) return jsonResponse({ ok: false, error: "invalid facebook page_id" }, 400);
+  if (bodyPageId && settingsPageId && bodyPageId !== settingsPageId) {
+    return jsonResponse({ ok: false, error: "page_id mismatch with settings" }, 400);
+  }
+  const pub = await svc.from("daily_content_publications")
+    .select("id, kolkata_date, status, hadith_source_line, cards, push, poster_url, poster_urls, poster_qc_status")
+    .eq("kolkata_date", kolkataDate).limit(1).maybeSingle();
+  if (pub.error) {
+    return jsonResponse({ ok: false, error: "failed to read publication", detail: pub.error.message }, 500);
+  }
+  const pubRow = pub.data;
+  if (!pubRow) return jsonResponse({ ok: false, error: "no publication for kolkata_date" }, 404);
+  if (pubRow.status !== "published") {
+    return jsonResponse({ ok: false, error: "not_published", status: pubRow.status }, 409);
+  }
+  if (pubRow.poster_qc_status !== "passed" || !pubRow.poster_url) {
+    return jsonResponse({ ok: false, error: "poster_not_ready", poster_qc_status: pubRow.poster_qc_status ?? null }, 409);
+  }
+  let caption: { caption: string; link: string; sourceLine: string };
+  try {
+    caption = buildFacebookCaption(pubRow);
+  } catch (e) {
+    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 400);
+  }
+  const capCheck = validateFacebookCaption(caption.caption, caption.sourceLine);
+  if (!capCheck.ok) return jsonResponse({ ok: false, error: capCheck.error }, 400);
+  const posterUrls = (pubRow.poster_urls ?? {}) as Record<string, string>;
+  const posterUrl = format === "portrait" ? pubRow.poster_url : posterUrls[format];
+  if (!posterUrl) {
+    return jsonResponse({ ok: false, error: "poster_not_ready", detail: `no finalized ${format} poster for this date` }, 409);
+  }
+  if (!isValidPosterUrl(posterUrl, kolkataDate)) {
+    return jsonResponse({ ok: false, error: "poster_not_ready", detail: "poster_url failed the finalized-asset check" }, 409);
+  }
+  // The log row is the Mode B decision record: created on first
+  // publish (status pending, attempt 0), approved separately, then
+  // published. One row per (publication_id, page_id) — the UNIQUE
+  // anchor; a concurrent create re-reads instead of failing.
+  const log = await svc.from("daily_content_facebook_posts").select("*")
+    .eq("publication_id", pubRow.id).eq("page_id", pageId).limit(1).maybeSingle();
+  if (log.error) {
+    if (isMissingTableError(log.error)) {
+      return jsonResponse({ ok: false, error: "facebook_log_unavailable", detail: "daily_content_facebook_posts table is missing — apply the Facebook migration first" }, 500);
+    }
+    return jsonResponse({ ok: false, error: "failed to read facebook log", detail: log.error.message }, 500);
+  }
+  let fbRow: any = log.data;
+  if (!fbRow) {
+    const created = await svc.from("daily_content_facebook_posts").insert({
+      publication_id: pubRow.id,
+      page_id: pageId,
+      asset_id: `poster:${kolkataDate}`,
+      poster_url: posterUrl,
+      caption: caption.caption,
+      status: "pending",
+      attempt: 0,
+      retry_history: [],
+      approved_at: null,
+      approved_by: null,
+      post_id: null,
+      permalink_url: null,
+    }).select("id, publication_id, page_id, status, attempt, retry_history, approved_at, approved_by, post_id, permalink_url, error_code, error_message, next_attempt_at").single();
+    if (created.error) {
+      const reread = await svc.from("daily_content_facebook_posts").select("*")
+        .eq("publication_id", pubRow.id).eq("page_id", pageId).limit(1).maybeSingle();
+      if (reread.error || !reread.data) {
+        return jsonResponse({ ok: false, error: "failed to create facebook log row", detail: created.error.message }, 500);
+      }
+      fbRow = reread.data;
+    } else {
+      fbRow = created.data;
+    }
+  }
+  if (fbRow.status === "posted") {
+    return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate, publication_id: pubRow.id, post_id: fbRow.post_id ?? null, permalink_url: fbRow.permalink_url ?? null });
+  }
+  if (fbRow.status === "paused" || fbRow.status === "skipped") {
+    return jsonResponse({ ok: true, skipped: true, status: fbRow.status, kolkata_date: kolkataDate, publication_id: pubRow.id });
+  }
+  if (fbRow.status === "failed") {
+    const attempt = typeof fbRow.attempt === "number" ? fbRow.attempt : 0;
+    if (attempt >= FB_MAX_ATTEMPTS) {
+      return jsonResponse({ ok: false, error: "facebook_max_attempts_reached", attempt, error_code: fbRow.error_code ?? null });
+    }
+    if (isTerminalFbErrorCode(fbRow.error_code)) {
+      return jsonResponse({ ok: false, error: "facebook_terminal_error", error_code: fbRow.error_code, attempt });
+    }
+    if (fbRow.next_attempt_at && new Date(fbRow.next_attempt_at).getTime() > now.getTime()) {
+      return jsonResponse({ ok: false, error: "facebook_not_due", next_attempt_at: fbRow.next_attempt_at, attempt });
+    }
+  }
+  // Mode B (default): approval_required !== false means the row must
+  // carry an approval before any Graph call is made.
+  const approvalRequired = sRow.facebook_approval_required !== false;
+  if (approvalRequired && !fbRow.approved_at) {
+    return jsonResponse({ ok: true, queued: true, status: "pending", approval_required: true, kolkata_date: kolkataDate, publication_id: pubRow.id, page_id: pageId });
+  }
+  // Claim the row for this attempt (H2 lease, 10 minutes). A loser
+  // dedupes — no second worker posts the same row.
+  const attempt = (typeof fbRow.attempt === "number" ? fbRow.attempt : 0) + 1;
+  const leaseUntil = new Date(now.getTime() + FB_LEASE_MIN * 60_000).toISOString();
+  const claimed = await claimFacebookRow(svc, fbRow, nowIso, leaseUntil);
+  if (!claimed) {
+    return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate, publication_id: pubRow.id, note: "another worker claimed this row" });
+  }
+  const history: any[] = Array.isArray(fbRow.retry_history) ? [...fbRow.retry_history] : [];
+  try {
+    const result = await fbPublishOnce(pageId, posterUrl, caption.caption, caption.link, token);
+    const newHistory = [...history, { attempt, at: nowIso, step: "verify", result: "posted", post_id: result.postId }];
+    await svc.from("daily_content_facebook_posts").update({
+      status: "posted",
+      post_id: result.postId,
+      permalink_url: result.permalinkUrl,
+      attempt,
+      retry_history: newHistory,
+      api_response_status: 200,
+      published_at: nowIso,
+      next_attempt_at: null,
+    }).eq("id", fbRow.id);
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: pubRow.id, page_id: pageId, post_id: result.postId, permalink_url: result.permalinkUrl, attempt, attempts: newHistory.length });
+  } catch (err) {
+    const cls = classifyFacebookError(err);
+    const retryable = cls.retryable && attempt < FB_MAX_ATTEMPTS;
+    const backoffMin = retryable ? FB_BACKOFF_MIN[Math.min(attempt - 1, FB_BACKOFF_MIN.length - 1)] : null;
+    const nextAttemptAt = retryable && backoffMin !== null
+      ? new Date(now.getTime() + backoffMin * 60_000).toISOString()
+      : null;
+    const newHistory = [...history, { attempt, at: nowIso, step: "publish", result: cls.kind, code: cls.code, subcode: cls.subcode, message: cls.message.slice(0, 200) }];
+    await svc.from("daily_content_facebook_posts").update({
+      status: "failed",
+      attempt,
+      error_code: cls.code,
+      error_message: cls.message.slice(0, FB_ERROR_MAX_LENGTH),
+      api_response_status: (err as FbErrorCarrier)?.httpStatus ?? null,
+      retry_history: newHistory,
+      next_attempt_at: nextAttemptAt,
+    }).eq("id", fbRow.id);
+    return jsonResponse({ ok: false, error: "facebook_publish_failed", kind: cls.kind, retryable, attempt, attempts: newHistory.length, next_attempt_at: nextAttemptAt, error_code: cls.code, error_subcode: cls.subcode });
+  }
+}
+
+/** facebook_approve: Mode B approval for one Facebook log row. The
+ *  approval is a conditional claim (only an unapproved row can be
+ *  approved); a second approve dedupes. Writes one admin_audit_log
+ *  row ONLY when approved_by is a real admin profile UUID — the edge
+ *  holds no admin JWT and admin_audit_log.actor_id is a uuid FK to
+ *  profiles(id), so a display name or a made-up id must never be
+ *  written there. The Facebook log row itself always records
+ *  approved_by, so the decision is never lost when the audit insert
+ *  is skipped. */
+async function handleFacebookApprove(body: Record<string, unknown>, svc: Svc): Promise<Response> {
+  const nowIso = new Date().toISOString();
+  const kolkataDate = typeof body.kolkata_date === "string" && body.kolkata_date.trim()
+    ? body.kolkata_date.trim()
+    : kolkataDateString(new Date());
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(kolkataDate)) {
+    return jsonResponse({ ok: false, error: "invalid kolkata_date" }, 400);
+  }
+  const approvedBy = typeof body.approved_by === "string" ? body.approved_by.trim() : "";
+  if (!approvedBy || approvedBy.length > 128) {
+    return jsonResponse({ ok: false, error: "approved_by is required (max 128 characters)" }, 400);
+  }
+  const settings = await svc.from("daily_content_settings").select("*").limit(1).maybeSingle();
+  if (settings.error) {
+    return jsonResponse({ ok: false, error: "failed to read settings", detail: settings.error.message }, 500);
+  }
+  const sRow = settings.data;
+  const settingsPageId = typeof sRow?.facebook_page_id === "string" ? sRow.facebook_page_id.trim() : "";
+  const bodyPageId = typeof body.page_id === "string" ? body.page_id.trim() : "";
+  const pageId = bodyPageId || settingsPageId;
+  if (!pageId) return jsonResponse({ ok: false, error: "facebook_page_id is not configured" }, 400);
+  if (!/^\d{1,32}$/.test(pageId)) return jsonResponse({ ok: false, error: "invalid facebook page_id" }, 400);
+  const pub = await svc.from("daily_content_publications")
+    .select("id, kolkata_date, status, hadith_source_line, cards, push, poster_url, poster_qc_status")
+    .eq("kolkata_date", kolkataDate).limit(1).maybeSingle();
+  if (pub.error) {
+    return jsonResponse({ ok: false, error: "failed to read publication", detail: pub.error.message }, 500);
+  }
+  const pubRow = pub.data;
+  if (!pubRow) return jsonResponse({ ok: false, error: "no publication for kolkata_date" }, 404);
+  if (pubRow.status !== "planned" && pubRow.status !== "published") {
+    return jsonResponse({ ok: false, error: "not_approvable", status: pubRow.status }, 409);
+  }
+  let captionText = "";
+  try {
+    captionText = buildFacebookCaption(pubRow).caption;
+  } catch (e) {
+    return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 400);
+  }
+  const log = await svc.from("daily_content_facebook_posts").select("*")
+    .eq("publication_id", pubRow.id).eq("page_id", pageId).limit(1).maybeSingle();
+  if (log.error) {
+    if (isMissingTableError(log.error)) {
+      return jsonResponse({ ok: false, error: "facebook_log_unavailable", detail: "daily_content_facebook_posts table is missing — apply the Facebook migration first" }, 500);
+    }
+    return jsonResponse({ ok: false, error: "failed to read facebook log", detail: log.error.message }, 500);
+  }
+  let fbRow: any = log.data;
+  if (!fbRow) {
+    const created = await svc.from("daily_content_facebook_posts").insert({
+      publication_id: pubRow.id,
+      page_id: pageId,
+      asset_id: `poster:${kolkataDate}`,
+      poster_url: pubRow.poster_url ?? null,
+      caption: captionText,
+      status: "pending",
+      attempt: 0,
+      retry_history: [],
+      approved_at: null,
+      approved_by: null,
+      post_id: null,
+      permalink_url: null,
+    }).select("id, publication_id, page_id, status, attempt, retry_history, approved_at, approved_by, post_id, permalink_url, error_code, error_message, next_attempt_at").single();
+    if (created.error) {
+      return jsonResponse({ ok: false, error: "failed to create facebook log row", detail: created.error.message }, 500);
+    }
+    fbRow = created.data;
+  }
+  if (fbRow.status === "posted") {
+    return jsonResponse({ ok: false, error: "already_posted", post_id: fbRow.post_id ?? null }, 409);
+  }
+  if (fbRow.approved_at) {
+    return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate, publication_id: pubRow.id, page_id: pageId, approved_at: fbRow.approved_at, approved_by: fbRow.approved_by ?? null });
+  }
+  const updated = await svc.from("daily_content_facebook_posts")
+    .update({ approved_at: nowIso, approved_by: approvedBy })
+    .eq("id", fbRow.id).is("approved_at", null).select("id, approved_at, approved_by");
+  if (updated.error) {
+    return jsonResponse({ ok: false, error: "failed to approve facebook post", detail: updated.error.message }, 500);
+  }
+  if (!Array.isArray(updated.data) || updated.data.length === 0) {
+    return jsonResponse({ ok: false, error: "already_approved", note: "another approver won this row" }, 409);
+  }
+  let auditNote = "skipped_no_admin_uuid";
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(approvedBy)) {
+    const profile = await svc.from("profiles").select("id").eq("id", approvedBy).limit(1).maybeSingle();
+    if (!profile.error && profile.data) {
+      const audit = await svc.from("admin_audit_log").insert({
+        action: "facebook_approve",
+        actor_id: approvedBy,
+        resource_type: "daily_content_facebook_posts",
+        resource_id: fbRow.id,
+        metadata: { kolkata_date: kolkataDate, publication_id: pubRow.id, page_id: pageId },
+      });
+      auditNote = audit.error ? `audit_insert_failed: ${audit.error.message}` : "written";
+    }
+  }
+  return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: pubRow.id, page_id: pageId, status: "pending", approved_at: nowIso, approved_by: approvedBy, admin_audit_log: auditNote });
+}
+
+/** facebook_token_health: debug_token check for the Page token.
+ *  Returns metadata only — never the token. The verdict is healthy
+ *  only when the token is valid, of type PAGE, carries all three
+ *  required scopes, and (when it expires at all) stays valid more
+ *  than 14 days. The settings write is best-effort: the columns
+ *  exist only after the Facebook migration, so a settings row without
+ *  them reports skipped_missing_columns instead of failing. */
+async function handleFacebookTokenHealth(svc: Svc): Promise<Response> {
+  const now = new Date();
+  const pageToken = Deno.env.get(FB_PAGE_TOKEN_ENV);
+  const appToken = Deno.env.get(FB_APP_TOKEN_ENV);
+  if (!pageToken) return jsonResponse({ ok: false, error: `${FB_PAGE_TOKEN_ENV} is not configured` }, 500);
+  if (!appToken) return jsonResponse({ ok: false, error: `${FB_APP_TOKEN_ENV} is not configured` }, 500);
+  const debug = await fbGraphCall("/debug_token", { input_token: pageToken }, appToken, { method: "GET" });
+  const data = debug?.data ?? {};
+  const reasons: string[] = [];
+  if (data.is_valid !== true) reasons.push("token is not valid");
+  if (data.type && data.type !== "PAGE") reasons.push(`token type is ${data.type}, expected PAGE`);
+  const scopes: string[] = Array.isArray(data.scopes) ? data.scopes : [];
+  for (const required of FB_REQUIRED_SCOPES) {
+    if (!scopes.includes(required)) reasons.push(`missing scope ${required}`);
+  }
+  const expiresAt = typeof data.expires_at === "number" ? data.expires_at : null;
+  const dataAccessExpiresAt = typeof data.data_access_expires_at === "number" ? data.data_access_expires_at : null;
+  const warnAt = Math.floor(now.getTime() / 1000) + 14 * 24 * 3600;
+  if (expiresAt !== null && expiresAt !== 0 && expiresAt <= warnAt) reasons.push("token expires within 14 days");
+  if (dataAccessExpiresAt !== null && dataAccessExpiresAt !== 0 && dataAccessExpiresAt <= warnAt) reasons.push("data access expires within 14 days");
+  const healthy = reasons.length === 0;
+  let settingsUpdate = "skipped_missing_columns";
+  const settings = await svc.from("daily_content_settings").select("*").limit(1).maybeSingle();
+  if (!settings.error && settings.data && "facebook_token_health" in settings.data && "facebook_token_checked_at" in settings.data) {
+    const updated = await svc.from("daily_content_settings").update({
+      facebook_token_health: healthy ? "healthy" : "unhealthy",
+      facebook_token_checked_at: now.toISOString(),
+    }).eq("id", settings.data.id);
+    settingsUpdate = updated.error ? `failed: ${updated.error.message}` : "updated";
+  }
+  return jsonResponse({
+    ok: true,
+    healthy,
+    verdict: healthy ? "healthy" : "unhealthy",
+    reasons,
+    app_id: typeof data.app_id === "string" ? data.app_id : null,
+    scopes,
+    expires_at: expiresAt,
+    data_access_expires_at: dataAccessExpiresAt,
+    settings_update: settingsUpdate,
+  });
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { status: 204, headers: CORS_HEADERS });
@@ -2067,6 +2821,18 @@ Deno.serve(async (req: Request) => {
   // action itself validates the URL, the row state, and idempotency.
   if (body.action === "set_poster") {
     return handleSetPoster(svc, body);
+  }
+  // Phase 4 — Facebook Page publication (rehearsal-only). CRON-secret
+  // gated like set_poster; the handlers validate settings, row state,
+  // the poster QC gate, and Mode B approval before any Graph call.
+  if (body.action === "facebook_publish") {
+    return await handleFacebookPublish(body, svc);
+  }
+  if (body.action === "facebook_approve") {
+    return await handleFacebookApprove(body, svc);
+  }
+  if (body.action === "facebook_token_health") {
+    return await handleFacebookTokenHealth(svc);
   }
   const kolkataDate = kolkataDateString(new Date());
 
