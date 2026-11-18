@@ -1,0 +1,225 @@
+# Phase E Self-Healing Tick Test (rehearsal)
+#
+# Tests the self-healing retry tick against the REHEARSAL project ONLY
+# (cazdbxxffvdnsdatjsrx). Posts {"retry_only": true, "heal": true} to
+# the rehearsal daily-content function and reports what happened.
+#
+# What a heal tick does (function code, poster branch
+# muse/daily-poster-pipeline-2026-11-15, Phase 3 split-flow heal):
+# runs the retry pass unchanged, then heals ONLY through the split
+# flow — it NEVER sends a text-only push and NEVER flips a row to
+# published on its own:
+#   - no row / failed row  -> plan-only (planned row, no send, no
+#     flip); this step then dispatches the poster workflow.
+#   - planned + poster QC-passed -> publishPlanned: the row flips
+#     and the first push goes out WITH the poster image.
+#   - planned + poster failed/pending -> HOLD (poster_failed /
+#     poster_pending); this step dispatches the poster workflow.
+#   - planned + quarantined -> HOLD (quarantined); NO dispatch —
+#     needs owner/admin review.
+#   - published row -> healed:false (nothing to do).
+# A plain retry tick (heal=false) still NEVER plans, publishes, or
+# creates a row.
+#
+# REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx. This
+# workflow NEVER touches production (no production URL, no production
+# secret, no production workflow). It is manual-dispatch only
+# (workflow_dispatch, confirm=true); there is no schedule.
+#
+# The tick is idempotent: running it twice is itself a test (the
+# second run must report healed:false, exactly one publication row
+# for today, and no second send). It is safe to re-run.
+#
+# Secrets required (repository secrets, created by the owner):
+#   REHEARSAL_CRON_SECRET - the CRON secret for the rehearsal
+#     daily-content call (same value as DAILY_CONTENT_CRON_SECRET in
+#     the rehearsal project)
+#   REHEARSAL_ANON_KEY - the rehearsal project's anon key (read-only
+#     PostgREST reads of the publication row; RLS shows published
+#     rows only, so a planned/failed row reads back empty — the
+#     function response is the primary evidence, the row read is
+#     corroboration for the published case)
+#
+# The secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file. They live only in shell
+# variables inside the single run step. The run response IS logged —
+# it contains no credentials.
+#
+# NOTE: a heal tick sends a real push ONLY when it publishes a
+# QC-passed poster via publishPlanned (the first send carries the
+# poster image). A heal that only plans a row sends NOTHING — the
+# poster workflow (dispatched by the step below) renders the poster
+# first, and only then does the publish step send. Expect a real
+# "আজকের হাদিস" push on the owner's device only when a heal
+# publishes a QC-passed poster. That is the test working as designed
+# (the send path is part of the proof). A held/quarantined row sends
+# nothing.
+#
+# Prerequisites (owner actions, each its own approval):
+#   1. This file enters the repo via the GitHub web upload (browser):
+#      a git push of a workflow file is rejected because the available
+#      token lacks the `workflow` scope. Upload it to
+#      .github/workflows/ on main.
+#   2. The poster branch (muse/daily-poster-pipeline-2026-11-15)
+#      is deployed to rehearsal via supabase-functions-deploy-rehearsal.yml.
+#      The old self-healing branch (muse/daily-self-healing-2026-11-16,
+#      text-only heal) is SUPERSEDED by the Phase 3 split-flow heal
+#      on the poster branch — do NOT deploy the old branch for this test.
+#   3. Rehearsal daily_content_settings: the tick fails closed while
+#      paused (expected: {ok:false, reason:"paused"}). For the
+#      heal-create tests the owner enables rehearsal with:
+#        UPDATE daily_content_settings SET enabled = true WHERE id = 1;
+#      on project cazdbxxffvdnsdatjsrx (dashboard noorapp-restore-test
+#      — confirm the project NAME first). Pause it again afterwards.
+
+name: Phase E Self-Healing Tick Test (rehearsal)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the self-healing tick test against REHEARSAL only'
+        required: true
+        type: boolean
+        default: false
+      heal:
+        description: 'Heal mode on (true) or plain retry tick only (false)'
+        required: false
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  heal-tick-test:
+    runs-on: ubuntu-latest
+    env:
+      REHEARSAL_URL: https://cazdbxxffvdnsdatjsrx.supabase.co
+      REHEARSAL_ANON_KEY: ${{ secrets.REHEARSAL_ANON_KEY }}
+      REHEARSAL_CRON_SECRET: ${{ secrets.REHEARSAL_CRON_SECRET }}
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          for s in REHEARSAL_ANON_KEY REHEARSAL_CRON_SECRET; do
+            if [ -z "${!s}" ]; then
+              echo "$s is not set as a repository secret."
+              exit 1
+            fi
+          done
+          echo "::add-mask::$REHEARSAL_ANON_KEY"
+          echo "::add-mask::$REHEARSAL_CRON_SECRET"
+          echo "Inputs validated; secrets are present (values never shown)."
+          echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
+
+      - name: Self-healing tick (rehearsal)
+        id: heal
+        env:
+          HEAL_INPUT: ${{ inputs.heal }}
+        run: |
+          set -euo pipefail
+          TODAY=$(TZ=Asia/Kolkata date +%F)
+          echo "Today (Asia/Kolkata): $TODAY"
+          if [ "$HEAL_INPUT" = "true" ]; then
+            BODY='{"retry_only": true, "heal": true}'
+            echo "Mode: HEAL tick (retry pass, then split-flow heal: plan-only / publish-with-poster / hold)."
+          else
+            BODY='{"retry_only": true}'
+            echo "Mode: PLAIN retry tick (never plans, never publishes)."
+          fi
+          echo "--- publication row(s) for today BEFORE the tick (anon read; RLS shows published rows only) ---"
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,published_at,recipients_total,recipients_sent,recipients_failed" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
+          echo ""
+          echo "--- heal tick ---"
+          RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+            -d "$BODY")
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "Response:"
+          echo "$BODY_OUT" | head -c 8000
+          echo ""
+          if [ "$CODE" = "401" ]; then
+            echo "Unauthorised (401): the CRON_SECRET does not match the rehearsal project's secret."
+            exit 1
+          fi
+          [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
+          echo "--- publication row(s) for today AFTER the tick ---"
+          curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,published_at,recipients_total,recipients_sent,recipients_failed" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
+          echo ""
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys, os
+          d = json.load(sys.stdin)
+          if d.get('reason') == 'paused':
+              print('PAUSED: rehearsal settings enabled=false. Nothing planned, nothing sent.')
+              print('To run the heal-create tests, the owner enables rehearsal (UPDATE daily_content_settings SET enabled = true WHERE id = 1).')
+              dispatch = False
+          elif d.get('healed') == 'planned':
+              print('HEALED (planned): a planned row was created/repaired for today — no send, no flip.')
+              print('Publication id:', d.get('publication_id'))
+              print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
+              print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+              print('The dispatch step below will run the poster workflow for this row.')
+              dispatch = True
+          elif d.get('healed') is True:
+              print('HEALED (published): the row was published WITH its QC-passed poster.')
+              print('Publication id:', d.get('publication_id'))
+              print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
+              print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+              dispatch = False
+          elif d.get('healed') is False:
+              hold = d.get('hold')
+              print('NOT HEALED: hold =', hold)
+              if hold in ('poster_pending', 'poster_failed'):
+                  print('HELD: the row needs the poster workflow — the dispatch step below will run it.')
+              elif hold == 'quarantined':
+                  print('QUARANTINED: the poster failed twice. No dispatch — needs owner/admin review.')
+              elif hold == 'no_valid_plan':
+                  print('NO VALID PLAN: nothing to poster. No dispatch.')
+              else:
+                  print('Nothing to do (already published, or a plain tick).')
+              print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
+              if d.get('alert'):
+                  print('Alert:', json.dumps(d.get('alert') or {}, ensure_ascii=False))
+              print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+              dispatch = hold in ('poster_pending', 'poster_failed')
+          else:
+              print('PLAIN RETRY TICK result:', json.dumps({k: d.get(k) for k in ('ok','retried','sent','failed','promoted','promotedPublished','superseded') if k in d}, ensure_ascii=False))
+              dispatch = False
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('dispatch_poster=' + ('true' if dispatch else 'false') + '\n')
+          "
+          echo "Heal tick test complete (rehearsal only)."
+
+      - name: Dispatch poster workflow (when the heal says the row needs a poster)
+        if: steps.heal.outputs.dispatch_poster == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The heal tick planned a row (healed:"planned") or held one
+          # for a missing/failed poster (hold: poster_pending /
+          # poster_failed). The poster workflow renders + finalizes +
+          # publishes it. No dispatch for quarantined, no_valid_plan,
+          # already-published, or healed:true rows.
+          # The poster workflow lives on the poster branch, so dispatch
+          # it at that ref. Needs `actions: write` (see permissions).
+          gh api --method POST \
+            /repos/abedinmolla2025/noorapp/actions/workflows/phase-e-poster-generate-rehearsal.yml/dispatches \
+            -f ref='muse/daily-poster-pipeline-2026-11-15' \
+            -f inputs[confirm]=true \
+            -f inputs[formats]='portrait,square' \
+            -f inputs[layout]='c' \
+            -f inputs[compare]=false
+          echo "Poster workflow dispatched (ref muse/daily-poster-pipeline-2026-11-15, formats portrait,square, layout c)."
+          echo "Watch that run: it renders, finalizes, and publishes the row with its poster."

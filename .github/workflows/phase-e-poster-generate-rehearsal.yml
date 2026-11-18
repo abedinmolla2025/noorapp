@@ -55,7 +55,29 @@
 # 'failed'` + a short reason on the publication row (never a poster
 # URL) and exits non-zero. A planned row stays planned (never
 # published); a published row stays published (text-only).
-# Downstream MUST NOT proceed on a failed poster.
+# Downstream MUST NOT proceed on a failed poster. A second failure
+# on the same Kolkata day quarantines the row (see Hold/Quarantine
+# below) — no automatic attempt retries it.
+#
+# Hold/Quarantine (Phase 3 — Hold/Quarantine + self-healing):
+# a poster failure HELDS the day: the row stays planned, and
+# `publish_planned` refuses it (409 `poster_not_ready`), so the day
+# is never published text-only. The heal tick (retry workflow with
+# `heal: true`) dispatches this workflow again for a held row. A
+# second failure on the same Kolkata day QUARANTINES the row — the
+# function stores the reason with a `quarantined:` prefix, and the
+# pre-check below skips a quarantined row cleanly (exit 3,
+# "QUARANTINED — needs review") with no render. A quarantined row
+# needs owner/admin review (force re-run or skip the day). The
+# `force` input bypasses ONLY the quarantine skip — never the
+# passed-poster skip. A successful `set_poster` pass clears the
+# error and ends the hold (the E2E recovery path).
+#
+# In-run bounded retry (Phase 3): render-poster.mjs and
+# upload-poster.mjs each retry a TRANSIENT failure once (max 2
+# attempts, 5 s apart) and never retry a deterministic one
+# (page QC error, dimension/size mismatch, invalid credentials).
+# The result JSON carries `attempts` (1 or 2).
 #
 # Secrets required (repository secrets, created by the owner):
 #   REHEARSAL_ANON_KEY, REHEARSAL_ADMIN_EMAIL, REHEARSAL_ADMIN_PASSWORD
@@ -93,6 +115,11 @@ on:
         options: [legacy, a, b, c]
       compare:
         description: 'Comparison mode: render to <date>/compare/<layout>-<format>.png and skip set_poster finalization (never touches the publication row)'
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: 'Force: re-attempt a QUARANTINED row (poster failed twice). Bypasses ONLY the quarantine skip — never the passed-poster skip. Default false.'
         required: false
         type: boolean
         default: false
@@ -155,6 +182,7 @@ jobs:
         id: precheck
         env:
           COMPARE: ${{ inputs.compare }}
+          FORCE: ${{ inputs.force }}
           LAYOUT: ${{ inputs.layout }}
         run: |
           set -euo pipefail
@@ -183,7 +211,7 @@ jobs:
           ")
           if [ -z "$ADMIN_TOKEN" ]; then echo "Admin sign-in failed."; exit 1; fi
           echo "::add-mask::$ADMIN_TOKEN"
-          ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,hadith_ref,hadith_source_line,cards" \
+          ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,poster_error,hadith_ref,hadith_source_line,cards" \
             -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $ADMIN_TOKEN")
           mkdir -p poster-out
           echo "$ROW" | python3 -c "
@@ -206,6 +234,14 @@ jobs:
               else:
                   print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
                   sys.exit(4)
+          if r.get('poster_qc_status') == 'failed' and (r.get('poster_error') or '').startswith('quarantined:'):
+              if os.environ.get('COMPARE') == 'true':
+                  print('COMPARE mode: quarantined poster ignored — rendering a comparison copy (never touches the row).')
+              elif os.environ.get('FORCE') == 'true':
+                  print('FORCE: quarantined row re-attempted by explicit input — rendering anyway.')
+              else:
+                  print('QUARANTINED — needs review for', '$DATE', '— poster failed twice. No render. Exiting cleanly.')
+                  sys.exit(3)
           plan_mode = 'true' if status == 'planned' else 'false'
           with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
               f.write('row_status=' + status + '\n')
