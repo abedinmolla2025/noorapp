@@ -145,6 +145,22 @@ const INPUTS = {
     english: "Narrated Anas bin Malik:The Prophet (ﷺ) passed by a woman who was sitting and weeping beside a grave and said to her, \"Fear Allah and be patient",
     sourceLine: "Sahih al-Bukhari, Hadith 1252",
   }),
+  // Regression 2026-11-18 (E2E 2026-11-18): bukhari-93-7158, verbatim from
+  // bundled sahih_bukhari_en.json (Bengali is DB-only, so bengali is ""
+  // here, as in h876). "Do not judge between two persons when you are
+  // angry" — anger/restraint, i.e. patience, NOT speech. Before the fix
+  // the speech keyword "قول" substring-matched the narration verb "يقول"
+  // and stole a score-1 win, holding the E2E on the missing quiet-garden
+  // scene. After the fix it must classify patience and select
+  // patience-tree (which exists and is reviewed).
+  anger7158: H({
+    ref: "hadith:bukhari-93-7158", bookKey: "bukhari", chapterId: 93,
+    chapterTitleEn: null,
+    bengali: "",
+    arabic: "حَدَّثَنَا آدَمُ، حَدَّثَنَا شُعْبَةُ، حَدَّثَنَا عَبْدُ الْمَلِكِ بْنُ عُمَيْرٍ، سَمِعْتُ عَبْدَ الرَّحْمَنِ بْنَ أَبِي بَكْرَةَ، قَالَ كَتَبَ أَبُو بَكْرَةَ إِلَى ابْنِهِ وَكَانَ بِسِجِسْتَانَ بِأَنْ لاَ تَقْضِيَ بَيْنَ اثْنَيْنِ وَأَنْتَ غَضْبَانُ، فَإِنِّي سَمِعْتُ النَّبِيَّ صلى الله عليه وسلم يَقُولُ ‏ \"‏ لاَ يَقْضِيَنَّ حَكَمٌ بَيْنَ اثْنَيْنِ وَهْوَ غَضْبَانُ ‏\"‏‏.‏",
+    english: "Narrated `Abdur Rahman bin Abi Bakra:Abu Bakra wrote to his son who was in Sijistan: 'Do not judge between two persons when you are angry, for I heard the Prophet (ﷺ) saying, \"A judge should not judge between two persons while he is in an angry mood",
+    sourceLine: "Sahih al-Bukhari, Hadith 7158",
+  }),
   // Master mission Phase 2 — bukhari-78-6000, verbatim from bundled sahih_bukhari_en.json
   // (Bengali is DB-only, so bengali is "" here, as in h876).
   mercy6000: H({
@@ -490,6 +506,26 @@ t("six-topic selection: parents 527 / patience 1252 / mercy 6000 render; charity
   assert.equal(charity.sel.hold.reason, "visual_needs_new_scene");
   assert.equal(charity.sel.selection.needsNewScene, true);
   assert.equal(charity.sel.selection.paletteId, null, "a held topic carries no palette (no fake design)");
+});
+t("regression 2026-11-18: bukhari-93-7158 (anger) classifies patience, not speech", () => {
+  // The E2E 2026-11-18 held on the missing quiet-garden scene because the
+  // speech keyword "قول" substring-matched the narration verb "يقول"
+  // ("he says", in nearly every hadith). Anger/restraint is patience
+  // content; patience-tree exists and is reviewed, so the hadith must
+  // render instead of holding.
+  const speech = engine.TOPICS.find((x) => x.id === "speech");
+  assert.ok(!speech.keywordsAr.includes("قول"), 'speech keywordsAr must not contain "قول" (it matches the narration verb يقول)');
+  const cls = engine.classifyHadith(INPUTS.anger7158);
+  assert.equal(cls.topicId, "patience", `topic ${cls.topicId} — 7158 is about anger/restraint, not speech`);
+  assert.equal(cls.method, "keyword", `method ${cls.method}`);
+  const { sel, qc, score } = selectAndQc(INPUTS.anger7158, NO_HISTORY, undefined, 7158);
+  assert.equal(sel.selection.topicId, "patience");
+  assert.equal(sel.hold, null, `unexpected hold: ${JSON.stringify(sel.hold)}`);
+  assert.equal(sel.selection.chosen.id, "patience-tree");
+  assert.equal(sel.scene.id, "patience-tree");
+  assert.equal(sel.selection.paletteId, "muted-blue");
+  assert.equal(qc.ok, true, `QC failed: ${qc.failures.join("; ")}`);
+  assert.ok(score.total >= 85, `semantic ${score.total} < 85`);
 });
 t("QC hard-fails an unknown palette id (fail closed, never silent gold)", () => {
   const input = INPUTS.quran5027;

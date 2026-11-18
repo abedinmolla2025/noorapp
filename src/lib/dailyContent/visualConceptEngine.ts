@@ -133,9 +133,11 @@ export const TOPICS: Topic[] = [
   },
   {
     id: "patience", toneLabelBn: "দৃঢ় ও শান্ত", labelBn: "ধৈর্য", labelEn: "Patience",
-    keywordsBn: ["ধৈর্য", "সবর", "দৃঢ়তা", "সহনশীল"],
-    keywordsAr: ["صبر", "صابر"],
-    keywordsEn: ["patience", "patient", "steadfast", "endur"],
+    // "রাগ / غضب / anger" added 2026-11-18: anger-restraint hadiths
+    // (e.g. bukhari-93-7158, "do not judge while angry") are patience content.
+    keywordsBn: ["ধৈর্য", "সবর", "দৃঢ়তা", "সহনশীল", "রাগ"],
+    keywordsAr: ["صبر", "صابر", "غضب"],
+    keywordsEn: ["patience", "patient", "steadfast", "endur", "anger", "angry"],
     chapterHints: [25, 27, 28, 33],
   },
   {
@@ -173,10 +175,15 @@ export const TOPICS: Topic[] = [
     keywordsEn: ["intention", "sincer", "deed"],
     chapterHints: [1],
   },
+  // NOTE (2026-11-18): "قول" was removed from keywordsAr — it substring-matches
+  // the narration verb "يقول" ("he says", in nearly every hadith) and stole a
+  // score-1 speech win on bukhari-93-7158 (an anger/patience hadith). Same class
+  // as the earlier أب/أم isnad fix. Genuine speech hadiths still match via
+  // لسان / كلام / صمت.
   {
     id: "speech", toneLabelBn: "শান্ত ও সংযত", labelBn: "জিহ্বা ও কথা", labelEn: "Speech & the tongue",
     keywordsBn: ["কথা", "জিহ্বা", "চুপ", "নীরব", "ভালো কথা", "জবান"],
-    keywordsAr: ["لسان", "كلام", "صمت", "قول"],
+    keywordsAr: ["لسان", "كلام", "صمت"],
     keywordsEn: ["tongue", "speech", "speak", "silent", "silence", "words"],
     chapterHints: [78],
   },
