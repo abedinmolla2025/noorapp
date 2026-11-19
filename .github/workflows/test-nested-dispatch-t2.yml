@@ -1,0 +1,32 @@
+# Test Nested Dispatch T2 (rehearsal only) — target of the T1 dispatch.
+#
+# Manual dispatch only. Its single job echoes a marker. The run existing
+# at all IS the live proof that the nested (workflow-run dispatches
+# workflow) hop works. If this workflow never runs after T1 dispatches it,
+# the nested hop FAILED — preserve the evidence, do not bypass.
+#
+# Prepared 2026-11-18 night. Upload via browser exact upload to the poster
+# branch alongside T1, SHA-verify, then dispatch T1 (see T1 header).
+#
+# REHEARSAL ONLY. Never touches production. No schedule.
+name: Test Nested Dispatch T2 (rehearsal)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the nested-dispatch target (rehearsal only)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  marker:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Marker
+        run: |
+          echo "NESTED-DISPATCH-T2-RAN run_id=${{ github.run_id }} ref=${{ github.ref }} event=${{ github.event_name }}"

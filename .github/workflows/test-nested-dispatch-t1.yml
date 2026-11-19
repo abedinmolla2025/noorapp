@@ -1,0 +1,44 @@
+# Test Nested Dispatch T1 (rehearsal only) — E2E brief §4 live proof.
+#
+# Manual dispatch only. Dispatches T2 with the built-in GITHUB_TOKEN
+# (permissions: actions: write). If T2 runs, the nested hop — a workflow
+# run dispatching another workflow — is proven LIVE. YAML validation and
+# GitHub docs do not count as proof; only T2's run does.
+#
+# Prepared 2026-11-18 night. Upload via browser exact upload to the poster
+# branch (workflow files need the browser route), SHA-verify, then dispatch
+# with: gh workflow run test-nested-dispatch-t1.yml --repo
+# abedinmolla2025/noorapp --ref muse/daily-poster-pipeline-2026-11-15
+# -f confirm=true
+#
+# REHEARSAL ONLY. Never touches production. No schedule.
+name: Test Nested Dispatch T1 (rehearsal)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to run the nested-dispatch test (rehearsal only)'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  dispatch-t2:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch T2
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh workflow run test-nested-dispatch-t2.yml \
+            --repo abedinmolla2025/noorapp \
+            --ref muse/daily-poster-pipeline-2026-11-15 \
+            -f confirm=true
+          echo "T2 dispatched (ref muse/daily-poster-pipeline-2026-11-15)."
+          echo "Live proof = a T2 run appears. If none appears, the nested hop FAILED — preserve the evidence, do not bypass."
