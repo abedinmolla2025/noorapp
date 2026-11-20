@@ -1,32 +1,76 @@
 # Phase E Daily Content Cron (production)
 #
-# Runs the daily-content planner as a REAL daily run against the
-# PRODUCTION project (llicfiepatzgllmjhzbw) from the GitHub runner.
+# REVISED — production 3-dispatch chain (Phase 7 step 6). NOT YET IN
+# THE REPO. Replacing this file on main needs its OWN owner approval
+# (production change); do NOT upload it as part of any rehearsal work.
+# Base: the current main file (SHA-256
+# 9ab68510ba292715e72f6739f7a8ca18645a88331cd6d98da7ee7d3050a5ec09).
+# See DIFFS.md in this directory for the exact delta.
+#
+# Step 1 of the production 3-dispatch chain (plan -> poster ->
+# publish_planned). Runs the daily-content planner as a PLAN-ONLY
+# daily run against the PRODUCTION project (llicfiepatzgllmjhzbw)
+# from the GitHub runner, then dispatches the production poster
+# workflow — it NEVER plans + sends + publishes in one call any
+# more (the old bare-call text-only path is gone with the converted
+# function: a bare call now plans only, and this workflow posts
+# {"plan_only": true} explicitly so the intent is unambiguous).
 #
 # Schedule: every day at 00:30 UTC = 06:00 Asia/Kolkata
-# (IST has no DST), the runbook's Step 8 time. This is the production
-# cron — it publishes the daily content and sends push notifications
-# to real users once the production settings row is enabled.
+# (IST has no DST), the runbook's Step 8 time. This is the
+# production cron — it starts the day's publication; the poster
+# workflow (step 2) renders + finalizes the poster, and the publish
+# workflow (step 3) flips the row and sends the first push WITH
+# the poster image.
 #
 # The run is gated by the production daily_content_settings row:
 # while enabled=false (PAUSED) the function returns
-# { ok:false, reason:"paused" } and publishes nothing, sends
+# { ok:false, reason:"paused" } and plans nothing, dispatches
 # nothing. Enabling (enabled=true) is a separate owner decision
 # (runbook Step 7) done via owner SQL on the production project;
-# this workflow never changes the settings row. Once enabled, a
-# scheduled run plans, publishes, and sends pushes in production.
-# The retry cron (runbook Step 9) is NOT included here —
-# it is a separate schedule, added only after the daily run is
-# verified.
+# this workflow never changes the settings row.
 #
-# Secrets required (repository secrets, created by the owner):
+# Dispatch mechanism (verified): the poster workflow is dispatched
+# with the built-in GITHUB_TOKEN via the workflow_dispatch API —
+# `workflow_dispatch` events ALWAYS create runs even when sent with
+# GITHUB_TOKEN (GitHub docs, "Triggering a workflow from a
+# workflow"). Needs `actions: write` (see permissions). Live
+# evidence in this repo: the rehearsal heal-test workflow
+# dispatched the rehearsal poster workflow the same way on
+# 2026-11-18 (poster run 2, 44253405733). The target workflow must
+# exist on the default branch (main) — it is uploaded there
+# (Phase 7 step 6). Dispatches target ref=main.
+#
+# Concurrency guard: before dispatching, this workflow checks for
+# an already queued/running poster run and skips the dispatch if
+# one exists — a 15-minute heal tick can already have a render in
+# flight, and a second render for the same date is pure waste.
+#
+# Failure: if plan_only fails (401 / non-200 / no valid plan) the
+# run exits 1 and dispatches NOTHING. The heal tick (production
+# retry workflow, every 15 minutes) is the backstop: it plans the
+# row and dispatches the poster workflow itself. A missed 06:00
+# schedule is recovered the same way — the day is no longer lost
+# to a schedule miss (the 2026-11-16 late and 2026-11-17 missed
+# runs needed manual recovery dispatches; the chain removes that).
+#
+# The retry cron (runbook Step 9) is NOT included here — it is a
+# separate schedule (phase-e-daily-retry-production.yml).
+#
+# Secrets required (repository secrets, created by the owner —
+# names only, values never in any file):
 #   PROD_CRON_SECRET - the CRON secret for the daily-content
 #     call (same value as DAILY_CONTENT_CRON_SECRET in the
-#     production project)
+#     production project; already exists)
+#   PROD_ANON_KEY - the production project's anon key (read-only
+#     PostgREST read of the publication row when plan_only reports
+#     deduped; RLS shows published rows only, so a planned row
+#     reads back empty — the function response is the primary
+#     evidence). NEW prerequisite (Phase 7 step 6).
 #
-# The secret is masked with ::add-mask:: immediately and is NEVER
-# echoed, logged, or written to any file. It lives only in a shell
-# variable inside the single run step. The run response IS logged —
+# The secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file. They live only in shell
+# variables inside the run steps. The run response IS logged —
 # it contains no credentials.
 
 name: Phase E Daily Content Cron (production)
@@ -50,12 +94,14 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   daily-run:
     runs-on: ubuntu-latest
     env:
       PROD_URL: https://llicfiepatzgllmjhzbw.supabase.co
+      PROD_ANON_KEY: ${{ secrets.PROD_ANON_KEY }}
     steps:
       - name: Validate inputs and secret
         run: |
@@ -63,14 +109,14 @@ jobs:
             echo "confirm must be true for a manual run; aborting."
             exit 1
           fi
-          if [ -z "${{ secrets.PROD_CRON_SECRET }}" ]; then
-            echo "PROD_CRON_SECRET is not set as a repository secret."
-            exit 1
-          fi
-          echo "Inputs validated; secret is present (value never shown)."
+          for s in PROD_ANON_KEY PROD_CRON_SECRET; do
+            if [ -z "${!s}" ]; then echo "$s is not set as a repository secret."; exit 1; fi
+          done
+          echo "Inputs validated; secrets are present (values never shown)."
           echo "Target: production only (llicfiepatzgllmjhzbw)."
 
-      - name: Daily-content run (production)
+      - name: Daily-content plan-only (production)
+        id: plan
         env:
           PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
         run: |
@@ -78,18 +124,18 @@ jobs:
           echo "::add-mask::$PROD_CRON_SECRET"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             DRY=false
-            echo "Scheduled run (00:30 UTC = 06:00 IST). Real run, not dry-run."
+            echo "Scheduled run (00:30 UTC = 06:00 IST). Plan-only, then dispatch the poster workflow."
           elif [ "${{ inputs.dry_run }}" = "true" ]; then
             DRY=true
-            echo "Manual dry run. Plan only, write nothing, send nothing."
+            echo "Manual dry run. Plan only, write nothing, send nothing, dispatch nothing."
           else
             DRY=false
-            echo "Manual real run. Gated by the production settings row (paused unless enabled=true)."
+            echo "Manual real run. Plan-only, then dispatch the poster workflow. Gated by the production settings row (paused unless enabled=true)."
           fi
           if [ "$DRY" = "true" ]; then
             BODY='{"dry_run": true}'
           else
-            BODY='{}'
+            BODY='{"plan_only": true}'
           fi
           RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
             -H 'Content-Type: application/json' \
@@ -106,12 +152,17 @@ jobs:
             exit 1
           fi
           [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
+          TODAY=$(TZ=Asia/Kolkata date +%F)
           echo "$BODY_OUT" | python3 -c "
-          import json, sys
+          import json, sys, os
           d = json.load(sys.stdin)
+          out = open(os.environ['GITHUB_OUTPUT'], 'a')
+          def set_dispatch(v):
+              out.write('dispatch_poster=' + v + '\n')
           if d.get('reason') == 'paused':
-              print('PAUSED: production settings enabled=false. Nothing published, nothing sent.')
-              print('To let the daily run publish in production, the owner enables the production settings row (runbook Step 7, owner SQL).')
+              print('PAUSED: production settings enabled=false. Nothing planned, nothing dispatched.')
+              print('To let the daily run plan in production, the owner enables the production settings row (runbook Step 7, owner SQL).')
+              set_dispatch('false')
           elif d.get('dry_run') is True:
               plan = d.get('plan') or {}
               print('Plan source:', plan.get('source'))
@@ -119,9 +170,85 @@ jobs:
               print('Hadith present:', bool(plan.get('hadith')))
               print('Cards count:', len(plan.get('cards') or []))
               print('Context present:', bool(plan.get('context')))
-              print('DRY RUN PASS: plan complete, nothing written, nothing sent.')
+              print('DRY RUN PASS: plan complete, nothing written, nothing sent, nothing dispatched.')
+              set_dispatch('false')
+          elif d.get('planned') is True:
+              print('PLANNED: a planned row was created for today. Nothing sent, nothing published.')
+              print('Publication id:', d.get('publication_id'))
+              print('Kolkata date:', d.get('kolkata_date'))
+              print('Next: the dispatch step below runs the poster workflow (formats=portrait,square, layout=c).')
+              set_dispatch('true')
+          elif d.get('deduped') is True:
+              print('DEDUPED: a row already exists for today. The row-check step below decides the dispatch:')
+              print('- a PUBLISHED row means the day is already published — nothing to poster.')
+              print('- no visible row means an earlier plan_only already planned it — dispatch the poster workflow.')
+              print('- a FAILED row means no valid plan — no dispatch; the heal tick owns the recovery.')
+              set_dispatch('CHECK')
           else:
-              print('Real run result:', json.dumps({k: d.get(k) for k in ('ok','publication_id','status','hadith','cards') if k in d}, ensure_ascii=False)[:2000])
-              print('REAL RUN DONE: check the production publication row to verify (one row for today, status published).')
+              print('Unexpected response keys:', sorted(d.keys()))
+              print('Full response:', json.dumps(d, ensure_ascii=False)[:2000])
+              sys.exit(1)
           "
-          echo "Daily-content run complete (production only)."
+          echo "Plan-only step complete (production only)."
+
+      - name: Row check for a deduped plan (decide the dispatch)
+        id: rowcheck
+        if: steps.plan.outputs.dispatch_poster == 'CHECK'
+        run: |
+          set -euo pipefail
+          TODAY=$(TZ=Asia/Kolkata date +%F)
+          echo "--- publication row for today (anon read; RLS shows published rows only) ---"
+          ROW=$(curl -s --max-time 30 "$PROD_URL/rest/v1/daily_content_publications?kolkata_date=eq.$TODAY&select=id,status,hadith_ref,poster_qc_status,poster_url,published_at" \
+            -H "apikey: $PROD_ANON_KEY" -H "Authorization: Bearer $PROD_ANON_KEY")
+          echo "$ROW" | python3 -c "
+          import json, sys, os
+          rows = json.load(sys.stdin)
+          out = open(os.environ['GITHUB_OUTPUT'], 'a')
+          if not rows:
+              print('No visible row: the row is PLANNED (hidden by RLS) — dispatch the poster workflow.')
+              out.write('dispatch_poster=true\n')
+          else:
+              r = rows[0]
+              if r.get('status') == 'published':
+                  print('Row is PUBLISHED already — nothing to poster, no dispatch.')
+                  out.write('dispatch_poster=false\n')
+              elif r.get('status') == 'failed':
+                  print('Row is FAILED (no valid plan) — no dispatch; the heal tick owns the recovery.')
+                  out.write('dispatch_poster=false\n')
+              else:
+                  print('Row status is', r.get('status'), '— no dispatch; unexpected state, investigate.')
+                  out.write('dispatch_poster=false\n')
+          "
+
+      - name: Dispatch poster workflow
+        if: steps.plan.outputs.dispatch_poster == 'true' || steps.rowcheck.outputs.dispatch_poster == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # Step 2 of the chain: render + QC + finalize the poster for
+          # today's planned row (formats portrait,square, layout c).
+          # The poster workflow dispatches the publish workflow on
+          # set_poster success. No dispatch on a paused / dry-run /
+          # failed / already-published day (the plan step decides).
+          # Concurrency guard: never dispatch while a poster run is
+          # already queued/running — a heal tick may already have one
+          # in flight for this date.
+          ACTIVE=$(gh api "repos/abedinmolla2025/noorapp/actions/workflows/phase-e-poster-generate-production.yml/runs?per_page=5" | python3 -c "
+          import json, sys
+          runs = json.load(sys.stdin).get('workflow_runs') or []
+          print(sum(1 for r in runs if r.get('status') in ('queued', 'in_progress')))
+          ")
+          if [ "$ACTIVE" != "0" ]; then
+            echo "A poster run is already active ($ACTIVE) — skipping this dispatch (the in-flight run owns the render)."
+            exit 0
+          fi
+          gh api --method POST \
+            /repos/abedinmolla2025/noorapp/actions/workflows/phase-e-poster-generate-production.yml/dispatches \
+            -f ref='main' \
+            -f inputs[confirm]=true \
+            -f inputs[formats]='portrait,square' \
+            -f inputs[layout]='c' \
+            -f inputs[compare]=false
+          echo "Poster workflow dispatched (ref main, formats portrait,square, layout c)."
+          echo "Watch that run: it renders, finalizes, and dispatches the publish workflow."

@@ -1,14 +1,41 @@
 # Phase E Daily Content Retry (production)
 #
+# REVISED — production 3-dispatch chain (Phase 7 step 7). NOT YET IN
+# THE REPO. Replacing this file on main needs its OWN owner approval
+# (production change); do NOT upload it as part of any rehearsal work.
+# Base: the Phase 3 prepared file (SHA-256
+# 5685694ea7c268b7da54d684c8c347b5b337d94a3cf892ba5b8b534dd347ed1f).
+# See DIFFS.md in this directory for the exact delta. The ONE change
+# vs the prepared file: a poster-dispatch step (below). The prepared
+# file's own header said that step "comes after the cutover step 6
+# (self-healing split-flow integration)" — this revision IS that step.
+#
 # Retries failed push deliveries for the PRODUCTION project
-# (llicfiepatzgllmjhzbw) from the GitHub runner.
+# (llicfiepatzgllmjhzbw) from the GitHub runner, and heals a missed
+# or stalled day ONLY through the split flow.
 #
 # Schedule: every 15 minutes. This is the runbook's Step 9
 # retry trigger — it calls the daily-content function with
-# { "retry_only": true }, which re-attempts failed deliveries
-# (bounded: max 4 attempts total — initial + 3 retries — with
-# 5/15/45 min backoff). It never creates a new publication and
-# never plans a new day; it only retries today's failed rows.
+# { "retry_only": true, "heal": true }, which re-attempts failed
+# deliveries (bounded: max 4 attempts total — initial + 3 retries —
+# with 5/15/45 min backoff) and then heals ONLY through the split
+# flow: a missing/failed row is planned (no send, no flip); a
+# planned row with a QC-passed poster is published WITH its poster
+# image; a planned row without one is HELD (poster_pending /
+# poster_failed / quarantined) — never published text-only. It never
+# creates a new publication outside the heal rules and never plans
+# a new day on a plain tick; it only retries today's failed rows.
+#
+# NEW IN THIS REVISION — the poster dispatch: when the tick plans a
+# row (healed:"planned") or holds one for a missing/failed poster
+# (hold: poster_pending / poster_failed), this workflow dispatches
+# the production poster workflow, which renders + finalizes and then
+# dispatches the publish workflow. Without this step a healed day
+# would sit planned forever — the prepared file planned but could
+# not render. No dispatch for quarantined, gate_hold, no_valid_plan,
+# publish_failed, already-published, healed:true, or paused rows.
+# The dispatch has the same concurrency guard as the daily cron: it
+# never starts a second render while one is already queued/running.
 #
 # The run is gated by the production daily_content_settings row:
 # while enabled=false (PAUSED) the function returns
@@ -21,7 +48,8 @@
 # Secrets required (repository secrets, created by the owner):
 #   PROD_CRON_SECRET - the CRON secret for the daily-content
 #     call (same value as DAILY_CONTENT_CRON_SECRET in the
-#     production project; same secret the daily cron uses)
+#     production project; same secret the daily cron uses; already
+#     exists)
 #
 # The secret is masked with ::add-mask:: immediately and is NEVER
 # echoed, logged, or written to any file. It lives only in a shell
@@ -44,6 +72,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   retry-tick:
@@ -65,16 +94,17 @@ jobs:
           echo "Target: production only (llicfiepatzgllmjhzbw)."
 
       - name: Daily-content retry tick (production)
+        id: tick
         env:
           PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
         run: |
           set -euo pipefail
           echo "::add-mask::$PROD_CRON_SECRET"
-          echo "Retry tick. Re-attempts failed deliveries only; creates no publication."
+          echo "Retry + heal tick. Re-attempts failed deliveries; heals only through the split flow (plan-only / publish-with-poster / hold). Never sends text-only."
           RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $PROD_CRON_SECRET" \
-            -d '{"retry_only": true}')
+            -d '{"retry_only": true, "heal": true}')
           CODE="${RESP##*$'\n'}"
           BODY_OUT="${RESP%$'\n'*}"
           echo "HTTP status: $CODE"
@@ -87,12 +117,64 @@ jobs:
           fi
           [ "$CODE" = "200" ] || { echo "Unexpected HTTP status $CODE."; exit 1; }
           echo "$BODY_OUT" | python3 -c "
-          import json, sys
+          import json, sys, os
           d = json.load(sys.stdin)
+          out = open(os.environ['GITHUB_OUTPUT'], 'a')
+          def set_dispatch(v):
+              out.write('dispatch_poster=' + ('true' if v else 'false') + '\n')
           if d.get('reason') == 'paused':
               print('PAUSED: production settings enabled=false. Nothing retried.')
+              set_dispatch(False)
           else:
               print('Retry tick result:', json.dumps({k: d.get(k) for k in ('ok','kolkata_date','retry') if k in d}, ensure_ascii=False)[:2000])
+              if 'healed' in d:
+                  print('Heal:', json.dumps({k: d.get(k) for k in ('healed','hold','publication_id','channels','alert') if k in d}, ensure_ascii=False)[:2000])
               print('RETRY TICK DONE: failed deliveries were re-attempted where due (bounded by backoff and max attempts).')
+              # Dispatch rule (mirrors the rehearsal heal-test workflow):
+              # the row needs a poster when the tick planned it
+              # (healed:'planned') or held it for a missing/failed
+              # poster (hold: poster_pending / poster_failed). No
+              # dispatch for healed:true, quarantined, gate_hold,
+              # no_valid_plan, publish_failed, already-published, or
+              # plain ticks — those either need review or need nothing.
+              dispatch = d.get('healed') == 'planned' or d.get('hold') in ('poster_pending', 'poster_failed')
+              if dispatch:
+                  print('DISPATCH: the row needs the poster workflow (healed:', d.get('healed'), '| hold:', d.get('hold'), ').')
+              set_dispatch(dispatch)
           "
           echo "Retry tick complete (production only)."
+
+      - name: Dispatch poster workflow (when the heal says the row needs a poster)
+        if: steps.tick.outputs.dispatch_poster == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The heal tick planned a row (healed:"planned") or held one
+          # for a missing/failed poster (hold: poster_pending /
+          # poster_failed). The poster workflow renders + finalizes +
+          # dispatches the publish workflow. No dispatch for
+          # quarantined, gate_hold, no_valid_plan, publish_failed,
+          # already-published, healed:true, or paused rows.
+          # Concurrency guard: never dispatch while a poster run is
+          # already queued/running — a render takes ~10 minutes and
+          # ticks fire every 15, so an in-flight render is the normal
+          # case, not an edge case.
+          ACTIVE=$(gh api "repos/abedinmolla2025/noorapp/actions/workflows/phase-e-poster-generate-production.yml/runs?per_page=5" | python3 -c "
+          import json, sys
+          runs = json.load(sys.stdin).get('workflow_runs') or []
+          print(sum(1 for r in runs if r.get('status') in ('queued', 'in_progress')))
+          ")
+          if [ "$ACTIVE" != "0" ]; then
+            echo "A poster run is already active ($ACTIVE) — skipping this dispatch (the in-flight run owns the render)."
+            exit 0
+          fi
+          gh api --method POST \
+            /repos/abedinmolla2025/noorapp/actions/workflows/phase-e-poster-generate-production.yml/dispatches \
+            -f ref='main' \
+            -f inputs[confirm]=true \
+            -f inputs[formats]='portrait,square' \
+            -f inputs[layout]='c' \
+            -f inputs[compare]=false
+          echo "Poster workflow dispatched (ref main, formats portrait,square, layout c)."
+          echo "Watch that run: it renders, finalizes, and dispatches the publish workflow."

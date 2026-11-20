@@ -1,0 +1,548 @@
+# Daily Content Poster Generation (production)
+#
+# PREPARED — production 3-dispatch chain (Phase 7 step 6). NOT YET IN
+# THE REPO. Uploading this file to main needs its OWN owner approval
+# (production change); do NOT upload it as part of any rehearsal work.
+# Mirror of the rehearsal poster workflow
+# (phase-e-poster-generate-rehearsal.yml, SHA-256
+# ad97a1efe258fee330e6ee3ffca04d17d4c17e100a892bc46d99ad015167aeae),
+# adapted for production (see DIFFS.md in this directory).
+#
+# Stage 2 of the production 3-dispatch chain (plan -> poster ->
+# publish_planned):
+#   1. POSTER GENERATION — render the real OgShareCard component
+#      (Dua OG visual identity) headlessly with Playwright/Chromium,
+#      from the publication row (verbatim text, never invented).
+#      The row is `planned` (created by the daily cron with
+#      plan_only) — the pre-check reads it with the admin JWT (anon
+#      RLS cannot see a planned row; the "Admins read publications"
+#      policy already covers it — migration 202611030001, already
+#      applied in production) and writes its cards to
+#      `poster-out/plan.json`, which the render page loads as
+#      `?plan=1`. A `published` row (legacy path) still renders
+#      from the anon read as before.
+#   2. IMAGE QC — the render page runs checkOgCardBatch + a verbatim
+#      character check against the publication card; the render script
+#      verifies exact export dimensions + non-trivial file size.
+#      A QC failure stops the pipeline: no upload, no URL persisted.
+#   3. POSTER ASSET FINALIZATION — upload the PNG(s) to the
+#      `daily-content-posters` Storage bucket (deterministic path
+#      <kolkata_date>/<format>.png, upsert; the bucket is created by
+#      migration 202611150001, Phase 7 step 4) and persist the
+#      finalized asset (asset ID, storage path, public URL, SHA-256
+#      checksum, QC status) on the publication row via the
+#      daily-content `set_poster` action (which accepts planned rows).
+#   4. DISPATCH PUBLISH — on set_poster success, this workflow
+#      dispatches the production publish workflow
+#      (phase-e-publish-production.yml), which calls
+#      `publish_planned`: the row flips to `published` and the first
+#      push goes out WITH the poster image. Publish is a SEPARATE
+#      workflow (not inline, unlike the rehearsal poster workflow)
+#      so a transient publish failure retries WITHOUT re-rendering.
+#      The function refuses a row whose poster is not QC-passed, so
+#      a poster failure leaves the row planned — downstream has
+#      nothing to distribute that day.
+#
+# Stage 4 (Downstream Distribution — homepage image, push image,
+# WhatsApp/Native Share, Facebook Page) reads the finalized asset.
+# The homepage already reads `poster_url`; push carries the image
+# on the first send through the split flow above. Share and
+# Facebook wiring is separate work.
+#
+# PRODUCTION ONLY. Target is hardcoded to llicfiepatzgllmjhzbw.
+# Manual dispatch + API dispatch from the production daily cron
+# (step 1) and the production retry workflow (heal path). No
+# schedule of its own — it runs only when dispatched. The workflow
+# never touches rehearsal.
+#
+# Dispatch mechanism (verified): a workflow dispatches another
+# workflow with the built-in GITHUB_TOKEN via the workflow_dispatch
+# API — `workflow_dispatch` events ALWAYS create runs even when
+# sent with GITHUB_TOKEN (GitHub docs, "Triggering a workflow from
+# a workflow"). Needs `actions: write` (see permissions). Live
+# evidence in this repo: the rehearsal heal-test workflow
+# dispatched the rehearsal poster workflow the same way on
+# 2026-11-18 (poster run 2, 44253405733). The target workflow must
+# exist on the default branch (main) — this file is uploaded there
+# (Phase 7 step 6). Dispatches target ref=main.
+#
+# Concurrency guard: the daily cron and the retry workflow check
+# for an already queued/running poster run before dispatching, so
+# a 15-minute heal tick never starts a second render while one is
+# in flight. The publish dispatch below has the same guard for the
+# publish workflow (publishPlanned dedupes, but a second dispatch
+# is pure waste).
+#
+# Idempotency: the pre-check exits 0 (nothing to do) when the
+# publication already has a QC-passed poster; Storage uploads use
+# deterministic paths with upsert; `set_poster` refuses to
+# overwrite a passed poster without force. Re-running for the same
+# date is safe.
+#
+# Comparison mode (`compare: true`, layout a/b/c): renders the
+# Bengali-first variants side by side WITHOUT touching the
+# publication row — the pre-check's idempotent skip is bypassed,
+# PNGs upload to `<kolkata_date>/compare/<layout>-<format>.png`,
+# and the set_poster finalization + publish dispatch are skipped.
+# Standard template is layout "c" (Bengali Panel + Arabic
+# Footnote, Master Mission Phase 2 decision 2026-11-16); compare
+# mode stays available for A/B checks.
+#
+# Failure: any render/upload/QC failure records `poster_qc_status=
+# 'failed'` + a short reason on the publication row (never a poster
+# URL) and exits non-zero. A planned row stays planned (never
+# published); a published row stays published (text-only).
+# Downstream MUST NOT proceed on a failed poster. A second failure
+# on the same Kolkata day quarantines the row (see Hold/Quarantine
+# below) — no automatic attempt retries it. The publish workflow
+# is NEVER dispatched on a failed poster.
+#
+# Hold/Quarantine (Phase 3 — Hold/Quarantine + self-healing):
+# a poster failure HELDS the day: the row stays planned, and
+# `publish_planned` refuses it (409 `poster_not_ready`), so the day
+# is never published text-only. The retry workflow (heal tick)
+# dispatches this workflow again for a held row. A second failure
+# on the same Kolkata day QUARANTINES the row — the function stores
+# the reason with a `quarantined:` prefix, and the pre-check below
+# skips a quarantined row cleanly (exit 3, "QUARANTINED — needs
+# review") with no render. A quarantined row needs owner/admin
+# review (force re-run or skip the day). The `force` input bypasses
+# ONLY the quarantine skip — never the passed-poster skip. A
+# successful `set_poster` pass clears the error and ends the hold
+# (the E2E recovery path).
+#
+# In-run bounded retry (Phase 3): render-poster.mjs and
+# upload-poster.mjs each retry a TRANSIENT failure once (max 2
+# attempts, 5 s apart) and never retry a deterministic one
+# (page QC error, dimension/size mismatch, invalid credentials).
+# The result JSON carries `attempts` (1 or 2).
+#
+# Secrets required (repository secrets, created by the owner —
+# names only, values never in any file):
+#   PROD_ANON_KEY, PROD_ADMIN_EMAIL, PROD_ADMIN_PASSWORD
+#   (Storage upload as admin; the pre-check also reads the
+#   publication row with the admin JWT, which can see planned
+#   rows), PROD_CRON_SECRET (set_poster calls).
+#   PROD_ANON_KEY / PROD_ADMIN_EMAIL / PROD_ADMIN_PASSWORD do NOT
+#   exist yet as repository secrets — creating them is a separate
+#   owner prerequisite (Phase 7 step 6); PROD_CRON_SECRET already
+#   exists (the production daily cron uses it).
+# Secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file.
+
+name: Daily Content Poster Generation (production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to generate the poster for the production publication'
+        required: true
+        type: boolean
+        default: false
+      kolkata_date:
+        description: 'Kolkata date (YYYY-MM-DD) of the planned publication; empty = today'
+        required: false
+        type: string
+        default: ''
+      formats:
+        description: 'Comma-separated formats to render (portrait,square,wide,story)'
+        required: false
+        type: string
+        default: 'portrait,square'
+      layout:
+        description: 'Poster layout: c (standard — Bengali Panel + Arabic Footnote), a/b (Bengali-first overrides), legacy (Arabic-first, explicit only)'
+        required: false
+        type: choice
+        default: 'c'
+        options: [legacy, a, b, c]
+      compare:
+        description: 'Comparison mode: render to <date>/compare/<layout>-<format>.png and skip set_poster finalization (never touches the publication row)'
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: 'Force: re-attempt a QUARANTINED row (poster failed twice). Bypasses ONLY the quarantine skip — never the passed-poster skip. Default false.'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  actions: write
+
+jobs:
+  generate-poster:
+    runs-on: ubuntu-latest
+    env:
+      PROD_URL: https://llicfiepatzgllmjhzbw.supabase.co
+      PROD_ANON_KEY: ${{ secrets.PROD_ANON_KEY }}
+      PROD_ADMIN_EMAIL: ${{ secrets.PROD_ADMIN_EMAIL }}
+      PROD_ADMIN_PASSWORD: ${{ secrets.PROD_ADMIN_PASSWORD }}
+      PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          for s in PROD_ANON_KEY PROD_ADMIN_EMAIL PROD_ADMIN_PASSWORD PROD_CRON_SECRET; do
+            if [ -z "${!s}" ]; then echo "$s secret is not set."; exit 1; fi
+          done
+          echo "::add-mask::$PROD_ANON_KEY"
+          echo "::add-mask::$PROD_ADMIN_PASSWORD"
+          echo "::add-mask::$PROD_CRON_SECRET"
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            case "${{ inputs.kolkata_date }}" in
+              ????-??-??) ;;
+              *) echo "kolkata_date must be YYYY-MM-DD."; exit 1 ;;
+            esac
+          fi
+          echo "Inputs validated; secrets present (values never shown)."
+          echo "Target: production only (llicfiepatzgllmjhzbw)."
+
+      - name: Checkout main code
+        uses: actions/checkout@v4
+
+      - name: Setup Node 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          npm ci --no-audit --no-fund
+
+      - name: Install Playwright Chromium
+        run: |
+          set -euo pipefail
+          npx playwright install --with-deps chromium
+
+      - name: Resolve date and pre-check publication
+        id: precheck
+        env:
+          COMPARE: ${{ inputs.compare }}
+          FORCE: ${{ inputs.force }}
+          LAYOUT: ${{ inputs.layout }}
+        run: |
+          set -euo pipefail
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            DATE="${{ inputs.kolkata_date }}"
+          else
+            DATE=$(TZ=Asia/Kolkata date +%F)
+          fi
+          if [ "$COMPARE" = "true" ] && [ "$LAYOUT" = "legacy" ]; then
+            echo "compare=true requires a Bengali-first layout (a, b or c), not legacy."
+            exit 1
+          fi
+          echo "kolkata_date=$DATE" >> "$GITHUB_OUTPUT"
+          echo "Date: $DATE"
+          # Split flow (Phase 3): the row may be PLANNED (created by
+          # plan_only) or PUBLISHED (legacy path). Anon RLS cannot see
+          # a planned row, so read with the admin JWT (the "Admins read
+          # publications" policy already covers it — migration
+          # 202611030001, applied in production). The token is masked
+          # immediately and lives only in this step.
+          TOKEN_RESP=$(curl -s --max-time 30 -X POST "$PROD_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $PROD_ANON_KEY" -H "Content-Type: application/json" \
+            -d "{\"email\": \"$PROD_ADMIN_EMAIL\", \"password\": \"$PROD_ADMIN_PASSWORD\"}")
+          ADMIN_TOKEN=$(echo "$TOKEN_RESP" | python3 -c "
+          import json, sys
+          print(json.load(sys.stdin).get('access_token') or '')
+          ")
+          if [ -z "$ADMIN_TOKEN" ]; then echo "Admin sign-in failed."; exit 1; fi
+          echo "::add-mask::$ADMIN_TOKEN"
+          ROW=$(curl -s --max-time 30 "$PROD_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,poster_error,hadith_ref,hadith_source_line,cards" \
+            -H "apikey: $PROD_ANON_KEY" -H "Authorization: Bearer $ADMIN_TOKEN")
+          mkdir -p poster-out
+          echo "$ROW" | python3 -c "
+          import json, sys, os
+          rows = json.load(sys.stdin)
+          if not rows:
+              print('NO PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+          r = rows[0]
+          status = r.get('status')
+          if status == 'failed':
+              print('Publication is failed for', '$DATE', '— nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+          if status not in ('planned', 'published'):
+              print('Publication status is', status, '— nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+          if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
+              if os.environ.get('COMPARE') == 'true':
+                  print('COMPARE mode: existing passed poster ignored — rendering a comparison copy.')
+              else:
+                  print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
+                  sys.exit(4)
+          if r.get('poster_qc_status') == 'failed' and (r.get('poster_error') or '').startswith('quarantined:'):
+              if os.environ.get('COMPARE') == 'true':
+                  print('COMPARE mode: quarantined poster ignored — rendering a comparison copy (never touches the row).')
+              elif os.environ.get('FORCE') == 'true':
+                  print('FORCE: quarantined row re-attempted by explicit input — rendering anyway.')
+              else:
+                  print('QUARANTINED — needs review for', '$DATE', '— poster failed twice. No render. Exiting cleanly.')
+                  sys.exit(3)
+          plan_mode = 'true' if status == 'planned' else 'false'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('row_status=' + status + '\n')
+              f.write('plan_mode=' + plan_mode + '\n')
+          if status == 'planned':
+              plan = {
+                  'kolkata_date': '$DATE',
+                  'hadith_ref': r.get('hadith_ref'),
+                  'hadith_source_line': r.get('hadith_source_line'),
+                  'cards': r.get('cards') or [],
+              }
+              with open('poster-out/plan.json', 'w') as f:
+                  json.dump(plan, f)
+              print('PLANNED row found — render will use ?plan=1 with poster-out/plan.json')
+          else:
+              print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
+          " || {
+            CODE=$?
+            if [ "$CODE" = "3" ] || [ "$CODE" = "4" ]; then
+              echo "precheck_skip=true" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            exit "$CODE"
+          }
+
+      - name: Build app (demo routes enabled, production Supabase)
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          VITE_ENABLE_DEMO_ROUTES: 'true'
+          VITE_SUPABASE_URL: ${{ env.PROD_URL }}
+          VITE_SUPABASE_PUBLISHABLE_KEY: ${{ secrets.PROD_ANON_KEY }}
+        run: |
+          set -euo pipefail
+          npm run build
+          test -f dist/app.html || { echo "dist/app.html missing after build."; exit 1; }
+          echo "Build OK (demo routes enabled for the poster-render route)."
+
+      - name: Render + upload + finalize (per format)
+        if: steps.precheck.outputs.precheck_skip != 'true'
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+          FORMATS: ${{ inputs.formats }}
+          LAYOUT: ${{ inputs.layout }}
+          COMPARE: ${{ inputs.compare }}
+          PLAN_MODE: ${{ steps.precheck.outputs.plan_mode }}
+        run: |
+          set -euo pipefail
+          # Split flow: a planned row renders from its plan JSON
+          # (written by the pre-check from the admin read). Copy it
+          # into dist/ before the server starts.
+          if [ "$PLAN_MODE" = "true" ]; then
+            test -f poster-out/plan.json || { echo "plan.json missing for a planned row."; exit 1; }
+            cp poster-out/plan.json dist/poster-plan.json
+            echo "Plan mode: dist/poster-plan.json ready for ?plan=1 renders."
+          fi
+          # Serve the built app (SPA fallback to app.html).
+          node scripts/daily-content/poster/serve-dist.mjs 4173 > /tmp/serve-dist.log 2>&1 &
+          SERVER_PID=$!
+          trap 'kill $SERVER_PID 2>/dev/null || true' EXIT
+          for i in $(seq 1 30); do
+            if curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render; then break; fi
+            sleep 1
+          done
+          curl -s -o /dev/null http://127.0.0.1:4173/demo/daily-content/poster-render || { echo "Static server did not come up."; cat /tmp/serve-dist.log; exit 1; }
+          echo "Static server up (pid $SERVER_PID)."
+
+          mkdir -p poster-out
+          if [ "$PLAN_MODE" = "true" ]; then
+            PLAN_PARAM="&plan=1"
+          else
+            PLAN_PARAM=""
+          fi
+          FAILED=""
+          for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
+            case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT"; continue ;; esac
+            echo "=== format: $FORMAT ==="
+            PNG="poster-out/poster-$DATE-$FORMAT.png"
+            if ! node scripts/daily-content/poster/render-poster.mjs \
+                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT&layout=$LAYOUT$PLAN_PARAM" \
+                --out "$PNG" > "poster-out/render-$FORMAT.json"; then
+              echo "Render FAILED for $FORMAT:"
+              cat "poster-out/render-$FORMAT.json"
+              FAILED="$FAILED $FORMAT"
+              continue
+            fi
+            cat "poster-out/render-$FORMAT.json"
+            echo "---"
+            if [ "$COMPARE" = "true" ]; then
+              OBJECT_PATH="$DATE/compare/$LAYOUT-$FORMAT.png"
+            else
+              OBJECT_PATH="$DATE/$FORMAT.png"
+            fi
+            if ! node scripts/daily-content/poster/upload-poster.mjs \
+                --file "$PNG" \
+                --object-path "$OBJECT_PATH" \
+                --supabase-url "$PROD_URL" \
+                --anon-key "$PROD_ANON_KEY" \
+                --admin-email "$PROD_ADMIN_EMAIL" \
+                --admin-password "$PROD_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
+              echo "Upload FAILED for $FORMAT:"
+              cat "poster-out/upload-$FORMAT.json"
+              FAILED="$FAILED $FORMAT"
+              continue
+            fi
+            cat "poster-out/upload-$FORMAT.json"
+            echo "---"
+          done
+          if [ -n "$FAILED" ]; then
+            echo "FAILED formats:$FAILED — stopping."
+            if [ "$COMPARE" != "true" ]; then
+              echo "Recording poster failure on the publication row."
+              REASON="render_or_upload_failed:${FAILED# }"
+              RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
+                -H 'Content-Type: application/json' \
+                -H "Authorization: Bearer $PROD_CRON_SECRET" \
+                -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
+              echo "$RESP" | head -c 2000
+              echo ""
+            else
+              echo "COMPARE mode: publication row untouched (no failure recorded)."
+            fi
+            echo "poster_failed=true" >> "$GITHUB_OUTPUT"
+            exit 1
+          fi
+          echo "All formats rendered + uploaded."
+          echo "poster_failed=false" >> "$GITHUB_OUTPUT"
+
+      - name: Finalize asset via set_poster
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+          FORMATS: ${{ inputs.formats }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PYEOF'
+          import json, os
+          date = os.environ["DATE"]
+          formats = [f.strip() for f in os.environ["FORMATS"].split(",") if f.strip()]
+          urls, checksums, scene = {}, {}, None
+          for fmt in formats:
+              with open(f"poster-out/render-{fmt}.json") as f:
+                  r = json.load(f)
+              assert r.get("ok"), f"render {fmt} not ok"
+              if scene is None:
+                  scene = r["backgroundId"]
+              elif scene != r["backgroundId"]:
+                  raise SystemExit(f"scene mismatch across formats: {scene} vs {r['backgroundId']}")
+              with open(f"poster-out/upload-{fmt}.json") as f:
+                  u = json.load(f)
+              assert u.get("ok"), f"upload {fmt} not ok"
+              urls[fmt] = u["publicUrl"]
+              checksums[fmt] = u["checksum"]
+          assert "portrait" in urls, "portrait (primary) is required"
+          body = {
+              "action": "set_poster",
+              "kolkata_date": date,
+              "poster_qc_status": "passed",
+              "poster_asset_id": f"poster:{date}",
+              "poster_storage_path": f"daily-content-posters/{date}/portrait.png",
+              "poster_url": urls["portrait"],
+              "poster_urls": urls,
+              "poster_checksum": checksums["portrait"],
+              "poster_checksums": checksums,
+              "poster_scene_id": scene,
+          }
+          with open("poster-out/set-poster-body.json", "w") as f:
+              json.dump(body, f)
+          print("set_poster body prepared; scene:", scene)
+          PYEOF
+          RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
+            -H 'Content-Type: application/json' \
+            -H "Authorization: Bearer $PROD_CRON_SECRET" \
+            -d @poster-out/set-poster-body.json)
+          CODE="${RESP##*$'\n'}"
+          BODY_OUT="${RESP%$'\n'*}"
+          echo "HTTP status: $CODE"
+          echo "$BODY_OUT" | head -c 2000
+          echo ""
+          [ "$CODE" = "200" ] || { echo "set_poster did not return 200."; exit 1; }
+          echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, d
+          print('set_poster result:', d)
+          "
+
+      - name: Verify finalized asset on the planned row
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          # Unlike the rehearsal poster workflow, this workflow does
+          # NOT publish: the row stays planned until the publish
+          # workflow (dispatched below) calls publish_planned. So the
+          # assertion here is planned + QC-passed, not published.
+          curl -s --max-time 30 "$PROD_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=kolkata_date,status,poster_asset_id,poster_storage_path,poster_url,poster_urls,poster_checksum,poster_scene_id,poster_qc_status,poster_generated_at" \
+            -H "apikey: $PROD_ANON_KEY" -H "Authorization: Bearer $PROD_ANON_KEY" \
+            | python3 -c "
+          import json, sys
+          rows = json.load(sys.stdin)
+          assert rows, 'publication row missing after set_poster'
+          r = rows[0]
+          assert r.get('status') == 'planned', r
+          assert r.get('poster_qc_status') == 'passed', r
+          assert r.get('poster_url'), r
+          assert r.get('poster_checksum'), r
+          assert r.get('poster_asset_id') == 'poster:' + '$DATE', r
+          print('FINALIZED ASSET VERIFIED (row still planned — publish is the next workflow):')
+          print(' asset_id:', r['poster_asset_id'])
+          print(' storage_path:', r['poster_storage_path'])
+          print(' poster_url:', r['poster_url'])
+          print(' checksum:', r['poster_checksum'])
+          print(' scene:', r['poster_scene_id'])
+          print(' qc_status:', r['poster_qc_status'])
+          print(' generated_at:', r['poster_generated_at'])
+          "
+
+      - name: Dispatch publish workflow
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
+        env:
+          GH_TOKEN: ${{ github.token }}
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          # Step 3 of the chain: publish the planned row now that its
+          # poster is finalized. A separate workflow (not inline, as
+          # in the rehearsal poster workflow) so a transient publish
+          # failure retries WITHOUT re-rendering. The publish workflow
+          # refuses a row whose poster is not QC-passed and dedupes
+          # an already-published row. The first push goes out WITH
+          # the poster image.
+          # Concurrency guard: never dispatch while a publish run is
+          # already queued/running — publishPlanned dedupes, but a
+          # second dispatch is pure waste.
+          ACTIVE=$(gh api "repos/abedinmolla2025/noorapp/actions/workflows/phase-e-publish-production.yml/runs?per_page=5" | python3 -c "
+          import json, sys
+          runs = json.load(sys.stdin).get('workflow_runs') or []
+          print(sum(1 for r in runs if r.get('status') in ('queued', 'in_progress')))
+          ")
+          if [ "$ACTIVE" != "0" ]; then
+            echo "A publish run is already active ($ACTIVE) — skipping this dispatch (the in-flight run owns the publish)."
+            exit 0
+          fi
+          gh api --method POST \
+            /repos/abedinmolla2025/noorapp/actions/workflows/phase-e-publish-production.yml/dispatches \
+            -f ref='main' \
+            -f inputs[confirm]=true \
+            -f inputs[kolkata_date]="$DATE"
+          echo "Publish workflow dispatched (ref main, kolkata_date $DATE)."
+          echo "Watch that run: it calls publish_planned and the first push goes out with the poster image."
+
+      - name: Upload poster PNGs as artifacts
+        if: always() && steps.precheck.outputs.precheck_skip != 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: poster-${{ steps.precheck.outputs.kolkata_date }}-${{ inputs.layout }}
+          path: poster-out/*.png
+          retention-days: 30

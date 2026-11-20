@@ -1,0 +1,207 @@
+# Daily Content Publish (production)
+#
+# PREPARED — production 3-dispatch chain (Phase 7 step 6). NOT YET IN
+# THE REPO. Uploading this file to main needs its OWN owner approval
+# (production change); do NOT upload it as part of any rehearsal work.
+#
+# Step 3 of the production 3-dispatch chain (plan -> poster ->
+# publish_planned). Posts {"publish_planned": true} to the production
+# daily-content function: the planned row flips to `published` and
+# the first push goes out WITH the finalized poster image.
+#
+# This workflow is a strict extract of the "Publish the planned row"
+# step of the rehearsal poster workflow
+# (phase-e-poster-generate-rehearsal.yml, SHA-256
+# ad97a1efe258fee330e6ee3ffca04d17d4c17e100a892bc46d99ad015167aeae),
+# made a standalone workflow so a transient publish failure retries
+# WITHOUT re-rendering the poster. One deliberate improvement over
+# the rehearsal step: a 409 HOLD (poster_not_ready / gate_hold /
+# website_paused) exits immediately WITHOUT retry — a hold is
+# deterministic, not transient; retrying it 3 times changes nothing.
+# Only 5xx / network failures retry (3 attempts, 20 s apart).
+#
+# The function is the fail-closed authority here
+# (supabase/functions/daily-content/index.ts, poster branch):
+#   - no row for the date            -> 404 (exit 1; nothing to publish)
+#   - already published              -> {ok:true, deduped:true} (exit 0)
+#   - row not planned                -> 409 not_planned (exit 1)
+#   - poster not QC-passed / no URL  -> 409 poster_not_ready (HOLD, exit 1,
+#     no retry — the poster workflow must finalize first)
+#   - 8-validation gate fails        -> 409 gate_hold, failed validation
+#     ids in the response (HOLD, exit 1, no retry — needs review; the
+#     heal tick maps it to hold "gate_hold" and never retries it)
+#   - website_auto_publish === false -> 409 website_paused (HOLD, exit 1,
+#     no retry — per-channel switch, owner action)
+#   - push_enabled === false         -> publishes WITHOUT sending
+#     (website flips, zeroed delivery counters, no push queued)
+#   - success                        -> {ok:true, publication_id,
+#     delivery:{total,sent,failed,skipped,disabled}}; the delivery
+#     invariant total == sent + failed + skipped is checked here and
+#     a breach is logged as a WARNING (the publish already happened —
+#     a breach is a bug to investigate, not a failed day).
+# A backfill date (kolkata_date != today) never publishes: the
+# function always acts on today's row, so publishing here would
+# target the wrong day. A past-date row must already be published.
+#
+# PRODUCTION ONLY. Target is hardcoded to llicfiepatzgllmjhzbw.
+# Manual dispatch + API dispatch from the production poster workflow
+# (step 2). No schedule of its own. The workflow never touches
+# rehearsal.
+#
+# Secrets required (repository secrets, created by the owner —
+# names only, values never in any file):
+#   PROD_CRON_SECRET (the publish call), PROD_ANON_KEY (the
+#   verification read of the published row). PROD_CRON_SECRET
+#   already exists; PROD_ANON_KEY is a new prerequisite (Phase 7
+#   step 6).
+# Secrets are masked with ::add-mask:: immediately and are NEVER
+# echoed, logged, or written to any file.
+
+name: Daily Content Publish (production)
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type true to publish today in production (planned row with QC-passed poster only)'
+        required: true
+        type: boolean
+        default: false
+      kolkata_date:
+        description: 'Kolkata date (YYYY-MM-DD) to publish; empty = today. A backfill date never publishes.'
+        required: false
+        type: string
+        default: ''
+
+permissions:
+  contents: read
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      PROD_URL: https://llicfiepatzgllmjhzbw.supabase.co
+      PROD_ANON_KEY: ${{ secrets.PROD_ANON_KEY }}
+      PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
+    steps:
+      - name: Validate inputs and secrets
+        run: |
+          set -euo pipefail
+          if [ "${{ inputs.confirm }}" != "true" ]; then
+            echo "confirm must be true for a manual run; aborting."
+            exit 1
+          fi
+          for s in PROD_ANON_KEY PROD_CRON_SECRET; do
+            if [ -z "${!s}" ]; then echo "$s secret is not set."; exit 1; fi
+          done
+          echo "::add-mask::$PROD_ANON_KEY"
+          echo "::add-mask::$PROD_CRON_SECRET"
+          if [ -n "${{ inputs.kolkata_date }}" ]; then
+            case "${{ inputs.kolkata_date }}" in
+              ????-??-??) ;;
+              *) echo "kolkata_date must be YYYY-MM-DD."; exit 1 ;;
+            esac
+          fi
+          echo "Inputs validated; secrets present (values never shown)."
+          echo "Target: production only (llicfiepatzgllmjhzbw)."
+
+      - name: Publish the planned row (split flow, step 3)
+        id: publish
+        env:
+          DATE: ${{ inputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          # A backfill date (DATE != today) never publishes: the
+          # function always acts on today's row, so publishing here
+          # would target the wrong day. A past-date row must already
+          # be published.
+          if [ -n "$DATE" ]; then
+            TODAY=$(TZ=Asia/Kolkata date +%F)
+            if [ "$DATE" != "$TODAY" ]; then
+              echo "DATE ($DATE) is not today ($TODAY) — publish step skipped; the row must already be published."
+              exit 0
+            fi
+          else
+            DATE=$(TZ=Asia/Kolkata date +%F)
+          fi
+          echo "kolkata_date=$DATE" >> "$GITHUB_OUTPUT"
+          # Bounded retry (3 attempts, 20 s apart) for TRANSIENT
+          # failures only. A 409 HOLD (poster_not_ready / gate_hold /
+          # website_paused / not_planned) is deterministic — retrying
+          # changes nothing, so exit 1 immediately. A persistent
+          # transient failure leaves the row planned with a QC-passed
+          # poster — the next heal tick publishes it via
+          # publishPlanned. Nothing publishes without a QC-passed
+          # poster, ever.
+          for attempt in 1 2 3; do
+            RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer $PROD_CRON_SECRET" \
+              -d '{"publish_planned": true}')
+            CODE="${RESP##*$'\n'}"
+            BODY_OUT="${RESP%$'\n'*}"
+            echo "Publish attempt $attempt: HTTP $CODE"
+            echo "$BODY_OUT" | head -c 8000
+            echo ""
+            if [ "$CODE" = "200" ]; then
+              echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, d
+          if d.get('deduped') is True:
+              print('DEDUPED: the row was already published. No duplicate publication, no new send.')
+          else:
+              print('publish_planned result:', json.dumps({k: d.get(k) for k in ('kolkata_date','publication_id','delivery') if k in d}, ensure_ascii=False))
+              dl = d.get('delivery') or {}
+              if dl:
+                  total = dl.get('total'); s = dl.get('sent', 0); f = dl.get('failed', 0); sk = dl.get('skipped', 0)
+                  if total is not None and total != s + f + sk:
+                      print(f'WARNING: delivery invariant broken: total={total} != sent({s}) + failed({f}) + skipped({sk}) — publish happened; investigate the counting bug, do NOT re-publish.')
+                  else:
+                      print(f'Delivery invariant holds: total={total} == sent({s}) + failed({f}) + skipped({sk}).')
+          "
+              exit 0
+            fi
+            if [ "$CODE" = "409" ] || [ "$CODE" = "404" ]; then
+              echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          print('HOLD (no retry):', d.get('reason') or d.get('error'), '| failed validations:', d.get('failed'), '| poster_qc_status:', d.get('poster_qc_status'))
+          "
+              echo "publish_planned refused with HTTP $CODE — a hold, not a transient failure. No retry."
+              exit 1
+            fi
+            if [ "$CODE" = "401" ]; then
+              echo "Unauthorised (401): the CRON_SECRET does not match the production project's secret."
+              exit 1
+            fi
+            sleep 20
+          done
+          echo "publish_planned did not return 200 after 3 attempts (transient failures)."
+          echo "The row stays planned with its QC-passed poster — the next heal tick publishes it."
+          exit 1
+
+      - name: Verify published row
+        if: steps.publish.outputs.kolkata_date != ''
+        env:
+          DATE: ${{ steps.publish.outputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          curl -s --max-time 30 "$PROD_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=kolkata_date,status,poster_asset_id,poster_storage_path,poster_url,poster_qc_status,poster_generated_at,published_at,recipients_total,recipients_sent,recipients_failed" \
+            -H "apikey: $PROD_ANON_KEY" -H "Authorization: Bearer $PROD_ANON_KEY" \
+            | python3 -c "
+          import json, sys
+          rows = json.load(sys.stdin)
+          assert rows, 'publication row missing after publish_planned'
+          r = rows[0]
+          assert r.get('status') == 'published', r
+          assert r.get('poster_qc_status') == 'passed', r
+          assert r.get('poster_url'), r
+          assert r.get('published_at'), r
+          print('PUBLISHED ROW VERIFIED:')
+          print(' kolkata_date:', r['kolkata_date'])
+          print(' poster_url:', r['poster_url'])
+          print(' asset_id:', r['poster_asset_id'])
+          print(' published_at:', r['published_at'])
+          print(' delivery total/sent/failed:', r.get('recipients_total'), '/', r.get('recipients_sent'), '/', r.get('recipients_failed'))
+          "
