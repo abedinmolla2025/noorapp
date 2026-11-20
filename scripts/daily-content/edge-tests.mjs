@@ -3043,7 +3043,10 @@ await t("edge Jumu'ah: dry-run without a correction is identical to the lib (no 
   assert.equal(res.json.plan.context.hijriKey, libCtx.hijriKey);
   assert.equal(res.json.plan.context.confirmation, "calculated");
   assert.deepEqual(res.json.plan.context.activeEventSlugs, libCtx.activeEvents.map((e) => e.event.slug));
-  assert.ok(!res.json.plan.context.activeEventSlugs.includes("jumuah"), "today is not a Friday");
+  // The edge plans for the real Kolkata day, so jumuah is present exactly when today is a Friday
+  // (2026-11-20 is a Friday — the old hard-coded "today is not a Friday" failed on Fridays).
+  const libHasJumuah = libCtx.activeEvents.some((e) => e.event.slug === "jumuah");
+  assert.equal(res.json.plan.context.activeEventSlugs.includes("jumuah"), libHasJumuah, "jumuah follows the real weekday");
   assert.equal(res.json.plan.diagnostics.correctionsApplied, 0);
   assert.equal(res.json.plan.diagnostics.correctionsReadError, false);
 });
