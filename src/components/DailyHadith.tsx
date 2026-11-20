@@ -3,6 +3,7 @@ import { BookOpen, ChevronRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { kolkataDateString } from "@/lib/dailyContent/selection";
+import { DailyHadithShareButtons } from "@/components/dailyContent/DailyHadithShareButtons";
 import {
   rotationIndexForDate,
   type RotationReason,
@@ -133,6 +134,9 @@ export interface PublishedDailyHadith {
   source: string;
   chapter: string;
   canonicalLink: string;
+  /** Phase 3 — the finalized poster URL for today's publication
+   *  (null when no poster is finalized yet; the card stays text-only). */
+  posterUrl?: string | null;
 }
 
 const languages: { key: Language; label: string }[] = [
@@ -169,6 +173,10 @@ const ROTATION_NOTES: Record<RotationReason, string> = {
 const DailyHadith = ({ published, status, rotationReason, contextLabel }: DailyHadithProps = {}) => {
   const navigate = useNavigate();
   const [selectedLang, setSelectedLang] = useState<Language>("bengali");
+  // Phase 8 — a poster that fails to load never shows as a broken
+  // image: the card falls back to text-only, and the share row (which
+  // needs the same finalized asset) hides with it.
+  const [posterFailed, setPosterFailed] = useState(false);
 
   const effectiveStatus = status ?? (published ? "published" : "rotation");
   const isPublished = effectiveStatus === "published";
@@ -320,6 +328,26 @@ const DailyHadith = ({ published, status, rotationReason, contextLabel }: DailyH
           </p>
         )}
 
+        {/* Phase 3 — finalized poster (published state only): the same
+            asset the poster pipeline finalized for today. Shown above
+            the text card; the text card below stays for readability.
+            Contextual/rotation states have no publication row, so they
+            never show a poster. When no poster is finalized yet, the
+            card stays text-only. Phase 8: a poster that fails to load
+            is hidden (onError) — the card falls back to text, never a
+            broken image. */}
+        {isPublished && published?.posterUrl && !posterFailed && (
+          <div className="mb-5 md:mb-6 overflow-hidden rounded-xl md:rounded-2xl border border-white/10">
+            <img
+              src={published.posterUrl}
+              alt={`আজকের হাদিস পোস্টার — ${shownSource}`}
+              className="w-full h-auto block"
+              loading="lazy"
+              onError={() => setPosterFailed(true)}
+            />
+          </div>
+        )}
+
         {/* Hadith Text Card */}
         <motion.div 
           className="relative bg-white/[0.07] border border-white/10 rounded-xl md:rounded-2xl p-4 md:p-6 mb-5 md:mb-6 backdrop-blur-md overflow-hidden"
@@ -403,6 +431,15 @@ const DailyHadith = ({ published, status, rotationReason, contextLabel }: DailyH
             <ChevronRight size={18} className="text-amber-400 group-hover:translate-x-1 transition-transform" />
           </motion.button>
         </div>
+
+        {/* Phase 8 — share actions for the finalized poster (published
+            state only, poster loaded): native share with the poster
+            file, WhatsApp, Facebook, download, copy link. The row
+            renders only when the poster is actually there — a failed
+            poster fetch hides it with the image, never a dead row. */}
+        {isPublished && published?.posterUrl && !posterFailed && (
+          <DailyHadithShareButtons record={published} />
+        )}
       </div>
     </motion.div>
   );

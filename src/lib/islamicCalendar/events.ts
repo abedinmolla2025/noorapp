@@ -260,6 +260,49 @@ export const ISLAMIC_EVENTS: readonly IslamicEventDef[] = [
   },
 ];
 
+export interface WeeklyEventDef {
+  /** Stable slug, used as the event identity in logs and recommendations. */
+  id: string;
+  slug: string;
+  /** Gregorian weekday (0 = Sunday … 6 = Saturday); 5 = Friday. */
+  weekday: number;
+  nameBn: string;
+  nameEn: string;
+  descriptionBn: string;
+  type: EventType;
+  /** Bengali note shown where the entry needs a caveat. */
+  noteBn?: string;
+}
+
+/**
+ * Weekly (Gregorian-weekday) occasions — NOT Hijri-date windows.
+ *
+ * Jumu'ah recurs every Friday; it is not a Hijri date, so it carries no
+ * Hijri month/day window and no confirmation concept (no moon sighting
+ * applies to a weekday — the Friday is certain from the Gregorian
+ * calendar alone). It is deliberately a separate list from
+ * ISLAMIC_EVENTS: the calendar page renders dated Hijri rows, while a
+ * weekly occasion has no date to render.
+ *
+ * Evidence for the entry (no verse text is quoted — the bundle carries
+ * surah metadata only, not ayah text): Surah Al-Jumu'ah is surah 62 of
+ * the bundled quran-surahs.json (englishName "Al-Jumu'a", translation
+ * "Friday", 11 ayahs, Medinan); the product's own scheduler copy calls
+ * Friday "জুম্মার দিন" (supabase/functions/scheduler-dispatch).
+ */
+export const WEEKLY_EVENTS: readonly WeeklyEventDef[] = [
+  {
+    id: "jumuah",
+    slug: "jumuah",
+    weekday: 5,
+    nameBn: "জুম্মা",
+    nameEn: "Jumu'ah (Friday Prayer)",
+    descriptionBn: "সাপ্তাহিক জুম্মার নামাজের দিন — প্রতি শুক্রবার",
+    type: "special",
+    noteBn: "প্রতি শুক্রবার — হিজরি তারিখের উপর নির্ভর করে না।",
+  },
+];
+
 export interface CalendarPageEvent {
   id: string;
   slug: string;

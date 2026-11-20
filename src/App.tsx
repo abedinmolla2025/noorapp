@@ -59,6 +59,9 @@ const EnginesDemoPage = DEMO_ROUTES_ENABLED
 const ReviewDecisionPacketPage = DEMO_ROUTES_ENABLED
   ? lazy(() => import("./pages/demo/ReviewDecisionPacket"))
   : DemoDisabled;
+const PosterRenderPage = DEMO_ROUTES_ENABLED
+  ? lazy(() => import("./pages/demo/PosterRender"))
+  : DemoDisabled;
 const SettingsPage = lazy(() => import("./pages/SettingsPage"));
 const NotificationsPage = lazy(() => import("./pages/NotificationsPage"));
 const BackendStatusPage = lazy(() => import("./pages/BackendStatusPage"));
@@ -153,6 +156,10 @@ const AppRoutes = () => {
               <Route path="/demo/daily-content/visuals" element={<VisualEngineDemoPage />} />
               <Route path="/demo/daily-content/engines" element={<EnginesDemoPage />} />
               <Route path="/demo/daily-content/review" element={<ReviewDecisionPacketPage />} />
+              {/* Poster render route for the headless poster-generation
+                  workflow (screenshot target). Same gate as the other
+                  demo routes: never linked, never in production builds. */}
+              <Route path="/demo/daily-content/poster-render" element={<PosterRenderPage />} />
             </>
           )}
           <Route path="/settings" element={<SettingsPage />} />

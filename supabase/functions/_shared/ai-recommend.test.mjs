@@ -116,21 +116,40 @@ const rewriteEsm = (src) =>
   );
 for (const [src, dest] of [
   [path.join(root, "supabase", "functions", "_shared", "require-admin.ts"), path.join(sharedDir, "require-admin.ts")],
+  // The function imports these _shared modules too (index.ts:39-40); the
+  // harness previously staged only require-admin.ts, so Node failed with
+  // ERR_MODULE_NOT_FOUND for ../_shared/ai-adapter.ts. ai-adapter.ts in
+  // turn imports ai-config.ts + ai-gemini-client.ts + ai-groq-client.ts.
+  [path.join(root, "supabase", "functions", "_shared", "ai-adapter.ts"), path.join(sharedDir, "ai-adapter.ts")],
+  [path.join(root, "supabase", "functions", "_shared", "ai-config.ts"), path.join(sharedDir, "ai-config.ts")],
+  [path.join(root, "supabase", "functions", "_shared", "ai-gemini-client.ts"), path.join(sharedDir, "ai-gemini-client.ts")],
+  [path.join(root, "supabase", "functions", "_shared", "ai-groq-client.ts"), path.join(sharedDir, "ai-groq-client.ts")],
+  [path.join(root, "supabase", "functions", "_shared", "bengali-editorial.ts"), path.join(sharedDir, "bengali-editorial.ts")],
   [path.join(root, "supabase", "functions", "recommend-daily-content", "index.ts"), path.join(fnDir, "index.ts")],
 ]) {
   fs.writeFileSync(dest, rewriteEsm(fs.readFileSync(src, "utf8")));
 }
 
 // ---- Gateway fetch stub ----
+// The Gemini/Groq clients read resp.text() and resp.headers.get("retry-after");
+// — a stub without them makes every provider call look like a network error
+// (the client catches the TypeError and returns a status-0 outcome).
 globalThis.__GATEWAY__ = { responses: [], calls: 0 };
 globalThis.fetch = async (_url, _opts) => {
   globalThis.__GATEWAY__.calls++;
   const next = globalThis.__GATEWAY__.responses.shift();
   if (!next) throw new Error("gateway stub: no scripted response left");
+  const headers = { get: (_name) => null };
   if (next.status === 429 || next.status === 402) {
-    return { status: next.status, ok: false, text: async () => next.text ?? "" };
+    return { status: next.status, ok: false, headers, text: async () => next.text ?? "" };
   }
-  return { status: next.status ?? 200, ok: true, json: async () => next.body };
+  return {
+    status: next.status ?? 200,
+    ok: true,
+    headers,
+    text: async () => JSON.stringify(next.body ?? {}),
+    json: async () => next.body,
+  };
 };
 
 await import(path.join(fnDir, "index.ts"));
@@ -170,16 +189,20 @@ function defaultTables() {
 }
 
 function aiResponse(recs) {
+  // Gemini envelope (Phase 3 adapter): the parser reads
+  // candidates[0].content.parts[].functionCall.args. args is an object here;
+  // the parser also accepts a JSON string.
   return {
     status: 200,
     body: {
-      choices: [
+      candidates: [
         {
-          message: {
-            tool_calls: [
-              { function: { name: "recommend_daily_content", arguments: JSON.stringify({ recommendations: recs }) } },
+          content: {
+            parts: [
+              { functionCall: { name: "recommend_daily_content", args: { recommendations: recs } } },
             ],
           },
+          finishReason: "STOP",
         },
       ],
     },
@@ -246,8 +269,17 @@ function setup({ tables, gateway, key = "test-key" } = {}) {
   globalThis.__FAKE_TABLES__ = tables ?? defaultTables();
   globalThis.__FAKE_ID_SEQ__ = 0;
   globalThis.__GATEWAY__ = { responses: gateway ?? [aiResponse(GOOD_RECS)], calls: 0 };
-  if (key === null) delete process.env.LOVABLE_API_KEY;
-  else process.env.LOVABLE_API_KEY = key;
+  if (key === null) {
+    // Phase 3 migration: the adapter requires BOTH provider keys
+    // (GEMINI_API_KEY primary, GROQ_API_KEY secondary); LOVABLE_API_KEY
+    // no longer exists anywhere in the product. requireSecret checks the
+    // primary first, so a missing key reports GEMINI_API_KEY.
+    delete process.env.GEMINI_API_KEY;
+    delete process.env.GROQ_API_KEY;
+  } else {
+    process.env.GEMINI_API_KEY = key;
+    process.env.GROQ_API_KEY = key;
+  }
 }
 
 // 1-4: auth + preflight
@@ -343,14 +375,28 @@ t("virtue claim in reason -> dropped", async () => {
 });
 
 // 10-12: gateway / key failures
+// (Phase 3 adapter taxonomy: the old Lovable codes NO_TOOL_CALL and
+// CREDITS_EXHAUSTED no longer exist; the adapter throws SCHEMA_ERROR /
+// PAYMENT_REQUIRED. The behavioural assertions — 500, no retry on 402,
+// gateway never called when the key is missing — are unchanged.)
 t("malformed AI JSON -> 500 AI_INVALID_JSON", async () => {
+  // Valid JSON args with the wrong shape: the adapter parses them fine,
+  // and the recommend function's own validation throws AI_INVALID_JSON
+  // (result.args has no recommendations array).
   setup({
     gateway: [
       {
         status: 200,
         body: {
-          choices: [
-            { message: { tool_calls: [{ function: { name: "recommend_daily_content", arguments: "not json{" } }] } },
+          candidates: [
+            {
+              content: {
+                parts: [
+                  { functionCall: { name: "recommend_daily_content", args: { wrongShape: true } } },
+                ],
+              },
+              finishReason: "STOP",
+            },
           ],
         },
       },
@@ -360,17 +406,28 @@ t("malformed AI JSON -> 500 AI_INVALID_JSON", async () => {
   eq(r.status, 500, "status");
   eq(r.body.error.includes("AI_INVALID_JSON"), true, "error");
 });
-t("no tool call -> 500 NO_TOOL_CALL", async () => {
-  setup({ gateway: [{ status: 200, body: { choices: [{ message: {} }] } }] });
+t("no tool call -> 500 SCHEMA_ERROR", async () => {
+  setup({
+    gateway: [
+      {
+        status: 200,
+        body: {
+          candidates: [
+            { content: { parts: [{ text: "free text, no call" }] }, finishReason: "STOP" },
+          ],
+        },
+      },
+    ],
+  });
   const r = await callEdge(recommendBody());
   eq(r.status, 500, "status");
-  eq(r.body.error.includes("NO_TOOL_CALL"), true, "error");
+  eq(r.body.error.includes("SCHEMA_ERROR"), true, "error");
 });
-t("key unset -> 500 LOVABLE_API_KEY is not configured", async () => {
+t("key unset -> 500 GEMINI_API_KEY is not configured", async () => {
   setup({ key: null });
   const r = await callEdge(recommendBody());
   eq(r.status, 500, "status");
-  eq(r.body.error.includes("LOVABLE_API_KEY is not configured"), true, "error");
+  eq(r.body.error.includes("GEMINI_API_KEY is not configured"), true, "error");
   eq(globalThis.__GATEWAY__.calls, 0, "gateway never called");
 });
 
@@ -422,11 +479,11 @@ t("gateway 429 then 200 -> retried, 200 with recommendations", async () => {
   eq(r.body.recommendations.length, 2, "recommendations");
   eq(globalThis.__GATEWAY__.calls, 2, "gateway calls");
 });
-t("gateway 402 -> 500 CREDITS_EXHAUSTED", async () => {
+t("gateway 402 -> 500 PAYMENT_REQUIRED", async () => {
   setup({ gateway: [{ status: 402, text: "out of credits" }] });
   const r = await callEdge(recommendBody());
   eq(r.status, 500, "status");
-  eq(r.body.error.includes("CREDITS_EXHAUSTED"), true, "error");
+  eq(r.body.error.includes("PAYMENT_REQUIRED"), true, "error");
 });
 
 // 18: context validation

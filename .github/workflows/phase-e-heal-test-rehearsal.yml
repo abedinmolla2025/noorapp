@@ -4,13 +4,22 @@
 # (cazdbxxffvdnsdatjsrx). Posts {"retry_only": true, "heal": true} to
 # the rehearsal daily-content function and reports what happened.
 #
-# What a heal tick does (function code, branch
-# muse/daily-self-healing-2026-11-16): runs the retry pass unchanged,
-# then — ONLY when today has no publication row or a failed row — runs
-# the daily publication path (plan -> resolve -> send -> flip), so a
-# missed 06:00 run no longer means a lost day. A planned row is left
-# to the tick; a published row is left alone. A plain retry tick
-# (heal=false) still NEVER plans, publishes, or creates a row.
+# What a heal tick does (function code, poster branch
+# muse/daily-poster-pipeline-2026-11-15, Phase 3 split-flow heal):
+# runs the retry pass unchanged, then heals ONLY through the split
+# flow — it NEVER sends a text-only push and NEVER flips a row to
+# published on its own:
+#   - no row / failed row  -> plan-only (planned row, no send, no
+#     flip); this step then dispatches the poster workflow.
+#   - planned + poster QC-passed -> publishPlanned: the row flips
+#     and the first push goes out WITH the poster image.
+#   - planned + poster failed/pending -> HOLD (poster_failed /
+#     poster_pending); this step dispatches the poster workflow.
+#   - planned + quarantined -> HOLD (quarantined); NO dispatch —
+#     needs owner/admin review.
+#   - published row -> healed:false (nothing to do).
+# A plain retry tick (heal=false) still NEVER plans, publishes, or
+# creates a row.
 #
 # REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx. This
 # workflow NEVER touches production (no production URL, no production
@@ -36,20 +45,26 @@
 # variables inside the single run step. The run response IS logged —
 # it contains no credentials.
 #
-# NOTE: a heal tick that creates a publication SENDS a real push to
-# the rehearsal project's device tokens (a copy of production's
-# tokens from the Nov 14 restore). Expect a real "আজকের হাদিস" push
-# on the owner's device when a heal creates a publication. That is
-# the test working as designed (the send path is part of the proof).
+# NOTE: a heal tick sends a real push ONLY when it publishes a
+# QC-passed poster via publishPlanned (the first send carries the
+# poster image). A heal that only plans a row sends NOTHING — the
+# poster workflow (dispatched by the step below) renders the poster
+# first, and only then does the publish step send. Expect a real
+# "আজকের হাদিস" push on the owner's device only when a heal
+# publishes a QC-passed poster. That is the test working as designed
+# (the send path is part of the proof). A held/quarantined row sends
+# nothing.
 #
 # Prerequisites (owner actions, each its own approval):
 #   1. This file enters the repo via the GitHub web upload (browser):
 #      a git push of a workflow file is rejected because the available
 #      token lacks the `workflow` scope. Upload it to
 #      .github/workflows/ on main.
-#   2. The branch muse/daily-self-healing-2026-11-16 is deployed to
-#      rehearsal via supabase-functions-deploy-rehearsal.yml (run
-#      43799986394 did this; re-dispatch if the branch moves).
+#   2. The poster branch (muse/daily-poster-pipeline-2026-11-15)
+#      is deployed to rehearsal via supabase-functions-deploy-rehearsal.yml.
+#      The old self-healing branch (muse/daily-self-healing-2026-11-16,
+#      text-only heal) is SUPERSEDED by the Phase 3 split-flow heal
+#      on the poster branch — do NOT deploy the old branch for this test.
 #   3. Rehearsal daily_content_settings: the tick fails closed while
 #      paused (expected: {ok:false, reason:"paused"}). For the
 #      heal-create tests the owner enables rehearsal with:
@@ -75,6 +90,7 @@ on:
 
 permissions:
   contents: read
+  actions: write
 
 jobs:
   heal-tick-test:
@@ -103,6 +119,7 @@ jobs:
           echo "Target: rehearsal only (cazdbxxffvdnsdatjsrx)."
 
       - name: Self-healing tick (rehearsal)
+        id: heal
         env:
           HEAL_INPUT: ${{ inputs.heal }}
         run: |
@@ -111,7 +128,7 @@ jobs:
           echo "Today (Asia/Kolkata): $TODAY"
           if [ "$HEAL_INPUT" = "true" ]; then
             BODY='{"retry_only": true, "heal": true}'
-            echo "Mode: HEAL tick (retry pass, then plan-if-missing)."
+            echo "Mode: HEAL tick (retry pass, then split-flow heal: plan-only / publish-with-poster / hold)."
           else
             BODY='{"retry_only": true}'
             echo "Mode: PLAIN retry tick (never plans, never publishes)."
@@ -141,22 +158,68 @@ jobs:
             -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY"
           echo ""
           echo "$BODY_OUT" | python3 -c "
-          import json, sys
+          import json, sys, os
           d = json.load(sys.stdin)
           if d.get('reason') == 'paused':
               print('PAUSED: rehearsal settings enabled=false. Nothing planned, nothing sent.')
               print('To run the heal-create tests, the owner enables rehearsal (UPDATE daily_content_settings SET enabled = true WHERE id = 1).')
+              dispatch = False
+          elif d.get('healed') == 'planned':
+              print('HEALED (planned): a planned row was created/repaired for today — no send, no flip.')
+              print('Publication id:', d.get('publication_id'))
+              print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
+              print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+              print('The dispatch step below will run the poster workflow for this row.')
+              dispatch = True
           elif d.get('healed') is True:
-              h = d.get('heal') or {}
-              print('HEALED: a publication was created for today.')
-              print('Publication id:', h.get('publication_id'))
-              print('Delivery:', json.dumps(h.get('delivery') or {}, ensure_ascii=False))
+              print('HEALED (published): the row was published WITH its QC-passed poster.')
+              print('Publication id:', d.get('publication_id'))
+              print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
               print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
+              dispatch = False
           elif d.get('healed') is False:
-              print('NOT HEALED: today already has a publication row (planned/published) or the heal failed.')
+              hold = d.get('hold')
+              print('NOT HEALED: hold =', hold)
+              if hold in ('poster_pending', 'poster_failed'):
+                  print('HELD: the row needs the poster workflow — the dispatch step below will run it.')
+              elif hold == 'quarantined':
+                  print('QUARANTINED: the poster failed twice. No dispatch — needs owner/admin review.')
+              elif hold == 'no_valid_plan':
+                  print('NO VALID PLAN: nothing to poster. No dispatch.')
+              else:
+                  print('Nothing to do (already published, or a plain tick).')
+              print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
+              if d.get('alert'):
+                  print('Alert:', json.dumps(d.get('alert') or {}, ensure_ascii=False))
               print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
-              print('Full response keys:', sorted(d.keys()))
+              dispatch = hold in ('poster_pending', 'poster_failed')
           else:
               print('PLAIN RETRY TICK result:', json.dumps({k: d.get(k) for k in ('ok','retried','sent','failed','promoted','promotedPublished','superseded') if k in d}, ensure_ascii=False))
+              dispatch = False
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('dispatch_poster=' + ('true' if dispatch else 'false') + '\n')
           "
           echo "Heal tick test complete (rehearsal only)."
+
+      - name: Dispatch poster workflow (when the heal says the row needs a poster)
+        if: steps.heal.outputs.dispatch_poster == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          # The heal tick planned a row (healed:"planned") or held one
+          # for a missing/failed poster (hold: poster_pending /
+          # poster_failed). The poster workflow renders + finalizes +
+          # publishes it. No dispatch for quarantined, no_valid_plan,
+          # already-published, or healed:true rows.
+          # The poster workflow lives on the poster branch, so dispatch
+          # it at that ref. Needs `actions: write` (see permissions).
+          gh api --method POST \
+            /repos/abedinmolla2025/noorapp/actions/workflows/phase-e-poster-generate-rehearsal.yml/dispatches \
+            -f ref='muse/daily-poster-pipeline-2026-11-15' \
+            -f inputs[confirm]=true \
+            -f inputs[formats]='portrait,square' \
+            -f inputs[layout]='c' \
+            -f inputs[compare]=false
+          echo "Poster workflow dispatched (ref muse/daily-poster-pipeline-2026-11-15, formats portrait,square, layout c)."
+          echo "Watch that run: it renders, finalizes, and publishes the row with its poster."

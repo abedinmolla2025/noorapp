@@ -37,7 +37,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Winding path through misty green hills at dawn, distant mosque silhouette",
     subjects: ["guidance", "হেদায়াত", "path", "straight path", "hidayah", "সরল পথ"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a narrow luminous footpath winding through soft green rolling hills at dawn, gentle mist, warm golden sunlight breaking on the horizon, a small distant mosque silhouette with a single minaret far on the horizon, peaceful and serene atmosphere, soft cinematic light, rich detail. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a narrow luminous footpath winding through soft green rolling hills at dawn, gentle mist, warm golden sunlight breaking on the horizon, a small distant mosque silhouette with a single minaret far on the horizon, peaceful and serene atmosphere, soft cinematic light, rich detail, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: guidance and the straight path; also Allah's creation. Mood: peaceful, serene. Lighting: warm golden sunlight breaking on the horizon at dawn. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: wide-angle landscape, eye-level, path leading from the lower centre to the horizon. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "parents-hands",
@@ -45,7 +45,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "An adult child's hands gently holding an elderly parent's wrinkled hands in warm golden window light at home, a quiet moment of mercy and gratitude for the parents who raised the child",
     subjects: ["parents", "parent", "elderly", "hands", "care", "mercy", "gratitude", "home", "পিতা-মাতা", "বৃদ্ধ"],
     prompt:
-      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: an adult child's hands gently and respectfully holding the wrinkled hands of an elderly parent, warm golden window light, soft focus background of a quiet home interior, tender and reverent atmosphere, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. Close-up on hands only, no faces, no identifiable people. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: an adult child's hands gently and respectfully holding the wrinkled hands of an elderly parent, warm golden window light, soft focus background of a quiet home interior, tender and reverent atmosphere, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. Close-up on hands only, no faces, no identifiable people. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: parents' rights. Mood: tender, reverent, warm. Lighting: warm golden window light from the side. Composition: lower-third — the Bengali panel sits low in the frame. Camera: close-up, eye-level, hands centred in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "family-child",
@@ -53,7 +53,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Parents and a young child walking together on a garden path at golden hour, seen from behind, a hopeful family moment and a quiet prayer for righteous offspring",
     subjects: ["family", "child", "children", "offspring", "parents", "prayer", "hope", "garden", "path", "পরিবার", "সন্তান"],
     prompt:
-      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: parents and a young child seen from behind walking together on a peaceful garden path at golden hour, soft morning light through trees, serene family atmosphere, warm green and gold tones, generous darker areas at the top and bottom for text overlay. Seen from behind only, no faces, no identifiable people. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: parents and a young child seen from behind walking together on a peaceful garden path at golden hour, soft morning light through trees, serene family atmosphere, warm green and gold tones, generous darker areas at the top and bottom for text overlay. Seen from behind only, no faces, no identifiable people. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: parents' rights; also family and children. Mood: serene, peaceful, hopeful. Lighting: soft morning light through trees. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: medium-wide, eye-level, figures in the middle distance, seen from behind. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "dawn-forgiveness",
@@ -61,7 +61,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "First dawn light breaking through darkness over a calm valley with mist and a lake, a reflective moment of repentance and hope for forgiveness and mercy",
     subjects: ["forgiveness", "repentance", "dawn", "light", "darkness", "mercy", "hope", "valley", "mist", "ক্ষমা", "তওবা"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: first dawn light breaking through darkness over a calm valley, soft golden rays cutting through thin mist and dark clouds, a quiet reflective landscape, hopeful and peaceful atmosphere, deep navy shadows and warm gold light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: first dawn light breaking through darkness over a calm valley, soft golden rays cutting through thin mist and dark clouds, a quiet reflective landscape, hopeful and peaceful atmosphere, deep navy shadows and warm gold light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: forgiveness and repentance. Mood: hopeful, peaceful, calm. Lighting: first dawn light, golden rays through mist. Composition: lower-third — the Bengali panel sits low in the frame. Camera: wide landscape, eye-level, valley filling the frame. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "patience-tree",
@@ -69,7 +69,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "A single strong old tree standing firm on a rocky mountain slope in difficult weather, wind-bent branches with a break of golden light, a resilient image of patience and steadfast endurance",
     subjects: ["patience", "steadfastness", "endurance", "tree", "mountain", "weather", "resilience", "firm", "strong", "ধৈর্য", "দৃঢ়তা"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a single strong old tree standing firm on a rocky mountain slope in difficult weather, wind-bent branches, dramatic clouds with a break of golden light, resilient and steadfast atmosphere, deep green and slate tones with warm gold highlights, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a single strong old tree standing firm on a rocky mountain slope in difficult weather, wind-bent branches, dramatic clouds with a break of golden light, resilient and steadfast atmosphere, deep green and slate tones with warm gold highlights, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: patience. Mood: resilient, steadfast, firm. Lighting: break of golden light through dramatic clouds. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: wide landscape, low angle, tree against the sky. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "intention-sunrise",
@@ -77,15 +77,15 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Golden sunrise over layered mountains and a valley river",
     subjects: ["intention", "niyyah", "নিয়ত", "new day", "morning", "beginning", "actions"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a golden sunrise breaking over gentle layered mountains, soft rays of light through thin clouds, calm warm sky in gold and soft amber, a tranquil valley below in soft shadow, serene and hopeful atmosphere, soft cinematic light. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: a golden sunrise breaking over gentle layered mountains, soft rays of light through thin clouds, calm warm sky in gold and soft amber, a tranquil valley below in soft shadow, serene and hopeful atmosphere, soft cinematic light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: intentions and sincerity. Mood: serene, hopeful, calm. Lighting: golden sunrise, soft rays through clouds. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: wide landscape, eye-level, sunrise in the upper third. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "forgiveness-leaf",
     file: "bg-forgiveness-leaf.jpg",
-    scene: "Rain-washed green leaf with droplets in golden light",
+    scene: "Rain washed green leaf with droplets in golden light",
     subjects: ["forgiveness", "mercy", "repentance", "ক্ষমা", "istighfar", "rain", "purity", "pardon"],
     prompt:
-      "Photorealistic premium macro photograph, tall vertical portrait orientation: a fresh green leaf covered in clear rain droplets, soft golden sunlight glowing through the droplets, dreamy green bokeh background, pure and refreshing atmosphere, crisp detail, soft cinematic light. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium macro photograph, tall vertical portrait orientation: a fresh green leaf covered in clear rain droplets, soft golden sunlight glowing through the droplets, dreamy green bokeh background, pure and refreshing atmosphere, crisp detail, soft cinematic light, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: forgiveness and repentance. Mood: pure, refreshing. Lighting: soft golden sunlight through droplets. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: macro, shallow depth of field, leaf centred. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "morning-window",
@@ -93,7 +93,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Quiet bedroom at first morning light, dawn through sheer curtains, prayer cap on side table",
     subjects: ["waking", "wake up", "sleep", "bedroom", "fajr", "ঘুম", "জাগা"],
     prompt:
-      "Photorealistic cinematic vertical photograph, portrait orientation, of a quiet bedroom at first morning light: soft golden dawn streaming through a half-open window with sheer curtains, a neatly made bed in gentle shadow, a prayer cap resting on a wooden side table, calm and peaceful atmosphere, warm highlights, deep soft shadows, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a quiet bedroom at first morning light: soft golden dawn streaming through a half-open window with sheer curtains, a neatly made bed in gentle shadow, a prayer cap resting on a wooden side table, calm and peaceful atmosphere, warm highlights, deep soft shadows, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image. Topic: prayer and worship. Mood: calm, peaceful, quiet. Lighting: soft golden dawn through sheer curtains. Composition: lower-third — the Bengali panel sits low in the frame. Camera: medium interior shot, eye-level, window light from the left. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "home-entrance",
@@ -101,7 +101,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Warm home entrance at golden hour, open carved wooden door, plants and courtyard",
     subjects: ["home", "entering", "entrance", "family", "house", "household", "বাড়ি", "ঘরে প্রবেশ", "পরিবার"],
     prompt:
-      "Photorealistic cinematic vertical photograph, portrait orientation, of a warm welcoming home entrance at golden hour: an open carved wooden doorway with soft light spilling out, potted plants and a woven doormat, a quiet family home courtyard beyond, warm and peaceful domestic atmosphere, rich warm tones, gentle shadows, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a warm welcoming home entrance at golden hour: an open carved wooden doorway with soft light spilling out, potted plants and a woven doormat, a quiet family home courtyard beyond, warm and peaceful domestic atmosphere, rich warm tones, gentle shadows, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image. Topic: family and home. Mood: warm, peaceful, welcoming. Lighting: golden-hour light spilling from the doorway. Composition: lower-third — the Bengali panel sits low in the frame. Camera: medium shot, eye-level, doorway centred. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "night-lantern",
@@ -109,7 +109,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Ornate lantern glowing on a branch in a dark night forest, stars above",
     subjects: ["night", "protection", "lantern", "darkness", "evening", "safety", "fear", "রাত", "অন্ধকার", "হেফাজত"],
     prompt:
-      "Photorealistic cinematic vertical photograph, portrait orientation, of a glowing ornate lantern hanging from a tree branch in a dark quiet forest at night, warm golden light radiating into deep blue-black shadows, mist between the trees, stars faintly visible above, feeling of safety and protection in the darkness, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a glowing ornate lantern hanging from a tree branch in a dark quiet forest at night, warm golden light radiating into deep blue-black shadows, mist between the trees, stars faintly visible above, feeling of safety and protection in the darkness, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image. Topic: protection and safety. Mood: safety, protection, quiet. Lighting: warm golden lantern light radiating into dark blue-black. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: medium shot, eye-level, lantern in the upper third. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "courtyard-prayer",
@@ -117,7 +117,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Man from behind in quiet prayer in a mosque courtyard at dusk, arches and lamps",
     subjects: ["mosque", "masjid", "মসজিদ", "courtyard", "tawbah", "তওবা", "salah", "নামাজ"],
     prompt:
-      "Photorealistic cinematic vertical photograph, portrait orientation, of a man seen from behind in quiet prayer inside a serene mosque courtyard at dusk, rows of arches and soft warm lamps, stone floor reflecting gentle light, humble and contemplative atmosphere of repentance, warm golden and deep teal tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image.",
+      "Photorealistic cinematic vertical photograph, portrait orientation, of a man seen from behind in quiet prayer inside a serene mosque courtyard at dusk, rows of arches and soft warm lamps, stone floor reflecting gentle light, humble and contemplative atmosphere of repentance, warm golden and deep teal tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no symbols, no watermarks anywhere in the image. Topic: prayer and worship. Mood: serene, humble, contemplative. Lighting: dusk lamplight, warm lamps from the sides. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: wide interior, eye-level, arches framing the figure. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "suhur-meal",
@@ -125,7 +125,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "A simple pre-dawn suhur meal on a wooden table — dates in a small bowl, a glass of water, bread — with a warm lantern and faint blue pre-dawn light through the window, a calm blessed quiet before the Ramadan fast begins",
     subjects: ["suhur", "meal", "dates", "pre-dawn", "ramadan", "blessing", "fast", "water", "table", "light", "calm", "blessed", "quiet", "peaceful", "সেহরি", "রমজান"],
     prompt:
-      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: a simple pre-dawn suhur meal on a wooden table — dates in a small bowl, a glass of water, a plate of bread — in a quiet dark home with soft warm lantern light and a faint blue pre-dawn glow through a window, calm and blessed atmosphere of the Ramadan fast before dawn, deep navy and warm gold tones, generous darker areas at the top and bottom for text overlay. No people, no faces. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: a simple pre-dawn suhur meal on a wooden table — dates in a small bowl, a glass of water, a plate of bread — in a quiet dark home with soft warm lantern light and a faint blue pre-dawn glow through a window, calm and blessed atmosphere of the Ramadan fast before dawn, deep navy and warm gold tones, generous darker areas at the top and bottom for text overlay. No people, no faces. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: fasting and Ramadan. Mood: calm, blessed, quiet. Lighting: warm lantern light, faint blue pre-dawn glow. Composition: lower-third — the Bengali panel sits low in the frame. Camera: tabletop close-up, slightly high angle, meal in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "library",
@@ -133,7 +133,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "A quiet Islamic library reading corner — wooden shelves of old books, an open Quran on a carved wooden rehal stand, a warm brass reading lamp and a cup of tea, a focused warm reverent calm of study and learning",
     subjects: ["knowledge", "books", "reading", "study", "book", "learning", "quran", "lamp", "stand", "library", "focused", "warm", "reverent", "calm", "জ্ঞান", "পড়া"],
     prompt:
-      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: a quiet Islamic library reading corner — wooden shelves of old books, an open Quran on a carved wooden rehal stand, a warm brass reading lamp glowing softly, a cup of tea beside it, reverent focused atmosphere of study and learning, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. No people, no faces. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image.",
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation: a quiet Islamic library reading corner — wooden shelves of old books, an open Quran on a carved wooden rehal stand, a warm brass reading lamp glowing softly, a cup of tea beside it, reverent focused atmosphere of study and learning, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. No people, no faces. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. Topic: Quran; also seeking knowledge. Mood: reverent, focused, calm. Lighting: warm brass lamp glow from the side. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: medium interior, eye-level, rehal and lamp in the middle. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "gratitude-garden",
@@ -141,7 +141,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist, a peaceful grateful atmosphere of nature and blessing",
     subjects: ["gratitude", "nature", "sunlight", "garden", "green", "leaves", "blessing", "peaceful", "morning", "কৃতজ্ঞতা", "প্রকৃতি"],
     prompt:
-      "Photorealistic premium landscape photograph, tall vertical portrait orientation: morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist, peaceful and grateful atmosphere, soft cinematic light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image.",
+      "Photorealistic premium landscape photograph, tall vertical portrait orientation: morning sunlight breaking through soft green leaves in a quiet garden, golden rays and gentle mist, peaceful and grateful atmosphere, soft cinematic light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image. Topic: gratitude. Mood: peaceful, grateful. Lighting: morning sunlight, golden rays through leaves. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: medium landscape, eye-level, light breaking through the canopy. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
   {
     id: "helping-hands",
@@ -149,7 +149,7 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     scene: "Two hands gently offering a cup of tea to an elderly person in a warm sunlit home, a respectful tender moment of kindness and compassion, no faces",
     subjects: ["kindness", "helping", "compassion", "hands", "tea", "elderly", "care", "warm", "respectful", "tender", "দয়া", "সদাচরণ"],
     prompt:
-      "Photorealistic premium photograph, tall vertical portrait orientation: two hands gently offering a cup of tea to an elderly person in a warm sunlit home, respectful and tender atmosphere, soft golden light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay, no faces in close-up. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image.",
+      "Photorealistic premium photograph, tall vertical portrait orientation: two hands gently offering a cup of tea to an elderly person in a warm sunlit home, respectful and tender atmosphere, soft golden light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay, no faces in close-up. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image. Topic: kindness and good conduct. Mood: respectful, tender, warm. Lighting: soft golden light from a window. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: close-up, eye-level, hands centred in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
 ];
 

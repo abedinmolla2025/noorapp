@@ -58,8 +58,9 @@ const HISTORY_DAYS = 30;
 const HISTORY_LIMIT = 500;
 const MAX_REASON_CHARS = 200;
 
-// The 16 event slugs from the Phase 4 catalog (src/lib/islamicCalendar/events.ts).
-// Keep in sync with the catalog — the function validates caller context here.
+// The event slugs from the Phase 4 catalog (src/lib/islamicCalendar/events.ts)
+// plus the weekly Jumu'ah occasion (WEEKLY_EVENTS). Keep in sync with the
+// catalog — the function validates caller context here.
 const EVENT_SLUGS = new Set([
   "islamic-new-year",
   "ashura",
@@ -77,6 +78,7 @@ const EVENT_SLUGS = new Set([
   "hajj",
   "dhul-hijjah-month",
   "rabi-ul-awwal-month",
+  "jumuah",
 ]);
 
 const SYSTEM_PROMPT = [
@@ -318,6 +320,21 @@ Deno.serve(async (req) => {
       return json(200, { ok: true, items: data ?? [] });
     }
 
+    // Phase 6 — decided-runs history (approved + rejected, newest
+    // first). The admin panel shows this next to the pending queue so
+    // a decided run is never invisible. Read-only; it never changes
+    // a run and never publishes anything.
+    if (action === "list_decided") {
+      const { data, error } = await svc
+        .from("daily_content_recommendations")
+        .select("id, kolkata_date, hijri_key, context, recommendations, dropped, status, created_by, created_at, reviewed_by, reviewed_at, review_note")
+        .in("status", ["approved", "rejected"])
+        .order("created_at", { ascending: false })
+        .limit(50);
+      if (error) throw new Error(`Failed to list decided recommendations: ${error.message}`);
+      return json(200, { ok: true, items: data ?? [] });
+    }
+
     if (action === "get") {
       const id = body.id as unknown;
       if (typeof id !== "string" || id.trim() === "") {
@@ -363,8 +380,34 @@ Deno.serve(async (req) => {
       return json(200, { ok: true, item: row });
     }
 
-    if (action !== "recommend") {
-      throw new HttpError(400, 'Unknown action. Use one of: "recommend", "list_pending", "get", "approve", "reject".');
+    // Phase 6 — regenerate-per-run: a fresh recommendation run for a
+    // date that does not have a PUBLISHED publication yet. The new
+    // run is always saved (pending_review); the planner consumes the
+    // NEWEST run, so a regenerated run supersedes a rejected or stale
+    // one without deleting history. A published day can never be
+    // regenerated (409) — one publication per kolkata_date. A planned
+    // (unpublished) row is NOT rebuilt: regenerate changes the
+    // recommendation, not an existing plan.
+    let forceSave = false;
+    if (action === "regenerate") {
+      const regenDate =
+        typeof body.kolkataDate === "string" && body.kolkataDate !== ""
+          ? body.kolkataDate
+          : kolkataToday();
+      if (!isRealDateKey(regenDate)) throw new HttpError(400, "kolkataDate must be a real YYYY-MM-DD date");
+      const { data: pubs, error: pubErr } = await svc
+        .from("daily_content_publications")
+        .select("id")
+        .eq("kolkata_date", regenDate)
+        .eq("status", "published")
+        .limit(1);
+      if (pubErr) throw new Error(`Failed to check publication for regenerate: ${pubErr.message}`);
+      if ((pubs ?? []).length > 0) throw new HttpError(409, "already published for date — regenerate is not allowed");
+      forceSave = true;
+    }
+
+    if (action !== "recommend" && action !== "regenerate") {
+      throw new HttpError(400, 'Unknown action. Use one of: "recommend", "regenerate", "list_pending", "list_decided", "get", "approve", "reject".');
     }
 
     // --- Recommend (Phases 5-6): rank, validate, optionally save. ---
@@ -636,7 +679,7 @@ Deno.serve(async (req) => {
     // the request (500) so the admin knows nothing was saved.
     let recommendationId: string | null = null;
     let persisted = false;
-    if (body.save === true) {
+    if (body.save === true || forceSave) {
       const { data, error } = await svc
         .from("daily_content_recommendations")
         .insert({
@@ -656,7 +699,7 @@ Deno.serve(async (req) => {
       persisted = true;
     }
 
-    return json(200, { ...base, recommendations, dropped, warnings, persisted, recommendationId });
+    return json(200, { ...base, recommendations, dropped, warnings, persisted, recommendationId, regenerated: action === "regenerate" });
   } catch (e) {
     return httpErrorResponse(e, corsHeaders);
   }

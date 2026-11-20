@@ -3,9 +3,16 @@
 # Stage 1–3 of the 4-stage Daily Content pipeline, rehearsal only:
 #   1. POSTER GENERATION — render the real OgShareCard component
 #      (Dua OG visual identity) headlessly with Playwright/Chromium,
-#      from the PUBLISHED publication row (verbatim text, never invented).
+#      from the publication row (verbatim text, never invented).
+#      SPLIT FLOW (Phase 3, Master Mission): the row is usually
+#      `planned` (created by the daily function with `plan_only`) —
+#      the pre-check reads it with the admin JWT (anon RLS cannot see
+#      a planned row; the "Admins read publications" policy already
+#      covers it) and writes its cards to `poster-out/plan.json`,
+#      which the render page loads as `?plan=1`. A `published` row
+#      (legacy path) still renders from the anon read as before.
 #   2. IMAGE QC — the render page runs checkOgCardBatch + a verbatim
-#      character check against the published card; the render script
+#      character check against the publication card; the render script
 #      verifies exact export dimensions + non-trivial file size.
 #      A QC failure stops the pipeline: no upload, no URL persisted.
 #   3. POSTER ASSET FINALIZATION — upload the PNG(s) to the
@@ -13,11 +20,18 @@
 #      <kolkata_date>/<format>.png, upsert) and persist the finalized
 #      asset (asset ID, storage path, public URL, SHA-256 checksum,
 #      QC status) on the publication row via the daily-content
-#      `set_poster` action.
+#      `set_poster` action (which now accepts planned rows).
+#      Then the PUBLISH step calls `publish_planned`: the row flips to
+#      `published` and the first push goes out WITH the poster image.
+#      The function refuses a row whose poster is not QC-passed, so a
+#      poster failure leaves the row planned — downstream has nothing
+#      to distribute that day.
 #
 # Stage 4 (Downstream Distribution — homepage image, push image,
 # WhatsApp/Native Share, Facebook Page) reads the finalized asset.
-# It is NOT in this workflow: no downstream consumer runs here.
+# The homepage already reads `poster_url` (Phase 3); push carries the
+# image on the first send through the split flow above. Share and
+# Facebook wiring is separate work.
 #
 # REHEARSAL ONLY. Target is hardcoded to cazdbxxffvdnsdatjsrx.
 # Manual dispatch only (no schedule — scheduled runs only fire from
@@ -29,14 +43,47 @@
 # deterministic paths with upsert; `set_poster` refuses to overwrite
 # a passed poster without force. Re-running for the same date is safe.
 #
+# Comparison mode (`compare: true`, layout a/b/c): renders the
+# Bengali-first variants side by side WITHOUT touching the publication
+# row — the pre-check's idempotent skip is bypassed, PNGs upload to
+# `<kolkata_date>/compare/<layout>-<format>.png`, and the set_poster
+# finalization + publish steps are skipped. Standard template is
+# layout "c" (Bengali Panel + Arabic Footnote, Master Mission Phase 2
+# decision 2026-11-16); compare mode stays available for A/B checks.
+#
 # Failure: any render/upload/QC failure records `poster_qc_status=
 # 'failed'` + a short reason on the publication row (never a poster
-# URL) and exits non-zero. The publication stays `published`
-# (text-only). Downstream MUST NOT proceed on a failed poster.
+# URL) and exits non-zero. A planned row stays planned (never
+# published); a published row stays published (text-only).
+# Downstream MUST NOT proceed on a failed poster. A second failure
+# on the same Kolkata day quarantines the row (see Hold/Quarantine
+# below) — no automatic attempt retries it.
+#
+# Hold/Quarantine (Phase 3 — Hold/Quarantine + self-healing):
+# a poster failure HELDS the day: the row stays planned, and
+# `publish_planned` refuses it (409 `poster_not_ready`), so the day
+# is never published text-only. The heal tick (retry workflow with
+# `heal: true`) dispatches this workflow again for a held row. A
+# second failure on the same Kolkata day QUARANTINES the row — the
+# function stores the reason with a `quarantined:` prefix, and the
+# pre-check below skips a quarantined row cleanly (exit 3,
+# "QUARANTINED — needs review") with no render. A quarantined row
+# needs owner/admin review (force re-run or skip the day). The
+# `force` input bypasses ONLY the quarantine skip — never the
+# passed-poster skip. A successful `set_poster` pass clears the
+# error and ends the hold (the E2E recovery path).
+#
+# In-run bounded retry (Phase 3): render-poster.mjs and
+# upload-poster.mjs each retry a TRANSIENT failure once (max 2
+# attempts, 5 s apart) and never retry a deterministic one
+# (page QC error, dimension/size mismatch, invalid credentials).
+# The result JSON carries `attempts` (1 or 2).
 #
 # Secrets required (repository secrets, created by the owner):
 #   REHEARSAL_ANON_KEY, REHEARSAL_ADMIN_EMAIL, REHEARSAL_ADMIN_PASSWORD
-#   (Storage upload as admin), REHEARSAL_CRON_SECRET (set_poster call).
+#   (Storage upload as admin; the pre-check also reads the publication
+#   row with the admin JWT, which can see planned rows), REHEARSAL_CRON_SECRET
+#   (set_poster + publish_planned calls).
 # Secrets are masked with ::add-mask:: immediately and are NEVER
 # echoed, logged, or written to any file.
 
@@ -60,6 +107,22 @@ on:
         required: false
         type: string
         default: 'portrait,square'
+      layout:
+        description: 'Poster layout: c (standard — Bengali Panel + Arabic Footnote), a/b (Bengali-first overrides), legacy (Arabic-first, explicit only)'
+        required: false
+        type: choice
+        default: 'c'
+        options: [legacy, a, b, c]
+      compare:
+        description: 'Comparison mode: render to <date>/compare/<layout>-<format>.png and skip set_poster finalization (never touches the publication row)'
+        required: false
+        type: boolean
+        default: false
+      force:
+        description: 'Force: re-attempt a QUARANTINED row (poster failed twice). Bypasses ONLY the quarantine skip — never the passed-poster skip. Default false.'
+        required: false
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -117,6 +180,10 @@ jobs:
 
       - name: Resolve date and pre-check publication
         id: precheck
+        env:
+          COMPARE: ${{ inputs.compare }}
+          FORCE: ${{ inputs.force }}
+          LAYOUT: ${{ inputs.layout }}
         run: |
           set -euo pipefail
           if [ -n "${{ inputs.kolkata_date }}" ]; then
@@ -124,24 +191,73 @@ jobs:
           else
             DATE=$(TZ=Asia/Kolkata date +%F)
           fi
+          if [ "$COMPARE" = "true" ] && [ "$LAYOUT" = "legacy" ]; then
+            echo "compare=true requires a Bengali-first layout (a, b or c), not legacy."
+            exit 1
+          fi
           echo "kolkata_date=$DATE" >> "$GITHUB_OUTPUT"
           echo "Date: $DATE"
-          ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,hadith_source_line" \
-            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $REHEARSAL_ANON_KEY")
-          echo "$ROW" | python3 -c "
+          # Split flow (Phase 3): the row may be PLANNED (created by
+          # plan_only) or PUBLISHED (legacy path). Anon RLS cannot see
+          # a planned row, so read with the admin JWT (the "Admins read
+          # publications" policy already covers it). The token is masked
+          # immediately and lives only in this step.
+          TOKEN_RESP=$(curl -s --max-time 30 -X POST "$REHEARSAL_URL/auth/v1/token?grant_type=password" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Content-Type: application/json" \
+            -d "{\"email\": \"$REHEARSAL_ADMIN_EMAIL\", \"password\": \"$REHEARSAL_ADMIN_PASSWORD\"}")
+          ADMIN_TOKEN=$(echo "$TOKEN_RESP" | python3 -c "
           import json, sys
+          print(json.load(sys.stdin).get('access_token') or '')
+          ")
+          if [ -z "$ADMIN_TOKEN" ]; then echo "Admin sign-in failed."; exit 1; fi
+          echo "::add-mask::$ADMIN_TOKEN"
+          ROW=$(curl -s --max-time 30 "$REHEARSAL_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,poster_error,hadith_ref,hadith_source_line,cards" \
+            -H "apikey: $REHEARSAL_ANON_KEY" -H "Authorization: Bearer $ADMIN_TOKEN")
+          mkdir -p poster-out
+          echo "$ROW" | python3 -c "
+          import json, sys, os
           rows = json.load(sys.stdin)
           if not rows:
-              print('NO PUBLISHED PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
+              print('NO PUBLICATION for', '$DATE', '— nothing to poster. Exiting cleanly.')
               sys.exit(3)
           r = rows[0]
-          if r.get('status') != 'published':
-              print('Publication status is', r.get('status'), '— not published. Nothing to poster. Exiting cleanly.')
+          status = r.get('status')
+          if status == 'failed':
+              print('Publication is failed for', '$DATE', '— nothing to poster. Exiting cleanly.')
+              sys.exit(3)
+          if status not in ('planned', 'published'):
+              print('Publication status is', status, '— nothing to poster. Exiting cleanly.')
               sys.exit(3)
           if r.get('poster_qc_status') == 'passed' and r.get('poster_url'):
-              print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
-              sys.exit(4)
-          print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
+              if os.environ.get('COMPARE') == 'true':
+                  print('COMPARE mode: existing passed poster ignored — rendering a comparison copy.')
+              else:
+                  print('POSTER ALREADY EXISTS (QC passed) for', '$DATE', '— idempotent skip. Exiting cleanly.')
+                  sys.exit(4)
+          if r.get('poster_qc_status') == 'failed' and (r.get('poster_error') or '').startswith('quarantined:'):
+              if os.environ.get('COMPARE') == 'true':
+                  print('COMPARE mode: quarantined poster ignored — rendering a comparison copy (never touches the row).')
+              elif os.environ.get('FORCE') == 'true':
+                  print('FORCE: quarantined row re-attempted by explicit input — rendering anyway.')
+              else:
+                  print('QUARANTINED — needs review for', '$DATE', '— poster failed twice. No render. Exiting cleanly.')
+                  sys.exit(3)
+          plan_mode = 'true' if status == 'planned' else 'false'
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as f:
+              f.write('row_status=' + status + '\n')
+              f.write('plan_mode=' + plan_mode + '\n')
+          if status == 'planned':
+              plan = {
+                  'kolkata_date': '$DATE',
+                  'hadith_ref': r.get('hadith_ref'),
+                  'hadith_source_line': r.get('hadith_source_line'),
+                  'cards': r.get('cards') or [],
+              }
+              with open('poster-out/plan.json', 'w') as f:
+                  json.dump(plan, f)
+              print('PLANNED row found — render will use ?plan=1 with poster-out/plan.json')
+          else:
+              print('Publication found:', r.get('hadith_source_line'), '| poster_qc_status:', r.get('poster_qc_status'))
           " || {
             CODE=$?
             if [ "$CODE" = "3" ] || [ "$CODE" = "4" ]; then
@@ -168,8 +284,19 @@ jobs:
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
           FORMATS: ${{ inputs.formats }}
+          LAYOUT: ${{ inputs.layout }}
+          COMPARE: ${{ inputs.compare }}
+          PLAN_MODE: ${{ steps.precheck.outputs.plan_mode }}
         run: |
           set -euo pipefail
+          # Split flow: a planned row renders from its plan JSON
+          # (written by the pre-check from the admin read). Copy it
+          # into dist/ before the server starts.
+          if [ "$PLAN_MODE" = "true" ]; then
+            test -f poster-out/plan.json || { echo "plan.json missing for a planned row."; exit 1; }
+            cp poster-out/plan.json dist/poster-plan.json
+            echo "Plan mode: dist/poster-plan.json ready for ?plan=1 renders."
+          fi
           # Serve the built app (SPA fallback to app.html).
           node scripts/daily-content/poster/serve-dist.mjs 4173 > /tmp/serve-dist.log 2>&1 &
           SERVER_PID=$!
@@ -182,13 +309,18 @@ jobs:
           echo "Static server up (pid $SERVER_PID)."
 
           mkdir -p poster-out
+          if [ "$PLAN_MODE" = "true" ]; then
+            PLAN_PARAM="&plan=1"
+          else
+            PLAN_PARAM=""
+          fi
           FAILED=""
           for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
             case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT"; continue ;; esac
             echo "=== format: $FORMAT ==="
             PNG="poster-out/poster-$DATE-$FORMAT.png"
             if ! node scripts/daily-content/poster/render-poster.mjs \
-                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT" \
+                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT&layout=$LAYOUT$PLAN_PARAM" \
                 --out "$PNG" > "poster-out/render-$FORMAT.json"; then
               echo "Render FAILED for $FORMAT:"
               cat "poster-out/render-$FORMAT.json"
@@ -197,9 +329,14 @@ jobs:
             fi
             cat "poster-out/render-$FORMAT.json"
             echo "---"
+            if [ "$COMPARE" = "true" ]; then
+              OBJECT_PATH="$DATE/compare/$LAYOUT-$FORMAT.png"
+            else
+              OBJECT_PATH="$DATE/$FORMAT.png"
+            fi
             if ! node scripts/daily-content/poster/upload-poster.mjs \
                 --file "$PNG" \
-                --object-path "$DATE/$FORMAT.png" \
+                --object-path "$OBJECT_PATH" \
                 --supabase-url "$REHEARSAL_URL" \
                 --anon-key "$REHEARSAL_ANON_KEY" \
                 --admin-email "$REHEARSAL_ADMIN_EMAIL" \
@@ -213,14 +350,19 @@ jobs:
             echo "---"
           done
           if [ -n "$FAILED" ]; then
-            echo "FAILED formats:$FAILED — recording poster failure on the publication row and stopping."
-            REASON="render_or_upload_failed:${FAILED# }"
-            RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
-              -H 'Content-Type: application/json' \
-              -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
-              -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
-            echo "$RESP" | head -c 2000
-            echo ""
+            echo "FAILED formats:$FAILED — stopping."
+            if [ "$COMPARE" != "true" ]; then
+              echo "Recording poster failure on the publication row."
+              REASON="render_or_upload_failed:${FAILED# }"
+              RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+                -H 'Content-Type: application/json' \
+                -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+                -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"$REASON\"}")
+              echo "$RESP" | head -c 2000
+              echo ""
+            else
+              echo "COMPARE mode: publication row untouched (no failure recorded)."
+            fi
             echo "poster_failed=true" >> "$GITHUB_OUTPUT"
             exit 1
           fi
@@ -228,7 +370,7 @@ jobs:
           echo "poster_failed=false" >> "$GITHUB_OUTPUT"
 
       - name: Finalize asset via set_poster
-        if: steps.precheck.outputs.precheck_skip != 'true'
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
           FORMATS: ${{ inputs.formats }}
@@ -286,8 +428,54 @@ jobs:
           print('set_poster result:', d)
           "
 
+      - name: Publish the planned row (split flow, step 3)
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
+        env:
+          DATE: ${{ steps.precheck.outputs.kolkata_date }}
+        run: |
+          set -euo pipefail
+          # Step 3 of the split flow: publish the row now that its poster
+          # is finalized. The function refuses a row whose poster is not
+          # QC-passed, and dedupes an already-published row (the legacy
+          # path, where the row was published before the poster). The
+          # first push goes out WITH the poster image.
+          # A backfill date (DATE != today) never publishes: the function
+          # always acts on today's row, so publishing here would target
+          # the wrong day. A past-date row must already be published.
+          TODAY=$(TZ=Asia/Kolkata date +%F)
+          if [ "$DATE" != "$TODAY" ]; then
+            echo "DATE ($DATE) is not today ($TODAY) — publish step skipped; the row must already be published."
+            exit 0
+          fi
+          # Bounded retry (3 attempts) for transient failures. A
+          # persistent failure leaves the row planned — the day is lost,
+          # but nothing publishes without a QC-passed poster.
+          for attempt in 1 2 3; do
+            RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
+              -H 'Content-Type: application/json' \
+              -H "Authorization: Bearer $REHEARSAL_CRON_SECRET" \
+              -d '{"publish_planned": true}')
+            CODE="${RESP##*$'\n'}"
+            BODY_OUT="${RESP%$'\n'*}"
+            echo "Publish attempt $attempt: HTTP $CODE"
+            echo "$BODY_OUT" | head -c 2000
+            echo ""
+            if [ "$CODE" = "200" ]; then
+              echo "$BODY_OUT" | python3 -c "
+          import json, sys
+          d = json.load(sys.stdin)
+          assert d.get('ok') is True, d
+          print('publish_planned result:', d)
+          "
+              exit 0
+            fi
+            sleep 20
+          done
+          echo "publish_planned did not return 200 after 3 attempts."
+          exit 1
+
       - name: Verify finalized asset on the publication row
-        if: steps.precheck.outputs.precheck_skip != 'true'
+        if: steps.precheck.outputs.precheck_skip != 'true' && inputs.compare != true
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
         run: |
@@ -318,6 +506,6 @@ jobs:
         if: always() && steps.precheck.outputs.precheck_skip != 'true'
         uses: actions/upload-artifact@v4
         with:
-          name: poster-${{ steps.precheck.outputs.kolkata_date }}
+          name: poster-${{ steps.precheck.outputs.kolkata_date }}-${{ inputs.layout }}
           path: poster-out/*.png
           retention-days: 30

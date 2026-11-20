@@ -19,6 +19,10 @@ const prefs = await import(path.join(dir, ".out/preferences.js"));
 const cstate = await import(path.join(dir, ".out/containerState.js"));
 const recs = await import(path.join(dir, ".out/recommendations.js"));
 const recPlan = await import(path.join(dir, ".out/recommendationPlan.js"));
+const share = await import(path.join(dir, ".out/dailyShare.js"));
+const mon = await import(path.join(dir, ".out/monitoring.js"));
+const gate = await import(path.join(dir, ".out/autonomousGate.js"));
+const pal = await import(path.join(dir, ".out/palettes.js"));
 const cal = await import(path.join(dir, ".out-cal/context.js"));
 const reqFor = (d) => recs.buildRecommendRequest(d, cal.getIslamicContextForKey(d));
 
@@ -447,6 +451,101 @@ t("ogQc: export sizes are exactly 1080x1350 and 1080x1080", () => {
   assert.deepEqual(ogQc.ogExportSize("square"), { width: 1080, height: 1080 });
   assert.deepEqual(ogQc.OG_STAGE_SIZE.portrait, { width: 540, height: 675 });
 });
+t("ogQc: square long content gets extra tightening, Bengali floor stays 16", () => {
+  const sq = ogQc.effectiveBengaliFirstLayout("c", "square", 306, 538);
+  assert.equal(sq.isLongContent, true);
+  assert.equal(sq.bengaliMinSize, 16);
+  assert.equal(sq.padding, "12px 26px 12px");
+  assert.equal(sq.titleSize, 16);
+  assert.equal(sq.gap, 6);
+  // Phase 2 (2026-11-17): the Arabic cap is RESTORED to the table value
+  // 0.25 — the 0.23 cap + the raised 14px Arabic floor cannot both hold
+  // (a 4-line minimum-size Arabic needs ~120px; 0.25 of the taller body
+  // is ~121px). Headroom now comes from the compact header + omitted
+  // divider + 1.55 Bengali leading, never from the Arabic.
+  assert.equal(sq.arabicCapShare, 0.25);
+  assert.equal(sq.bengaliLineHeight, 1.55);
+  assert.equal(sq.panelPaddingV, 12);
+  assert.equal(sq.sourcePillPaddingV, 4);
+  assert.equal(sq.arabicMinSize, 14);
+  assert.equal(sq.headerCompact, true);
+  assert.equal(sq.hideDivider, true);
+});
+t("ogQc: square short content is byte-identical to the table (no regression)", () => {
+  const sq = ogQc.effectiveBengaliFirstLayout("c", "square", 20, 35);
+  assert.equal(sq.isLongContent, false);
+  assert.deepEqual(
+    { padding: sq.padding, titleSize: sq.titleSize, gap: sq.gap, arabicCapShare: sq.arabicCapShare, bengaliLineHeight: sq.bengaliLineHeight, panelPaddingV: sq.panelPaddingV, sourcePillPaddingV: sq.sourcePillPaddingV },
+    { padding: "22px 26px 22px", titleSize: 22, gap: 12, arabicCapShare: 0.25, bengaliLineHeight: 1.65, panelPaddingV: 16, sourcePillPaddingV: 6 },
+  );
+});
+t("ogQc: portrait long content pays for the Arabic strip from chrome (header + leading), keeps its divider", () => {
+  const po = ogQc.effectiveBengaliFirstLayout("c", "portrait", 306, 538);
+  assert.equal(po.isLongContent, true);
+  // Phase 2: long portrait compacts the header and uses 1.6 Bengali
+  // leading to pay for the Arabic glass strip (~15px) — the divider
+  // stays, and every other number is the pre-existing long tightening.
+  assert.equal(po.headerCompact, true);
+  assert.equal(po.hideDivider, false);
+  assert.equal(po.arabicMinSize, 14);
+  assert.deepEqual(
+    { padding: po.padding, titleSize: po.titleSize, gap: po.gap, arabicCapShare: po.arabicCapShare, bengaliLineHeight: po.bengaliLineHeight, panelPaddingV: po.panelPaddingV, sourcePillPaddingV: po.sourcePillPaddingV },
+    { padding: "22px 28px 22px", titleSize: 20, gap: 10, arabicCapShare: 0.28, bengaliLineHeight: 1.6, panelPaddingV: 16, sourcePillPaddingV: 6 },
+  );
+});
+t("ogQc: layout C arabic floor is 14px in both formats, never below", () => {
+  assert.equal(ogQc.BENGALI_FIRST_LAYOUT.c.portrait.arabicMinSize, 14);
+  assert.equal(ogQc.BENGALI_FIRST_LAYOUT.c.square.arabicMinSize, 14);
+  assert.equal(ogQc.ARABIC_MIN_SIZE_LAYOUT_C, 14);
+  assert.equal(ogQc.effectiveBengaliFirstLayout("c", "square", 20, 35).arabicMinSize, 14);
+  assert.equal(ogQc.effectiveBengaliFirstLayout("c", "portrait", 20, 35).arabicMinSize, 14);
+});
+t("ogQc: short-content rule shrinks the panel only when both texts are short", () => {
+  assert.equal(ogQc.isShortPosterContent(35, 20), true); // intentions fixture
+  assert.equal(ogQc.isShortPosterContent(120, 120), true); // boundary
+  assert.equal(ogQc.isShortPosterContent(121, 20), false);
+  assert.equal(ogQc.isShortPosterContent(35, 121), false);
+  assert.equal(ogQc.isShortPosterContent(424, 331), false); // 869 medium
+  assert.equal(ogQc.isShortPosterContent(538, 306), false); // 5022 long
+});
+t("ogQc: fit record passes with headroom, warns at the floor, fails on overflow or below-floor size", () => {
+  const base = { format: "square", isLongContent: true, bengaliSize: 20, bengaliMinSize: 16, arabicSize: 16, arabicMinSize: 14, bengaliLines: 8, arabicLines: 3, bengaliSparePx: 30, arabicSparePx: 5, bengaliOverflow: false, arabicOverflow: false, bengaliLineHeight: 24.8, arabicLineHeight: 28 };
+  const ok = ogQc.checkOgFitRecord(base);
+  assert.equal(ok.ok, true);
+  assert.equal(ok.warnings.length, 0);
+  const atFloor = ogQc.checkOgFitRecord({ ...base, bengaliSize: 16, bengaliSparePx: 30 });
+  assert.equal(atFloor.ok, true);
+  assert.equal(atFloor.warnings.some((w) => w.includes("at the floor")), true);
+  const thin = ogQc.checkOgFitRecord({ ...base, bengaliSparePx: 5 });
+  assert.equal(thin.ok, true);
+  assert.equal(thin.warnings.some((w) => w.includes("under one real-font line")), true);
+  const over = ogQc.checkOgFitRecord({ ...base, bengaliOverflow: true, bengaliSparePx: -2 });
+  assert.equal(over.ok, false);
+  assert.equal(over.errors.some((e) => e.startsWith("bengali_overflow_at_min")), true);
+  const below = ogQc.checkOgFitRecord({ ...base, arabicSize: 13 });
+  assert.equal(below.ok, false);
+  assert.equal(below.errors.some((e) => e.includes("below the 14px floor")), true);
+  const neg = ogQc.checkOgFitRecord({ ...base, arabicSparePx: -2 });
+  assert.equal(neg.ok, false);
+  // Sub-pixel rounding (-0.4px) passes: same +1px tolerance as the render gate.
+  assert.equal(ogQc.checkOgFitRecord({ ...base, arabicSparePx: -0.4 }).ok, true);
+});
+t("ogQc: readability guarantees pass for layout C and catch a lowered floor", () => {
+  const sqLong = ogQc.effectiveBengaliFirstLayout("c", "square", 306, 538);
+  const g = ogQc.checkOgReadabilityGuarantees("c", sqLong);
+  assert.equal(g.ok, true);
+  // Known hierarchy inversion (title 16 == floor 16) is a warning, not a pass/fail.
+  assert.equal(g.warnings.some((w) => w.includes("hierarchy inversion")), true);
+  const poLong = ogQc.effectiveBengaliFirstLayout("c", "portrait", 306, 538);
+  assert.equal(ogQc.checkOgReadabilityGuarantees("c", poLong).ok, true);
+  const lowered = ogQc.checkOgReadabilityGuarantees("c", { ...sqLong, bengaliMinSize: 14 });
+  assert.equal(lowered.ok, false);
+  assert.equal(lowered.errors.some((e) => e.includes("16px hard floor")), true);
+  const squeezed = ogQc.checkOgReadabilityGuarantees("c", { ...sqLong, bengaliLineHeight: 1.4 });
+  assert.equal(squeezed.ok, false);
+  const starved = ogQc.checkOgReadabilityGuarantees("c", { ...sqLong, arabicCapShare: 0.15 });
+  assert.equal(starved.ok, false);
+});
 
 // ---- Phase 3: preference client (pure, stubbed transport) ----
 t("preferences: opt_out posts the endpoint with action opt_out and returns the server state", async () => {
@@ -534,7 +633,13 @@ t("containerState: valid publication builds the published record", () => {
     source: "Sahih al-Bukhari, Hadith 42",
     chapter: "Chapter 3",
     canonicalLink: "/hadith/sahih-bukhari/bangla",
+    posterUrl: null,
   });
+});
+t("containerState: poster_url flows through to the published record (Phase 3)", () => {
+  const url = "https://cazdbxxffvdnsdatjsrx.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-15/portrait.png";
+  const rec = cstate.resolvePublishedRecord(pubRow({ poster_url: url }), hRow());
+  assert.equal(rec.posterUrl, url);
 });
 t("containerState: non-bukhari book keeps its key and falls back to /hadith", () => {
   const rec = cstate.resolvePublishedRecord(pubRow(), hRow({ book_key: "muslim" }));
@@ -662,8 +767,10 @@ t("recommendations: last-ten night builds a Qadr-window request", () => {
 t("recommendations: Eid al-Fitr builds a festivals-chapter request", () => {
   const req = reqFor("2026-03-20");
   assert.deepEqual(req.context.hijri, { year: 1447, month: 10, day: 1 });
-  assert.deepEqual(req.context.activeEventSlugs, ["eid-fitr"]);
-  assert.deepEqual(req.chapterIds, [13]);
+  // 2026-03-20 is a Friday: Jumu'ah joins Eid al-Fitr, and book 11
+  // (Friday Prayer) joins the chapter prefilter.
+  assert.deepEqual(req.context.activeEventSlugs, ["eid-fitr", "jumuah"]);
+  assert.deepEqual(req.chapterIds, [11, 13]);
 });
 t("recommendations: Eid al-Adha builds a Hajj-chapter request", () => {
   const req = reqFor("2026-05-27");
@@ -725,6 +832,773 @@ t("recommendationPlan: more than 5 content recommendations are capped at 5", () 
   assert.equal(plan.contentRefs.length, 5);
   assert.equal(plan.contentRefs[4], "content:dua-e");
   assert.equal(plan.contentRefs.includes("content:dua-f"), false);
+});
+
+// ---- Phase 8: daily share (pure, injected navigator/fetch) ----
+const SHARE_POSTER_URL =
+  "https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png";
+const shareRec = (over = {}) => ({
+  bengali: "BENGALI-TEST",
+  source: "Sahih al-Bukhari, Hadith 1",
+  canonicalLink: "/hadith/sahih-bukhari/bangla",
+  posterUrl: SHARE_POSTER_URL,
+  kolkataDate: "2026-11-17",
+  ...over,
+});
+const imageFetch = async () => ({
+  ok: true,
+  status: 200,
+  headers: { get: (n) => (n === "content-type" ? "image/png" : null) },
+  // 2,400 bytes: larger than the 1x1 probe file (68 bytes) so a
+  // size-gated canShare can accept the probe and reject the real file.
+  blob: async () => new Blob(["PNG-POSTER-".repeat(200)], { type: "image/png" }),
+});
+const httpFailFetch = async () => ({
+  ok: false,
+  status: 404,
+  headers: { get: () => null },
+  blob: async () => new Blob([]),
+});
+const textFetch = async () => ({
+  ok: true,
+  status: 200,
+  headers: { get: (n) => (n === "content-type" ? "text/html" : null) },
+  blob: async () => new Blob(["<html>"], { type: "text/html" }),
+});
+const throwingFetch = async () => {
+  throw new Error("network down");
+};
+
+t("dailyShare: caption is Bengali-first with source, homepage link, brand suffix", () => {
+  const caption = share.dailyShareCaption(shareRec());
+  assert.ok(caption.startsWith("🤲 আজকের হাদিস\nBENGALI-TEST"));
+  assert.ok(caption.includes("📖 Sahih al-Bukhari, Hadith 1"));
+  assert.ok(caption.includes("🔗 https://www.noorapp.in/"));
+  assert.ok(caption.endsWith("— NoorApp"));
+  assert.equal(caption.includes("BENGALI-TEST"), true);
+});
+
+t("dailyShare: caption throws on missing Bengali or missing source", () => {
+  assert.throws(() => share.dailyShareCaption(shareRec({ bengali: "  " })), /Bengali text/);
+  assert.throws(() => share.dailyShareCaption(shareRec({ source: "" })), /source line/);
+});
+
+t("dailyShare: share URL is the homepage (where the daily card lives)", () => {
+  assert.equal(share.dailyShareUrl(), "https://www.noorapp.in/");
+});
+
+t("dailyShare: WhatsApp URL is a wa.me text link carrying the caption", () => {
+  const caption = share.dailyShareCaption(shareRec());
+  const url = share.dailyWhatsappShareUrl(caption);
+  assert.ok(url.startsWith("https://wa.me/?text="));
+  assert.equal(decodeURIComponent(url.slice("https://wa.me/?text=".length)), caption);
+});
+
+t("dailyShare: Facebook URL is sharer.php with the homepage URL + quote", () => {
+  const caption = share.dailyShareCaption(shareRec());
+  const url = share.dailyFacebookShareUrl(share.dailyShareUrl(), caption);
+  assert.ok(url.startsWith("https://www.facebook.com/sharer/sharer.php?"));
+  const params = new URL(url).searchParams;
+  assert.equal(params.get("u"), "https://www.noorapp.in/");
+  assert.equal(params.get("quote"), caption);
+});
+
+t("dailyShare: finalized-poster URL validation accepts only the poster bucket PNG", () => {
+  assert.equal(share.isFinalizedPosterUrl(SHARE_POSTER_URL), true);
+  assert.equal(
+    share.isFinalizedPosterUrl(SHARE_POSTER_URL.replace("/portrait.png", "/square.png")),
+    true,
+  );
+  // Rehearsal project host is equally valid (same code, both environments).
+  assert.equal(
+    share.isFinalizedPosterUrl(
+      "https://cazdbxxffvdnsdatjsrx.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+    ),
+    true,
+  );
+  assert.equal(share.isFinalizedPosterUrl("http://example.com/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png"), false);
+  assert.equal(share.isFinalizedPosterUrl("https://example.com/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png"), false);
+  assert.equal(share.isFinalizedPosterUrl("https://www.noorapp.in/og-image.png"), false);
+  assert.equal(share.isFinalizedPosterUrl("https://llicfiepatzgllmjhzbw.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.jpg"), false);
+  assert.equal(share.isFinalizedPosterUrl(null), false);
+  assert.equal(share.isFinalizedPosterUrl(42), false);
+});
+
+t("dailyShare: poster format from URL + dated download filename", () => {
+  assert.equal(share.posterFormatFromUrl(SHARE_POSTER_URL), "portrait");
+  assert.equal(share.posterFormatFromUrl(SHARE_POSTER_URL.replace("portrait", "square")), "square");
+  assert.equal(share.dailyPosterFileName("2026-11-17", SHARE_POSTER_URL), "noorapp-hadith-2026-11-17-portrait.png");
+  assert.throws(() => share.dailyPosterFileName("17-11-2026", SHARE_POSTER_URL), /YYYY-MM-DD/);
+});
+
+t("dailyShare: fetchPosterFile returns a PNG File; HTTP / non-image / network throw typed errors", async () => {
+  const file = await share.fetchPosterFile(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", imageFetch);
+  assert.equal(file.name, "noorapp-hadith-2026-11-17-portrait.png");
+  assert.equal(file.type, "image/png");
+  await assert.rejects(
+    share.fetchPosterFile(SHARE_POSTER_URL, "x.png", httpFailFetch),
+    (e) => e.reason === "http",
+  );
+  await assert.rejects(
+    share.fetchPosterFile(SHARE_POSTER_URL, "x.png", textFetch),
+    (e) => e.reason === "not-image",
+  );
+  await assert.rejects(
+    share.fetchPosterFile(SHARE_POSTER_URL, "x.png", throwingFetch),
+    (e) => e.reason === "network",
+  );
+});
+
+t("dailyShare: native-share support probe — none / text / image", () => {
+  assert.equal(share.getNativeShareSupport(null), "none");
+  assert.equal(share.getNativeShareSupport({}), "none");
+  assert.equal(share.getNativeShareSupport({ share: async () => {} }), "text");
+  assert.equal(
+    share.getNativeShareSupport({ share: async () => {}, canShare: () => true }),
+    "image",
+  );
+  assert.equal(
+    share.getNativeShareSupport({
+      share: async () => {},
+      canShare: (d) => !d.files,
+    }),
+    "text",
+  );
+  assert.equal(
+    share.getNativeShareSupport({
+      share: async () => {},
+      canShare: () => {
+        throw new Error("unsupported shape");
+      },
+    }),
+    "text",
+  );
+});
+
+t("dailyShare: native file share sends the poster file + caption", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(shareRec(), { nav, fetchImpl: imageFetch });
+  assert.equal(res.method, "native-file");
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].files.length, 1);
+  assert.equal(shared[0].files[0].name, "noorapp-hadith-2026-11-17-portrait.png");
+  assert.equal(shared[0].files[0].type, "image/png");
+  assert.ok(shared[0].text.includes("BENGALI-TEST"));
+});
+
+t("dailyShare: fetch failure degrades to a text share, never a silent failure", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(shareRec(), { nav, fetchImpl: throwingFetch });
+  assert.equal(res.method, "native-text");
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].files, undefined);
+  assert.ok(shared[0].text.includes("BENGALI-TEST"));
+});
+
+t("dailyShare: text-only support shares text; no API reports unsupported; cancel is not an error", async () => {
+  const shared = [];
+  const textNav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: (d) => !d.files,
+  };
+  const textRes = await share.shareDailyPoster(shareRec(), { nav: textNav, fetchImpl: imageFetch });
+  assert.equal(textRes.method, "native-text");
+  assert.equal(shared.length, 1);
+
+  const noneRes = await share.shareDailyPoster(shareRec(), { nav: {}, fetchImpl: imageFetch });
+  assert.equal(noneRes.method, "unsupported");
+  assert.equal(shared.length, 1);
+
+  const abortError = new Error("user cancelled");
+  abortError.name = "AbortError";
+  const cancelNav = {
+    share: async () => {
+      throw abortError;
+    },
+    canShare: () => true,
+  };
+  const cancelRes = await share.shareDailyPoster(shareRec(), { nav: cancelNav, fetchImpl: imageFetch });
+  assert.equal(cancelRes.method, "cancelled");
+
+  const failNav = {
+    share: async () => {
+      throw new Error("share sheet failed");
+    },
+    canShare: () => true,
+  };
+  const failRes = await share.shareDailyPoster(shareRec(), { nav: failNav, fetchImpl: imageFetch });
+  assert.equal(failRes.method, "failed");
+  assert.equal(failRes.detail, "share sheet failed");
+});
+
+t("dailyShare: canShare rejecting the exact file falls back to text share", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    // Tiny probe passes (68 bytes), the real 2.4 KB file does not.
+    canShare: (d) => !(d.files && d.files[0].size > 1000),
+  };
+  const res = await share.shareDailyPoster(shareRec(), { nav, fetchImpl: imageFetch });
+  assert.equal(res.method, "native-text");
+  assert.equal(shared.length, 1);
+  assert.equal(shared[0].files, undefined);
+});
+
+t("dailyShare: no finalized poster → file share refuses instead of sharing an arbitrary URL", async () => {
+  const shared = [];
+  const nav = {
+    share: async (data) => {
+      shared.push(data);
+    },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(shareRec({ posterUrl: "https://example.com/other.png" }), {
+    nav,
+    fetchImpl: imageFetch,
+  });
+  assert.equal(res.method, "failed");
+  assert.equal(shared.length, 0);
+});
+
+t("dailyShare: download serves the file; fetch failure opens the poster URL instead", async () => {
+  const clicked = [];
+  const revoked = [];
+  const res = await share.downloadPoster(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", {
+    fetchImpl: imageFetch,
+    createObjectUrl: () => "blob:poster",
+    revokeObjectUrl: (u) => revoked.push(u),
+    clickAnchor: (href, name) => clicked.push({ href, name }),
+  });
+  assert.equal(res.method, "downloaded");
+  assert.deepEqual(clicked, [{ href: "blob:poster", name: "noorapp-hadith-2026-11-17-portrait.png" }]);
+  assert.deepEqual(revoked, ["blob:poster"]);
+
+  const opened = [];
+  const res2 = await share.downloadPoster(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", {
+    fetchImpl: throwingFetch,
+    openWindow: (u) => opened.push(u),
+  });
+  assert.equal(res2.method, "opened");
+  assert.deepEqual(opened, [SHARE_POSTER_URL]);
+});
+
+t("dailyShare: copyText returns true on success, false when denied or unavailable", async () => {
+  assert.equal(await share.copyText("https://www.noorapp.in/", { writeText: async () => {} }), true);
+  assert.equal(
+    await share.copyText("https://www.noorapp.in/", {
+      writeText: async () => {
+        throw new Error("denied");
+      },
+    }),
+    false,
+  );
+  assert.equal(await share.copyText("https://www.noorapp.in/", null), false);
+});
+
+// --- monitoring (Phase 10): schedule assessment, alert derivation, snapshot ---
+const monPub = (over = {}) => ({
+  id: "pub-1",
+  kolkata_date: "2026-11-17",
+  status: "published",
+  poster_qc_status: "passed",
+  poster_error: null,
+  poster_url: "https://example.supabase.co/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+  hadith_ref: "hadith:h1",
+  recipients_total: 9,
+  recipients_sent: 9,
+  recipients_failed: 0,
+  error: null,
+  created_at: "2026-11-17T00:35:00.000Z",
+  published_at: "2026-11-17T00:35:00.000Z",
+  ...over,
+});
+const monDel = (over = {}) => ({
+  publication_id: "pub-1",
+  status: "sent",
+  attempts: 1,
+  max_attempts: 4,
+  created_at: "2026-11-17T00:35:00.000Z",
+  error: null,
+  ...over,
+});
+
+t("monitoring: published on time (06:05 IST) -> ok", () => {
+  const s = mon.assessSchedule(new Date("2026-11-17T10:00:00+05:30"), "2026-11-17", monPub());
+  assert.equal(s.status, "ok");
+  assert.equal(s.window, "closed");
+  assert.equal(s.expected_at, "2026-11-17T00:30:00.000Z");
+  assert.equal(s.grace_until, "2026-11-17T01:00:00.000Z");
+});
+t("monitoring: published late (12:39 IST, the 2026-11-16 shape) -> late", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-16T13:00:00+05:30"),
+    "2026-11-16",
+    monPub({ kolkata_date: "2026-11-16", published_at: "2026-11-16T07:09:00.000Z" }),
+  );
+  assert.equal(s.status, "late");
+});
+t("monitoring: no row after grace (10:00 IST, the 2026-11-17 shape) -> missed", () => {
+  const s = mon.assessSchedule(new Date("2026-11-17T10:00:00+05:30"), "2026-11-17", null);
+  assert.equal(s.status, "missed");
+  assert.equal(s.window, "closed");
+});
+t("monitoring: planned row after grace -> missed", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T10:00:00+05:30"),
+    "2026-11-17",
+    monPub({ status: "planned", published_at: null }),
+  );
+  assert.equal(s.status, "missed");
+  assert.equal(s.publication_status, "planned");
+});
+t("monitoring: failed row after grace -> missed", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T10:00:00+05:30"),
+    "2026-11-17",
+    monPub({ status: "failed", published_at: null, error: "no valid plan" }),
+  );
+  assert.equal(s.status, "missed");
+});
+t("monitoring: no row before grace (05:30 IST) -> ok, window open", () => {
+  const s = mon.assessSchedule(new Date("2026-11-17T05:30:00+05:30"), "2026-11-17", null);
+  assert.equal(s.status, "ok");
+  assert.equal(s.window, "open");
+});
+t("monitoring: grace boundary — 06:29 IST ok, 06:30 IST missed", () => {
+  assert.equal(mon.assessSchedule(new Date("2026-11-17T06:29:00+05:30"), "2026-11-17", null).status, "ok");
+  assert.equal(mon.assessSchedule(new Date("2026-11-17T06:30:00+05:30"), "2026-11-17", null).status, "missed");
+});
+t("monitoring: timezone — 01:00 UTC is 06:30 IST (missed), 00:35 UTC is 06:05 IST (ok)", () => {
+  assert.equal(mon.assessSchedule(new Date("2026-11-17T01:00:00.000Z"), "2026-11-17", null).status, "missed");
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T01:00:00.000Z"),
+    "2026-11-17",
+    monPub({ published_at: "2026-11-17T00:35:00.000Z" }),
+  );
+  assert.equal(s.status, "ok");
+});
+t("monitoring: published row with no published_at -> ok (never late on missing data)", () => {
+  const s = mon.assessSchedule(
+    new Date("2026-11-17T10:00:00+05:30"),
+    "2026-11-17",
+    monPub({ published_at: null }),
+  );
+  assert.equal(s.status, "ok");
+});
+t("monitoring: deriveAlerts — failed row critical, quarantined critical, poster failed warn", () => {
+  const alerts = mon.deriveAlerts(
+    [
+      monPub({ id: "p-fail", kolkata_date: "2026-11-16", status: "failed", error: "no valid plan" }),
+      monPub({ id: "p-q", kolkata_date: "2026-11-17", status: "planned", poster_qc_status: "failed", poster_error: "quarantined:bengali_overflow_at_min" }),
+      monPub({ id: "p-pf", kolkata_date: "2026-11-15", status: "planned", poster_qc_status: "failed", poster_error: "bengali_overflow_at_min" }),
+    ],
+    [],
+  );
+  assert.equal(alerts.length, 3);
+  assert.equal(alerts.find((a) => a.publication_id === "p-fail").level, "critical");
+  assert.equal(alerts.find((a) => a.publication_id === "p-q").level, "critical");
+  assert.equal(alerts.find((a) => a.publication_id === "p-q").reason, "quarantined:bengali_overflow_at_min");
+  assert.equal(alerts.find((a) => a.publication_id === "p-pf").level, "warn");
+});
+t("monitoring: deriveAlerts — failed deliveries aggregate per (publication, error)", () => {
+  const alerts = mon.deriveAlerts(
+    [monPub()],
+    [
+      monDel({ status: "failed", error: "gone" }),
+      monDel({ status: "failed", error: "gone" }),
+      monDel({ status: "failed", error: "timeout" }),
+      monDel({ status: "retryable", error: "gone" }),
+    ],
+  );
+  assert.equal(alerts.length, 2);
+  assert.equal(alerts.find((a) => a.reason.includes("gone")).reason, "push delivery failed for 2 devices: gone");
+  assert.ok(alerts.find((a) => a.reason.includes("timeout")));
+});
+t("monitoring: dedupeAlerts — same day+reason twice -> one alert", () => {
+  const a = { level: "warn", reason: "poster failed; poster workflow retry needed", kolkata_date: "2026-11-17", publication_id: "p1", first_seen: "2026-11-17T01:00:00.000Z" };
+  const out = mon.dedupeAlerts([a, { ...a }, { ...a, reason: "other" }]);
+  assert.equal(out.length, 2);
+});
+t("monitoring: snapshot — published today, push counts + retryable + last activity", () => {
+  const snap = mon.buildMonitoringSnapshot(
+    [monPub()],
+    [
+      monDel({ status: "retryable", attempts: 1, max_attempts: 4, created_at: "2026-11-17T00:40:00.000Z" }),
+      monDel({ status: "retryable", attempts: 3, max_attempts: 4, created_at: "2026-11-17T00:40:00.000Z" }),
+      monDel({ status: "failed", attempts: 4, max_attempts: 4, error: "gone" }),
+    ],
+    new Date("2026-11-17T10:00:00+05:30"),
+  );
+  assert.equal(snap.kolkata_date, "2026-11-17");
+  assert.equal(snap.schedule.status, "ok");
+  assert.equal(snap.publication.status, "published");
+  assert.equal(snap.publication.poster_qc_status, "passed");
+  assert.equal(snap.push.total, 9);
+  assert.equal(snap.push.sent, 9);
+  assert.equal(snap.push.retryable, 2);
+  assert.equal(snap.push.attempts_remaining, 4);
+  assert.equal(snap.alerts.length, 1);
+  assert.equal(snap.last_activity, "2026-11-17T00:40:00.000Z");
+});
+t("monitoring: snapshot — no row after grace -> missed, no publication, empty push", () => {
+  const snap = mon.buildMonitoringSnapshot([], [], new Date("2026-11-17T10:00:00+05:30"));
+  assert.equal(snap.schedule.status, "missed");
+  assert.equal(snap.publication, null);
+  assert.equal(snap.push.total, 0);
+  assert.equal(snap.alerts.length, 0);
+  assert.equal(snap.last_activity, null);
+});
+t("monitoring: snapshot — quarantined today -> missed schedule + critical alert + recent failure", () => {
+  const snap = mon.buildMonitoringSnapshot(
+    [monPub({ status: "planned", poster_qc_status: "failed", poster_error: "quarantined:bengali_overflow_at_min", published_at: null })],
+    [],
+    new Date("2026-11-17T10:00:00+05:30"),
+  );
+  assert.equal(snap.schedule.status, "missed");
+  assert.equal(snap.alerts.length, 1);
+  assert.equal(snap.alerts[0].level, "critical");
+  assert.equal(snap.recent_failures.length, 1);
+  assert.equal(snap.recent_failures[0].reason, "quarantined:bengali_overflow_at_min");
+});
+
+// --- 8-validation autonomous gate ---
+// A valid (publishable) input: synthetic texts only ("ARABIC-TEST" /
+// "BENGALI-TEST" carry no topic keywords, and the fixture hadith is
+// chapter 1, so the engine classifies it "intentions" via the chapter
+// prior — the fixture scene is the intentions concept's scene
+// "intention-sunrise").
+const gatePoster = (over = {}) => ({
+  url: "http://stub/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png",
+  urls: { portrait: "http://stub/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png" },
+  assetId: "poster:2026-11-17",
+  storagePath: "daily-content-posters/2026-11-17/portrait.png",
+  checksum: "a".repeat(64),
+  checksums: { portrait: "a".repeat(64) },
+  sceneId: "intention-sunrise",
+  qcStatus: "passed",
+  generatedAt: "2026-11-17T02:00:00.000Z",
+  ...over,
+});
+const gateInput = (over = {}) => ({
+  kolkataDate: "2026-11-17",
+  hadithRef: "hadith:h1",
+  hadithSourceLine: "Sahih al-Bukhari, Hadith 1",
+  cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  push: { title: "TITLE", body: "BODY" },
+  poster: gatePoster(),
+  liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", english: null },
+  liveDuas: {},
+  history: [],
+  hadithCycle: 1,
+  cardCycle: 1,
+  posterBaseUrl: "http://stub",
+  ...over,
+});
+const gateResult = (verdict, id) => verdict.results.find((r) => r.id === id);
+const gateHistRow = (over = {}) => ({
+  kolkata_date: "2026-11-16", hadith_ref: null, cards: [], poster_scene_id: null, hadith_cycle: 1, card_cycle: 1, ...over,
+});
+
+t("gate: valid input -> publish, all 8 pass", () => {
+  const v = gate.evaluateAutonomousGate(gateInput());
+  assert.equal(v.decision, "publish");
+  assert.deepEqual(v.failed, []);
+  assert.equal(v.results.length, 8);
+  assert.ok(v.results.every((r) => r.pass));
+});
+t("gate: valid input + one dua card -> publish", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s1", arabic: "ARABIC-s1", bengali: "BENGALI-s1", sourceLine: "REF-s1" },
+    ],
+    liveDuas: { s1: { slug: "s1", title: "TITLE-s1", content: "BENGALI-s1", content_arabic: "ARABIC-s1", metadata: { reference: "REF-s1", source_type: "Dua" }, status: "published", content_type: "dua" } },
+  }));
+  assert.equal(v.decision, "publish");
+});
+t("gate V1: source line number mismatch -> fail (V1 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ hadithSourceLine: "Sahih al-Bukhari, Hadith 2" }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["source_reference_integrity"]);
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: malformed hadith_ref -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ hadithRef: "bukhari-10-869" }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: live hadith missing -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ liveHadith: null }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+  assert.equal(v.decision, "hold");
+});
+t("gate V1: two hadith cards -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "hadith", recordRef: "hadith:h2", arabic: "ARABIC-H2", bengali: "BENGALI-H2", sourceLine: "Sahih al-Bukhari, Hadith 2" },
+    ],
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: duplicate card refs -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "REF" },
+    ],
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: zero cards -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ cards: [] }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V1: dua card with no live row -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s9", arabic: "ARABIC-s9", bengali: "BENGALI-s9", sourceLine: "REF-s9" },
+    ],
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
+t("gate V2: card Arabic differs from live -> fail (V2 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-CHANGED", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["arabic_integrity"]);
+});
+t("gate V2: empty card Arabic -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "  ", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  }));
+  assert.equal(gateResult(v, "arabic_integrity").pass, false);
+});
+t("gate V3: card Bengali differs from live -> fail (V3 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-CHANGED", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_editorial_quality"]);
+});
+t("gate V3: meaning failure (পিতৃসত্তা) -> fail (V3 only)", () => {
+  // The corpus case: a translation containing পিতৃসত্তা is a meaning
+  // distortion (Qur'an 112:3) — the gate must hold it even when the
+  // card matches the live row verbatim. The word is the pattern under
+  // test, not transcribed content.
+  const bn = "BENGALI-TEST পিতৃসত্তা";
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: bn, sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: bn, english: null },
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_editorial_quality"]);
+  assert.match(gateResult(v, "bengali_editorial_quality").detail, /পিতৃসত্তা/);
+});
+t("gate V3: soft issues (repetition) are warnings, never blocking", () => {
+  const bn = "BENGALI-TEST। BENGALI-TEST।";
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: bn, sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: bn, english: null },
+  }));
+  assert.equal(v.decision, "publish");
+  assert.ok(gateResult(v, "bengali_editorial_quality").warnings.some((w) => w.includes("Repetition")));
+});
+t("gate V4: claim word introduced in the push -> fail (V4 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ push: { title: "TITLE", body: "BODY সওয়াব" } }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["fabricated_claims_detection"]);
+});
+t("gate V4: claim word that is the live source's own wording -> pass, noted", () => {
+  // The corpus case: 5/218 bundled duas faithfully contain সওয়াব /
+  // নিশ্চিত / পুরস্কার from their Qur'an source — those are NOT
+  // fabricated claims. The word is the pattern under test.
+  const bn = "BENGALI-TEST সওয়াব";
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: bn, sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-TEST", bengali: bn, english: null },
+  }));
+  assert.equal(v.decision, "publish");
+  assert.match(gateResult(v, "fabricated_claims_detection").detail, /source.s own wording/);
+});
+t("gate V5: scene from another topic -> fail (V5 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ sceneId: "courtyard-prayer" }) }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["content_visual_consistency"]);
+});
+t("gate V5: same scene used yesterday -> fail (14-day window)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-16", poster_scene_id: "intention-sunrise" })],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["content_visual_consistency"]);
+});
+t("gate V5: same scene 15 days ago -> pass (window expired)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-02", poster_scene_id: "intention-sunrise" })],
+  }));
+  assert.equal(v.decision, "publish");
+});
+t("gate V5: poster QC not passed -> fail (V5 + V6)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ qcStatus: "failed" }) }));
+  assert.equal(v.decision, "hold");
+  assert.equal(gateResult(v, "content_visual_consistency").pass, false);
+  assert.equal(gateResult(v, "bengali_readability_image_quality").pass, false);
+});
+t("gate V6: empty push body -> fail (V6 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ push: { title: "TITLE", body: "  " } }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_readability_image_quality"]);
+});
+t("gate V7: published row already exists for today -> fail (V7 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-17", hadith_ref: "hadith:h9" })],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["duplicate_prevention"]);
+});
+t("gate V7: same hadith already published in this cycle -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-16", hadith_ref: "hadith:h1", hadith_cycle: 1 })],
+  }));
+  assert.equal(gateResult(v, "duplicate_prevention").pass, false);
+});
+t("gate V7: same hadith in an older cycle -> pass", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    history: [gateHistRow({ kolkata_date: "2026-11-16", hadith_ref: "hadith:h1", hadith_cycle: 0 })],
+    hadithCycle: 1,
+  }));
+  assert.equal(v.decision, "publish");
+});
+t("gate V7: same dua card already published in this card cycle -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s1", arabic: "ARABIC-s1", bengali: "BENGALI-s1", sourceLine: "REF-s1" },
+    ],
+    liveDuas: { s1: { slug: "s1", title: "TITLE-s1", content: "BENGALI-s1", content_arabic: "ARABIC-s1", metadata: { reference: "REF-s1", source_type: "Dua" }, status: "published", content_type: "dua" } },
+    history: [gateHistRow({ kolkata_date: "2026-11-16", cards: [{ recordRef: "content:s1" }], card_cycle: 1 })],
+  }));
+  assert.equal(gateResult(v, "duplicate_prevention").pass, false);
+});
+t("gate V7: missing cycle numbers -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ hadithCycle: null, cardCycle: null }));
+  assert.equal(gateResult(v, "duplicate_prevention").pass, false);
+});
+t("gate V8: bad checksum -> fail (V8 only)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ checksum: "xyz" }) }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["finalized_asset_integrity"]);
+});
+t("gate V8: poster generated on another date -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ generatedAt: "2026-11-16T02:00:00.000Z" }) }));
+  assert.equal(gateResult(v, "finalized_asset_integrity").pass, false);
+});
+t("gate V8: wrong asset id -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ poster: gatePoster({ assetId: "poster:2026-11-16" }) }));
+  assert.equal(gateResult(v, "finalized_asset_integrity").pass, false);
+});
+t("gate V8: no poster base URL -> fail (fail-closed)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({ posterBaseUrl: "" }));
+  assert.equal(gateResult(v, "finalized_asset_integrity").pass, false);
+});
+t("gate: malformed cards (missing recordRef / non-string text) -> hold, never throw", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [{ kind: "hadith", bengali: "BENGALI-H" }],
+  }));
+  assert.equal(v.decision, "hold");
+  assert.ok(v.failed.includes("source_reference_integrity"));
+});
+t("gate: two failures -> hold listing both", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    poster: gatePoster({ checksum: "xyz" }),
+    push: { title: "TITLE", body: "  " },
+  }));
+  assert.equal(v.decision, "hold");
+  assert.deepEqual(v.failed, ["bengali_readability_image_quality", "finalized_asset_integrity"]);
+  assert.equal(v.reasons.length, 2);
+});
+
+
+// --- palettes (Master mission Phase 2: dynamic color system) ---
+t("palettes: contrast math — white/black is 21, brand gold vs #0b1526 is 10.65", () => {
+  assert.equal(pal.contrastRatio("#ffffff", "#000000"), 21);
+  assert.equal(pal.contrastRatio("#000000", "#ffffff"), 21);
+  assert.equal(pal.contrastRatio("#e9c15c", "#0b1526"), 10.65);
+  assert.equal(pal.contrastRatio("#ffffff", "#0b1526"), 18.27);
+  assert.equal(pal.contrastRatio("not-a-color", "#0b1526"), null);
+  assert.equal(pal.relativeLuminance("#ffffff"), 1);
+  assert.equal(pal.relativeLuminance("#000000"), 0);
+});
+t("palettes: all 11 topic palettes reach the 4.5 contrast floor (readability non-negotiable)", () => {
+  assert.equal(Object.keys(pal.PALETTES).length, 11);
+  for (const p of Object.values(pal.PALETTES)) {
+    const r = pal.checkPaletteContrast(p);
+    assert.equal(r.ok, true, `${p.id} (${p.accent}) contrast ${r.ratio} < 4.5`);
+    assert.ok(r.ratio >= 4.5);
+  }
+  assert.equal(pal.PALETTE_MIN_CONTRAST, 4.5);
+  assert.equal(pal.BRAND_GOLD, "#e9c15c");
+  assert.equal(pal.POSTER_BG, "#0b1526");
+});
+t("palettes: lookup by id; unknown id is null (never a silent fallback)", () => {
+  assert.equal(pal.paletteById("emerald").accent, "#7fd4a8");
+  assert.equal(pal.paletteById("gentle-green").name, "Gentle green");
+  assert.equal(pal.paletteById("no-such-palette"), null);
+  assert.equal(pal.accentRgba("#7fd4a8", 0.85), "rgba(127, 212, 168, 0.85)");
+  assert.equal(pal.accentRgba("bad", 0.85), null);
+});
+
+// --- sharing: one finalized asset, every channel (Master mission Phase 2 §9) ---
+t("dailyShare: one asset — native file share, download and links all use the same finalized poster URL", async () => {
+  const rec = shareRec();
+  const seen = [];
+  const nav = {
+    share: async (data) => { seen.push(data); },
+    canShare: () => true,
+  };
+  const res = await share.shareDailyPoster(rec, { nav, fetchImpl: imageFetch });
+  assert.equal(res.method, "native-file");
+  assert.equal(seen.length, 1);
+  assert.equal(seen[0].files[0].name, "noorapp-hadith-2026-11-17-portrait.png");
+  assert.ok(seen[0].text.includes("BENGALI-TEST"));
+  const dl = await share.downloadPoster(SHARE_POSTER_URL, "noorapp-hadith-2026-11-17-portrait.png", {
+    fetchImpl: imageFetch,
+    createObjectUrl: () => "blob:fake",
+    revokeObjectUrl: () => {},
+    clickAnchor: (href, name) => { seen.push({ href, name }); },
+  });
+  assert.equal(dl.method, "downloaded");
+  assert.equal(seen[1].name, "noorapp-hadith-2026-11-17-portrait.png");
+  const caption = share.dailyShareCaption(rec);
+  assert.ok(share.dailyWhatsappShareUrl(caption).includes(encodeURIComponent("https://www.noorapp.in/")));
+  assert.ok(share.dailyFacebookShareUrl(share.dailyShareUrl(), caption).includes(encodeURIComponent("https://www.noorapp.in/")));
+});
+t("dailyShare: a non-finalized URL never yields a file share (same gate as download)", async () => {
+  const nav = { share: async () => {}, canShare: () => true };
+  const res = await share.shareDailyPoster(
+    shareRec({ posterUrl: "https://example.com/storage/v1/object/public/daily-content-posters/2026-11-17/portrait.png" }),
+    { nav, fetchImpl: imageFetch },
+  );
+  assert.equal(res.method, "failed");
+  assert.equal(res.detail, "no finalized poster to share");
 });
 
 await Promise.all(pending);
