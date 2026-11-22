@@ -419,6 +419,15 @@ export type OgFitRecord = {
   /** Measured px line-heights from computed style (not the layout multipliers). */
   bengaliLineHeight: number;
   arabicLineHeight: number;
+  /**
+   * Adaptive multi-page (owner brief 2026-11-22): a page whose Arabic
+   * ended on an earlier page renders no Arabic block (and vice versa
+   * for Arabic-heavy sets). Absent (default true) = the block is
+   * present and the lines<1 checks apply; false = the block is absent
+   * by design and the set-level coverage check proves completeness.
+   */
+  bengaliPresent?: boolean;
+  arabicPresent?: boolean;
 };
 
 /** Validate a measured fit record: floors honoured, no overflow, no negative spare. */
@@ -434,8 +443,11 @@ export function checkOgFitRecord(fit: OgFitRecord): OgCheck {
   // in getBoundingClientRect can read -0.2/-0.4 px on a fitting box.
   if (fit.bengaliSparePx < -1) errors.push(`bengali spare ${fit.bengaliSparePx}px is negative (text overflows its panel)`);
   if (fit.arabicSparePx < -1) errors.push(`arabic spare ${fit.arabicSparePx}px is negative (text overflows its box)`);
-  if (fit.bengaliLines < 1) errors.push("bengali lines < 1 (no Bengali text measured)");
-  if (fit.arabicLines < 1) errors.push("arabic lines < 1 (no Arabic text measured)");
+  // Adaptive multi-page: a block absent by design (its text ended on an
+  // earlier page) reports 0 lines — the set-level coverage check, not
+  // this record, proves that text is complete across pages.
+  if (fit.bengaliPresent !== false && fit.bengaliLines < 1) errors.push("bengali lines < 1 (no Bengali text measured)");
+  if (fit.arabicPresent !== false && fit.arabicLines < 1) errors.push("arabic lines < 1 (no Arabic text measured)");
   if (errors.length === 0) {
     if (fit.bengaliSize === fit.bengaliMinSize) {
       warnings.push("bengali at the floor: readable size is the minimum — re-verify in the real-font environment");

@@ -1153,6 +1153,37 @@ function isValidChecksum(value: unknown): value is string {
   return typeof value === "string" && /^[0-9a-f]{64}$/.test(value);
 }
 
+// ---- Adaptive multi-page (owner brief 2026-11-22) — page keys ----
+// A multi-page set keeps page 1 under the base format key (the
+// singular poster_url stays page-1 portrait) and pages 2-3 under
+// `<format>-p2` / `<format>-p3` in the poster_urls / poster_checksums
+// maps (storage `<date>/<format>-p<N>.png`). No new columns: the maps
+// already exist; only the key validation widens. The singular
+// poster_url check stays on isValidPosterUrl (page-1 only) so a
+// page-2 URL can never become the push/homepage image.
+const ADAPTIVE_MAX_PAGE = 3;
+
+function isPosterAssetKey(value: unknown): value is string {
+  if (typeof value !== "string") return false;
+  if ((POSTER_FORMATS as readonly string[]).includes(value)) return true;
+  const m = /^([a-z]+)-p([2-9])$/.exec(value);
+  return m !== null && (POSTER_FORMATS as readonly string[]).includes(m[1]) && Number(m[2]) <= ADAPTIVE_MAX_PAGE;
+}
+
+function isValidPosterPageUrl(value: unknown, kolkataDate: string): value is string {
+  if (typeof value !== "string" || value.length === 0 || value.length > 500) return false;
+  const prefix = `${SUPABASE_URL}/storage/v1/object/public/daily-content-posters/`;
+  if (!value.startsWith(prefix)) return false;
+  const rest = value.slice(prefix.length);
+  return POSTER_FORMATS.some((f) => {
+    if (rest === `${kolkataDate}/${f}.png`) return true;
+    for (let p = 2; p <= ADAPTIVE_MAX_PAGE; p++) {
+      if (rest === `${kolkataDate}/${f}-p${p}.png`) return true;
+    }
+    return false;
+  });
+}
+
 // ---- Phase 3 (Hold/Quarantine) — quarantine marker (no migration) ----
 // A poster failure is recorded by set_poster with poster_error set to
 // the workflow's reason. A SECOND failure for the same row on the same
@@ -1194,7 +1225,7 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
         return jsonResponse({ ok: false, error: "poster_urls must be an object" }, 400);
       }
       for (const [format, url] of Object.entries(posterUrls as Record<string, unknown>)) {
-        if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidPosterUrl(url, kolkataDate)) {
+        if (!isPosterAssetKey(format) || !isValidPosterPageUrl(url, kolkataDate)) {
           return jsonResponse({ ok: false, error: `poster_urls[${format}] is not a valid poster URL` }, 400);
         }
       }
@@ -1216,7 +1247,7 @@ async function handleSetPoster(svc: Svc, body: Record<string, unknown>): Promise
         return jsonResponse({ ok: false, error: "poster_checksums must be an object" }, 400);
       }
       for (const [format, sum] of Object.entries(checksums as Record<string, unknown>)) {
-        if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidChecksum(sum)) {
+        if (!isPosterAssetKey(format) || !isValidChecksum(sum)) {
           return jsonResponse({ ok: false, error: `poster_checksums[${format}] must be a SHA-256 hex string` }, 400);
         }
       }
@@ -3345,7 +3376,8 @@ function gateBuildHistoryEntries(
 // shape, same failure messages. Differences (mechanical only):
 //  - kolkataDateString (already in this file, same Intl algorithm)
 //    replaces the lib's kolkataDateOf;
-//  - isValidPosterUrl / isValidChecksum / POSTER_FORMATS are the ones
+//  - isValidPosterUrl / isValidPosterPageUrl / isPosterAssetKey /
+//    isValidChecksum / POSTER_FORMATS are the ones
 //    already in this file (set_poster's validators, reused, not copied);
 //  - input types are the edge's row shapes.
 // A parity test (lib gate vs edge gate on identical fixtures) guards
@@ -3711,7 +3743,7 @@ export function gateEvalFinalizedAssetIntegrity(input: GateInputShape): GateVali
       return gateFail(id, "poster_urls must be an object");
     }
     for (const [format, url] of Object.entries(p.urls)) {
-      if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidPosterUrl(url, date)) {
+      if (!isPosterAssetKey(format) || !isValidPosterPageUrl(url, date)) {
         return gateFail(id, `poster_urls[${format}] is not a valid poster URL`);
       }
     }
@@ -3733,7 +3765,7 @@ export function gateEvalFinalizedAssetIntegrity(input: GateInputShape): GateVali
       return gateFail(id, "poster_checksums must be an object");
     }
     for (const [format, sum] of Object.entries(p.checksums)) {
-      if (!(POSTER_FORMATS as readonly string[]).includes(format) || !isValidChecksum(sum)) {
+      if (!isPosterAssetKey(format) || !isValidChecksum(sum)) {
         return gateFail(id, `poster_checksums[${format}] must be a SHA-256 hex string`);
       }
     }

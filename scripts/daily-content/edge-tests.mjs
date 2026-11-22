@@ -2727,6 +2727,105 @@ await t("edge Phase 3: set_poster finalizes onto a planned row", async () => {
   assert.equal(pub.push.image_url, posterUrlFor(TODAY));
 });
 
+// ---- Adaptive multi-page (owner brief 2026-11-22): page keys in the
+// poster maps. Page 1 stays the singular poster_url (push/homepage
+// image); pages 2-3 ride in poster_urls / poster_checksums under
+// `<format>-p<N>` keys. No new columns, no migration.
+const posterPageUrlFor = (date, format, page) =>
+  `http://stub/storage/v1/object/public/daily-content-posters/${date}/${format}${page > 1 ? `-p${page}` : ""}.png`;
+
+await t("edge adaptive: set_poster accepts page-2/3 keys in the poster maps", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge(posterBody({
+    poster_urls: {
+      portrait: posterPageUrlFor(TODAY, "portrait", 1),
+      "portrait-p2": posterPageUrlFor(TODAY, "portrait", 2),
+      "portrait-p3": posterPageUrlFor(TODAY, "portrait", 3),
+      square: posterPageUrlFor(TODAY, "square", 1),
+      "square-p2": posterPageUrlFor(TODAY, "square", 2),
+    },
+    poster_checksums: {
+      portrait: "a".repeat(64),
+      "portrait-p2": "b".repeat(64),
+      "portrait-p3": "c".repeat(64),
+      square: "d".repeat(64),
+      "square-p2": "e".repeat(64),
+    },
+  }));
+  assert.equal(res.json.ok, true);
+  assert.equal(res.json.poster_qc_status, "passed");
+  const pub = svc.tables.daily_content_publications[0];
+  assert.equal(pub.poster_url, posterUrlFor(TODAY));
+  assert.equal(pub.poster_urls["portrait-p2"], posterPageUrlFor(TODAY, "portrait", 2));
+  assert.equal(pub.poster_checksums["portrait-p3"], "c".repeat(64));
+  // The push still carries page 1 (the singular poster_url).
+  assert.equal(pub.push.image_url, posterUrlFor(TODAY));
+});
+
+await t("edge adaptive: set_poster refuses a page-2 URL as the singular poster_url", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge(posterBody({ poster_url: posterPageUrlFor(TODAY, "portrait", 2) }));
+  assert.equal(res.status, 400);
+  assert.equal(res.json.ok, false);
+  assert.equal(svc.tables.daily_content_publications[0].poster_url, null);
+});
+
+await t("edge adaptive: set_poster refuses a page-4 key (over the 3-page cap)", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    publications: [plannedRow()],
+  });
+  stubs.holder.svc = svc;
+  const res = await callEdge(posterBody({
+    poster_urls: { portrait: posterUrlFor(TODAY), "portrait-p4": posterPageUrlFor(TODAY, "portrait", 4) },
+    poster_checksums: { portrait: "a".repeat(64), "portrait-p4": "b".repeat(64) },
+  }));
+  assert.equal(res.status, 400);
+  assert.equal(res.json.ok, false);
+});
+
+await t("edge adaptive: multi-page set still publishes with the page-1 image", async () => {
+  const svc = makeSvc({
+    settings: [{ enabled: true }],
+    // The 8-gate verifies the stored card against the live hadith row
+    // (V1-V4 fail closed on missing rows), like the full split-flow test.
+    hadiths: [hadithRow()],
+    duas: ["s1", "s2", "s3", "s4", "s5"].map((s) => duaRow(s)),
+    publications: [plannedRow()],
+    tokens: [token("t1", "d1")],
+  });
+  stubs.holder.svc = svc;
+  const calls = setWebpush(ok201);
+  const finalized = await callEdge(posterBody({
+    poster_urls: {
+      portrait: posterPageUrlFor(TODAY, "portrait", 1),
+      "portrait-p2": posterPageUrlFor(TODAY, "portrait", 2),
+      square: posterPageUrlFor(TODAY, "square", 1),
+      "square-p2": posterPageUrlFor(TODAY, "square", 2),
+    },
+    poster_checksums: {
+      portrait: "a".repeat(64),
+      "portrait-p2": "b".repeat(64),
+      square: "c".repeat(64),
+      "square-p2": "d".repeat(64),
+    },
+  }));
+  assert.equal(finalized.json.ok, true);
+  const pub = await callEdge({ publish_planned: true });
+  assert.equal(pub.json.ok, true);
+  assert.equal(pub.json.delivery.sent, 1);
+  assert.equal(JSON.parse(calls[0].payload).image_url, posterUrlFor(TODAY));
+  assert.equal(svc.tables.daily_content_publications[0].status, "published");
+});
+
 await t("edge Phase 3: set_poster refuses a failed row", async () => {
   const svc = makeSvc({
     settings: [{ enabled: true }],
