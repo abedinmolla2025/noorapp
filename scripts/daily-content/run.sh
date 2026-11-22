@@ -14,7 +14,7 @@ echo "== compile dailyContent lib =="
   src/lib/dailyContent/visualConceptEngine.ts src/lib/dailyContent/visualSelection.ts \
   src/lib/dailyContent/dailyShare.ts src/lib/dailyContent/monitoring.ts \
   src/lib/dailyContent/bengaliQuality.ts src/lib/dailyContent/autonomousGate.ts \
-  src/lib/dailyContent/palettes.ts \
+  src/lib/dailyContent/palettes.ts src/lib/dailyContent/adaptivePoster.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
 # Separate invocation for the Islamic Calendar lib: its own outDir (.out-cal).
 # Mixing it into the lib compile would change the common rootDir and move
@@ -30,8 +30,20 @@ echo "== compile dailyContent lib =="
 # lib outputs into .out/src/... (common rootDir), breaking test imports.
 ./node_modules/.bin/tsc api/daily-content-run.ts \
   --module esnext --target es2020 --skipLibCheck --outDir scripts/daily-content/.out
+# Syntax check for the poster render route + card (TSX files the tsc
+# invocations above do not cover — a syntax error here went green in
+# run.sh and only surfaced as a vite 500 at render time, 2026-11-22:
+# a dropped `linesOf` header in PosterRender.tsx). esbuild parses
+# (no bundling, no import resolution) — the same class of error the
+# vite transform reports.
+echo "== syntax check poster render route + card =="
+for f in src/pages/demo/PosterRender.tsx src/pages/demo/adaptivePosterFixtures.ts src/components/dailyContent/OgShareCard.tsx; do
+  ./node_modules/vite/node_modules/.bin/esbuild "$f" --loader:.tsx=tsx --outfile=/dev/null
+done
 echo "== build fixture (real bundled duas) =="
 node scripts/daily-content/build-fixture.mjs
+echo "== adaptive long-hadith poster tests =="
+node scripts/daily-content/adaptive-poster-tests.mjs
 echo "== unit tests =="
 node scripts/daily-content/tests.mjs
 echo "== visual intelligence integration tests =="

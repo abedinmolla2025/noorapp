@@ -59,7 +59,11 @@
  * in the status JSON / QC metadata only),
  * `plan=1` (split flow: render from the PLANNED row's `/poster-plan.json`
  * instead of the published row — see data source 1b above),
- * `fixture` (test-only, see above).
+ * `fixture` (test-only, see above; `6530` = the canonical long
+ * hadith, `6530-medium` / `6530-2page` = sentence-aligned excerpts),
+ * `adaptive=1` (adaptive multi-page, owner brief 2026-11-22: split
+ * the card and render one page — `page=N`, 1-based, default 1;
+ * off by default, single-poster behaviour unchanged without it).
  */
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
@@ -79,6 +83,14 @@ import {
   type VisualStatusJson,
 } from "@/lib/dailyContent/visualSelection";
 import { checkOgCardBatch, checkOgVerbatim, effectiveBengaliFirstLayout, ogExportSize, OG_STAGE_SIZE, parsePosterLayout, type OgFitRecord, type OgFormat, type PosterLayout } from "@/lib/dailyContent/ogQc";
+import {
+  adaptivePageLabel,
+  splitAdaptivePages,
+  verifyAdaptiveCoverage,
+  type AdaptivePosterMode,
+  type AdaptiveSplitResult,
+} from "@/lib/dailyContent/adaptivePoster";
+import { buildAdaptivePageCard, fixture6530Card, fixture6530ExcerptCard, fixtureAdaptiveLinkCard } from "./adaptivePosterFixtures";
 import { paletteById } from "@/lib/dailyContent/palettes";
 import { buildHadithCard, hadithCanonicalLink, hadithSourceLine } from "@/lib/dailyContent/cards";
 import { extractHadithMatn, transliterateArabic } from "@/lib/dailyContent/transliteration";
@@ -127,6 +139,24 @@ type PosterStatus = {
   verbatimOk: boolean | null;
   exportSize: { width: number; height: number };
   error: string | null;
+  /**
+   * Adaptive multi-page (owner brief 2026-11-22): null unless
+   * `?adaptive=1` — then the mode, the rendered page, and the
+   * set-level coverage verdict (the whole set is held unless the
+   * coverage check passes). The `fit` record above is per-page.
+   */
+  adaptive: {
+    mode: AdaptivePosterMode;
+    pageIndex: number;
+    pageCount: number;
+    isExcerpt: boolean;
+    coverageOk: boolean;
+    coverageErrors: string[];
+  } | null;
+  /** On-poster page label (e.g. "২/৩") for multi-page sets; null otherwise. */
+  pageLabel: string | null;
+  /** Excerpt notice for link-mode intro posters; null otherwise. */
+  excerptNotice: string | null;
 };
 
 /**
@@ -163,8 +193,19 @@ export default function PosterRender() {
   const layout = parsePosterLayout(params.get("layout"));
   const fixture = params.get("fixture");
   const planMode = params.get("plan") === "1";
+  // Adaptive multi-page (owner brief 2026-11-22): `?adaptive=1` runs
+  // the splitter on the loaded card and renders one page
+  // (`?page=N`, 1-based, default 1). Off by default — the existing
+  // single-poster behaviour is byte-identical without the param.
+  const adaptiveEnabled = params.get("adaptive") === "1";
+  const pageParam = Number(params.get("page") ?? "1");
+  const pageIndex = Number.isFinite(pageParam) && pageParam >= 1 ? Math.floor(pageParam) : 1;
 
   const [card, setCard] = useState<CardPayload | null>(null);
+  // Adaptive multi-page: the FULL (un-paged) card, kept alongside the
+  // rendered page card so the effective layout + fit floors are
+  // computed from the whole hadith (all pages share one chrome).
+  const [fullCard, setFullCard] = useState<CardPayload | null>(null);
   const [background, setBackground] = useState<BackgroundScene | null>(null);
   const [status, setStatus] = useState<PosterStatus>({
     status: "loading",
@@ -187,6 +228,9 @@ export default function PosterRender() {
     verbatimOk: null,
     exportSize: ogExportSize(format),
     error: null,
+    adaptive: null,
+    pageLabel: null,
+    excerptNotice: null,
   });
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -202,6 +246,18 @@ export default function PosterRender() {
 
         if (fixture === "intentions") {
           payload = fixtureCard();
+        } else if (fixture === "6530") {
+          // Canonical long-hadith case (Bukhari 81-6530, exact Bengali).
+          payload = fixture6530Card();
+        } else if (fixture === "6530-medium") {
+          // Sentence-aligned ~500-char excerpt (EXTENDED_SINGLE case).
+          payload = fixture6530ExcerptCard(500, "medium");
+        } else if (fixture === "6530-2page") {
+          // Sentence-aligned ~700-char excerpt (MULTI_PAGE, 2 pages).
+          payload = fixture6530ExcerptCard(700, "2page");
+        } else if (fixture === "adaptive-link") {
+          // Synthetic long test text (LINK mode intro poster).
+          payload = fixtureAdaptiveLinkCard();
         } else if (fixture) {
           throw new Error(`unknown_fixture:${fixture}`);
         } else {
@@ -372,7 +428,41 @@ export default function PosterRender() {
           // the pronunciation state is QC metadata only (status JSON).
           pronunciationShown: layout === "legacy",
         });
-        setCard(payload);
+        // Adaptive multi-page (owner brief 2026-11-22): split the FULL
+        // card — visual selection and batch QC above already ran on the
+        // whole hadith — and render the requested page. The set-level
+        // coverage check is the gate: a failed coverage check holds the
+        // WHOLE set (the page is never rendered as a partial set).
+        // Without `?adaptive=1` the full card renders as before.
+        let renderCard = payload;
+        let adaptiveStatus: PosterStatus["adaptive"] = null;
+        let pageLabel: string | null = null;
+        let excerptNotice: string | null = null;
+        if (adaptiveEnabled) {
+          const split: AdaptiveSplitResult = splitAdaptivePages(payload.arabic, payload.bengali, format);
+          const coverage = verifyAdaptiveCoverage(payload.arabic, payload.bengali, split);
+          if (!coverage.ok) {
+            throw new Error(`adaptive_coverage_fail:${coverage.errors.join("; ")}`);
+          }
+          if (pageIndex > split.pages.length) {
+            throw new Error(`adaptive_page_out_of_range:${pageIndex}/${split.pages.length}`);
+          }
+          const page = split.pages[pageIndex - 1];
+          const isExcerpt = split.mode === "full_reading_link";
+          renderCard = buildAdaptivePageCard(payload, page.arabic, page.bengali, page.index, page.pageCount, isExcerpt);
+          adaptiveStatus = {
+            mode: split.mode,
+            pageIndex: page.index,
+            pageCount: page.pageCount,
+            isExcerpt,
+            coverageOk: coverage.ok,
+            coverageErrors: coverage.errors,
+          };
+          pageLabel = page.pageCount > 1 ? adaptivePageLabel(page.index, page.pageCount) : null;
+          excerptNotice = isExcerpt ? "সম্পূর্ণ হাদিস পড়ুন" : null;
+        }
+        setCard(renderCard);
+        setFullCard(payload);
         setBackground(assigned);
         setStatus((s) => ({
           ...s,
@@ -388,6 +478,9 @@ export default function PosterRender() {
           qc,
           verbatimOk,
           error: qc.ok ? null : `qc_fail:${qc.errors.join("; ")}`,
+          adaptive: adaptiveStatus,
+          pageLabel,
+          excerptNotice,
         }));
       } catch (e) {
         if (cancelled) return;
@@ -452,7 +545,24 @@ export default function PosterRender() {
         const measureFit = (nodes: Element[]): OgFitRecord | null => {
           const bn = nodes.find((el) => el.getAttribute("data-fit-kind") === "bengali") as HTMLElement | undefined;
           const ar = nodes.find((el) => el.getAttribute("data-fit-kind") === "arabic") as HTMLElement | undefined;
-          if (!bn || !ar) return null;
+          if (!bn && !ar) return null;
+          // Adaptive multi-page: a page whose Arabic (or Bengali) ended
+          // on an earlier page renders no block for that language — the
+          // absent side reports 0 lines with Present=false, and the
+          // set-level coverage check (not this record) proves the text
+          // is complete across pages.
+          const bnSize = bn ? Number(bn.getAttribute("data-fit-size") ?? "") || 0 : 0;
+          const arSize = ar ? Number(ar.getAttribute("data-fit-size") ?? "") || 0 : 0;
+          // Floors come from the same effective-layout table the card
+          // rendered with — never hardcoded here, so the record and the
+          // render can never disagree about what the floor was. For an
+          // adaptive page the lengths are the FULL card's (all pages
+          // share one chrome — see layoutLengths in OgShareCard).
+          const effLengths =
+            adaptiveEnabled && fullCard
+              ? { arabic: fullCard.arabic.length, bengali: fullCard.bengali.length }
+              : { arabic: card?.arabic.length ?? 0, bengali: card?.bengali.length ?? 0 };
+          const eff = layout === "legacy" ? null : effectiveBengaliFirstLayout(layout, format, effLengths.arabic, effLengths.bengali);
           const linesOf = (el: HTMLElement): number => {
             const textEl = el.querySelector("div");
             if (!textEl) return 0;
@@ -475,12 +585,6 @@ export default function PosterRender() {
             const textEl = el.querySelector("div");
             return textEl ? parseFloat(getComputedStyle(textEl).lineHeight) || 0 : 0;
           };
-          const bnSize = Number(bn.getAttribute("data-fit-size") ?? "") || 0;
-          const arSize = Number(ar.getAttribute("data-fit-size") ?? "") || 0;
-          // Floors come from the same effective-layout table the card
-          // rendered with — never hardcoded here, so the record and the
-          // render can never disagree about what the floor was.
-          const eff = layout === "legacy" ? null : effectiveBengaliFirstLayout(layout, format, card?.arabic.length ?? 0, card?.bengali.length ?? 0);
           // Spare px is the TRUE headroom: box height minus text height
           // minus vertical padding. (NOT clientHeight - scrollHeight:
           // for a fitting flex panel Chrome reports scrollHeight ==
@@ -498,19 +602,21 @@ export default function PosterRender() {
           };
           return {
             format,
-            isLongContent: (card?.arabic.length ?? 0) > 260 || (card?.bengali.length ?? 0) > 380,
+            isLongContent: effLengths.arabic > 260 || effLengths.bengali > 380,
             bengaliSize: bnSize,
             bengaliMinSize: eff?.bengaliMinSize ?? 0,
             arabicSize: arSize,
             arabicMinSize: eff?.arabicMinSize ?? 0,
-            bengaliLines: linesOf(bn),
-            arabicLines: linesOf(ar),
-            bengaliSparePx: spareOf(bn),
-            arabicSparePx: spareOf(ar),
-            bengaliOverflow: bn.getAttribute("data-fit-overflow") === "true",
-            arabicOverflow: ar.getAttribute("data-fit-overflow") === "true",
-            bengaliLineHeight: lhOf(bn),
-            arabicLineHeight: lhOf(ar),
+            bengaliLines: bn ? linesOf(bn) : 0,
+            arabicLines: ar ? linesOf(ar) : 0,
+            bengaliSparePx: bn ? spareOf(bn) : 0,
+            arabicSparePx: ar ? spareOf(ar) : 0,
+            bengaliOverflow: bn ? bn.getAttribute("data-fit-overflow") === "true" : false,
+            arabicOverflow: ar ? ar.getAttribute("data-fit-overflow") === "true" : false,
+            bengaliLineHeight: bn ? lhOf(bn) : 0,
+            arabicLineHeight: ar ? lhOf(ar) : 0,
+            bengaliPresent: bn !== undefined,
+            arabicPresent: ar !== undefined,
           };
         };
         for (;;) {
@@ -562,7 +668,8 @@ export default function PosterRender() {
       cancelled = true;
       if (timer) clearTimeout(timer);
     };
-  }, [card, background]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [card, background, fullCard, adaptiveEnabled]);
 
   // Expose the status for the screenshot script.
   useEffect(() => {
@@ -582,7 +689,7 @@ export default function PosterRender() {
       </div>
       {card && background && (
         <div id="poster-stage" ref={stageRef} style={{ width: stage.width, height: stage.height }}>
-          <OgShareCard card={card} backgroundUrl={backgroundUrl(background)} badgeLabel={badgeLabelForCard(card)} format={format} layout={layout} palette={status.visual ? paletteById(status.visual.paletteId) : null} />
+          <OgShareCard card={card} backgroundUrl={backgroundUrl(background)} badgeLabel={badgeLabelForCard(card)} format={format} layout={layout} palette={status.visual ? paletteById(status.visual.paletteId) : null} pageLabel={status.pageLabel} excerptNotice={status.excerptNotice} layoutLengths={adaptiveEnabled && fullCard ? { arabicLen: fullCard.arabic.length, bengaliLen: fullCard.bengali.length } : null} />
         </div>
       )}
       {status.status === "error" && (

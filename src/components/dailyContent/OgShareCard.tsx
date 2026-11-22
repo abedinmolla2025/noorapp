@@ -151,6 +151,26 @@ type OgShareCardProps = {
    * everywhere (back-compat for admin preview + legacy layouts).
    */
   palette?: PosterPalette | null;
+  /**
+   * Adaptive multi-page (owner brief 2026-11-22): page label
+   * (e.g. "২/৩") shown in the source-pill row. Absent = single
+   * poster — output is byte-identical to before.
+   */
+  pageLabel?: string | null;
+  /**
+   * Adaptive link mode: excerpt notice (e.g. "সম্পূর্ণ হাদিস পড়ুন")
+   * shown in the source-pill row. Absent = complete content.
+   */
+  excerptNotice?: string | null;
+  /**
+   * Adaptive multi-page: the FULL card's text lengths, for the
+   * effective-layout computation. Without this, a short later page
+   * would compute a different (non-long) layout than page 1 — a
+   * compact header on page 1 but not page 2 — breaking the
+   * cross-page visual consistency the brief requires. Absent = the
+   * card's own lengths (single-poster behaviour, unchanged).
+   */
+  layoutLengths?: { arabicLen: number; bengaliLen: number } | null;
 };
 
 /**
@@ -496,7 +516,7 @@ function AutoFitArabic({
     </div>
   );
 }
-function SourcePill({ sourceLine, paddingV = 6 }: { sourceLine: string; paddingV?: number }) {
+function SourcePill({ sourceLine, paddingV = 6, pageLabel = null, excerptNotice = null }: { sourceLine: string; paddingV?: number; pageLabel?: string | null; excerptNotice?: string | null }) {
   return (
     <div
       style={{
@@ -522,6 +542,31 @@ function SourcePill({ sourceLine, paddingV = 6 }: { sourceLine: string; paddingV
       >
         {sourceLine}
       </span>
+      {/* Adaptive multi-page: the page label rides in this same row, so
+          it costs no extra height (the 10-lines/page Bengali budget
+          already accounts for this row). The excerpt notice marks a
+          link-mode intro poster as partial — never implied complete. */}
+      {pageLabel && (
+        <span
+          style={{
+            color: GOLD,
+            fontWeight: 800,
+            fontSize: 12,
+            background: "rgba(6,17,32,0.88)",
+            border: `1px solid ${GOLD_BORDER}`,
+            borderRadius: 12,
+            padding: `${paddingV}px 10px`,
+            fontFamily: BENGALI_FONT,
+          }}
+        >
+          {pageLabel}
+        </span>
+      )}
+      {excerptNotice && (
+        <span style={{ color: "#f5c86b", fontSize: 12, fontWeight: 700, fontFamily: BENGALI_FONT }}>
+          {excerptNotice}
+        </span>
+      )}
       <span style={{ color: "#e8e8e8", fontSize: 12 }}>noorapp.in</span>
     </div>
   );
@@ -540,7 +585,7 @@ function SourcePill({ sourceLine, paddingV = 6 }: { sourceLine: string; paddingV
  * content stack is vertically centered, so the frame rebalances itself
  * with no empty space where a banner used to be.
  */
-export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait", composition = "centered", layout: posterLayout = "c", palette = null }: OgShareCardProps) {
+export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrait", composition = "centered", layout: posterLayout = "c", palette = null, pageLabel = null, excerptNotice = null, layoutLengths = null }: OgShareCardProps) {
   const stage = OG_STAGE_SIZE[format];
   const ogLayout = OG_LAYOUT[format];
   const lowerThird = composition === "lower-third" && !ogLayout.horizontal;
@@ -555,14 +600,18 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
   // so this stays 0 there.
   const [arabicEpoch, setArabicEpoch] = useState(0);
   // Bengali-first variants (a/b/c) use their own size table, tightened
-  // for long content; legacy keeps the exact numbers above.
+  // for long content; legacy keeps the exact numbers above. Adaptive
+  // multi-page: the effective layout comes from the FULL card's lengths
+  // (layoutLengths) so every page of a set shares one chrome — a short
+  // later page must not switch back to the non-long header/divider.
+  const layoutLens = layoutLengths ?? { arabicLen: card.arabic.length, bengaliLen: card.bengali.length };
   const bfLayout =
     posterLayout !== "legacy"
       ? effectiveBengaliFirstLayout(
           posterLayout as BengaliFirstLayout,
           format,
-          card.arabic.length,
-          card.bengali.length,
+          layoutLens.arabicLen,
+          layoutLens.bengaliLen,
         )
       : null;
   return (
@@ -718,21 +767,27 @@ export function OgShareCard({ card, backgroundUrl, badgeLabel, format = "portrai
             {/* Arabic second — smaller, verbatim, never reworded (rule 4).
                 Joint fit: the block is capped (a share of the body
                 height) and auto-fits inside the cap, so a long Arabic
-                can no longer starve the Bengali hero of height. */}
-            <AutoFitArabic
-              text={card.arabic}
-              baseSize={bfLayout.arabicSize}
-              minSize={bfLayout.arabicMinSize}
-              lineHeight={bfLayout.arabicLineHeight}
-              capShare={bfLayout.arabicCapShare}
-              panel={posterLayout !== "c"}
-              footnote={posterLayout === "c"}
-              arabicPadding={bfLayout.arabicPadding}
-              onSettled={() => setArabicEpoch((e) => e + 1)}
-              accentBorder={accentBorder}
-            />
+                can no longer starve the Bengali hero of height.
+                Adaptive multi-page: a page whose Arabic ended on an
+                earlier page renders no Arabic block (the set-level
+                coverage check proves the Arabic is complete across
+                pages); the Bengali panel then takes the freed height. */}
+            {card.arabic.trim() !== "" && (
+              <AutoFitArabic
+                text={card.arabic}
+                baseSize={bfLayout.arabicSize}
+                minSize={bfLayout.arabicMinSize}
+                lineHeight={bfLayout.arabicLineHeight}
+                capShare={bfLayout.arabicCapShare}
+                panel={posterLayout !== "c"}
+                footnote={posterLayout === "c"}
+                arabicPadding={bfLayout.arabicPadding}
+                onSettled={() => setArabicEpoch((e) => e + 1)}
+                accentBorder={accentBorder}
+              />
+            )}
             {/* Source pill — only when the source left the header badge (B/C). */}
-            {!bfLayout.sourceInBadge && <SourcePill sourceLine={card.sourceLine} paddingV={bfLayout.sourcePillPaddingV} />}
+            {!bfLayout.sourceInBadge && <SourcePill sourceLine={card.sourceLine} paddingV={bfLayout.sourcePillPaddingV} pageLabel={pageLabel} excerptNotice={excerptNotice} />}
           </div>
         ) : ogLayout.horizontal ? (
           <div
