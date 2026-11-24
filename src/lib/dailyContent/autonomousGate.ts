@@ -179,6 +179,10 @@ export type GateInput = {
   /** The row's cycle numbers (planner-assigned). Null -> V7 FAILS (fail-closed). */
   hadithCycle: number | null;
   cardCycle: number | null;
+  /** Text-only fallback mode (owner decision 2026-11-23): V5/V8 are
+   *  SKIPPED (no poster to check) and V6 runs only its push-text
+   *  half. Absent/false = the normal all-8-must-pass gate. */
+  textOnlyFallback?: boolean;
   /** Base URL for the poster-URL check (the project's SUPABASE_URL).
    *  Empty -> V8 FAILS (fail-closed). */
   posterBaseUrl: string;
@@ -187,6 +191,11 @@ export type GateInput = {
 export type GateValidationResult = {
   id: ValidationId;
   pass: boolean;
+  /** True when the check did not run (text-only fallback: V5/V8 have
+   *  no poster to check). A skipped result is never recorded as a
+   *  pass — evaluateSafetyGate excludes it from `failed` but the
+   *  verdict still shows pass:false + skipped:true. */
+  skipped?: boolean;
   /** Machine-readable detail (the failing reason, or the passing evidence). */
   detail: string;
   /** Soft issues — recorded, never blocking. */
@@ -249,6 +258,7 @@ const hasText = (v: unknown): v is string => typeof v === "string" && v.trim().l
 
 const ok = (id: ValidationId, detail: string, warnings: string[] = []): GateValidationResult => ({ id, pass: true, detail, warnings });
 const fail = (id: ValidationId, detail: string, warnings: string[] = []): GateValidationResult => ({ id, pass: false, detail, warnings });
+const skip = (id: ValidationId, detail: string): GateValidationResult => ({ id, pass: false, skipped: true, detail, warnings: [] });
 
 function parseHadithRef(ref: string | null): string | null {
   if (typeof ref !== "string") return null;
@@ -474,6 +484,11 @@ export function evalFabricatedClaimsDetection(input: GateInput): GateValidationR
 export function evalContentVisualConsistency(input: GateInput): GateValidationResult {
   const id: ValidationId = "content_visual_consistency";
   const poster = input.poster;
+  // Text-only fallback: there is no poster or scene to check — the
+  // validation is SKIPPED (recorded, never claimed as passed).
+  if (input.textOnlyFallback === true) {
+    return skip(id, "text-only fallback: no poster/scene to check — content-visual consistency skipped (not passed)");
+  }
   if (poster.qcStatus !== "passed") {
     return fail(id, `poster_qc_status ${JSON.stringify(poster.qcStatus)} != passed — no render QC evidence`);
   }
@@ -556,7 +571,10 @@ export function evalContentVisualConsistency(input: GateInput): GateValidationRe
 
 export function evalBengaliReadabilityImageQuality(input: GateInput): GateValidationResult {
   const id: ValidationId = "bengali_readability_image_quality";
-  if (input.poster.qcStatus !== "passed") {
+  // Text-only fallback: the poster-QC precondition is skipped, but
+  // the push-text half still runs — in fallback mode the push IS the
+  // publication, so empty title/body must still HOLD.
+  if (input.textOnlyFallback !== true && input.poster.qcStatus !== "passed") {
     return fail(id, `poster_qc_status ${JSON.stringify(input.poster.qcStatus)} != passed — no render QC evidence`);
   }
   if (input.cards.length < 1) {
@@ -565,7 +583,9 @@ export function evalBengaliReadabilityImageQuality(input: GateInput): GateValida
   if (!input.push || !hasText(input.push.title) || !hasText(input.push.body)) {
     return fail(id, "push title/body empty — nothing readable to send");
   }
-  return ok(id, "poster QC passed for these cards; push title/body present (fit is render-time evidence)");
+  return ok(id, input.textOnlyFallback === true
+    ? "text-only fallback: no poster; push title/body present"
+    : "poster QC passed for these cards; push title/body present (fit is render-time evidence)");
 }
 
 /* ------------------------------------------------------------------ */
@@ -612,6 +632,11 @@ export function evalFinalizedAssetIntegrity(input: GateInput): GateValidationRes
   const id: ValidationId = "finalized_asset_integrity";
   const p = input.poster;
   const date = input.kolkataDate;
+  // Text-only fallback: there is no finalized asset to verify — the
+  // validation is SKIPPED (recorded, never claimed as passed).
+  if (input.textOnlyFallback === true) {
+    return skip(id, "text-only fallback: no finalized asset to verify — skipped (not passed)");
+  }
   if (!input.posterBaseUrl) {
     return fail(id, "poster base URL not configured — URL cannot be verified (fail-closed)");
   }
@@ -704,7 +729,7 @@ export function evaluateAutonomousGate(input: GateInput): GateVerdict {
     evalDuplicatePrevention(safe),
     evalFinalizedAssetIntegrity(safe),
   ];
-  const combined = evaluateSafetyGate(results.map((r) => ({ id: r.id, pass: r.pass, detail: r.detail })));
+  const combined = evaluateSafetyGate(results.map((r) => ({ id: r.id, pass: r.pass, detail: r.detail, ...(r.skipped === true ? { skipped: true } : {}) })));
   if (combined.decision === "publish") {
     return { decision: "publish", results, failed: [], reasons: [] };
   }

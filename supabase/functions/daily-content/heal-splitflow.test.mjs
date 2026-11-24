@@ -3,14 +3,18 @@
 //
 // The retry tick with { "retry_only": true, "heal": true } runs the
 // retry pass unchanged, then heals ONLY through the split flow — it
-// NEVER sends a text-only push and NEVER flips a row to published on
-// its own:
+// NEVER flips a row to published on its own, EXCEPT the text-only
+// fallback (owner decision 2026-11-23): with the text_only_fallback
+// setting on, a quarantined row publishes text-only (see
+// text-only-fallback.test.mjs). With the flag off (the default in
+// these tests) it NEVER sends a text-only push:
 //   - no row / failed row  -> plan-only (planned row, no send, no flip)
 //   - planned + poster QC-passed -> publishPlanned (first send WITH
 //     the poster image — the only send in heal)
 //   - planned + poster failed    -> HOLD (poster_failed; poster
 //     workflow should retry)
 //   - planned + quarantined      -> HOLD (quarantined; no dispatch)
+//     when the fallback flag is off; publishes TEXT-ONLY when on
 //   - planned + poster pending   -> HOLD (poster_pending; dispatch
 //     the poster workflow)
 //   - published row              -> healed:false (nothing to do)

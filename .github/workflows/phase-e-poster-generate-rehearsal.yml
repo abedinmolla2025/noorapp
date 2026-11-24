@@ -27,6 +27,23 @@
 #      poster failure leaves the row planned — downstream has nothing
 #      to distribute that day.
 #
+# Adaptive multi-page (2026-11-22, owner brief — merged to main 2026-11-22):
+# the render page selects a layout mode from the card's measured fit
+# (`?adaptive=1`): single / extended_single (1 page), multi_page
+# (2–3 pages, sentence-boundary splits, whole-set coverage gate), or
+# full_reading_link (1 intro page + link). This workflow PROBES with a
+# portrait page-1 adaptive render to learn the mode + pageCount, then
+# renders every (page, format) pair; the probe PNG is page-1 portrait
+# and is reused, never re-rendered. Page 1 keeps the existing storage
+# layout (<date>/<format>.png); pages 2–3 upload to
+# <date>/<format>-p2.png / -p3.png and land in the existing
+# poster_urls / poster_checksums maps under keys <format>-p2 / -p3
+# (the function accepts them; page-1 portrait stays poster_url, so
+# the publish / push / homepage chain works unchanged). Finalize
+# asserts ONE backgroundId across ALL renders; ANY failed page or
+# format fails the WHOLE set (set_poster failed, never a partial set).
+# Compare mode stays non-adaptive (single render per format, as before).
+#
 # Stage 4 (Downstream Distribution — homepage image, push image,
 # WhatsApp/Native Share, Facebook Page) reads the finalized asset.
 # The homepage already reads `poster_url` (Phase 3); push carries the
@@ -279,7 +296,7 @@ jobs:
           test -f dist/app.html || { echo "dist/app.html missing after build."; exit 1; }
           echo "Build OK (demo routes enabled for the poster-render route)."
 
-      - name: Render + upload + finalize (per format)
+      - name: Render + upload (adaptive pages x formats)
         if: steps.precheck.outputs.precheck_skip != 'true'
         env:
           DATE: ${{ steps.precheck.outputs.kolkata_date }}
@@ -315,40 +332,120 @@ jobs:
             PLAN_PARAM=""
           fi
           FAILED=""
-          for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
-            case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT"; continue ;; esac
-            echo "=== format: $FORMAT ==="
-            PNG="poster-out/poster-$DATE-$FORMAT.png"
-            if ! node scripts/daily-content/poster/render-poster.mjs \
-                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT&layout=$LAYOUT$PLAN_PARAM" \
-                --out "$PNG" > "poster-out/render-$FORMAT.json"; then
-              echo "Render FAILED for $FORMAT:"
+          if [ "$COMPARE" = "true" ]; then
+            # Compare mode: unchanged, non-adaptive single render per format.
+            for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
+              case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT"; continue ;; esac
+              echo "=== format: $FORMAT ==="
+              PNG="poster-out/poster-$DATE-$FORMAT.png"
+              if ! node scripts/daily-content/poster/render-poster.mjs \
+                  --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT&layout=$LAYOUT$PLAN_PARAM" \
+                  --out "$PNG" > "poster-out/render-$FORMAT.json"; then
+                echo "Render FAILED for $FORMAT:"
+                cat "poster-out/render-$FORMAT.json"
+                FAILED="$FAILED $FORMAT"
+                continue
+              fi
               cat "poster-out/render-$FORMAT.json"
-              FAILED="$FAILED $FORMAT"
-              continue
-            fi
-            cat "poster-out/render-$FORMAT.json"
-            echo "---"
-            if [ "$COMPARE" = "true" ]; then
+              echo "---"
               OBJECT_PATH="$DATE/compare/$LAYOUT-$FORMAT.png"
-            else
-              OBJECT_PATH="$DATE/$FORMAT.png"
-            fi
-            if ! node scripts/daily-content/poster/upload-poster.mjs \
-                --file "$PNG" \
-                --object-path "$OBJECT_PATH" \
-                --supabase-url "$REHEARSAL_URL" \
-                --anon-key "$REHEARSAL_ANON_KEY" \
-                --admin-email "$REHEARSAL_ADMIN_EMAIL" \
-                --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
-              echo "Upload FAILED for $FORMAT:"
+              if ! node scripts/daily-content/poster/upload-poster.mjs \
+                  --file "$PNG" \
+                  --object-path "$OBJECT_PATH" \
+                  --supabase-url "$REHEARSAL_URL" \
+                  --anon-key "$REHEARSAL_ANON_KEY" \
+                  --admin-email "$REHEARSAL_ADMIN_EMAIL" \
+                  --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT.json"; then
+                echo "Upload FAILED for $FORMAT:"
+                cat "poster-out/upload-$FORMAT.json"
+                FAILED="$FAILED $FORMAT"
+                continue
+              fi
               cat "poster-out/upload-$FORMAT.json"
-              FAILED="$FAILED $FORMAT"
-              continue
+              echo "---"
+            done
+          else
+            # Adaptive mode: probe portrait page 1 to learn the mode +
+            # pageCount, then render every (page, format) pair. The
+            # probe IS page-1 portrait and is reused, never re-rendered.
+            echo "=== adaptive probe: portrait page 1 ==="
+            PROBE_PNG="poster-out/poster-$DATE-portrait-p1.png"
+            PROBE_JSON="poster-out/render-portrait-p1.json"
+            if ! node scripts/daily-content/poster/render-poster.mjs \
+                --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=portrait&layout=$LAYOUT&adaptive=1&page=1$PLAN_PARAM" \
+                --out "$PROBE_PNG" > "$PROBE_JSON"; then
+              echo "Probe render FAILED (portrait page 1):"
+              cat "$PROBE_JSON"
+              FAILED="$FAILED portrait-p1"
+            else
+              cat "$PROBE_JSON"
+              echo "---"
+              PAGE_COUNT=$(python3 -c "import json; a=json.load(open('$PROBE_JSON')).get('adaptive') or {}; print(a.get('pageCount') or '')")
+              ADAPTIVE_MODE=$(python3 -c "import json; a=json.load(open('$PROBE_JSON')).get('adaptive') or {}; print(a.get('mode') or '')")
+              case "$PAGE_COUNT" in 1|2|3) ;; *) echo "Adaptive plan missing or pageCount out of range (1-3): mode=$ADAPTIVE_MODE pageCount=$PAGE_COUNT"; FAILED="$FAILED portrait-p1" ;; esac
+              if [ -z "$FAILED" ]; then
+                echo "Adaptive mode: $ADAPTIVE_MODE, pages: $PAGE_COUNT"
+                # Upload the probe PNG as page-1 portrait (object path
+                # has no -p1 suffix, keeping the existing layout).
+                if ! node scripts/daily-content/poster/upload-poster.mjs \
+                    --file "$PROBE_PNG" \
+                    --object-path "$DATE/portrait.png" \
+                    --supabase-url "$REHEARSAL_URL" \
+                    --anon-key "$REHEARSAL_ANON_KEY" \
+                    --admin-email "$REHEARSAL_ADMIN_EMAIL" \
+                    --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-portrait-p1.json"; then
+                  echo "Upload FAILED for portrait-p1:"
+                  cat "poster-out/upload-portrait-p1.json"
+                  FAILED="$FAILED portrait-p1"
+                else
+                  cat "poster-out/upload-portrait-p1.json"
+                  echo "---"
+                fi
+              fi
+              if [ -z "$FAILED" ]; then
+                for PAGE in $(seq 1 "$PAGE_COUNT"); do
+                  for FORMAT in $(echo "$FORMATS" | tr ',' ' '); do
+                    case "$FORMAT" in portrait|square|wide|story) ;; *) echo "Unknown format: $FORMAT"; FAILED="$FAILED $FORMAT-p$PAGE"; continue ;; esac
+                    if [ "$PAGE" = "1" ] && [ "$FORMAT" = "portrait" ]; then
+                      continue
+                    fi
+                    echo "=== page $PAGE, format: $FORMAT ==="
+                    PNG="poster-out/poster-$DATE-$FORMAT-p$PAGE.png"
+                    RENDER_JSON="poster-out/render-$FORMAT-p$PAGE.json"
+                    if ! node scripts/daily-content/poster/render-poster.mjs \
+                        --url "http://127.0.0.1:4173/demo/daily-content/poster-render?date=$DATE&format=$FORMAT&layout=$LAYOUT&adaptive=1&page=$PAGE$PLAN_PARAM" \
+                        --out "$PNG" > "$RENDER_JSON"; then
+                      echo "Render FAILED for $FORMAT page $PAGE:"
+                      cat "$RENDER_JSON"
+                      FAILED="$FAILED $FORMAT-p$PAGE"
+                      continue
+                    fi
+                    cat "$RENDER_JSON"
+                    echo "---"
+                    if [ "$PAGE" = "1" ]; then
+                      OBJECT_PATH="$DATE/$FORMAT.png"
+                    else
+                      OBJECT_PATH="$DATE/$FORMAT-p$PAGE.png"
+                    fi
+                    if ! node scripts/daily-content/poster/upload-poster.mjs \
+                        --file "$PNG" \
+                        --object-path "$OBJECT_PATH" \
+                        --supabase-url "$REHEARSAL_URL" \
+                        --anon-key "$REHEARSAL_ANON_KEY" \
+                        --admin-email "$REHEARSAL_ADMIN_EMAIL" \
+                        --admin-password "$REHEARSAL_ADMIN_PASSWORD" > "poster-out/upload-$FORMAT-p$PAGE.json"; then
+                      echo "Upload FAILED for $FORMAT page $PAGE:"
+                      cat "poster-out/upload-$FORMAT-p$PAGE.json"
+                      FAILED="$FAILED $FORMAT-p$PAGE"
+                      continue
+                    fi
+                    cat "poster-out/upload-$FORMAT-p$PAGE.json"
+                    echo "---"
+                  done
+                done
+              fi
             fi
-            cat "poster-out/upload-$FORMAT.json"
-            echo "---"
-          done
+          fi
           if [ -n "$FAILED" ]; then
             echo "FAILED formats:$FAILED — stopping."
             if [ "$COMPARE" != "true" ]; then
@@ -377,23 +474,46 @@ jobs:
         run: |
           set -euo pipefail
           python3 - <<'PYEOF'
-          import json, os
+          import glob, json, os, re
           date = os.environ["DATE"]
           formats = [f.strip() for f in os.environ["FORMATS"].split(",") if f.strip()]
+          # Every render in adaptive mode writes render-<format>-p<N>.json
+          # (probe included). Finalize asserts the WHOLE SET: one mode,
+          # one pageCount, one backgroundId across every page and format.
+          probe = json.load(open("poster-out/render-portrait-p1.json"))
+          assert probe.get("ok"), "probe render (portrait p1) not ok"
+          adaptive = probe.get("adaptive") or {}
+          page_count = adaptive.get("pageCount")
+          assert page_count in (1, 2, 3), f"unexpected pageCount: {page_count}"
+          mode = adaptive.get("mode")
+          print(f"Adaptive set: mode={mode} pages={page_count} formats={formats}")
           urls, checksums, scene = {}, {}, None
-          for fmt in formats:
-              with open(f"poster-out/render-{fmt}.json") as f:
+          seen = set()
+          for path in sorted(glob.glob("poster-out/render-*-p*.json")):
+              m = re.match(r"poster-out/render-(.+)-p(\d)\.json$", path)
+              assert m, f"unexpected render file: {path}"
+              fmt, page = m.group(1), int(m.group(2))
+              assert fmt in formats, f"render for unexpected format: {fmt}"
+              assert 1 <= page <= page_count, f"render page out of range: {fmt} p{page} (count {page_count})"
+              with open(path) as f:
                   r = json.load(f)
-              assert r.get("ok"), f"render {fmt} not ok"
+              assert r.get("ok"), f"render {fmt} p{page} not ok"
+              a = r.get("adaptive") or {}
+              assert a.get("pageCount") == page_count, f"pageCount mismatch on {fmt} p{page}: {a.get('pageCount')} vs {page_count}"
+              assert a.get("mode") == mode, f"mode mismatch on {fmt} p{page}: {a.get('mode')} vs {mode}"
               if scene is None:
                   scene = r["backgroundId"]
               elif scene != r["backgroundId"]:
-                  raise SystemExit(f"scene mismatch across formats: {scene} vs {r['backgroundId']}")
-              with open(f"poster-out/upload-{fmt}.json") as f:
+                  raise SystemExit(f"background mismatch across set: {scene} vs {r['backgroundId']} ({fmt} p{page})")
+              with open(f"poster-out/upload-{fmt}-p{page}.json") as f:
                   u = json.load(f)
-              assert u.get("ok"), f"upload {fmt} not ok"
-              urls[fmt] = u["publicUrl"]
-              checksums[fmt] = u["checksum"]
+              assert u.get("ok"), f"upload {fmt} p{page} not ok"
+              key = fmt if page == 1 else f"{fmt}-p{page}"
+              urls[key] = u["publicUrl"]
+              checksums[key] = u["checksum"]
+              seen.add((fmt, page))
+          expected = {(fmt, p) for fmt in formats for p in range(1, page_count + 1)}
+          assert seen == expected, f"render set incomplete: missing {sorted(expected - seen)}, extra {sorted(seen - expected)}"
           assert "portrait" in urls, "portrait (primary) is required"
           body = {
               "action": "set_poster",
@@ -409,7 +529,7 @@ jobs:
           }
           with open("poster-out/set-poster-body.json", "w") as f:
               json.dump(body, f)
-          print("set_poster body prepared; scene:", scene)
+          print("set_poster body prepared; scene:", scene, "; pages:", sorted(urls))
           PYEOF
           RESP=$(curl -s --max-time 60 -w '\n%{http_code}' -X POST "$REHEARSAL_URL/functions/v1/daily-content" \
             -H 'Content-Type: application/json' \
@@ -492,6 +612,10 @@ jobs:
           assert r.get('poster_url'), r
           assert r.get('poster_checksum'), r
           assert r.get('poster_asset_id') == 'poster:' + '$DATE', r
+          expected = json.load(open('poster-out/set-poster-body.json'))['poster_urls'].keys()
+          actual = r.get('poster_urls') or {}
+          missing = [k for k in expected if k not in actual]
+          assert not missing, f"poster_urls missing keys: {missing}"
           print('FINALIZED ASSET VERIFIED:')
           print(' asset_id:', r['poster_asset_id'])
           print(' storage_path:', r['poster_storage_path'])
@@ -500,6 +624,7 @@ jobs:
           print(' scene:', r['poster_scene_id'])
           print(' qc_status:', r['poster_qc_status'])
           print(' generated_at:', r['poster_generated_at'])
+          print(' poster pages:', sorted(actual))
           "
 
       - name: Upload poster PNGs as artifacts

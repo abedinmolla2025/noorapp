@@ -403,6 +403,16 @@ const pendingRun = (over = {}) => runRow({
     assert.equal(m.facebookApprovalRequired, false);
     assert.equal(m.facebookPostingEnabled, false);
   });
+  await checkAsync("modeSettingsFromRow: text_only_fallback defaults false (null row, legacy row, non-boolean)", async () => {
+    assert.equal(edge.modeSettingsFromRow(null).textOnlyFallback, false);
+    assert.equal(edge.modeSettingsFromRow({ id: 1, enabled: true }).textOnlyFallback, false);
+    assert.equal(edge.modeSettingsFromRow({ id: 1, enabled: true, text_only_fallback: "yes" }).textOnlyFallback, false);
+    assert.equal(edge.modeSettingsFromRow({ id: 1, enabled: true, text_only_fallback: 1 }).textOnlyFallback, false);
+  });
+  await checkAsync("modeSettingsFromRow: text_only_fallback true -> flag on", async () => {
+    const m = edge.modeSettingsFromRow({ id: 1, enabled: true, text_only_fallback: true });
+    assert.equal(m.textOnlyFallback, true);
+  });
   const hRefs = new Set(["hadith:h1", "hadith:h2"]);
   const cRefs = new Set(["content:s1", "content:s2"]);
   await checkAsync("validateModeARun: valid pending run -> ok", async () => {
@@ -648,6 +658,15 @@ const pendingRun = (over = {}) => runRow({
     const res = await callEdgeAuth(handler, { action: "update_settings", settings: { enabled: true } }, "Bearer admin-jwt");
     assert.equal(res.status, 403);
     assert.equal(svc.tables.daily_content_settings[0].enabled, true, "the row is untouched");
+    assert.equal(svc.tables.admin_audit_log.length, 0);
+  });
+
+  await checkAsync("update_settings: text_only_fallback -> 403 (owner-SQL only, like `enabled`)", async () => {
+    const svc = makeSvc(adminSeed());
+    stubs.holder.svc = svc;
+    const res = await callEdgeAuth(handler, { action: "update_settings", settings: { text_only_fallback: true } }, "Bearer admin-jwt");
+    assert.equal(res.status, 403);
+    assert.equal(svc.tables.daily_content_settings[0].text_only_fallback, undefined, "the row is untouched");
     assert.equal(svc.tables.admin_audit_log.length, 0);
   });
 

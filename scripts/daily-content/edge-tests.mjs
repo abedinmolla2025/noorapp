@@ -3526,4 +3526,45 @@ await t("edge gate: parity — lib gate and edge gate agree exactly on identical
   }
 });
 
+await t("edge gate: fallback mode — lib and edge agree (V5/V8 skipped, V6 push-text, decision publish)", async () => {
+  // Text-only fallback mode (owner decision 2026-11-23): no poster
+  // exists, so V5/V8 are SKIPPED (never claimed as passed) and V6
+  // runs only its push-text half. Both gates must agree exactly,
+  // including the skipped markers.
+  const poster = {
+    url: null, urls: null, assetId: null, storagePath: null,
+    checksum: null, checksums: null, sceneId: null, qcStatus: "failed", generatedAt: null,
+  };
+  const input = {
+    kolkataDate: "2026-11-17",
+    hadithRef: "hadith:h1",
+    hadithSourceLine: "Sahih al-Bukhari, Hadith 1",
+    cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-H", bengali: "BENGALI-H", sourceLine: "Sahih al-Bukhari, Hadith 1" }],
+    push: { title: "TITLE", body: "BODY" },
+    poster,
+    liveHadith: { id: "h1", book_key: "bukhari", chapter_id: 1, hadith_number: 1, arabic: "ARABIC-H", bengali: "BENGALI-H", english: null },
+    liveDuas: {},
+    history: [],
+    hadithCycle: 1,
+    cardCycle: 1,
+    textOnlyFallback: true,
+  };
+  const libVerdict = gateLib.evaluateAutonomousGate({ ...input, posterBaseUrl: "http://stub" });
+  const edgeVerdict = edgeMod.evaluateAutonomousGate(input);
+  assert.equal(libVerdict.decision, "publish", "lib: fallback mode publishes");
+  assert.equal(edgeVerdict.decision, "publish", "edge: fallback mode publishes");
+  assert.deepEqual(edgeVerdict.failed, libVerdict.failed, "failed");
+  assert.deepEqual(edgeVerdict.failed, [], "nothing fails in fallback mode");
+  assert.deepEqual(
+    edgeVerdict.results.map((r) => [r.id, r.pass, r.skipped ?? false]),
+    libVerdict.results.map((r) => [r.id, r.pass, r.skipped ?? false]),
+    "per-validation pass/fail/skipped",
+  );
+  for (const id of ["content_visual_consistency", "finalized_asset_integrity"]) {
+    assert.equal(edgeVerdict.results.find((r) => r.id === id).skipped, true, `edge: ${id} skipped`);
+    assert.equal(libVerdict.results.find((r) => r.id === id).skipped, true, `lib: ${id} skipped`);
+  }
+  assert.equal(edgeVerdict.results.find((r) => r.id === "bengali_readability_image_quality").pass, true, "V6 passes on the push text");
+});
+
 console.log(`edge tests: ${n} passed`);

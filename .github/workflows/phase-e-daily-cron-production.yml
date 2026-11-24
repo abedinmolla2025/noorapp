@@ -102,6 +102,7 @@ jobs:
     env:
       PROD_URL: https://llicfiepatzgllmjhzbw.supabase.co
       PROD_ANON_KEY: ${{ secrets.PROD_ANON_KEY }}
+      PROD_CRON_SECRET: ${{ secrets.PROD_CRON_SECRET }}
     steps:
       - name: Validate inputs and secret
         run: |
