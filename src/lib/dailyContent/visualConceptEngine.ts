@@ -809,13 +809,17 @@ export const MANDATORY_VALIDATIONS: MandatoryValidation[] = [
   },
 ];
 
-export type ValidationResult = { id: ValidationId; pass: boolean; detail?: string };
+export type ValidationResult = { id: ValidationId; pass: boolean; detail?: string; skipped?: boolean };
 
 export type SafetyGateResult =
   | { decision: "publish"; failed: [] }
   | { decision: "hold"; failed: ValidationId[]; reasons: string[] };
 
-/** All 8 must be present AND pass, else HOLD. Unknown id -> HOLD (fail-closed). */
+/** All 8 must be present AND pass, else HOLD. Unknown id -> HOLD (fail-closed).
+ *  A result recorded with skipped === true (text-only fallback mode:
+ *  V5/V8 have no poster to check) is present but NOT counted as a
+ *  failure — it is explicitly not a pass either. A missing result
+ *  still HOLDs. */
 export function evaluateSafetyGate(results: ValidationResult[]): SafetyGateResult {
   const byId = new Map(results.map((r) => [r.id, r]));
   const failed: ValidationId[] = [];
@@ -826,6 +830,7 @@ export function evaluateSafetyGate(results: ValidationResult[]): SafetyGateResul
       failed.push(v.id);
       reasons.push(`${v.label}: no result recorded — HOLD (fail-closed)`);
     } else if (!r.pass) {
+      if (r.skipped === true) continue;
       failed.push(v.id);
       reasons.push(`${v.label}: FAILED${r.detail ? ` — ${r.detail}` : ""}`);
     }

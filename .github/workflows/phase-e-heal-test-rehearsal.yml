@@ -7,16 +7,20 @@
 # What a heal tick does (function code, poster branch
 # muse/daily-poster-pipeline-2026-11-15, Phase 3 split-flow heal):
 # runs the retry pass unchanged, then heals ONLY through the split
-# flow — it NEVER sends a text-only push and NEVER flips a row to
-# published on its own:
+# flow — it NEVER flips a row to published on its own, except the
+# text-only fallback (owner decision 2026-11-23): a quarantined row
+# publishes text-only when the text_only_fallback setting is on
+# (the 8-gate still applies — a gate_hold never publishes):
 #   - no row / failed row  -> plan-only (planned row, no send, no
 #     flip); this step then dispatches the poster workflow.
 #   - planned + poster QC-passed -> publishPlanned: the row flips
 #     and the first push goes out WITH the poster image.
 #   - planned + poster failed/pending -> HOLD (poster_failed /
 #     poster_pending); this step dispatches the poster workflow.
-#   - planned + quarantined -> HOLD (quarantined); NO dispatch —
-#     needs owner/admin review.
+#   - planned + quarantined -> HOLD (quarantined) when
+#     text_only_fallback is off; publishes TEXT-ONLY when the flag
+#     is on. NO dispatch either way — the heal publishes it
+#     directly when the flag is on.
 #   - published row -> healed:false (nothing to do).
 # A plain retry tick (heal=false) still NEVER plans, publishes, or
 # creates a row.
@@ -47,13 +51,16 @@
 #
 # NOTE: a heal tick sends a real push ONLY when it publishes a
 # QC-passed poster via publishPlanned (the first send carries the
-# poster image). A heal that only plans a row sends NOTHING — the
-# poster workflow (dispatched by the step below) renders the poster
-# first, and only then does the publish step send. Expect a real
-# "আজকের হাদিস" push on the owner's device only when a heal
-# publishes a QC-passed poster. That is the test working as designed
-# (the send path is part of the proof). A held/quarantined row sends
-# nothing.
+# poster image), or a quarantined row text-only via the text-only
+# fallback when the text_only_fallback setting is on. A heal that
+# only plans a row sends NOTHING — the poster workflow (dispatched
+# by the step below) renders the poster first, and only then does
+# the publish step send. Expect a real "আজকের হাদিস" push on the
+# owner's device only when a heal publishes a QC-passed poster (or a
+# quarantined row text-only with the flag on). That is the test
+# working as designed (the send path is part of the proof). A
+# held row sends nothing; a quarantined row sends a text-only push
+# only when the fallback flag is on.
 #
 # Prerequisites (owner actions, each its own approval):
 #   1. This file enters the repo via the GitHub web upload (browser):
@@ -172,7 +179,11 @@ jobs:
               print('The dispatch step below will run the poster workflow for this row.')
               dispatch = True
           elif d.get('healed') is True:
-              print('HEALED (published): the row was published WITH its QC-passed poster.')
+              if d.get('fallback'):
+                  print('HEALED (published text-only): the quarantined row was published via the text-only fallback.')
+                  print('Fallback:', d.get('fallback'))
+              else:
+                  print('HEALED (published): the row was published WITH its QC-passed poster.')
               print('Publication id:', d.get('publication_id'))
               print('Channels:', json.dumps(d.get('channels') or {}, ensure_ascii=False))
               print('Tick:', json.dumps(d.get('tick') or {}, ensure_ascii=False))
@@ -183,7 +194,7 @@ jobs:
               if hold in ('poster_pending', 'poster_failed'):
                   print('HELD: the row needs the poster workflow — the dispatch step below will run it.')
               elif hold == 'quarantined':
-                  print('QUARANTINED: the poster failed twice. No dispatch — needs owner/admin review.')
+                  print('QUARANTINED: the poster failed twice. No dispatch — publishes text-only on the next heal tick when text_only_fallback is on, else needs owner/admin review.')
               elif hold == 'no_valid_plan':
                   print('NO VALID PLAN: nothing to poster. No dispatch.')
               else:

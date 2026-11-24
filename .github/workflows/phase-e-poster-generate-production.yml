@@ -254,7 +254,18 @@ jobs:
           import json, sys
           print(json.load(sys.stdin).get('access_token') or '')
           ")
-          if [ -z "$ADMIN_TOKEN" ]; then echo "Admin sign-in failed."; exit 1; fi
+          if [ -z "$ADMIN_TOKEN" ]; then
+            echo "Admin sign-in failed."
+            # Record the failure like a render failure (CRON-secret call —
+            # no admin token needed), so it counts toward quarantine and the
+            # text-only fallback can fire after a second failure. Best
+            # effort: set_poster 404s when no row exists for the date.
+            curl -s --max-time 30 -X POST "$PROD_URL/functions/v1/daily-content" \
+              -H "Authorization: Bearer $PROD_CRON_SECRET" \
+              -H "Content-Type: application/json" \
+              -d "{\"action\":\"set_poster\",\"kolkata_date\":\"$DATE\",\"poster_qc_status\":\"failed\",\"poster_error\":\"precheck:admin_sign_in_failed\"}" || true
+            exit 1
+          fi
           echo "::add-mask::$ADMIN_TOKEN"
           ROW=$(curl -s --max-time 30 "$PROD_URL/rest/v1/daily_content_publications?kolkata_date=eq.$DATE&select=id,status,poster_url,poster_qc_status,poster_error,hadith_ref,hadith_source_line,cards" \
             -H "apikey: $PROD_ANON_KEY" -H "Authorization: Bearer $ADMIN_TOKEN")

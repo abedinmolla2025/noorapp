@@ -1,0 +1,43 @@
+-- Daily Content text-only fallback flag.
+--
+-- REHEARSAL FIRST. Do NOT apply to production without a separate explicit
+-- owner approval (see the Daily Content Master Mission). This file is
+-- local; no production database is touched by writing it.
+--
+-- What this adds:
+--  * One boolean column `text_only_fallback` on
+--    `public.daily_content_settings` (NOT NULL DEFAULT false).
+--    When true, a QUARANTINED publication row (poster failed twice)
+--    publishes text-only through `publishPlanned` — the 8-gate still
+--    applies (V5/V8 recorded SKIPPED, V6 push-text checked; a
+--    gate_hold never publishes). When false (default), quarantined
+--    rows hold exactly as before.
+--  * Owner decision 2026-11-23 16:22 IST ("Text-only fallback করে
+--    দিন"). The flag is owner-SQL only — it is NOT in the
+--    `update_settings` allowlist (the edge function 403s it, same
+--    pattern as `enabled`).
+--
+-- RLS unchanged (the settings row is already admin-gated; this
+-- migration adds no policy).
+--
+-- Enable (owner SQL, rehearsal first, production only with separate
+-- approval):
+--   UPDATE public.daily_content_settings SET text_only_fallback = true WHERE id = 1;
+--
+-- Verify:
+--   SELECT id, enabled, text_only_fallback FROM public.daily_content_settings;
+--
+-- Rollback (owner SQL, either project):
+--   UPDATE public.daily_content_settings SET text_only_fallback = false WHERE id = 1;
+-- The flag off restores the previous hold behaviour exactly; the code
+-- stays deployed but inert.
+--
+-- Verification queries (run after applying, read-only):
+--   SELECT column_name, data_type, column_default
+--   FROM information_schema.columns
+--   WHERE table_schema = 'public'
+--     AND table_name = 'daily_content_settings'
+--     AND column_name = 'text_only_fallback';
+
+alter table public.daily_content_settings
+  add column if not exists text_only_fallback boolean not null default false;

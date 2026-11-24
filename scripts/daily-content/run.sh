@@ -60,6 +60,8 @@ echo "== facebook page publication tests (real edge code, mocked Graph API) =="
 node supabase/functions/daily-content/facebook.test.mjs
 echo "== split-flow self-healing tests (real edge code, stubbed deps) =="
 node supabase/functions/daily-content/heal-splitflow.test.mjs
+echo "== text-only fallback tests (real edge code, stubbed deps) =="
+node supabase/functions/daily-content/text-only-fallback.test.mjs
 echo "== Mode A/B + per-channel switches tests (real edge code, mocked Graph API) =="
 node supabase/functions/daily-content/mode-ab.test.mjs
 echo "== monitoring + schedule-miss tests (real edge code, stubbed deps) =="

@@ -25,7 +25,9 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  * date is never violated, so no schema change was needed):
  *  - (none) --daily run, valid plan--> planned (the bare call stops
  *    here — Option A conversion, 2026-11-17; publish_planned finishes
- *    it after the poster is finalized, never text-only)
+ *    it after the poster is finalized, or text-only when the
+ *    text-only fallback applies — quarantined row + text_only_fallback
+ *    setting on, owner decision 2026-11-23)
  *  - (none) --daily run, no valid plan--> failed (one row per date; a
  *    later same-date run with a valid plan repairs it in place, it does
  *    NOT insert a second row and the date is never blocked)
@@ -36,10 +38,14 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    retryable and sent by the tick; the row itself stays planned
  *    (a tick NEVER adopts content, plans, publishes, or creates a row)
  *  - planned --heal tick, same date--> the heal step reads the row and
- *    NEVER sends a text-only push and NEVER flips it: a row whose
- *    poster is QC-passed is published through publishPlanned (the
- *    same gate the poster workflow uses, so the first send carries
- *    the poster image); a row whose poster failed is HELD (see
+ *    NEVER flips it on its own: a row whose poster is QC-passed is
+ *    published through publishPlanned (the same gate the poster
+ *    workflow uses, so the first send carries the poster image); a
+ *    QUARANTINED row is published TEXT-ONLY through publishPlanned
+ *    when the text_only_fallback setting is on (owner decision
+ *    2026-11-23 — the 8-gate still applies, V5/V8 skipped, V6
+ *    push-text checked; a gate_hold never publishes), and is HELD
+ *    when the flag is off; a row whose poster failed is HELD (see
  *    below); a row whose poster is still pending is left for the
  *    poster workflow. A planned row with no stored push (corrupt)
  *    is repaired in place by re-planning, exactly as the daily path
@@ -58,10 +64,14 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    by set_poster with poster_error starting `quarantined:` and the
  *    row is QUARANTINED — no automatic attempt retries it (the heal
  *    tick reports hold:"quarantined" and the poster workflow skips
- *    it unless force-dispatched). A successful set_poster pass clears
- *    the error and ends the hold. A status='failed' row (no valid
- *    plan) is a hold of a different kind: a later heal tick repairs
- *    it in place when a valid plan exists.
+ *    it unless force-dispatched), EXCEPT the text-only fallback:
+ *    when the text_only_fallback setting is on (owner decision
+ *    2026-11-23), the heal tick publishes a quarantined row
+ *    text-only through publishPlanned (8-gate still applies). A
+ *    successful set_poster pass clears the error and ends the hold.
+ *    A status='failed' row (no valid plan) is a hold of a different
+ *    kind: a later heal tick repairs it in place when a valid plan
+ *    exists.
  *  - planned --tick, past date--> failed ("superseded") + its pending
  *    AND retryable deliveries failed, so no stale notification can
  *    survive supersede. Stale content is NEVER reused as another day's
@@ -106,12 +116,15 @@ import webpush from "https://esm.sh/web-push@3.6.7?bundle";
  *    retry tick with { "retry_only": true, "heal": true } runs the
  *    retry pass unchanged, then heals ONLY through the split flow —
  *    it plans (plan-only semantics, never sends, never flips) or
- *    publishes a row whose poster is already QC-passed. It NEVER
- *    publishes text-only. There is no text-only fallback: the
- *    fallback question needs explicit owner approval and is NOT
- *    implemented. `heal` without `retry_only` is a client error
- *    (400), as is combining `heal` with `plan_only` or
- *    `publish_planned`.
+ *    publishes a row whose poster is already QC-passed. Text-only
+ *    fallback (owner-authorized 2026-11-23 16:22 IST, "Text-only
+ *    fallback করে দিন"): when the text_only_fallback setting is on
+ *    (owner-SQL only), a QUARANTINED row publishes text-only
+ *    through publishPlanned — the 8-gate still applies (V5/V8
+ *    skipped, V6 push-text checked; a gate_hold never publishes).
+ *    Flag off restores the previous hold behaviour exactly.
+ *    `heal` without `retry_only` is a client error (400), as is
+ *    combining `heal` with `plan_only` or `publish_planned`.
  *  - Facebook Page publication (Phase 4, owner-authorized 2026-11-16;
  *    rehearsal-only; audit NOORAPP-FACEBOOK-AUTOMATION-AUDIT-
  *    2026-11-16.md): the finalized poster for a PUBLISHED publication
@@ -1386,6 +1399,11 @@ export type ModeSettings = {
   facebookAutoPublishEnabled: boolean;
   facebookApprovalRequired: boolean;
   facebookPostingEnabled: boolean;
+  /** Text-only fallback (owner decision 2026-11-23): when true, a
+   *  QUARANTINED row (poster failed twice) publishes text-only
+   *  through publishPlanned. Owner-SQL only — never in the
+   *  update_settings allowlist. Default false (fail-closed). */
+  textOnlyFallback: boolean;
 };
 
 /** Pure mapping from a settings row (select "*") to ModeSettings.
@@ -1400,6 +1418,7 @@ export function modeSettingsFromRow(row: Record<string, unknown> | null): ModeSe
       facebookAutoPublishEnabled: false,
       facebookApprovalRequired: true,
       facebookPostingEnabled: true,
+      textOnlyFallback: false,
     };
   }
   return {
@@ -1410,6 +1429,7 @@ export function modeSettingsFromRow(row: Record<string, unknown> | null): ModeSe
     facebookAutoPublishEnabled: row.facebook_auto_publish_enabled === true,
     facebookApprovalRequired: row.facebook_approval_required !== false,
     facebookPostingEnabled: row.facebook_posting_enabled !== false,
+    textOnlyFallback: row.text_only_fallback === true,
   };
 }
 
@@ -2532,11 +2552,15 @@ async function facebookDispositionAfterPublish(svc: Svc, kolkataDate: string): P
  *  heal of the self-healing branch, which published via publishPlan()
  *  with image_url null).
  *
- *  Runs AFTER the plain retry pass (tick). It NEVER sends a text-only
- *  push and NEVER flips a row to published on its own. The only send
- *  in this function is publishPlanned, which refuses any row whose
- *  poster is not QC-passed — so a healed day always carries the
- *  finalized poster image, exactly like the E2E split flow.
+ *  Runs AFTER the plain retry pass (tick). It NEVER flips a row to
+ *  published on its own, EXCEPT the text-only fallback (owner
+ *  decision 2026-11-23): with the text_only_fallback setting on, a
+ *  quarantined row publishes text-only through publishPlanned (the
+ *  8-gate still applies; V5/V8 skipped, V6 push-text). With the flag
+ *  off, the only send in this function is publishPlanned, which
+ *  refuses any row whose poster is not QC-passed — so a healed day
+ *  carries the finalized poster image, exactly like the E2E split
+ *  flow, unless the fallback fires.
  *
  *  Outcomes (kolkata_date is always today):
  *   - published row                 -> healed:false (nothing to do)
@@ -2545,6 +2569,9 @@ async function facebookDispositionAfterPublish(svc: Svc, kolkataDate: string): P
  *     failed after set_poster — the heal finishes it, with the image)
  *   - planned + quarantined poster -> healed:false, hold:"quarantined"
  *     (alert: critical — needs owner/admin review; no dispatch)
+ *     when the fallback flag is off; with the flag on, publishPlanned
+ *     publishes it text-only (healed:true, fallback:"text_only"),
+ *     or hold:"gate_hold" when the gate fails
  *   - planned + poster failed      -> healed:false, hold:"poster_failed"
  *     (alert: warn — the poster workflow should retry; dispatch it)
  *   - planned + poster pending     -> healed:false, hold:"poster_pending"
@@ -3066,13 +3093,17 @@ export const MANDATORY_VALIDATIONS: MandatoryValidation[] = [
   },
 ];
 
-export type ValidationResult = { id: ValidationId; pass: boolean; detail?: string };
+export type ValidationResult = { id: ValidationId; pass: boolean; detail?: string; skipped?: boolean };
 
 export type SafetyGateResult =
   | { decision: "publish"; failed: [] }
   | { decision: "hold"; failed: ValidationId[]; reasons: string[] };
 
-/** All 8 must be present AND pass, else HOLD. Unknown id -> HOLD (fail-closed). */
+/** All 8 must be present AND pass, else HOLD. Unknown id -> HOLD (fail-closed).
+ *  A result recorded with skipped === true (text-only fallback mode:
+ *  V5/V8 have no poster to check) is present but NOT counted as a
+ *  failure — it is explicitly not a pass either. A missing result
+ *  still HOLDs. */
 export function evaluateSafetyGate(results: ValidationResult[]): SafetyGateResult {
   const byId = new Map(results.map((r) => [r.id, r]));
   const failed: ValidationId[] = [];
@@ -3083,6 +3114,7 @@ export function evaluateSafetyGate(results: ValidationResult[]): SafetyGateResul
       failed.push(v.id);
       reasons.push(`${v.label}: no result recorded — HOLD (fail-closed)`);
     } else if (!r.pass) {
+      if (r.skipped === true) continue;
       failed.push(v.id);
       reasons.push(`${v.label}: FAILED${r.detail ? ` — ${r.detail}` : ""}`);
     }
@@ -3427,11 +3459,20 @@ export type GateInputShape = {
   historyRecords?: ReadonlyMap<string, { chapter_id: number | null; english: string | null }>;
   hadithCycle: number | null;
   cardCycle: number | null;
+  /** Text-only fallback mode (owner decision 2026-11-23): V5/V8 are
+   *  SKIPPED (no poster to check) and V6 runs only its push-text
+   *  half. Absent/false = the normal all-8-must-pass gate. */
+  textOnlyFallback?: boolean;
 };
 
 export type GateValidationResultShape = {
   id: ValidationId;
   pass: boolean;
+  /** True when the check did not run (text-only fallback: V5/V8 have
+   *  no poster to check). A skipped result is never recorded as a
+   *  pass — evaluateSafetyGate excludes it from `failed` but the
+   *  verdict still shows pass:false + skipped:true. */
+  skipped?: boolean;
   detail: string;
   warnings: string[];
 };
@@ -3445,6 +3486,7 @@ export type GateVerdictShape = {
 
 const gateOk = (id: ValidationId, detail: string, warnings: string[] = []): GateValidationResultShape => ({ id, pass: true, detail, warnings });
 const gateFail = (id: ValidationId, detail: string, warnings: string[] = []): GateValidationResultShape => ({ id, pass: false, detail, warnings });
+const gateSkip = (id: ValidationId, detail: string): GateValidationResultShape => ({ id, pass: false, skipped: true, detail, warnings: [] });
 
 function gateParseHadithRef(ref: string | null): string | null {
   if (typeof ref !== "string") return null;
@@ -3638,6 +3680,11 @@ export function gateEvalFabricatedClaimsDetection(input: GateInputShape): GateVa
 export function gateEvalContentVisualConsistency(input: GateInputShape): GateValidationResultShape {
   const id: ValidationId = "content_visual_consistency";
   const poster = input.poster;
+  // Text-only fallback: there is no poster or scene to check — the
+  // validation is SKIPPED (recorded, never claimed as passed).
+  if (input.textOnlyFallback === true) {
+    return gateSkip(id, "text-only fallback: no poster/scene to check — content-visual consistency skipped (not passed)");
+  }
   if (poster.qcStatus !== "passed") {
     return gateFail(id, `poster_qc_status ${JSON.stringify(poster.qcStatus)} != passed — no render QC evidence`);
   }
@@ -3688,7 +3735,10 @@ export function gateEvalContentVisualConsistency(input: GateInputShape): GateVal
 
 export function gateEvalBengaliReadabilityImageQuality(input: GateInputShape): GateValidationResultShape {
   const id: ValidationId = "bengali_readability_image_quality";
-  if (input.poster.qcStatus !== "passed") {
+  // Text-only fallback: the poster-QC precondition is skipped, but
+  // the push-text half still runs — in fallback mode the push IS the
+  // publication, so empty title/body must still HOLD.
+  if (input.textOnlyFallback !== true && input.poster.qcStatus !== "passed") {
     return gateFail(id, `poster_qc_status ${JSON.stringify(input.poster.qcStatus)} != passed — no render QC evidence`);
   }
   if (input.cards.length < 1) {
@@ -3697,7 +3747,9 @@ export function gateEvalBengaliReadabilityImageQuality(input: GateInputShape): G
   if (!input.push || !hasText(input.push.title) || !hasText(input.push.body)) {
     return gateFail(id, "push title/body empty — nothing readable to send");
   }
-  return gateOk(id, "poster QC passed for these cards; push title/body present (fit is render-time evidence)");
+  return gateOk(id, input.textOnlyFallback === true
+    ? "text-only fallback: no poster; push title/body present"
+    : "poster QC passed for these cards; push title/body present (fit is render-time evidence)");
 }
 
 export function gateEvalDuplicatePrevention(input: GateInputShape): GateValidationResultShape {
@@ -3735,6 +3787,11 @@ export function gateEvalFinalizedAssetIntegrity(input: GateInputShape): GateVali
   const id: ValidationId = "finalized_asset_integrity";
   const p = input.poster;
   const date = input.kolkataDate;
+  // Text-only fallback: there is no finalized asset to verify — the
+  // validation is SKIPPED (recorded, never claimed as passed).
+  if (input.textOnlyFallback === true) {
+    return gateSkip(id, "text-only fallback: no finalized asset to verify — skipped (not passed)");
+  }
   if (!isValidPosterUrl(p.url, date)) {
     return gateFail(id, `poster_url is not a daily-content-posters URL for ${date} and a known format`);
   }
@@ -3817,7 +3874,7 @@ export function evaluateAutonomousGate(input: GateInputShape): GateVerdictShape 
     gateEvalDuplicatePrevention(safe),
     gateEvalFinalizedAssetIntegrity(safe),
   ];
-  const combined = evaluateSafetyGate(results.map((r) => ({ id: r.id, pass: r.pass, detail: r.detail })));
+  const combined = evaluateSafetyGate(results.map((r) => ({ id: r.id, pass: r.pass, detail: r.detail, ...(r.skipped === true ? { skipped: true } : {}) })));
   if (combined.decision === "publish") {
     return { decision: "publish", results, failed: [], reasons: [] };
   }
@@ -3886,6 +3943,37 @@ async function healSplitFlow(
 
   if (pub?.status === "planned" && pub.push) {
     if (isQuarantined(pub.poster_error)) {
+      // Text-only fallback (owner decision 2026-11-23): when the
+      // text_only_fallback setting is on, a quarantined row publishes
+      // text-only through publishPlanned (same gate, no image). Flag
+      // off keeps the hold behaviour below.
+      const { settings: fbSettings } = await readModeSettings(svc);
+      if (fbSettings.textOnlyFallback === true) {
+        const published = await publishPlanned(svc, kolkataDate);
+        const pj = (await published.json().catch(() => ({}))) as Record<string, unknown>;
+        if (pj.ok === true && pj.deduped !== true) {
+          const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
+          return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: true, hold: null, fallback: "text_only", publication_id: pj.publication_id,
+            reason: "poster_quarantined; published text-only (text_only_fallback enabled)",
+            channels: channels("published", pj.delivery ?? null, fb) });
+        }
+        if (pj.deduped === true) {
+          const fb = await facebookDispositionAfterPublish(svc, kolkataDate);
+          return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: null, deduped: true,
+            channels: channels("published", null, fb) });
+        }
+        // A gate hold is its own hold state (not a publish failure):
+        // the content failed validation and is NEVER published
+        // text-only. Any other non-ok publish result keeps the
+        // publish_failed hold.
+        const hold = pj.reason === "gate_hold" ? "gate_hold" : "publish_failed";
+        const alertReason = pj.reason === "gate_hold"
+          ? `autonomous gate held the publication: ${Array.isArray(pj.failed) ? (pj.failed as string[]).join(",") : "unknown"}`
+          : `publish_planned failed: ${typeof pj.error === "string" ? pj.error : "unknown"}`;
+        return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold, publication_id: pub.id,
+          channels: channels("planned", null),
+          alert: alertFor("warn", alertReason, pub.id) });
+      }
       return respond({ ok: true, kolkata_date: kolkataDate, tick, healed: false, hold: "quarantined", publication_id: pub.id,
         channels: channels("quarantined", null),
         alert: alertFor("critical", "quarantined: poster failed twice; needs owner/admin review", pub.id) });
@@ -3980,6 +4068,7 @@ async function runPublishGate(
     card_cycle: number | null;
   },
   kolkataDate: string,
+  opts: { textOnlyFallback?: boolean } = {},
 ): Promise<GateVerdictShape> {
   const cards = Array.isArray(pub.cards) ? (pub.cards as GateCardShape[]) : [];
   const hadithId = gateParseHadithRef(pub.hadith_ref);
@@ -4063,17 +4152,23 @@ async function runPublishGate(
     historyRecords,
     hadithCycle: pub.hadith_cycle ?? null,
     cardCycle: pub.card_cycle ?? null,
+    textOnlyFallback: opts.textOnlyFallback === true,
   });
 }
 
-/** Publish step 3 of the split flow: publish a planned row ONLY when
- *  its poster is finalized (QC-passed), sending the first push with the
- *  finalized poster as `image_url`. Refuses anything else — a failed
- *  or missing poster leaves the row planned, so downstream has nothing
- *  to distribute that day. An already-published row dedupes. */
+/** Publish step 3 of the split flow: publish a planned row whose
+ *  poster is finalized (QC-passed), sending the first push with the
+ *  finalized poster as `image_url`. Text-only fallback (owner
+ *  decision 2026-11-23): a QUARANTINED row (poster failed twice)
+ *  publishes text-only when the `text_only_fallback` setting is on
+ *  — the 8-gate still applies (V5/V8 skipped, V6 push-text checked;
+ *  a gate_hold never publishes). Refuses anything else — a failed
+ *  or missing poster on a non-quarantined row leaves the row
+ *  planned, so downstream has nothing to distribute that day. An
+ *  already-published row dedupes. */
 async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> {
   const { data: row } = await svc.from("daily_content_publications")
-    .select("id, status, push, poster_url, poster_qc_status, hadith_ref, hadith_source_line, cards, poster_asset_id, poster_storage_path, poster_checksum, poster_checksums, poster_urls, poster_scene_id, poster_generated_at, hadith_cycle, card_cycle")
+    .select("id, status, push, poster_url, poster_qc_status, poster_error, hadith_ref, hadith_source_line, cards, poster_asset_id, poster_storage_path, poster_checksum, poster_checksums, poster_urls, poster_scene_id, poster_generated_at, hadith_cycle, card_cycle")
     .eq("kolkata_date", kolkataDate)
     .maybeSingle();
   const pub = row as {
@@ -4082,6 +4177,7 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
     push: Record<string, unknown> | null;
     poster_url: string | null;
     poster_qc_status: string | null;
+    poster_error: string | null;
     hadith_ref: string | null;
     hadith_source_line: string | null;
     cards: unknown;
@@ -4100,22 +4196,36 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
   if (pub.status !== "planned") {
     return jsonResponse({ ok: false, error: "publication is not planned", reason: "not_planned" }, 409);
   }
+  // Settings are read once here and reused for the per-channel
+  // switches below. The fallback is a function of (flag on) + (row
+  // quarantined) — no body flag: a manual publish-workflow dispatch
+  // on a quarantined row with the flag on publishes text-only, and
+  // with the flag off it 409s poster_not_ready as before.
+  const { settings: modeSettings } = await readModeSettings(svc);
+  const fallback = isQuarantined(pub.poster_error) && modeSettings.textOnlyFallback === true;
   // The split-flow gate: a publication is published ONLY with a
-  // QC-passed finalized poster. A failed or missing poster leaves
-  // the row planned — downstream has nothing to distribute.
+  // QC-passed finalized poster — unless the text-only fallback
+  // applies (quarantined row + flag on). A failed or missing poster
+  // on any other row leaves the row planned — downstream has nothing
+  // to distribute.
   if (pub.poster_qc_status !== "passed" || !pub.poster_url) {
-    return jsonResponse({ ok: false, reason: "poster_not_ready", poster_qc_status: pub.poster_qc_status ?? null }, 409);
+    if (!fallback) {
+      return jsonResponse({ ok: false, reason: "poster_not_ready", poster_qc_status: pub.poster_qc_status ?? null }, 409);
+    }
+    // else: text-only fallback — continue to the gate.
   }
   const storedPush = pub.push && typeof pub.push === "object" ? (pub.push as Record<string, unknown>) : null;
   if (!storedPush) return jsonResponse({ ok: false, error: "planned row has no push payload" }, 500);
   // The 8-validation autonomous gate (Section 7): ALL 8 must pass or
-  // the row is HELD, never published. The verdict is recorded in the
+  // the row is HELD, never published. In fallback mode V5/V8 are
+  // recorded SKIPPED and V6 runs its push-text half; any genuine
+  // failure still holds the row. The verdict is recorded in the
   // row's error column (gate_hold:<failed ids>) so the admin page and
   // the heal tick can see why; the row stays planned. This runs AFTER
   // the poster check (preserving the poster_not_ready contract) and
   // BEFORE the per-channel switches, so it applies to both send paths
   // (including push-paused publishWithoutPush).
-  const verdict = await runPublishGate(svc, pub, kolkataDate);
+  const verdict = await runPublishGate(svc, pub, kolkataDate, { textOnlyFallback: fallback });
   if (verdict.decision === "hold") {
     // Best-effort verdict record: a failed write must not turn a hold
     // into a publish — the 409 below is returned regardless, and it
@@ -4123,34 +4233,38 @@ async function publishPlanned(svc: Svc, kolkataDate: string): Promise<Response> 
     await svc.from("daily_content_publications").update({ error: `gate_hold:${verdict.failed.join(",")}` } as never).eq("id", pub.id).eq("status", "planned");
     return jsonResponse({ ok: false, reason: "gate_hold", failed: verdict.failed, validations: verdict.results }, 409);
   }
-  // Phase 6 — per-channel switches. website_auto_publish === false
-  // refuses the website publication (the row stays planned); a
-  // paused website channel never publishes. push_enabled === false
+  // Phase 6 — per-channel switches (modeSettings was read once at
+  // the top of this function and is reused here). website_auto_publish
+  // === false refuses the website publication (the row stays planned);
+  // a paused website channel never publishes. push_enabled === false
   // publishes the website WITHOUT sending: the row flips with zeroed
   // delivery counters and no delivery rows are created, so no push is
   // queued for later — the push channel's pause is honored, not
   // deferred. (Push catch-up after unpausing is not implemented;
   // see the Phase 6 report.) Missing columns mean legacy behaviour
   // (website + push on).
-  const { settings: modeSettings } = await readModeSettings(svc);
   if (modeSettings.websiteAutoPublish === false) {
     return jsonResponse({ ok: false, error: "website_paused", reason: "website_auto_publish is false" }, 409);
   }
   if (modeSettings.pushEnabled === false) {
     try {
       const result = await publishWithoutPush(svc, pub.id);
-      return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery });
+      return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery, ...(fallback ? { fallback: "text_only" } : {}) });
     } catch (e) {
       return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
     }
   }
   // set_poster already sets push.image_url; re-derive it from the
   // finalized poster_url so the first send carries the image even if
-  // the stored push predates finalization.
-  const pushForSend = { ...storedPush, image_url: pub.poster_url } as PushPayload;
+  // the stored push predates finalization. In text-only fallback
+  // mode the push is forced image_url null (defense in depth — a
+  // quarantined row's stored push already carries null).
+  const pushForSend = fallback
+    ? { ...storedPush, image_url: null } as PushPayload
+    : { ...storedPush, image_url: pub.poster_url } as PushPayload;
   try {
     const result = await sendAndPublish(svc, pub.id, pushForSend);
-    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery });
+    return jsonResponse({ ok: true, kolkata_date: kolkataDate, publication_id: result.publication_id, delivery: result.delivery, ...(fallback ? { fallback: "text_only" } : {}) });
   } catch (e) {
     return jsonResponse({ ok: false, error: e instanceof Error ? e.message : String(e) }, 500);
   }
@@ -4253,6 +4367,9 @@ async function handleUpdateSettings(req: Request, svc: Svc, body: Record<string,
   if (entries.length === 0) return jsonResponse({ ok: false, error: "no settings provided" }, 400);
   if ("enabled" in (patch as Record<string, unknown>)) {
     return jsonResponse({ ok: false, error: "enabled is owner-SQL only and cannot be changed here" }, 403);
+  }
+  if ("text_only_fallback" in (patch as Record<string, unknown>)) {
+    return jsonResponse({ ok: false, error: "text_only_fallback is owner-SQL only and cannot be changed here" }, 403);
   }
   for (const [k, v] of entries) {
     if (!(UPDATE_SETTINGS_ALLOWLIST as readonly string[]).includes(k)) {
@@ -5323,7 +5440,9 @@ Deno.serve(async (req: Request) => {
     // daily cron becomes a 3-dispatch chain (plan -> poster ->
     // publish_planned) in a separate, owner-approved step (Phase 7
     // step 6); until then a bare cron call plans the day and the
-    // heal/retry path finishes it — never text-only.
+    // heal/retry path finishes it — with a poster when one exists, or
+    // text-only only for a quarantined row when the text_only_fallback
+    // setting is on (owner decision 2026-11-23).
     const r = await ensurePlannedRow(svc, kolkataDate, plan);
     if (r.kind === "deduped") {
       return jsonResponse({ ok: true, deduped: true, kolkata_date: kolkataDate });
