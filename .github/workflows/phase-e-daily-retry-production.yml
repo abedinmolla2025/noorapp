@@ -22,7 +22,10 @@
 # flow: a missing/failed row is planned (no send, no flip); a
 # planned row with a QC-passed poster is published WITH its poster
 # image; a planned row without one is HELD (poster_pending /
-# poster_failed / quarantined) — never published text-only. It never
+# poster_failed) — except a QUARANTINED row, which the heal tick
+# publishes TEXT-ONLY when the text_only_fallback setting is on
+# (owner decision 2026-11-23; the 8-gate still applies — a gate_hold
+# never publishes). It never
 # creates a new publication outside the heal rules and never plans
 # a new day on a plain tick; it only retries today's failed rows.
 #
@@ -100,7 +103,7 @@ jobs:
         run: |
           set -euo pipefail
           echo "::add-mask::$PROD_CRON_SECRET"
-          echo "Retry + heal tick. Re-attempts failed deliveries; heals only through the split flow (plan-only / publish-with-poster / hold). Never sends text-only."
+          echo "Retry + heal tick. Re-attempts failed deliveries; heals only through the split flow (plan-only / publish-with-poster / hold / text-only fallback for quarantined rows when text_only_fallback is on)."
           RESP=$(curl -s --max-time 90 -w '\n%{http_code}' -X POST "$PROD_URL/functions/v1/daily-content" \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $PROD_CRON_SECRET" \
@@ -128,7 +131,7 @@ jobs:
           else:
               print('Retry tick result:', json.dumps({k: d.get(k) for k in ('ok','kolkata_date','retry') if k in d}, ensure_ascii=False)[:2000])
               if 'healed' in d:
-                  print('Heal:', json.dumps({k: d.get(k) for k in ('healed','hold','publication_id','channels','alert') if k in d}, ensure_ascii=False)[:2000])
+                  print('Heal:', json.dumps({k: d.get(k) for k in ('healed','hold','fallback','publication_id','channels','alert') if k in d}, ensure_ascii=False)[:2000])
               print('RETRY TICK DONE: failed deliveries were re-attempted where due (bounded by backoff and max attempts).')
               # Dispatch rule (mirrors the rehearsal heal-test workflow):
               # the row needs a poster when the tick planned it
