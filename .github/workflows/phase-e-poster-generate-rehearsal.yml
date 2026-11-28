@@ -228,6 +228,14 @@ jobs:
           ")
           if [ -z "$ADMIN_TOKEN" ]; then
             echo "Admin sign-in failed."
+            echo "$TOKEN_RESP" | python3 -c "
+            import json, sys
+            try:
+                d = json.load(sys.stdin)
+                print('GOTRUE_ERROR code=' + str(d.get('code')) + ' error_code=' + str(d.get('error_code')) + ' msg=' + str(d.get('msg')) + ' message=' + str(d.get('message')))
+            except Exception:
+                print('GOTRUE_ERROR non-JSON response')
+            "
             # Record the failure like a render failure (CRON-secret call —
             # no admin token needed), so it counts toward quarantine and the
             # text-only fallback can fire after a second failure. Best
