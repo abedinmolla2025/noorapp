@@ -151,6 +151,14 @@ export const CARD_BACKGROUNDS: BackgroundScene[] = [
     prompt:
       "Photorealistic premium photograph, tall vertical portrait orientation: two hands gently offering a cup of tea to an elderly person in a warm sunlit home, respectful and tender atmosphere, soft golden light, deep green and warm gold tones, generous darker areas at the top and bottom for text overlay, no faces in close-up. Absolutely no text, no words, no letters, no calligraphy, no signs anywhere in the image. Topic: kindness and good conduct. Mood: respectful, tender, warm. Lighting: soft golden light from a window. Composition: centered — the Bengali panel sits in the middle of the frame. Camera: close-up, eye-level, hands centred in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
   },
+  {
+    id: "food-sharing",
+    file: "bg-food-sharing.jpg",
+    scene: "Two pairs of hands across a simple wooden table, one gently offering a bowl of dates and bread to the other in warm golden light — a humble, generous image of charity and sadaqah, no faces",
+    subjects: ["charity", "sadaqah", "giving", "food", "poor", "needy", "dates", "bread", "hands", "sharing", "generous", "humble", "warm", "দান", "সদকা", "গরিব", "খাবার", "খেজুর"],
+    prompt:
+      "Photorealistic premium cinematic photograph, tall vertical portrait orientation. Absolutely no text, no words, no letters, no calligraphy, no signs, no readable writing anywhere in the image. No faces, no identifiable people. Generous darker areas at the top and bottom for text overlay. Two pairs of hands across a simple wooden table, one gently offering a bowl of dates and bread to the other, warm golden light, humble and generous atmosphere, close-up on hands only. Topic: charity and sadaqah. Mood: humble, generous, warm. Lighting: warm golden light from above. Composition: lower-third — the content sits low in the frame. Camera: close-up, eye-level, hands and table in the lower half. Text-safe zones: keep the upper third and the bottom strip dark and free of detail for the Bengali panel and the Arabic footnote.",
+  },
 ];
 
 /** Future scene ideas (NOT inventory — each needs its own generated file first). */

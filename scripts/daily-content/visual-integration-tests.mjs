@@ -485,11 +485,12 @@ t("palette contrast: every palette reaches 4.5 vs #0b1526 (readability is non-ne
   }
   assert.equal(pal.paletteById("no-such-palette"), null);
 });
-t("six-topic selection: parents 527 / patience 1252 / mercy 6000 render; charity 1410 HOLDs", () => {
+t("six-topic selection: parents 527 / patience 1252 / mercy 6000 / charity 1410 render", () => {
   const cases = [
     ["parents527", "parents", "parents-hands", "parents-hands", "warm-cream"],
     ["patience1252", "patience", "patience-tree", "patience-tree", "muted-blue"],
     ["mercy6000", "kindness", "helping-hands", "helping-hands", "gentle-green"],
+    ["charity1410", "charity", "food-sharing", "food-sharing", "warm-amber"],
   ];
   for (const [key, topic, concept, scene, palette] of cases) {
     const { sel, qc, score } = selectAndQc(INPUTS[key], NO_HISTORY, undefined, 0);
@@ -500,12 +501,6 @@ t("six-topic selection: parents 527 / patience 1252 / mercy 6000 render; charity
     assert.equal(qc.ok, true, `${key}: QC failed: ${qc.failures.join("; ")}`);
     assert.ok(score.total >= 85, `${key}: semantic ${score.total} < 85`);
   }
-  const charity = selectAndQc(INPUTS.charity1410);
-  assert.equal(charity.sel.selection.topicId, "charity");
-  assert.equal(charity.sel.scene, null);
-  assert.equal(charity.sel.hold.reason, "visual_needs_new_scene");
-  assert.equal(charity.sel.selection.needsNewScene, true);
-  assert.equal(charity.sel.selection.paletteId, null, "a held topic carries no palette (no fake design)");
 });
 t("regression 2026-11-18: bukhari-93-7158 (anger) classifies patience, not speech", () => {
   // The E2E 2026-11-18 held on the missing quiet-garden scene because the
