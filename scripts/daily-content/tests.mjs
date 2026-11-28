@@ -1378,6 +1378,27 @@ t("gate V1: dua card with no live row -> fail (fail-closed)", () => {
   }));
   assert.equal(gateResult(v, "source_reference_integrity").pass, false);
 });
+t("gate V1: dua with empty-string reference but a source set -> pass (planner/gate parity, 2026-11-28)", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s1", arabic: "ARABIC-s1", bengali: "BENGALI-s1", sourceLine: "REF-s1" },
+    ],
+    liveDuas: { s1: { slug: "s1", title: "TITLE-s1", content: "BENGALI-s1", content_arabic: "ARABIC-s1", metadata: { reference: "", source: "রমযানের দোয়া সংকলন", source_type: "Dua" }, status: "published", content_type: "dua" } },
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, true);
+  assert.equal(v.decision, "publish");
+});
+t("gate V1: dua with empty reference and no source -> fail", () => {
+  const v = gate.evaluateAutonomousGate(gateInput({
+    cards: [
+      { kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-TEST", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" },
+      { kind: "dua", recordRef: "content:s1", arabic: "ARABIC-s1", bengali: "BENGALI-s1", sourceLine: "REF-s1" },
+    ],
+    liveDuas: { s1: { slug: "s1", title: "TITLE-s1", content: "BENGALI-s1", content_arabic: "ARABIC-s1", metadata: { reference: "", source_type: "Dua" }, status: "published", content_type: "dua" } },
+  }));
+  assert.equal(gateResult(v, "source_reference_integrity").pass, false);
+});
 t("gate V2: card Arabic differs from live -> fail (V2 only)", () => {
   const v = gate.evaluateAutonomousGate(gateInput({
     cards: [{ kind: "hadith", recordRef: "hadith:h1", arabic: "ARABIC-CHANGED", bengali: "BENGALI-TEST", sourceLine: "Sahih al-Bukhari, Hadith 1" }],

@@ -3587,7 +3587,16 @@ export function gateEvalSourceReferenceIntegrity(input: GateInputShape): GateVal
     if (typeof d.content_type !== "string" || d.content_type.toLowerCase() !== "dua") {
       return gateFail(id, `live dua ${slug} content_type ${JSON.stringify(d.content_type)} != dua`);
     }
-    const reference = d.metadata?.reference ?? d.metadata?.source ?? null;
+    // Reference fallback mirrors the planner's mapDua: an empty-string
+    // reference falls through to metadata.source (||), not just null
+    // (??). A dua whose reference is "" but whose source is set (e.g.
+    // special-dua-for-ramadan, 2026-11-28) is planner-eligible, so the
+    // gate must not fail it on reference.
+    const meta = d.metadata ?? {};
+    const reference =
+      (typeof meta.reference === "string" && meta.reference) ||
+      (typeof meta.source === "string" && meta.source) ||
+      null;
     if (!hasText(d.content) || !hasText(d.content_arabic) || !hasText(reference)) {
       return gateFail(id, `live dua ${slug} is ineligible (empty content, Arabic, or reference)`);
     }
